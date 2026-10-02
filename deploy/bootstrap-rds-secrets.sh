@@ -54,14 +54,34 @@ else
   echo
 fi
 
-read -rsp "Contraseña nueva de migración (mínimo 20 caracteres): " MIGRATION_PASSWORD
-echo
-read -rsp "Contraseña nueva de aplicación (mínimo 20 caracteres y distinta): " APP_PASSWORD
-echo
-read -rsp "TICKET_ENCRYPTION_KEY respaldada por separado: " TICKET_KEY
-echo
-read -rsp "SECURITY_HASH_KEY independiente: " HASH_KEY
-echo
+if [[ "${NEXO_GENERATE_APPLICATION_SECRETS:-NO}" == "YES" ]]; then
+  mapfile -t GENERATED_SECRETS < <(
+    "$PROJECT_ROOT/backend/.venv/bin/python" - <<'PY'
+import secrets
+from cryptography.fernet import Fernet
+
+print(secrets.token_urlsafe(32))
+print(secrets.token_urlsafe(32))
+print(Fernet.generate_key().decode("ascii"))
+print(secrets.token_urlsafe(48))
+PY
+  )
+  MIGRATION_PASSWORD="${GENERATED_SECRETS[0]}"
+  APP_PASSWORD="${GENERATED_SECRETS[1]}"
+  TICKET_KEY="${GENERATED_SECRETS[2]}"
+  HASH_KEY="${GENERATED_SECRETS[3]}"
+  unset GENERATED_SECRETS
+  echo "Contraseñas de base y claves de aplicación generadas localmente en la EC2."
+else
+  read -rsp "Contraseña nueva de migración (mínimo 20 caracteres): " MIGRATION_PASSWORD
+  echo
+  read -rsp "Contraseña nueva de aplicación (mínimo 20 caracteres y distinta): " APP_PASSWORD
+  echo
+  read -rsp "TICKET_ENCRYPTION_KEY respaldada por separado: " TICKET_KEY
+  echo
+  read -rsp "SECURITY_HASH_KEY independiente: " HASH_KEY
+  echo
+fi
 read -rsp "Token DuckDNS (no se mostrará): " DUCKDNS_TOKEN
 echo
 
