@@ -31,6 +31,6 @@ No hay NAT Gateway, balanceador, Auto Scaling, réplica ni Multi-AZ. La V1 prior
 
 ## Seguridad de red y aplicación
 
-Nginx es el único punto HTTP(S); FastAPI escucha en loopback y PostgreSQL nunca se expone a Internet. SSH está cerrado de forma predeterminada y solo admite un `/32` temporal. Las cookies se exigen `Secure` en producción, los orígenes CSRF son explícitos y HTTPS usará un subdominio DuckDNS reclamado por la usuaria con Let's Encrypt; aún no está operativo.
+Nginx es el único punto HTTP(S); FastAPI escucha en loopback y PostgreSQL nunca se expone a Internet. SSH está cerrado de forma predeterminada; la administración preferida es Session Manager con el perfil existente, y un `/32` temporal queda solo como contingencia. Las cookies se exigen `Secure` en producción, los orígenes CSRF son explícitos y HTTPS usará `nexoeventos-demo.duckdns.org` con Let's Encrypt; aún no está operativo.
 
 Terraform fue formateado y validado sin credenciales. El plan autenticado, permisos efectivos, cuotas y despliegue siguen pendientes; ver `infra/aws/README.md` y `docs/costos-v1.md`.

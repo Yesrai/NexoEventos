@@ -12,8 +12,8 @@ No se acepta como evidencia una pantalla de configuración sin resultado. Las ca
 | EV06 | Datos | RDS PostgreSQL privado | Conexión desde app, no desde Internet; persistencia | endpoint RDS oculto + prueba reinicio | **Restauración local disponible; pendiente RDS** |
 | EV07 | Respaldo | S3 privado + RDS backup/snapshot final + copia externa | Carga, versión, paquete cifrado y restauración aislada | checksums/metadata sin contenido sensible + informe restore | **Restore local disponible; scripts preparados; pendiente S3/RDS/copia externa** |
 | EV08 | Observabilidad | CloudWatch Logs y alarma CPU | Logs sanitizados, retención y estado de alarma | captura grupos/alarma | **Configuración Terraform; pendiente cloud** |
-| EV09 | IaC | Terraform AWS | identidad por cuenta, estado separado, `fmt`, `validate`, plan revisado y post-apply sin cambios | resumen sanitizado; binario solo en `work/` | **fmt/validate actuales; 30/0/0 histórico; nuevo plan bloqueado por `voc-cancel-cred`, archivo incompleto eliminado** |
-| EV10 | Flujo público seguro | DuckDNS + Let's Encrypt + aplicación | iniciar sesión → reservar → ver QR → validar una vez | URL real y capturas sin token reutilizable | **Flujo local probado; FQDN/certificado/cloud pendientes** |
+| EV09 | IaC | Terraform AWS | identidad por cuenta, estado separado, `fmt`, `validate`, plan revisado y post-apply sin cambios | resumen sanitizado; binario solo en `work/` | **fmt/validate actuales; 30/0/0 histórico; intento nuevo bloqueado por `InvalidClientTokenId`, sin binario** |
+| EV10 | Flujo público seguro | DuckDNS + Let's Encrypt + aplicación | iniciar sesión → reservar → ver QR → validar una vez | URL real y capturas sin token reutilizable | **Flujo local probado; FQDN confirmado, DNS/certificado/cloud pendientes** |
 
 ## Cifras que no son mediciones
 

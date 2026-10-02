@@ -9,7 +9,7 @@ Las dependencias directas se declaran en `backend/requirements-production.txt` y
 1. Confirma identidad/cuenta con `scripts/terraform-account.sh` y revisa el plan aprobado.
 2. Copia el commit aprobado a `/opt/nexoeventos`; no copies `.env`, `work/`, estados ni planes.
 3. Ejecuta como root `/opt/nexoeventos/deploy/install-amazon-linux-2023.sh`. No inicia la aplicación.
-4. Reclama personalmente el subdominio DuckDNS. Introduce el token solo en el prompt de `bootstrap-rds-secrets.sh`; nunca en Git, historial de shell, capturas o argumentos.
+4. Usa el subdominio confirmado `nexoeventos-demo.duckdns.org`. Regenera personalmente el token justo antes del despliegue e introdúcelo solo en el prompt de `bootstrap-rds-secrets.sh`; nunca en Git, historial de shell, capturas o argumentos.
 5. Ejecuta `bootstrap-rds-secrets.sh <rds-id> <región> <dominio-completo>`. El script intenta leer el secreto maestro administrado por RDS con el rol de instancia. Si se deniega, lo informa y solicita el valor manualmente sin eco; no cambia IAM. La credencial maestra se usa en memoria para preparar roles y no se guarda.
 6. Carga como root `/etc/nexoeventos/migration.env`, ejecuta `backend/.venv/bin/alembic upgrade head` y descarga la variable del entorno. El archivo queda `root:root 0600` y no lo consume el servicio.
 7. Inicia `nexoeventos-api.service`. systemd lee `/etc/nexoeventos/backend.env` antes de bajar privilegios a `nexoeventos`; el usuario de la aplicación no puede leer ni modificar el archivo.
@@ -29,7 +29,7 @@ Las dependencias directas se declaran en `backend/requirements-production.txt` y
 
 ## DuckDNS y HTTPS
 
-La consulta DNS del 2 de octubre de 2026 devolvió NXDOMAIN para `nexoeventos-demo.duckdns.org`, `nexoeventos-demo-2026.duckdns.org` y `nexoeventos-upeu-demo.duckdns.org`. Esto no confirma que el nombre esté libre en el registro interno de DuckDNS. La persona usuaria debe iniciar sesión en [DuckDNS](https://www.duckdns.org/), intentar añadir primero `nexoeventos-demo` y comunicar únicamente el FQDN aceptado, nunca el token.
+La usuaria confirmó el 2 de octubre de 2026 que `nexoeventos-demo.duckdns.org` está agregado a su cuenta. DNS y HTTPS todavía no están operativos porque no existe una EC2 desplegada ni una IPv4 que publicar. El token observado durante la revisión del navegador debe invalidarse y regenerarse personalmente antes de la instalación; no se comparte por chat.
 
 El timer `nexoeventos-duckdns.timer` actualiza la IP cada cinco minutos mediante la [API oficial de DuckDNS](https://www.duckdns.org/spec.jsp). El token reside en `/etc/nexoeventos/duckdns.env` (`root:root`, `0600`) y se pasa a `curl` por entrada estándar, no por argumentos ni logs. Certbot/Let's Encrypt es la opción V1 gratuita.
 

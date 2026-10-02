@@ -1,10 +1,10 @@
 # Calendario de uso del crédito AWS hasta el 26 de noviembre
 
-Propuesta operativa; no autoriza `apply` ni `destroy`. Si el despliegue se aprobara el 5 de octubre a las 09:00 y persistiera hasta el 26 de noviembre a las 23:59 (Lima), los recursos existirían 1,262.983 horas. Las ventanas activas máximas suman 37 horas.
+Propuesta operativa; no autoriza `apply` ni `destroy`. El escenario más temprano revisado usa el 2 de octubre a las 15:00 y persistencia hasta el 26 de noviembre a las 23:59 (Lima): 1,328.983 horas. No es una fecha real de creación; después de un eventual `apply` se reemplazará por los timestamps observados. Las ventanas activas máximas suman 37 horas.
 
 | Fecha | Ventana máxima | Objetivo |
 |---|---:|---|
-| 5 oct | 4 h | despliegue por etapas, solo tras aprobación |
+| primera ventana aprobada | 4 h | despliegue por etapas, solo después de un plan autenticado |
 | 8 oct | 4 h | aplicación, migraciones y conectividad privada |
 | 14, 20 y 26 oct | 3 h cada una | seguridad, backups y EV02–EV08 |
 | 1, 7 y 13 nov | 3 h cada una | restauración, observabilidad y pruebas |
@@ -12,7 +12,7 @@ Propuesta operativa; no autoriza `apply` ni `destroy`. Si el despliegue se aprob
 | 24 nov | 4 h | cierre de evidencias y documentación |
 | 26 nov | 3 h | ventana final y contingencia |
 
-Forecast corregido: USD 1.621 de EC2/RDS/IPv4, USD 7.769 de almacenamiento/servicios persistentes y USD 0.877 de consumo variable base; subtotal USD 10.267 y techo con margen USD 13.267. Las fechas de creación se reemplazarán por timestamps reales después de un eventual `apply`.
+Forecast corregido: USD 1.621 de EC2/RDS/IPv4, USD 8.175 de almacenamiento/servicios persistentes y USD 0.923 de consumo variable base; subtotal USD 10.719 y techo con margen USD 13.719. Las fechas de creación se reemplazarán por timestamps reales después de un eventual `apply`.
 
 ## Operación por sesión
 

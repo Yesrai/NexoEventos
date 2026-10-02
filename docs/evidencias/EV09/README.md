@@ -8,4 +8,6 @@ Evidencia obtenida el 2 de octubre de 2026:
 - Plan binario: `work/aws-v1.tfplan`, ignorado por Git y modo `0600`.
 - No se ejecutó `apply` ni `destroy`.
 
-El plan puede contener ID de cuenta, nombres derivados, endpoint previsto y metadata marcada sensible de RDS. No se adjunta ni se copia a capturas. La evidencia transportable es el resumen sanitizado anterior. Después de `25a12c1` se habilitó snapshot final y se añadieron identidad/estado por cuenta, por lo que el plan 30/0/0 queda como evidencia histórica y no debe aplicarse. El intento nuevo fue denegado por credenciales Academy canceladas (`voc-cancel-cred`) y el archivo parcial se eliminó. Se requiere iniciar otra sesión, obtener credenciales nuevas y generar un plan autenticado antes de cualquier aprobación.
+El plan puede contener ID de cuenta, nombres derivados, endpoint previsto y metadata marcada sensible de RDS. No se adjunta ni se copia a capturas. La evidencia transportable es el resumen sanitizado anterior. Después de `25a12c1` se habilitó snapshot final y se añadieron identidad/estado por cuenta, por lo que el plan 30/0/0 queda como evidencia histórica y no debe aplicarse.
+
+El 2 de octubre se inició una sesión nueva y la consola AWS abrió correctamente en `us-east-1`, pero STS rechazó el bloque CLI recién emitido con `InvalidClientTokenId`. El intento de plan actual falló durante la validación de credenciales del proveedor y no produjo binario. `fmt` y `validate` sí pasaron. Se necesita otra credencial temporal que supere STS antes de generar evidencia vigente.

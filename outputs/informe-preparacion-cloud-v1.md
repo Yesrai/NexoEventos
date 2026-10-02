@@ -1,20 +1,20 @@
 # Informe actualizado de preparación cloud V1 — NexoEventos
 
-Fecha: 2 de octubre de 2026. Base revisada: commit `25a12c1`. No se ejecutó `terraform apply` ni `destroy` y no se creó, modificó, detuvo o eliminó ningún recurso cloud durante esta actualización.
+Fecha: 2 de octubre de 2026. Base revisada: commit `4ad752b`. No se ejecutó `terraform apply` ni `destroy` y no se creó, modificó, detuvo o eliminó ningún recurso cloud durante esta actualización.
 
 ## Ficha ejecutiva
 
 | Tema | Resultado actual |
 |---|---|
 | Arquitectura | una EC2 `t3.small` AL2023 con Nginx/React/FastAPI; RDS PostgreSQL `db.t3.micro` privado Single-AZ; S3 privado; CloudWatch; sin NAT/ALB/Multi-AZ |
-| Terraform | `fmt` y `validate` actuales correctos; plan autenticado 30/0/0 pertenece a `25a12c1` y quedó invalidado; nuevo intento bloqueado por credenciales Academy canceladas y archivo incompleto eliminado |
+| Terraform | `fmt` y `validate` correctos; plan 30/0/0 de `25a12c1` histórico y no reutilizado; el intento nuevo se bloqueó en STS con `InvalidClientTokenId` y no produjo plan |
 | SO e instalación | instalador AL2023 con DNF, Python 3.11 aislado, Node 24.21.0 verificado, dependencias/proveedor fijados; ejecución sobre EC2 real pendiente |
 | Secretos | carga interactiva sin eco, archivos root-only, proceso sin privilegios; maestro RDS no se guarda; permiso de lectura del secreto se probará con rol real |
-| DNS/TLS | DuckDNS + Let's Encrypt elegidos; `nexoeventos-demo.duckdns.org` no resolvía, pero la disponibilidad solo se confirma al reclamarlo; HTTPS no operativo |
-| Costo hasta 26 nov | subtotal previsto USD 10.267; margen USD 3.000; techo USD 13.267, suponiendo 37 h activas y persistencia desde 5 oct 09:00 |
+| DNS/TLS | `nexoeventos-demo.duckdns.org` confirmado por la usuaria; DNS hacia EC2, certificado y HTTPS todavía no operativos |
+| Costo hasta 26 nov | subtotal previsto USD 10.719; margen USD 3.000; techo USD 13.719, suponiendo 37 h activas y persistencia desde 2 oct 15:00 |
 | Recuperación | restore local, snapshot final, backup portable cifrado y procedimiento entre cuentas preparados; pruebas cloud/copia externa/migración real pendientes |
 
-Único dato de dominio que debe aportar la usuaria: **el FQDN que DuckDNS confirme como agregado a su cuenta** (preferido `nexoeventos-demo.duckdns.org`). No debe aportar el token; lo introducirá personalmente en el servidor mediante prompt sin eco.
+El FQDN ya está decidido: **`nexoeventos-demo.duckdns.org`**. El token no se aporta por chat; como quedó visible durante una inspección de accesibilidad, debe regenerarse personalmente otra vez antes de introducirlo en el servidor mediante prompt sin eco.
 
 ## Arquitectura desplegable
 
@@ -25,7 +25,7 @@ Fecha: 2 de octubre de 2026. Base revisada: commit `25a12c1`. No se ejecutó `te
 - S3 bloqueado al público, SSE-S3, versionado/lifecycle; dos log groups de 7 días y alarma CPU.
 - Sin NAT Gateway, balanceador, Auto Scaling, réplica ni Multi-AZ para preservar crédito.
 
-El SG de RDS acepta 5432 exclusivamente desde el SG de EC2. 443 es público; 80 queda para redirección/ACME. SSH está cerrado por defecto y solo puede abrirse con `/32` local explícito.
+El SG de RDS acepta 5432 exclusivamente desde el SG de EC2. 443 es público; 80 queda para redirección/ACME. SSH está cerrado por defecto (`admin_cidr = ""`). La administración prevista es Systems Manager Session Manager con `LabInstanceProfile`/`LabRole`, salida HTTPS y el agente incluido en la AMI oficial AL2023. Academy documenta la vía, pero su funcionamiento real solo podrá probarse cuando exista la instancia.
 
 ## Amazon Linux 2023 y reproducibilidad
 
@@ -55,7 +55,7 @@ Las contraseñas migrator/app son distintas. `/etc/nexoeventos/migration.env` y 
 
 ## DuckDNS, HTTPS y ACM
 
-La consulta DNS devolvió NXDOMAIN para los tres candidatos (`nexoeventos-demo`, `nexoeventos-demo-2026`, `nexoeventos-upeu-demo`), evidencia insuficiente para asegurar disponibilidad. La usuaria debe iniciar sesión en DuckDNS, reclamar el candidato y comunicar solo el FQDN.
+La usuaria confirmó que `nexoeventos-demo.duckdns.org` quedó agregado en DuckDNS. Esa confirmación no demuestra resolución hacia AWS ni HTTPS, porque todavía no existe una IP pública de NexoEventos. El token visto durante la inspección del navegador debe invalidarse y regenerarse personalmente justo antes del despliegue.
 
 El token queda en `/etc/nexoeventos/duckdns.env` root-only; un timer lo usa por entrada estándar para actualizar la IPv4 cada cinco minutos. Certbot 5.8.0 ejecuta ACME/Let's Encrypt y renueva dos veces al día mediante timer. No se emitió certificado.
 
@@ -76,7 +76,7 @@ Treinta días exactos son 720 horas:
 | ingestión de logs supuesta | USD 0.500 |
 | **total sin margen** | **USD 36.465** |
 
-Forecast desde 5-oct-2026 09:00 hasta 26-nov-2026 23:59: 1,262.983 horas persistentes y 37 horas activas. Ejecución USD 1.621; almacenamiento/servicios USD 7.769; variable base USD 0.877; subtotal USD 10.267; margen USD 3.000; **techo USD 13.267**. No es costo observado: no existe fecha real de creación sin `apply`.
+Forecast desde el escenario más temprano 2-oct-2026 15:00 hasta 26-nov-2026 23:59: 1,328.983 horas persistentes y 37 horas activas. Ejecución USD 1.621; almacenamiento/servicios USD 8.175; variable base USD 0.923; subtotal USD 10.719; margen USD 3.000; **techo USD 13.719**. No es costo observado: no existe fecha real de creación sin `apply`.
 
 El presupuesto Academy indicado es USD 50; el último uso observado fue USD 0.10 y puede retrasarse. Se revisa manualmente a USD 30 y USD 40 para decidir antes de agotarlo, sin presentarlo como límite automático.
 
@@ -99,15 +99,15 @@ Learner Lab 184558 documentó regiones `us-east-1`/`us-west-2`, sesiones de 4 h,
 - Node efectivo `v24.21.0`; frontend: 1 test aprobado y build Vite correcto (44 módulos).
 - Backend/PostgreSQL: 16 tests aprobados; permanece una advertencia no bloqueante de compatibilidad futura Starlette/httpx.
 - Restauración aislada: 3 eventos, 1 reserva y 1 entrada; token cifrado recuperable con la clave separada.
-- Terraform AWS/Azure/GCP: `fmt` y `validate` satisfactorios; plan AWS actual bloqueado por sesión cancelada.
+- Terraform AWS: `fmt` y `validate` satisfactorios. Se inició una sesión Academy nueva y la consola web abrió en `us-east-1`; STS rechazó las credenciales CLI recién emitidas con `InvalidClientTokenId`, así que el proveedor no calculó cambios ni creó un plan.
 - Scripts shell: análisis de sintaxis correcto; Python: compilación correcta. `shellcheck` no está instalado y no se añadió.
 - Escaneo básico: ninguna firma de clave AWS/PEM en archivos versionados; `.env`, estados y planes continúan ignorados.
 
 ## Bloqueos y decisiones restantes
 
-1. Reclamar en DuckDNS y aportar únicamente el FQDN aceptado.
-2. En Chrome, abrir **Iniciar el Laboratorio de aprendizaje de AWS Academy**, pulsar `Start Lab`, esperar el indicador verde y obtener credenciales nuevas. Las actuales permiten STS pero niegan las lecturas del plan con `voc-cancel-cred`.
-3. Revisar ese plan y aprobar costo/`apply` explícitamente.
+1. Regenerar personalmente el token DuckDNS antes de instalarlo, sin compartirlo por chat.
+2. Obtener de Academy un bloque CLI que supere `aws sts get-caller-identity`; el Lab y la consola web están activos, pero la credencial emitida actualmente es inválida.
+3. Generar el plan nuevo, revisar recursos/costo y aprobar `apply` explícitamente.
 4. Tras desplegar, comprobar perfil de instancia → secreto maestro, instalación AL2023 real, DNS y HTTPS.
 5. Elegir el destino protegido fuera de la cuenta para el backup cifrado.
 

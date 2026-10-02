@@ -12,13 +12,15 @@ Terraform solicita a RDS administrar el secreto maestro. El archivo local de Fas
 
 ## DNS y certificados
 
-La decisión es DuckDNS + Let's Encrypt. Los nombres consultados no resolvían el 2 de octubre, pero solo el portal de DuckDNS puede confirmar disponibilidad. Una vez reclamado el nombre, el timer actualiza la IP y Certbot emite/renueva el certificado. No hay dominio reclamado ni HTTPS probado todavía.
+La decisión es DuckDNS + Let's Encrypt. La usuaria confirmó el 2 de octubre que `nexoeventos-demo.duckdns.org` quedó agregado a su cuenta. Esto confirma el nombre, no la resolución hacia una EC2 ni HTTPS: ambos permanecen pendientes hasta que exista una IPv4 pública y Certbot emita el certificado. El timer actualizará la IP y Certbot emitirá/renovará el certificado.
+
+El token no se solicita por chat ni se guarda en Git, argumentos, logs o capturas. Como el valor recién regenerado quedó visible durante una inspección de accesibilidad del navegador, debe regenerarse otra vez justo antes de instalarlo mediante el prompt sin eco; ese valor posterior será el único válido.
 
 ACM sí admite actualmente certificados públicos exportables para EC2 y otras cargas; ya no es correcto afirmar que siempre requiera ALB/CloudFront. El certificado exportable predeterminado tiene costo y ciclo de 198 días desde el cambio anunciado en 2026. Para V1 se elige ACME gratuito por costo y menor dependencia de permisos AWS, no por una imposibilidad técnica de ACM.
 
 ## Controles pendientes en cloud
 
-1. FQDN realmente aceptado por DuckDNS; el token lo introduce personalmente la usuaria.
+1. Regenerar personalmente el token DuckDNS justo antes del despliegue e introducirlo mediante el prompt sin eco.
 2. Lectura del secreto maestro con el rol de instancia o uso manual controlado.
 3. Ejecución del instalador y verificación de paquetes en la AMI real.
 4. Resolución DNS, emisión/renovación TLS y prueba externa.

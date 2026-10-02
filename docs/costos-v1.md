@@ -22,18 +22,18 @@ Una jornada aislada de ocho horas cuesta USD 0.3504 en EC2/RDS/IPv4. Prorrateand
 
 ## Calendario real propuesto hasta la entrega
 
-No existe una fecha real de creación porque aún no se ejecutó `apply`: el costo cloud actual atribuible a esta V1 es USD 0. La previsión usa explícitamente **5 de octubre de 2026 09:00 (Lima)** como creación hipotética y **26 de noviembre de 2026 23:59 (Lima)** como fin de persistencia: 1,262.983 horas, equivalentes a 1.754144 periodos de 720 horas.
+No existe una fecha real de creación porque aún no se ejecutó `apply`: el costo cloud actual atribuible a esta V1 es USD 0. Para no conservar la fecha hipotética anterior, la previsión usa el escenario más temprano posible: **2 de octubre de 2026 15:00 (Lima)**, después de generar y aprobar un plan válido, hasta **26 de noviembre de 2026 23:59 (Lima)**. Son 1,328.983 horas, equivalentes a 1.845810 periodos de 720 horas. Tras un eventual `apply`, se sustituirá este supuesto por los timestamps reales observados.
 
 | Componente | Horas/periodo | Importe previsto |
 |---|---:|---:|
 | EC2 activa | 37 h | USD 0.770 |
 | RDS activo | 37 h | USD 0.666 |
 | IPv4 pública | 37 h | USD 0.185 |
-| EBS + RDS storage + secreto + S3 + logs almacenados + alarma | 1,262.983 h | USD 7.769 |
-| ingestión variable base | 1.754144 GiB supuesto | USD 0.877 |
-| **subtotal** | | **USD 10.267** |
+| EBS + RDS storage + secreto + S3 + logs almacenados + alarma | 1,328.983 h | USD 8.175 |
+| ingestión variable base | 1.845810 GiB supuesto | USD 0.923 |
+| **subtotal** | | **USD 10.719** |
 | margen explícito para solicitudes S3, transferencia, créditos T3, más logs y desvíos | | **USD 3.000** |
-| **techo planificado** | | **USD 13.267** |
+| **techo planificado** | | **USD 13.719** |
 
 Después del despliegue se sustituirá la fecha hipotética por el `LaunchTime`/`InstanceCreateTime` observado y se registrarán horas reales. `scripts/calculate-aws-budget.py` reproduce el cálculo. La estimación no demuestra elegibilidad de servicios ni garantiza el precio final.
 

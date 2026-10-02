@@ -20,7 +20,9 @@ No se debe reutilizar el estado Academy para otra cuenta. Una cuenta normal nece
 
 ## Estado de comprobación
 
-El plan autenticado histórico del commit `25a12c1` fue 30 altas, 0 cambios y 0 eliminaciones. Después se añadieron controles de cuenta, snapshot final y portabilidad; por ello ese binario ya no debe aplicarse. El intento de plan actual recibió denegaciones explícitas `voc-cancel-cred` al leer AMI, zonas y perfil: la sesión del laboratorio está cancelada. El archivo incompleto se eliminó. `fmt` y `validate` actuales sí pasaron; hay que iniciar otra sesión Academy y descargar credenciales nuevas antes de regenerar el plan.
+El plan autenticado histórico del commit `25a12c1` fue 30 altas, 0 cambios y 0 eliminaciones. Después se añadieron controles de cuenta, snapshot final y portabilidad; por ello ese binario ya no debe aplicarse. El 2 de octubre se inició otra sesión de cuatro horas y la consola abrió en `us-east-1`, pero STS rechazó el bloque CLI recién emitido con `InvalidClientTokenId`. El proveedor falló antes de calcular cambios y no creó plan. `fmt` y `validate` actuales sí pasaron; hace falta una credencial Academy que supere STS para regenerarlo.
+
+La vía de administración prevista es Systems Manager Session Manager mediante `LabInstanceProfile`/`LabRole`, tal como indican las instrucciones del Learner Lab. La EC2 tiene salida HTTPS y Amazon Linux 2023 incluye el agente SSM en las AMI oficiales. SSH permanece cerrado cuando `admin_cidr = ""`. La existencia del perfil está documentada por Academy, pero una sesión SSM real no puede probarse antes de crear la instancia; no se interpreta como permiso operativo confirmado.
 
 Academy confirmó que `LabInstanceProfile` existía y contenía `LabRole`, pero denegó `iam:GetPolicy`. La lectura del secreto maestro administrado por RDS no puede probarse hasta que exista: `deploy/bootstrap-rds-secrets.sh` la intenta en la EC2 y falla de forma cerrada a entrada manual sin eco, sin ampliar permisos.
 

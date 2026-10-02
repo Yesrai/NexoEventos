@@ -1,6 +1,6 @@
 APP_ENV=production
 DATABASE_URL=postgresql+psycopg://nexoeventos_app:REPLACE_FROM_SECRET@REPLACE_RDS_ENDPOINT/nexoeventos?sslmode=require
-FRONTEND_ORIGINS=https://REPLACE_DOMAIN
+FRONTEND_ORIGINS=https://nexoeventos-demo.duckdns.org
 SESSION_COOKIE_SECURE=true
 SESSION_HOURS=8
 LOGIN_MAX_FAILURES=5
