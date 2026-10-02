@@ -1,5 +1,12 @@
 aws_region = "us-east-1"
 environment = "demo"
+project_slug = "nexoeventos"
+
+# Copiar este archivo a work/terraform-envs/<entorno>.tfvars y sustituirlo allí.
+# El archivo real queda fuera de Git. No reutilizarlo entre cuentas.
+expected_account_id = "REPLACE_WITH_12_DIGIT_ACCOUNT_ID"
+instance_profile_name = "REPLACE_WITH_EXISTING_PROFILE"
+final_snapshot_identifier = "nexoeventos-demo-final-20261126"
 
 # Mantener vacío si no se requiere SSH. Si se habilita temporalmente, usar una
 # dirección /32 y pasarla por un archivo .tfvars local ignorado por Git.

@@ -68,4 +68,4 @@ No existe un endpoint público para enumerar reservas o entradas. Consulta [docs
 ./scripts/check-local.sh
 ```
 
-Consulta [docs/diagnostico-entorno.md](docs/diagnostico-entorno.md), [docs/arquitectura-inicial.md](docs/arquitectura-inicial.md), [infra/aws/README.md](infra/aws/README.md) y [docs/costos-v1.md](docs/costos-v1.md) antes de cualquier despliegue. La configuración de Nginx/systemd está preparada en `deploy/`, pero HTTPS no estará operativo hasta elegir un dominio, obtener un certificado y verificar el servicio públicamente.
+Consulta [docs/diagnostico-entorno.md](docs/diagnostico-entorno.md), [docs/arquitectura-inicial.md](docs/arquitectura-inicial.md), [infra/aws/README.md](infra/aws/README.md), [docs/costos-v1.md](docs/costos-v1.md) y [docs/operacion/migracion-entre-cuentas.md](docs/operacion/migracion-entre-cuentas.md) antes de cualquier despliegue. La configuración reproducible de Amazon Linux 2023, Nginx/systemd, DuckDNS y ACME está en `deploy/`; HTTPS no estará operativo hasta reclamar el FQDN, emitir el certificado y verificar el servicio públicamente.

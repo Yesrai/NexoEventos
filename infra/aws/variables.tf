@@ -1,16 +1,39 @@
 variable "aws_region" {
-  description = "Región permitida por Learner Lab. No implica permiso para crear recursos."
+  description = "Región elegida para este entorno. Debe validarse contra permisos, cuotas y costos de la cuenta."
   type        = string
   default     = "us-east-1"
   validation {
-    condition     = contains(["us-east-1", "us-west-2"], var.aws_region)
-    error_message = "Learner Lab solo documenta us-east-1 y us-west-2."
+    condition     = can(regex("^[a-z]{2}(-gov)?-[a-z]+-[0-9]+$", var.aws_region))
+    error_message = "aws_region debe tener el formato de una región AWS."
+  }
+}
+
+variable "expected_account_id" {
+  description = "ID de 12 dígitos de la cuenta autorizada. Se mantiene en un tfvars local ignorado por Git."
+  type        = string
+  sensitive   = true
+  validation {
+    condition     = can(regex("^[0-9]{12}$", var.expected_account_id))
+    error_message = "expected_account_id debe contener exactamente 12 dígitos."
+  }
+}
+
+variable "project_slug" {
+  type    = string
+  default = "nexoeventos"
+  validation {
+    condition     = can(regex("^[a-z][a-z0-9-]{1,30}$", var.project_slug))
+    error_message = "project_slug debe empezar por letra y usar minúsculas, números o guiones."
   }
 }
 
 variable "environment" {
   type    = string
   default = "demo"
+  validation {
+    condition     = can(regex("^[a-z][a-z0-9-]{1,20}$", var.environment))
+    error_message = "environment debe empezar por letra y usar minúsculas, números o guiones."
+  }
 }
 variable "vpc_cidr" {
   type    = string
@@ -55,8 +78,12 @@ variable "ec2_root_volume_gib" {
 }
 
 variable "instance_profile_name" {
-  type    = string
-  default = "LabInstanceProfile"
+  description = "Perfil IAM ya existente y autorizado. Academy suele usar LabInstanceProfile; otras cuentas requieren uno propio."
+  type        = string
+  validation {
+    condition     = length(trimspace(var.instance_profile_name)) > 0
+    error_message = "instance_profile_name es obligatorio para cada cuenta."
+  }
 }
 variable "db_instance_class" {
   type    = string
@@ -81,9 +108,23 @@ variable "log_retention_days" {
   default = 7
 }
 
+variable "final_snapshot_identifier" {
+  description = "Nombre único del snapshot final. Debe cambiarse antes de una eliminación posterior si ya existe."
+  type        = string
+  validation {
+    condition = (
+      length(var.final_snapshot_identifier) >= 1 &&
+      length(var.final_snapshot_identifier) <= 255 &&
+      can(regex("^[A-Za-z][A-Za-z0-9-]*[A-Za-z0-9]$", var.final_snapshot_identifier)) &&
+      !strcontains(var.final_snapshot_identifier, "--")
+    )
+    error_message = "El snapshot debe empezar por letra, terminar en letra/número y no contener guiones consecutivos."
+  }
+}
+
 locals {
-  project_name = "nexoeventos"
-  name_prefix  = "${local.project_name}-${var.environment}"
+  project_name = var.project_slug
+  name_prefix  = "${var.project_slug}-${var.environment}"
   common_tags = {
     Project     = "NexoEventos"
     Environment = var.environment

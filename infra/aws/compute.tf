@@ -15,13 +15,17 @@ data "aws_ami" "amazon_linux_2023" {
   }
 }
 
+data "aws_iam_instance_profile" "app" {
+  name = var.instance_profile_name
+}
+
 resource "aws_instance" "app" {
   ami                         = data.aws_ami.amazon_linux_2023.id
   instance_type               = var.ec2_instance_type
   subnet_id                   = aws_subnet.public_a.id
   vpc_security_group_ids      = [aws_security_group.web.id]
   associate_public_ip_address = true
-  iam_instance_profile        = var.instance_profile_name
+  iam_instance_profile        = data.aws_iam_instance_profile.app.name
   monitoring                  = false
   metadata_options {
     http_endpoint = "enabled"

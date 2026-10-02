@@ -1,0 +1,16 @@
+aws_region     = "us-east-1"
+project_slug   = "nexoeventos"
+environment    = "academy"
+
+# Sustituir únicamente en work/terraform-envs/academy.tfvars (ignorado por Git).
+expected_account_id    = "REPLACE_WITH_12_DIGIT_ACCOUNT_ID"
+instance_profile_name  = "LabInstanceProfile"
+final_snapshot_identifier = "nexoeventos-academy-final-20261126"
+
+admin_cidr              = ""
+ec2_instance_type       = "t3.small"
+ec2_root_volume_gib     = 20
+db_instance_class       = "db.t3.micro"
+db_allocated_storage_gib = 20
+backup_retention_days   = 7
+log_retention_days      = 7

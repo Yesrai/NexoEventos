@@ -1,25 +1,26 @@
 # Configuración de producción preparada
 
-## Estado verificable
+La configuración local incluye Nginx, FastAPI persistente sin `--reload`, cookies `Secure`, orígenes HTTPS explícitos, CSRF, límite de autenticación y health/readiness sin detalles sensibles. En producción el backend rechaza el arranque si faltan claves, cookies seguras u orígenes HTTPS.
 
-La configuración local prepara Nginx, FastAPI persistente, cookies seguras, orígenes explícitos, CSRF, límites de autenticación y health checks. No existe todavía un dominio ni certificado emitido, por lo que HTTPS permanece preparado y no operativo.
-
-En `APP_ENV=production` el backend se niega a iniciar si `SESSION_COOKIE_SECURE` no es verdadero, si algún origen no usa HTTPS o si faltan las claves de cifrado y derivación de seguridad.
+Amazon Linux 2023 es la plataforma elegida. El instalador reproducible valida el SO, usa DNF, conserva Python del sistema, crea un `venv` Python 3.11 y fija Node 24.21.0/dependencias. Uvicorn corre como `nexoeventos`, sin shell ni privilegios; systemd usa endurecimiento y lee un archivo root-only antes de cambiar de usuario.
 
 ## Secretos
 
-`DATABASE_URL`, `TICKET_ENCRYPTION_KEY` y `SECURITY_HASH_KEY` son secretos. La clave de entradas debe respaldarse separada de PostgreSQL: restaurar la base sin esa versión de clave impide recuperar los QR. Los archivos reales viven fuera del repositorio con permisos `0600`; los ejemplos solo contienen marcadores.
+`DATABASE_URL`, `TICKET_ENCRYPTION_KEY`, `SECURITY_HASH_KEY` y token DuckDNS se solicitan sin eco. Se escriben atómicamente bajo `/etc/nexoeventos`, `root:root 0600`; no entran en `user_data`, Terraform, Git o capturas. Migración y aplicación usan usuarios/archivos distintos. La identidad maestra RDS solo prepara roles y no se persiste.
 
-La propuesta Terraform solicita a RDS administrar la contraseña maestra en Secrets Manager. Antes del despliegue debe verificarse que Learner Lab permita esa operación y que `LabRole` pueda leer únicamente el secreto requerido. Si se deniega, hay que elegir otro mecanismo autorizado sin guardar la contraseña en variables, planes o estado versionado.
+Terraform solicita a RDS administrar el secreto maestro. El archivo local de FastAPI no resuelve el permiso de `secretsmanager:GetSecretValue`. El bootstrap consulta el ARN y prueba la lectura con el perfil real; si AWS la deniega, no intenta cambiar IAM y permite que la propietaria introduzca el secreto manualmente sin eco. Esta comprobación permanece pendiente hasta que exista RDS.
 
-## Límites de inicio de sesión
+## DNS y certificados
 
-Los fallos se agrupan mediante HMAC del correo normalizado y la dirección de origen; esos datos no se guardan en claro. Cinco fallos dentro de quince minutos bloquean esa combinación durante quince minutos. El estado reside en PostgreSQL y se comparte entre workers. Esta protección reduce fuerza bruta básica, pero no sustituye WAF, límites perimetrales o monitoreo para una exposición real.
+La decisión es DuckDNS + Let's Encrypt. Los nombres consultados no resolvían el 2 de octubre, pero solo el portal de DuckDNS puede confirmar disponibilidad. Una vez reclamado el nombre, el timer actualiza la IP y Certbot emite/renueva el certificado. No hay dominio reclamado ni HTTPS probado todavía.
 
-## Decisiones pendientes
+ACM sí admite actualmente certificados públicos exportables para EC2 y otras cargas; ya no es correcto afirmar que siempre requiera ALB/CloudFront. El certificado exportable predeterminado tiene costo y ciclo de 198 días desde el cambio anunciado en 2026. Para V1 se elige ACME gratuito por costo y menor dependencia de permisos AWS, no por una imposibilidad técnica de ACM.
 
-1. Dominio público y control de su DNS.
-2. Emisión y renovación del certificado TLS.
-3. Confirmación de acceso de `LabRole` al secreto administrado por RDS.
-4. IP administrativa `/32` o uso confirmado de Session Manager.
-5. Retención definitiva de logs y responsable de alertas.
+## Controles pendientes en cloud
+
+1. FQDN realmente aceptado por DuckDNS; el token lo introduce personalmente la usuaria.
+2. Lectura del secreto maestro con el rol de instancia o uso manual controlado.
+3. Ejecución del instalador y verificación de paquetes en la AMI real.
+4. Resolución DNS, emisión/renovación TLS y prueba externa.
+5. IP administrativa `/32` o Session Manager si su permiso se confirma.
+6. Responsable y retención final de alertas/logs.

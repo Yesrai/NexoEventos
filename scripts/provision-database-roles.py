@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create NexoEventos database roles without embedding their password."""
+"""Create isolated NexoEventos owner, migration, and application roles."""
 from __future__ import annotations
 
 import argparse
@@ -19,21 +19,32 @@ def main() -> None:
     if not url:
         raise SystemExit("Define MIGRATION_DATABASE_URL con la identidad administrativa de migraciones.")
     url = url.replace("postgresql+psycopg://", "postgresql://", 1)
+    migration_password = os.getenv("NEXO_MIGRATION_DATABASE_PASSWORD") or getpass.getpass(
+        "Contraseña nueva para nexoeventos_migrator (no se mostrará): "
+    )
     app_password = os.getenv("NEXO_APP_DATABASE_PASSWORD") or getpass.getpass(
         "Contraseña nueva para nexoeventos_app (no se mostrará): "
     )
-    if len(app_password) < 16:
-        raise SystemExit("La contraseña de aplicación debe tener al menos 16 caracteres.")
+    if len(migration_password) < 20 or len(app_password) < 20:
+        raise SystemExit("Las contraseñas de migración y aplicación deben tener al menos 20 caracteres.")
+    if migration_password == app_password:
+        raise SystemExit("Las identidades de migración y aplicación deben usar contraseñas distintas.")
 
     with psycopg.connect(url) as connection:
         with connection.cursor() as cursor:
-            database, migration_user = cursor.execute(
+            database, administrative_user = cursor.execute(
                 "SELECT current_database(), current_user"
             ).fetchone()
             if database != args.database_name:
                 raise SystemExit(f"Base rechazada: {database}; se esperaba {args.database_name}.")
+            if administrative_user in {"nexoeventos_app", "nexoeventos_migrator"}:
+                raise SystemExit("La preparación de roles requiere la identidad administrativa de RDS.")
 
-            for role, login in (("nexoeventos_owner", False), ("nexoeventos_app", True)):
+            for role, login in (
+                ("nexoeventos_owner", False),
+                ("nexoeventos_migrator", True),
+                ("nexoeventos_app", True),
+            ):
                 exists = cursor.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (role,)).fetchone()
                 if not exists:
                     cursor.execute(
@@ -45,11 +56,16 @@ def main() -> None:
             cursor.execute(
                 sql.SQL(
                     "ALTER ROLE {} WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION PASSWORD {}"
+                ).format(sql.Identifier("nexoeventos_migrator"), sql.Literal(migration_password))
+            )
+            cursor.execute(
+                sql.SQL(
+                    "ALTER ROLE {} WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION PASSWORD {}"
                 ).format(sql.Identifier("nexoeventos_app"), sql.Literal(app_password))
             )
             cursor.execute(
                 sql.SQL("GRANT {} TO {}").format(
-                    sql.Identifier("nexoeventos_owner"), sql.Identifier(migration_user)
+                    sql.Identifier("nexoeventos_owner"), sql.Identifier("nexoeventos_migrator")
                 )
             )
             cursor.execute("ALTER SCHEMA public OWNER TO nexoeventos_owner")
@@ -59,7 +75,13 @@ def main() -> None:
                 sql.SQL("GRANT CONNECT ON DATABASE {} TO nexoeventos_app").format(sql.Identifier(database))
             )
 
-    print("Roles de migración/aplicación preparados; no se mostró ni guardó la contraseña.")
+            cursor.execute(
+                sql.SQL("GRANT CONNECT ON DATABASE {} TO nexoeventos_migrator").format(
+                    sql.Identifier(database)
+                )
+            )
+
+    print("Roles owner/migrator/app preparados; no se mostró ninguna contraseña.")
 
 
 if __name__ == "__main__":

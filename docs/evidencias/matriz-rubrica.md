@@ -8,12 +8,12 @@ No se acepta como evidencia una pantalla de configuración sin resultado. Las ca
 | EV02 | Red base | VPC `10.20.0.0/16` | CIDR, DNS y etiquetas en recurso real | Captura VPC + salida sanitizada | **Pendiente cloud** |
 | EV03 | Segmentación | Subred pública, dos DB privadas, tablas de ruta, IGW | Ruta pública solo donde corresponde; datos sin ruta Internet | Capturas y plan/aplicación | **Pendiente cloud** |
 | EV04 | Seguridad | SG web y DB | 80/443 público, SSH `/32` opcional, 5432 solo SG web | Reglas reales + prueba de puerto | **Pendiente cloud** |
-| EV05 | Cómputo y aplicación | EC2, Nginx, systemd | Servicio persistente sin reload; FastAPI solo loopback | estado del servicio, `curl` y captura | **Configuración local disponible; pendiente cloud** |
+| EV05 | Cómputo y aplicación | EC2 AL2023, Nginx, systemd | Instalación reproducible; servicio sin reload; FastAPI solo loopback | versiones, estado del servicio, `curl` y captura | **Instalador/configuración local disponible; ejecución AL2023 pendiente** |
 | EV06 | Datos | RDS PostgreSQL privado | Conexión desde app, no desde Internet; persistencia | endpoint RDS oculto + prueba reinicio | **Restauración local disponible; pendiente RDS** |
-| EV07 | Respaldo | S3 privado + RDS backup | Carga, versionado y restauración aislada | objeto sin contenido sensible + informe restore | **Restore local disponible; pendiente S3/RDS** |
+| EV07 | Respaldo | S3 privado + RDS backup/snapshot final + copia externa | Carga, versión, paquete cifrado y restauración aislada | checksums/metadata sin contenido sensible + informe restore | **Restore local disponible; scripts preparados; pendiente S3/RDS/copia externa** |
 | EV08 | Observabilidad | CloudWatch Logs y alarma CPU | Logs sanitizados, retención y estado de alarma | captura grupos/alarma | **Configuración Terraform; pendiente cloud** |
-| EV09 | IaC | Terraform AWS | `fmt`, `validate`, plan revisado y post-apply sin cambios | resumen sanitizado; binario solo en `work/` | **fmt/validate y plan autenticado disponibles: 30/0/0; post-apply pendiente** |
-| EV10 | Flujo público seguro | HTTPS + aplicación | iniciar sesión → reservar → ver QR → validar una vez | URL real y capturas sin token reutilizable | **Flujo local probado; dominio/certificado/cloud pendientes** |
+| EV09 | IaC | Terraform AWS | identidad por cuenta, estado separado, `fmt`, `validate`, plan revisado y post-apply sin cambios | resumen sanitizado; binario solo en `work/` | **fmt/validate actuales; 30/0/0 histórico; nuevo plan bloqueado por `voc-cancel-cred`, archivo incompleto eliminado** |
+| EV10 | Flujo público seguro | DuckDNS + Let's Encrypt + aplicación | iniciar sesión → reservar → ver QR → validar una vez | URL real y capturas sin token reutilizable | **Flujo local probado; FQDN/certificado/cloud pendientes** |
 
 ## Cifras que no son mediciones
 

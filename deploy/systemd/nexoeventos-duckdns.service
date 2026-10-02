@@ -1,0 +1,20 @@
+[Unit]
+Description=Update NexoEventos DuckDNS record
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/nexoeventos/duckdns.env
+ExecStart=/usr/local/sbin/nexoeventos-duckdns-update
+User=root
+Group=root
+UMask=0077
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectHome=true
+ProtectSystem=strict
+ProtectProc=invisible
+
+[Install]
+WantedBy=multi-user.target

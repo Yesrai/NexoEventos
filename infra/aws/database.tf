@@ -22,7 +22,8 @@ resource "aws_db_instance" "postgres" {
   backup_retention_period      = var.backup_retention_days
   copy_tags_to_snapshot        = true
   deletion_protection          = false
-  skip_final_snapshot          = true
+  skip_final_snapshot          = false
+  final_snapshot_identifier    = var.final_snapshot_identifier
   apply_immediately            = false
   auto_minor_version_upgrade   = true
   monitoring_interval          = 0

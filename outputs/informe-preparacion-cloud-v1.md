@@ -1,119 +1,114 @@
-# Informe de preparación cloud V1 — NexoEventos
+# Informe actualizado de preparación cloud V1 — NexoEventos
 
-Fecha de actualización: 2 de octubre de 2026. Se inició una sesión autorizada de AWS Academy únicamente para lectura y planificación. No se creó, modificó, detuvo ni eliminó ningún recurso cloud; no se ejecutó `terraform apply` ni `destroy`.
+Fecha: 2 de octubre de 2026. Base revisada: commit `25a12c1`. No se ejecutó `terraform apply` ni `destroy` y no se creó, modificó, detuvo o eliminó ningún recurso cloud durante esta actualización.
 
-## Resultado ejecutivo
+## Ficha ejecutiva
 
-El repositorio estaba limpio en `4971e5d`, rama `main`, sin remoto. El Learner Lab inició correctamente, se configuró un perfil CLI temporal fuera del repositorio y se comprobó una identidad de rol asumido sin registrar cuenta ni ARN en este informe. El inventario no encontró recursos de NexoEventos. Terraform produjo un plan válido de **30 altas, 0 cambios y 0 eliminaciones**; el binario queda solo en `work/`, ignorado y con modo `0600`.
+| Tema | Resultado actual |
+|---|---|
+| Arquitectura | una EC2 `t3.small` AL2023 con Nginx/React/FastAPI; RDS PostgreSQL `db.t3.micro` privado Single-AZ; S3 privado; CloudWatch; sin NAT/ALB/Multi-AZ |
+| Terraform | `fmt` y `validate` actuales correctos; plan autenticado 30/0/0 pertenece a `25a12c1` y quedó invalidado; nuevo intento bloqueado por credenciales Academy canceladas y archivo incompleto eliminado |
+| SO e instalación | instalador AL2023 con DNF, Python 3.11 aislado, Node 24.21.0 verificado, dependencias/proveedor fijados; ejecución sobre EC2 real pendiente |
+| Secretos | carga interactiva sin eco, archivos root-only, proceso sin privilegios; maestro RDS no se guarda; permiso de lectura del secreto se probará con rol real |
+| DNS/TLS | DuckDNS + Let's Encrypt elegidos; `nexoeventos-demo.duckdns.org` no resolvía, pero la disponibilidad solo se confirma al reclamarlo; HTTPS no operativo |
+| Costo hasta 26 nov | subtotal previsto USD 10.267; margen USD 3.000; techo USD 13.267, suponiendo 37 h activas y persistencia desde 5 oct 09:00 |
+| Recuperación | restore local, snapshot final, backup portable cifrado y procedimiento entre cuentas preparados; pruebas cloud/copia externa/migración real pendientes |
 
-La aplicación no está desplegada. La siguiente acción cloud requiere aprobar expresamente este plan, el costo y el mecanismo de secretos.
+Único dato de dominio que debe aportar la usuaria: **el FQDN que DuckDNS confirme como agregado a su cuenta** (preferido `nexoeventos-demo.duckdns.org`). No debe aportar el token; lo introducirá personalmente en el servidor mediante prompt sin eco.
 
-## AWS Academy comprobado
+## Arquitectura desplegable
 
-| Comprobación | Resultado | Evidencia | Limitación |
-|---|---|---|---|
-| Laboratorio | Learner Lab 184558; sesión de 4 h iniciada y terminada normalmente | Temporizador `04:00`, “Lab environment ready” y luego `Lab terminated` | No se verificó fecha de expiración global del curso |
-| Presupuesto | `Used $0.1 of $50` | Panel de Vocareum | USD 50 es asignado; USD 0.10 es uso mostrado. Remanente aritmético USD 49.90, no saldo independiente; retraso 8–12 h |
-| Regiones | `us-east-1` y `us-west-2` | Instrucciones vigentes, actualización 2025-06-24 | Listado no prueba permisos de creación |
-| Identidad/CLI | Rol asumido válido; perfil `nexoeventos-lab`, archivos `0600` | `sts get-caller-identity` sanitizado | Credenciales temporales; caducan y no están en Git |
-| EC2 | On-Demand; tamaños nano–large; AMI disponible en región, no Marketplace; 9 instancias y 32 vCPU máximos por región | Instrucciones | No se intentó crear una instancia ni consultar cuota de creación |
-| EBS | gp2, gp3, sc1 o standard; máximo 100 GB; sin PIOPS | Instrucciones | Plan usa 20 GiB gp3, compatible documentalmente |
-| Auto Scaling / ELB | Servicios listados; tamaños nano–large en Auto Scaling; pueden asumir `LabRole` | Instrucciones | No incluidos en V1 y no se probó creación |
-| IAM | `LabRole` y `LabInstanceProfile` existen; el perfil contiene el rol | Lectura CLI | `iam:GetPolicy` fue denegado; no se pudo auditar permiso efectivo ni mínimo |
-| RDS PostgreSQL | Documentado nano–medium, gp2 hasta 100 GB y sin enhanced monitoring | Instrucciones revisadas anteriormente y configuración actual | Plan usa `db.t3.micro`, 20 GiB gp2, monitoring 0; creación y cuota no probadas |
-| S3 / CloudWatch / Secrets | Listado e inventario de lectura exitosos | CLI | Crear recursos y leer secretos no se probaron; listar no demuestra esos permisos |
-| Precios API | `pricing:GetProducts` denegado | CLI | Se usaron listas públicas oficiales, no se intentó ampliar privilegios |
-| Persistencia de sesión | Recursos y datos se conservan; EC2 se detiene al terminar y vuelve a iniciarse en una nueva sesión | Instrucciones | RDS, EBS, S3, logs y secretos pueden seguir cobrando |
+- VPC `10.20.0.0/16`; pública `10.20.1.0/24`; datos privadas `10.20.21.0/24` y `10.20.22.0/24` en dos AZ.
+- EC2 Amazon Linux 2023 `x86_64`, `t3.small`, EBS gp3 20 GiB cifrado, IMDSv2, IPv4 dinámica y perfil IAM definido por entorno.
+- Nginx sirve `frontend/dist`; FastAPI/Uvicorn escucha en loopback y corre como usuario `nexoeventos`, sin shell/sudo.
+- RDS PostgreSQL `db.t3.micro`, Single-AZ, gp2 20 GiB cifrado, no público, backup 7 días y snapshot final obligatorio.
+- S3 bloqueado al público, SSE-S3, versionado/lifecycle; dos log groups de 7 días y alarma CPU.
+- Sin NAT Gateway, balanceador, Auto Scaling, réplica ni Multi-AZ para preservar crédito.
 
-## Inventario de solo lectura
+El SG de RDS acepta 5432 exclusivamente desde el SG de EC2. 443 es público; 80 queda para redirección/ACME. SSH está cerrado por defecto y solo puede abrirse con `/32` local explícito.
 
-No existe ningún recurso con etiqueta/prefijo NexoEventos en las dos regiones permitidas.
+## Amazon Linux 2023 y reproducibilidad
 
-| Recurso | us-east-1 | us-west-2 | Posible consumo actual |
-|---|---:|---:|---|
-| EC2 | 0 | 0 | Ninguno |
-| EBS volúmenes / snapshots propios | 0 / 0 | 0 / 0 | Ninguno |
-| VPC / subredes | 1 / 6 | 1 / 4 | Predeterminadas; sin costo directo |
-| Elastic IP / NAT Gateway | 0 / 0 | 0 / 0 | Ninguno |
-| ELB clásico / ELBv2 / Auto Scaling | 0 / 0 / 0 | 0 / 0 / 0 | Ninguno |
-| RDS / snapshots manuales | 0 / 0 | 0 / 0 | Ninguno |
-| S3 | 0 global | — | Ninguno |
-| CloudWatch Logs | 3 | 0 | 6,187 bytes; sin retención, ajenos a NexoEventos |
-| Alarmas CloudWatch | 0 | 0 | Ninguno |
-| Secrets Manager | 0 | 0 | Ninguno |
+Se eliminó cualquier ambigüedad Ubuntu. El instalador comprueba `ID=amzn` y `VERSION_ID=2023`, usa DNF e instala Nginx, Python 3.11, cliente PostgreSQL y AWS CLI v2. No repunta `/usr/bin/python3`. Node 24.21.0 se instala desde el archivo oficial con SHA-256 fijado. Backend usa `requirements-production.txt`; frontend usa versiones exactas y lock; Terraform fija AWS provider 6.67.0.
 
-Los tres grupos de logs son la única fuente existente que puede seguir acumulando almacenamiento si otro servicio escribe. No se inspeccionó su contenido ni se modificó retención.
+El script instala archivos y unidades pero no inicia FastAPI hasta que existan secretos/DNS. La compatibilidad observada localmente incluye sintaxis, compilación y tests. La prueba definitiva de nombres de paquetes, systemd, SELinux/contextos y servicio en la AMI real solo puede ejecutarse después de un `apply` aprobado.
 
-## Plan Terraform autenticado
+## Terraform por cuenta
 
-`fmt` y `validate` pasaron. `terraform init` intentó consultar el registro y agotó el tiempo de red, pero el proveedor ya estaba bloqueado/cacheado y tanto `validate` como `plan` se completaron con ese proveedor. Resultado: **30 add, 0 change, 0 destroy**.
+`expected_account_id`, región, entorno, tamaños, perfil IAM y snapshot se declaran por entorno en tfvars ignorados. `scripts/terraform-account.sh` consulta STS, compara sin imprimir el ID y separa:
 
-| Tipo | Cantidad |
+- `work/terraform/<entorno>` — caché/directorio de trabajo;
+- `work/terraform-state/<entorno>/terraform.tfstate` — estado independiente;
+- `work/terraform-plans/<entorno>.tfplan` — plan protegido.
+
+No se reutiliza el estado de Academy en otra cuenta. El destino debe aportar su propio perfil/rol: `LabRole` y `LabInstanceProfile` no se asumen. También se vuelven a verificar SCP/IAM, cuotas, regiones, tipos disponibles, costos y financiación. No se asumen créditos nuevos.
+
+## Secretos y base de datos
+
+`bootstrap-rds-secrets.sh` obtiene endpoint/ARN mediante lectura AWS, prueba `GetSecretValue` y usa la credencial maestra solo en memoria para crear:
+
+- `nexoeventos_owner`: `NOLOGIN`, propietario;
+- `nexoeventos_migrator`: login exclusivo Alembic, miembro del owner;
+- `nexoeventos_app`: login limitado para FastAPI.
+
+Las contraseñas migrator/app son distintas. `/etc/nexoeventos/migration.env` y `backend.env` son `root:root 0600`; solo backend.env lo consume systemd antes de bajar privilegios. QR/hash se cargan sin eco y se respaldan separadas. Si el rol no lee el secreto maestro, el script lo informa, no eleva permisos y ofrece entrada manual sin eco. El archivo de aplicación no sustituye ese permiso.
+
+## DuckDNS, HTTPS y ACM
+
+La consulta DNS devolvió NXDOMAIN para los tres candidatos (`nexoeventos-demo`, `nexoeventos-demo-2026`, `nexoeventos-upeu-demo`), evidencia insuficiente para asegurar disponibilidad. La usuaria debe iniciar sesión en DuckDNS, reclamar el candidato y comunicar solo el FQDN.
+
+El token queda en `/etc/nexoeventos/duckdns.env` root-only; un timer lo usa por entrada estándar para actualizar la IPv4 cada cinco minutos. Certbot 5.8.0 ejecuta ACME/Let's Encrypt y renueva dos veces al día mediante timer. No se emitió certificado.
+
+Corrección técnica: ACM ya permite certificados públicos exportables y puede desplegarse en EC2. Desde febrero de 2026, el certificado exportable público predeterminado usa 198 días y cobra por nombre. Para esta V1 se prefiere Let's Encrypt gratuito; no se afirma que ACM requiera obligatoriamente ALB/CloudFront.
+
+## Presupuesto corregido
+
+Treinta días exactos son 720 horas:
+
+| Componente | 720 h/30 días |
 |---|---:|
-| VPC / Internet Gateway | 1 / 1 |
-| Subredes | 3 |
-| Tablas / asociaciones de ruta | 2 / 3 |
-| Security groups | 2 |
-| Reglas ingress / egress | 3 / 4 |
-| EC2 `t3.small` | 1 |
-| RDS PostgreSQL `db.t3.micro` | 1 |
-| DB subnet group | 1 |
-| S3 + acceso público, cifrado, versión y lifecycle | 5 recursos |
-| CloudWatch log groups / alarma | 2 / 1 |
+| EC2 `t3.small` | USD 14.976 |
+| RDS `db.t3.micro` | USD 12.960 |
+| IPv4 pública | USD 3.600 |
+| EBS 20 GiB | USD 1.600 |
+| RDS storage 20 GiB | USD 2.300 |
+| secreto + S3 + logs almacenados + alarma | USD 0.529 |
+| ingestión de logs supuesta | USD 0.500 |
+| **total sin margen** | **USD 36.465** |
 
-Configuración exacta: VPC `10.20.0.0/16`; pública `10.20.1.0/24`; datos `10.20.21.0/24` y `10.20.22.0/24`; EC2 Amazon Linux 2023 con 20 GiB gp3 cifrado, IMDSv2 y `LabInstanceProfile`; RDS privado Single-AZ, 20 GiB gp2 cifrado, backup 7 días, sin enhanced monitoring; S3 privado/versionado/SSE-S3; logs 7 días y alarma CPU. No hay NAT, ALB, Auto Scaling, Multi-AZ ni réplica.
+Forecast desde 5-oct-2026 09:00 hasta 26-nov-2026 23:59: 1,262.983 horas persistentes y 37 horas activas. Ejecución USD 1.621; almacenamiento/servicios USD 7.769; variable base USD 0.877; subtotal USD 10.267; margen USD 3.000; **techo USD 13.267**. No es costo observado: no existe fecha real de creación sin `apply`.
 
-Un plan exitoso confirma sintaxis, lecturas y composición; **no confirma permisos de creación, cuotas ni que Secrets Manager funcionará al aplicar**.
+El presupuesto Academy indicado es USD 50; el último uso observado fue USD 0.10 y puede retrasarse. Se revisa manualmente a USD 30 y USD 40 para decidir antes de agotarlo, sin presentarlo como límite automático.
 
-## Secretos y archivos sensibles
+## RDS, snapshot y recuperación
 
-- No existe `user_data`; ninguna contraseña ni clave QR entra en la instancia desde Terraform.
-- RDS administraría la contraseña maestra en Secrets Manager. El valor no se declara en variables ni código.
-- El plan marca `aws_db_instance.postgres` como recurso con metadata sensible. El binario puede contener cuenta, nombres derivados, endpoint previsto y ARNs; por eso queda en `work/`, modo `0600`, sin adjuntarse como evidencia.
-- El estado posterior contendrá IDs, endpoints y metadata/ARN del secreto. No debe versionarse ni compartirse.
-- La aplicación no debe ejecutar con la cuenta maestra. Tras crear RDS se debe crear `nexoeventos_app` con permisos limitados y mantener separado el rol de migraciones.
-- Opción preferida pendiente de verificar: secreto de aplicación separado, leído por EC2. `iam:GetPolicy` está denegado, así que no se puede afirmar acceso mínimo de `LabInstanceProfile`.
-- Alternativa V1 sin poner valores en Terraform: carga interactiva sin eco a `/etc/nexoeventos/backend.env`, `root:root` y `0600`. Las claves de sesión, derivación y QR se respaldan separadas del dump.
+Consultar RDS o repetir la orden de detención no reinicia los siete días. Antes del límite hay que arrancar, esperar `available`, comprobar, detener y esperar `stopped`; se registran ambas transiciones. No se añadieron automatizaciones porque sus permisos no están comprobados.
 
-## Costo del plan
+Terraform ahora exige snapshot final y propone `nexoeventos-academy-final-20261126`; debe verificarse unicidad antes de una eventual eliminación. Escenario conservador después de eliminar RDS: 20 GiB × USD 0.095 = USD 1.90/mes. No se ejecutó `destroy`.
 
-Precios públicos oficiales de `us-east-1`: EC2 `t3.small` USD 0.0208/h; RDS `db.t3.micro` USD 0.018/h; IPv4 USD 0.005/h; EBS gp3 USD 0.08/GiB-mes; RDS gp2 USD 0.115/GiB-mes.
+`test-restore-local.sh` verifica restauración aislada y descifrado QR. `create-portable-backup.sh` produce un dump+fuentes+checksums cifrados; todavía debe copiarse a un destino protegido fuera de la cuenta. Las claves QR/hash y la contraseña del paquete viajan por canales separados.
 
-| Categoría | 8 h | 730 h / 30 días |
-|---|---:|---:|
-| Tiempo: EC2 + RDS + IPv4 | USD 0.3504 | USD 31.974 |
-| Almacenamiento/servicios persistentes | USD 0.0485 prorrateado | USD 4.429 |
-| Consumo supuesto: 1 GB de logs | USD 0.0055 prorrateado | USD 0.500 |
-| **Total** | **USD 0.4044** | **USD 36.903** |
+La migración entre cuentas queda pendiente. El procedimiento incluye destino aislado, restore de prueba, roles/reservas/QR, pausa final de escrituras, backup final, restore, DNS/HTTPS y rollback al origen sin escrituras simultáneas.
 
-No incluye créditos CPU T3, solicitudes S3, transferencia facturable, exceso de backups ni impuestos. Al detener EC2 sigue EBS; al detener RDS siguen almacenamiento/backups y AWS lo reinicia tras siete días; S3, logs, alarma y secretos persisten. La propuesta de 37 horas activas y 52 días de persistencia hasta el 26 de noviembre estima **USD 10.164**, siempre que se cumpla el calendario y no haya olvidos.
+## AWS Academy observado anteriormente
 
-## HTTPS
+Learner Lab 184558 documentó regiones `us-east-1`/`us-west-2`, sesiones de 4 h, tamaños EC2 nano–large, RDS nano–medium, EBS/RDS hasta 100 GiB y roles precreados. El inventario no encontró recursos NexoEventos; había tres log groups ajenos con solo 6,187 bytes. Listar servicios no demostró creación. `iam:GetPolicy` y `pricing:GetProducts` fueron denegados. Los permisos de creación, cuota y lectura del secreto siguen sin probarse.
 
-No hay dominio configurado: Nginx conserva `${DOMAIN}` y no existe certificado. Opciones sin comprar nada automáticamente:
+## Verificaciones ejecutadas en esta actualización
 
-1. Subdominio que ya controle la usuaria + registro DNS A + Let's Encrypt. Es la opción más estable; exige control DNS y actualizar el registro cuando cambie la IPv4.
-2. Nombre dinámico gratuito gestionado por un tercero. Requiere cuenta/token externo, que sería otro secreto operativo.
-3. Dominio basado en IP como `sslip.io` para demostración. No requiere compra, pero depende de un tercero y cambia al cambiar la IPv4.
+- Node efectivo `v24.21.0`; frontend: 1 test aprobado y build Vite correcto (44 módulos).
+- Backend/PostgreSQL: 16 tests aprobados; permanece una advertencia no bloqueante de compatibilidad futura Starlette/httpx.
+- Restauración aislada: 3 eventos, 1 reserva y 1 entrada; token cifrado recuperable con la clave separada.
+- Terraform AWS/Azure/GCP: `fmt` y `validate` satisfactorios; plan AWS actual bloqueado por sesión cancelada.
+- Scripts shell: análisis de sintaxis correcto; Python: compilación correcta. `shellcheck` no está instalado y no se añadió.
+- Escaneo básico: ninguna firma de clave AWS/PEM en archivos versionados; `.env`, estados y planes continúan ignorados.
 
-Un certificado autofirmado no produce HTTPS confiable para EV10. ACM no se conecta directamente a Nginx/EC2 sin otro servicio como ALB o CloudFront, que no forma parte de esta V1. No se registró dominio ni se emitió certificado.
+## Bloqueos y decisiones restantes
 
-## Calendario y decisiones pendientes
+1. Reclamar en DuckDNS y aportar únicamente el FQDN aceptado.
+2. En Chrome, abrir **Iniciar el Laboratorio de aprendizaje de AWS Academy**, pulsar `Start Lab`, esperar el indicador verde y obtener credenciales nuevas. Las actuales permiten STS pero niegan las lecturas del plan con `voc-cancel-cred`.
+3. Revisar ese plan y aprobar costo/`apply` explícitamente.
+4. Tras desplegar, comprobar perfil de instancia → secreto maestro, instalación AL2023 real, DNS y HTTPS.
+5. Elegir el destino protegido fuera de la cuenta para el backup cifrado.
 
-El calendario detallado propone sesiones el 5, 8, 14, 20 y 26 de octubre; 1, 7, 13, 19, 24 y 26 de noviembre. Cada sesión empieza revisando presupuesto/inventario y termina deteniendo cómputo. El intervalo máximo de seis días evita olvidar RDS hasta su reinicio automático de siete días.
-
-Decisiones mínimas antes de `apply`:
-
-1. Aprobar los 30 recursos y el techo de costo.
-2. Elegir dominio/subdominio y método TLS.
-3. Elegir secreto de aplicación separado o aceptar temporalmente el archivo root-only; no usar la cuenta maestra.
-4. Decidir si se mantiene `skip_final_snapshot = true`; no ejecutar `destroy` como estrategia de ahorro sin una evidencia de backup/restauración.
-5. Aceptar que los permisos de creación y cuota solo se conocerán al desplegar; no intentar ampliar privilegios si falla.
-
-## Evidencias
-
-- EV09 actualizado con `fmt`, `validate` y plan autenticado 30/0/0.
-- EV01 permanece local; EV02–EV08 y EV10 siguen pendientes de recursos reales y pruebas cloud.
-- No se capturaron credenciales, tokens, cuenta completa ni plan binario.
-
-NexoEventos sigue siendo una implementación académica local con infraestructura planificada; no está desplegado ni listo para producción.
+NexoEventos continúa como implementación académica local preparada para despliegue; no está desplegado ni listo para producción.
