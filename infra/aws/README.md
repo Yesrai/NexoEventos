@@ -20,7 +20,7 @@ No se debe reutilizar el estado Academy para otra cuenta. Una cuenta normal nece
 
 ## Estado de comprobación
 
-El plan autenticado histórico del commit `25a12c1` fue 30 altas, 0 cambios y 0 eliminaciones. Después se añadieron controles de cuenta, snapshot final y portabilidad; por ello ese binario ya no debe aplicarse. El 2 de octubre se inició otra sesión de cuatro horas y la consola abrió en `us-east-1`, pero STS rechazó el bloque CLI recién emitido con `InvalidClientTokenId`. El proveedor falló antes de calcular cambios y no creó plan. `fmt` y `validate` actuales sí pasaron; hace falta una credencial Academy que supere STS para regenerarlo.
+El plan autenticado histórico del commit `25a12c1` no se reutilizó. El 2 de octubre se recuperó el token completo de la misma sesión —la vista accesible lo había truncado— y se creó un entorno AWS aislado fuera del repositorio, sin variables heredadas ni cambios en perfiles ajenos. STS validó la identidad y el plan vigente resultó en **30 altas, 0 cambios y 0 eliminaciones**, sin advertencias. El binario actual está protegido con modo `0600` en `work/terraform-plans/academy.tfplan`; no se ejecutó `apply` ni `destroy`.
 
 La vía de administración prevista es Systems Manager Session Manager mediante `LabInstanceProfile`/`LabRole`, tal como indican las instrucciones del Learner Lab. La EC2 tiene salida HTTPS y Amazon Linux 2023 incluye el agente SSM en las AMI oficiales. SSH permanece cerrado cuando `admin_cidr = ""`. La existencia del perfil está documentada por Academy, pero una sesión SSM real no puede probarse antes de crear la instancia; no se interpreta como permiso operativo confirmado.
 

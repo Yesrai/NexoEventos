@@ -7,7 +7,7 @@ Fecha: 2 de octubre de 2026. Base revisada: commit `4ad752b`. No se ejecutó `te
 | Tema | Resultado actual |
 |---|---|
 | Arquitectura | una EC2 `t3.small` AL2023 con Nginx/React/FastAPI; RDS PostgreSQL `db.t3.micro` privado Single-AZ; S3 privado; CloudWatch; sin NAT/ALB/Multi-AZ |
-| Terraform | `fmt` y `validate` correctos; plan 30/0/0 de `25a12c1` histórico y no reutilizado; el intento nuevo se bloqueó en STS con `InvalidClientTokenId` y no produjo plan |
+| Terraform | `fmt`, `validate` y STS correctos; plan vigente 30 altas, 0 cambios y 0 eliminaciones, sin advertencias; binario protegido fuera de Git |
 | SO e instalación | instalador AL2023 con DNF, Python 3.11 aislado, Node 24.21.0 verificado, dependencias/proveedor fijados; ejecución sobre EC2 real pendiente |
 | Secretos | carga interactiva sin eco, archivos root-only, proceso sin privilegios; maestro RDS no se guarda; permiso de lectura del secreto se probará con rol real |
 | DNS/TLS | `nexoeventos-demo.duckdns.org` confirmado por la usuaria; DNS hacia EC2, certificado y HTTPS todavía no operativos |
@@ -99,15 +99,15 @@ Learner Lab 184558 documentó regiones `us-east-1`/`us-west-2`, sesiones de 4 h,
 - Node efectivo `v24.21.0`; frontend: 1 test aprobado y build Vite correcto (44 módulos).
 - Backend/PostgreSQL: 16 tests aprobados; permanece una advertencia no bloqueante de compatibilidad futura Starlette/httpx.
 - Restauración aislada: 3 eventos, 1 reserva y 1 entrada; token cifrado recuperable con la clave separada.
-- Terraform AWS: `fmt` y `validate` satisfactorios. Se inició una sesión Academy nueva y la consola web abrió en `us-east-1`; STS rechazó las credenciales CLI recién emitidas con `InvalidClientTokenId`, así que el proveedor no calculó cambios ni creó un plan.
+- Terraform AWS: `fmt` y `validate` satisfactorios. No existían variables `AWS_*` ni archivos alternativos sustituyendo el perfil. El fallo `InvalidClientTokenId` se debía a un session token truncado por la representación accesible. Con el bloque completo de una sola sesión en archivos temporales externos al repositorio (`0700`/`0600`), STS funcionó y se generó el plan vigente 30/0/0 sin advertencias.
 - Scripts shell: análisis de sintaxis correcto; Python: compilación correcta. `shellcheck` no está instalado y no se añadió.
 - Escaneo básico: ninguna firma de clave AWS/PEM en archivos versionados; `.env`, estados y planes continúan ignorados.
 
 ## Bloqueos y decisiones restantes
 
 1. Regenerar personalmente el token DuckDNS antes de instalarlo, sin compartirlo por chat.
-2. Obtener de Academy un bloque CLI que supere `aws sts get-caller-identity`; el Lab y la consola web están activos, pero la credencial emitida actualmente es inválida.
-3. Generar el plan nuevo, revisar recursos/costo y aprobar `apply` explícitamente.
+2. Revisar el plan vigente y los permisos que solo pueden confirmarse al crear recursos, especialmente Session Manager y lectura del secreto maestro.
+3. Aprobar `apply` explícitamente si se acepta el plan; aún no está autorizado.
 4. Tras desplegar, comprobar perfil de instancia → secreto maestro, instalación AL2023 real, DNS y HTTPS.
 5. Elegir el destino protegido fuera de la cuenta para el backup cifrado.
 
