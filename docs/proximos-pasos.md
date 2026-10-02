@@ -1,8 +1,8 @@
 # Próximos pasos
 
-1. Elegir un dominio o subdominio y el método de certificado TLS; hasta entonces HTTPS está preparado pero no operativo.
-2. La usuaria completa selección de cuenta/MFA de Azure; verificar por lectura saldo, vencimiento, políticas y cuotas.
-3. Con autorización explícita, iniciar Learner Lab y hacer inventario AWS de solo lectura; confirmar `LabInstanceProfile` y acceso mínimo a secretos.
-4. Ejecutar `terraform plan` autenticado y guardar el resultado sanitizado como EV09. No ejecutar `apply`.
-5. Comparar el plan con la estimación de USD 36.903/mes y pedir aprobación explícita del despliegue.
-6. Solo tras esa aprobación, desplegar por etapas, reunir EV02–EV10 y medir rendimiento, RTO y RPO.
+1. Elegir dominio/subdominio y método de certificado TLS; hasta entonces HTTPS está preparado pero no operativo.
+2. Decidir el mecanismo de secretos de aplicación. El acceso mínimo de `LabInstanceProfile` a Secrets Manager no pudo verificarse porque Learner Lab deniega la lectura de políticas.
+3. Revisar y aprobar explícitamente el plan autenticado de 30 altas y su estimación de USD 0.404 por 8 h / USD 36.903 por 730 h. No ejecutar `apply` sin esa aprobación.
+4. Si se aprueba, desplegar por etapas y comprobar cada permiso real; un plan correcto no prueba autorización de creación ni cuota.
+5. Reunir EV02–EV10, emitir/probar HTTPS y medir rendimiento, RTO y RPO. No marcar evidencia cloud como completa antes de observar el recurso y la prueba.
+6. Completar aparte la selección de cuenta/MFA de Azure para verificar saldo, vencimiento, políticas y cuotas.

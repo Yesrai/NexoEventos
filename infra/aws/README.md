@@ -19,8 +19,10 @@ terraform fmt -check -recursive infra/aws
 terraform -chdir=infra/aws validate
 ```
 
-La validación local es satisfactoria. `terraform plan` está pendiente porque la CLI no tiene credenciales autorizadas. Un `validate` correcto no demuestra permisos para crear recursos ni disponibilidad de cuotas.
+`terraform fmt`, `validate` y un `plan` autenticado se ejecutaron satisfactoriamente el 2 de octubre de 2026 con el perfil temporal `nexoeventos-lab`. El plan propone **30 altas, 0 cambios y 0 eliminaciones**. El binario permanece solo en `work/aws-v1.tfplan`, ignorado y con modo `0600`; no es evidencia de que cada alta será autorizada al aplicar ni de que haya cuota disponible.
 
-Antes de planificar, copiar `terraform.tfvars.example` a un archivo local `.tfvars`, confirmar que `LabInstanceProfile` existe y revisar que Learner Lab esté activo. Guardar cualquier plan solo bajo `work/` o con extensión `.tfplan`; ambos están excluidos de Git.
+La lectura confirmó que `LabInstanceProfile` existe y contiene `LabRole`. Learner Lab denegó `iam:GetPolicy`, de modo que el contenido efectivo de sus políticas y el acceso al secreto permanecen sin verificar. Guardar cualquier plan solo bajo `work/` o con extensión `.tfplan`; ambos están excluidos de Git.
+
+No hay `user_data`. Terraform solicita a RDS administrar el secreto maestro, pero las credenciales limitadas de la aplicación y las claves de sesión/QR deben inyectarse después del despliegue sin pasar por variables, plan o estado. Hasta verificar Secrets Manager, la alternativa V1 es una carga interactiva sin eco a `/etc/nexoeventos/backend.env`, propiedad `root:root` y modo `0600`; nunca usar la cuenta maestra como cuenta de ejecución.
 
 No ejecutar `apply` ni `destroy` sin aprobación explícita posterior del plan y su costo.

@@ -2,7 +2,7 @@
 
 No se acepta como evidencia una pantalla de configuración sin resultado. Las capturas deben mostrar fecha/contexto, ocultar identificadores innecesarios y nunca incluir contraseñas, cookies, secretos, tokens QR completos ni datos personales. Las cifras del caso y metas se etiquetan como objetivos; solo una ejecución registrada es resultado medido.
 
-| ID | Sección / criterio | Recurso | Prueba exigida | Evidencia prevista | Estado al 2026-10-01 |
+| ID | Sección / criterio | Recurso | Prueba exigida | Evidencia prevista | Estado al 2026-10-02 |
 |---|---|---|---|---|---|
 | EV01 | Aplicación y control de acceso | React, FastAPI, PostgreSQL | Compilación, pruebas de roles, idempotencia y concurrencia | `EV01/README.md` + capturas locales | **Disponible local**; falta ejecución pública |
 | EV02 | Red base | VPC `10.20.0.0/16` | CIDR, DNS y etiquetas en recurso real | Captura VPC + salida sanitizada | **Pendiente cloud** |
@@ -12,7 +12,7 @@ No se acepta como evidencia una pantalla de configuración sin resultado. Las ca
 | EV06 | Datos | RDS PostgreSQL privado | Conexión desde app, no desde Internet; persistencia | endpoint RDS oculto + prueba reinicio | **Restauración local disponible; pendiente RDS** |
 | EV07 | Respaldo | S3 privado + RDS backup | Carga, versionado y restauración aislada | objeto sin contenido sensible + informe restore | **Restore local disponible; pendiente S3/RDS** |
 | EV08 | Observabilidad | CloudWatch Logs y alarma CPU | Logs sanitizados, retención y estado de alarma | captura grupos/alarma | **Configuración Terraform; pendiente cloud** |
-| EV09 | IaC | Terraform AWS | `fmt`, `validate`, plan revisado y post-apply sin cambios | comandos sanitizados y plan | **fmt/validate disponibles; plan pendiente de sesión** |
+| EV09 | IaC | Terraform AWS | `fmt`, `validate`, plan revisado y post-apply sin cambios | resumen sanitizado; binario solo en `work/` | **fmt/validate y plan autenticado disponibles: 30/0/0; post-apply pendiente** |
 | EV10 | Flujo público seguro | HTTPS + aplicación | iniciar sesión → reservar → ver QR → validar una vez | URL real y capturas sin token reutilizable | **Flujo local probado; dominio/certificado/cloud pendientes** |
 
 ## Cifras que no son mediciones
