@@ -1,0 +1,47 @@
+name: local-quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Backend tests
+        env:
+          PGPASSWORD: postgres
+        run: |
+          python -m pip install -r backend/requirements.txt
+          psql -h localhost -U postgres -d postgres -c "CREATE ROLE nexoeventos_owner NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT"
+          psql -h localhost -U postgres -d postgres -c "CREATE ROLE nexoeventos_app LOGIN PASSWORD 'ci-only' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT"
+          psql -h localhost -U postgres -d postgres -c "CREATE DATABASE nexoeventos_test OWNER nexoeventos_owner"
+          psql -h localhost -U postgres -d postgres -c "REVOKE ALL ON DATABASE nexoeventos_test FROM PUBLIC; GRANT CONNECT ON DATABASE nexoeventos_test TO nexoeventos_app"
+          cd backend
+          MIGRATION_DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:5432/nexoeventos_test" alembic upgrade head
+          DATABASE_URL="postgresql+psycopg://nexoeventos_app:ci-only@localhost:5432/nexoeventos_test" pytest
+      - name: Frontend build
+        run: |
+          cd frontend
+          npm ci
+          npm run build

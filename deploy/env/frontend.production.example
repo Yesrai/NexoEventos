@@ -1,0 +1,2 @@
+# Déjalo vacío para usar /api en el mismo origen HTTPS servido por Nginx.
+VITE_API_URL=
