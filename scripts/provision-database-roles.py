@@ -48,19 +48,19 @@ def main() -> None:
                 exists = cursor.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (role,)).fetchone()
                 if not exists:
                     cursor.execute(
-                        sql.SQL("CREATE ROLE {} {} NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION").format(
+                        sql.SQL("CREATE ROLE {} {} NOCREATEDB NOCREATEROLE NOREPLICATION").format(
                             sql.Identifier(role), sql.SQL("LOGIN" if login else "NOLOGIN")
                         )
                     )
 
             cursor.execute(
                 sql.SQL(
-                    "ALTER ROLE {} WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION PASSWORD {}"
+                    "ALTER ROLE {} WITH LOGIN NOCREATEDB NOCREATEROLE NOREPLICATION PASSWORD {}"
                 ).format(sql.Identifier("nexoeventos_migrator"), sql.Literal(migration_password))
             )
             cursor.execute(
                 sql.SQL(
-                    "ALTER ROLE {} WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION PASSWORD {}"
+                    "ALTER ROLE {} WITH LOGIN NOCREATEDB NOCREATEROLE NOREPLICATION PASSWORD {}"
                 ).format(sql.Identifier("nexoeventos_app"), sql.Literal(app_password))
             )
             cursor.execute(
