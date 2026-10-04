@@ -97,8 +97,31 @@ def test_events_reservations_and_tickets_persist_across_backend_restart() -> Non
         assert reservations[0]["id"] == reservation_id
         assert len(tickets) == 2
         assert all(ticket["qr_token"].startswith("nexo_") for ticket in tickets)
+        assert all(ticket["event_date"] == "2026-10-17" for ticket in tickets)
+        assert all(ticket["event_venue"] == "Centro Cultural de Lima" for ticket in tickets)
         assert client.get("/api/events/1").json()["available_capacity"] == 238
     restarted_app.state.engine.dispose()
+
+
+def test_duplicate_registration_uses_a_generic_message() -> None:
+    app = create_app(TEST_APP_URL)
+    with TestClient(app) as client:
+        register_client(client)
+        client.cookies.clear()
+        response = client.post(
+            "/api/auth/register",
+            headers={"Origin": "http://testserver"},
+            json={
+                "email": "cliente-a@example.com",
+                "display_name": "Otro nombre",
+                "password": CLIENT_PASSWORD,
+            },
+        )
+    app.state.engine.dispose()
+    assert response.status_code == 409
+    assert response.json() == {
+        "detail": "No se pudo completar el registro. Revisa los datos o intenta iniciar sesión."
+    }
 
 
 def test_two_concurrent_requests_for_last_seat_create_exactly_one_reservation() -> None:

@@ -84,6 +84,8 @@ class TicketView(BaseModel):
     reservation_id: UUID
     event_id: int
     event_name: str
+    event_date: DateValue
+    event_venue: str
     qr_token: str
     used_at: datetime | None
 

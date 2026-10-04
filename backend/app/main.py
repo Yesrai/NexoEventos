@@ -121,7 +121,10 @@ def create_app(database_url: str | None = None) -> FastAPI:
                 session.flush()
                 raw_token, csrf_token, _ = issue_session(session, user)
         except IntegrityError:
-            raise HTTPException(status_code=409, detail="El correo ya está registrado") from None
+            raise HTTPException(
+                status_code=409,
+                detail="No se pudo completar el registro. Revisa los datos o intenta iniciar sesión.",
+            ) from None
         auth_session = session.get(AuthSession, hashlib.sha256(raw_token.encode()).hexdigest())
         assert auth_session is not None
         set_session_cookies(response, raw_token, csrf_token)
@@ -222,18 +225,20 @@ def create_app(database_url: str | None = None) -> FastAPI:
 
     def owned_ticket(ticket_id: UUID, owner_id: UUID, session: Session) -> TicketView:
         row = session.execute(
-            select(Ticket, Event.name)
+            select(Ticket, Event)
             .join(Event, Event.id == Ticket.event_id)
             .where(Ticket.id == ticket_id, Ticket.owner_user_id == owner_id)
         ).one_or_none()
         if row is None:
             raise HTTPException(status_code=404, detail="Entrada no encontrada")
-        ticket, event_name = row
+        ticket, event = row
         return TicketView(
             id=ticket.id,
             reservation_id=ticket.reservation_id,
             event_id=ticket.event_id,
-            event_name=event_name,
+            event_name=event.name,
+            event_date=event.event_date,
+            event_venue=event.venue,
             qr_token=reveal_ticket_secret(ticket.token_ciphertext),
             used_at=ticket.used_at,
         )
