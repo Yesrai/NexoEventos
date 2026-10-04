@@ -27,6 +27,8 @@ install -d -o root -g root -m 0700 /etc/nexoeventos
 secret_json="$(mktemp /run/nexoeventos-rds-secret.XXXXXX)"
 cleanup() {
   unset MASTER_PASSWORD APP_PASSWORD MIGRATION_PASSWORD TICKET_KEY HASH_KEY DUCKDNS_TOKEN
+  unset DATABASE_URL MIGRATION_DATABASE_URL FRONTEND_ORIGINS DUCKDNS_DOMAIN
+  unset TICKET_ENCRYPTION_KEY SECURITY_HASH_KEY
   rm -f -- "$secret_json"
 }
 trap cleanup EXIT
@@ -54,7 +56,47 @@ else
   echo
 fi
 
-if [[ "${NEXO_GENERATE_APPLICATION_SECRETS:-NO}" == "YES" ]]; then
+protected_files=(
+  /etc/nexoeventos/backend.env
+  /etc/nexoeventos/migration.env
+  /etc/nexoeventos/duckdns.env
+)
+existing_files=0
+for protected_file in "${protected_files[@]}"; do
+  [[ -f "$protected_file" ]] && ((existing_files += 1))
+done
+
+if [[ "$existing_files" -gt 0 && "$existing_files" -lt "${#protected_files[@]}" ]]; then
+  echo "Hay un conjunto incompleto de archivos protegidos; se rechaza mezclar secretos." >&2
+  exit 1
+elif [[ "$existing_files" -eq "${#protected_files[@]}" ]]; then
+  for protected_file in "${protected_files[@]}"; do
+    if [[ "$(stat -c '%U:%G:%a' "$protected_file")" != "root:root:600" ]]; then
+      echo "Permisos o propietario inesperados en $protected_file." >&2
+      exit 1
+    fi
+  done
+  set -a
+  # Estos archivos fueron creados por este script, pertenecen a root y no son
+  # escribibles por otros usuarios.
+  source /etc/nexoeventos/backend.env
+  source /etc/nexoeventos/migration.env
+  source /etc/nexoeventos/duckdns.env
+  set +a
+  APP_PASSWORD="$(printf %s "$DATABASE_URL" | python3.11 -c \
+    'import sys, urllib.parse; print(urllib.parse.unquote(urllib.parse.urlsplit(sys.stdin.read()).password or ""), end="")')"
+  MIGRATION_PASSWORD="$(printf %s "$MIGRATION_DATABASE_URL" | python3.11 -c \
+    'import sys, urllib.parse; print(urllib.parse.unquote(urllib.parse.urlsplit(sys.stdin.read()).password or ""), end="")')"
+  TICKET_KEY="${TICKET_ENCRYPTION_KEY:-}"
+  HASH_KEY="${SECURITY_HASH_KEY:-}"
+  DUCKDNS_TOKEN="${DUCKDNS_TOKEN:-}"
+  if [[ "${FRONTEND_ORIGINS:-}" != "https://${DOMAIN}" || \
+        "${DUCKDNS_DOMAIN:-}" != "${DOMAIN%.duckdns.org}" ]]; then
+    echo "Los archivos existentes pertenecen a otro dominio; no se reutilizaron." >&2
+    exit 1
+  fi
+  echo "Se reutilizarán los secretos protegidos existentes; no se regeneraron."
+elif [[ "${NEXO_GENERATE_APPLICATION_SECRETS:-NO}" == "YES" ]]; then
   mapfile -t GENERATED_SECRETS < <(
     "$PROJECT_ROOT/backend/.venv/bin/python" - <<'PY'
 import secrets
@@ -82,8 +124,10 @@ else
   read -rsp "SECURITY_HASH_KEY independiente: " HASH_KEY
   echo
 fi
-read -rsp "Token DuckDNS (no se mostrará): " DUCKDNS_TOKEN
-echo
+if [[ "$existing_files" -eq 0 ]]; then
+  read -rsp "Token DuckDNS (no se mostrará): " DUCKDNS_TOKEN
+  echo
+fi
 
 if [[ ${#MIGRATION_PASSWORD} -lt 20 || ${#APP_PASSWORD} -lt 20 || \
       "$MIGRATION_PASSWORD" == "$APP_PASSWORD" || ! "$HASH_KEY" =~ ^[A-Za-z0-9_-]{43,}$ || \

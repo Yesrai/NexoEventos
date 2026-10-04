@@ -48,20 +48,58 @@ def main() -> None:
                 exists = cursor.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (role,)).fetchone()
                 if not exists:
                     cursor.execute(
-                        sql.SQL("CREATE ROLE {} {} NOCREATEDB NOCREATEROLE NOREPLICATION").format(
+                        # PostgreSQL defaults new roles to NOSUPERUSER, NOCREATEDB,
+                        # NOCREATEROLE, NOREPLICATION and NOBYPASSRLS.  Do not
+                        # spell those attributes out: an RDS administrative role
+                        # is intentionally unable to change some of them.
+                        sql.SQL("CREATE ROLE {} {}").format(
                             sql.Identifier(role), sql.SQL("LOGIN" if login else "NOLOGIN")
                         )
                     )
 
+            role_rows = cursor.execute(
+                """
+                SELECT rolname, rolcanlogin, rolsuper, rolcreatedb, rolcreaterole,
+                       rolreplication, rolbypassrls
+                  FROM pg_roles
+                 WHERE rolname = ANY(%s)
+                """,
+                (["nexoeventos_owner", "nexoeventos_migrator", "nexoeventos_app"],),
+            ).fetchall()
+            roles = {row[0]: row[1:] for row in role_rows}
+            expected_login = {
+                "nexoeventos_owner": False,
+                "nexoeventos_migrator": True,
+                "nexoeventos_app": True,
+            }
+            for role, should_login in expected_login.items():
+                attributes = roles.get(role)
+                if attributes is None:
+                    raise SystemExit(f"No se pudo preparar el rol requerido: {role}.")
+                (
+                    can_login,
+                    is_superuser,
+                    can_create_db,
+                    can_create_role,
+                    can_replicate,
+                    bypasses_rls,
+                ) = attributes
+                if can_login != should_login:
+                    raise SystemExit(f"El atributo LOGIN preexistente no es el esperado para {role}.")
+                if any((is_superuser, can_create_db, can_create_role, can_replicate, bypasses_rls)):
+                    raise SystemExit(
+                        f"El rol preexistente {role} tiene atributos elevados; se rechaza modificarlo automáticamente."
+                    )
+
             cursor.execute(
-                sql.SQL(
-                    "ALTER ROLE {} WITH LOGIN NOCREATEDB NOCREATEROLE NOREPLICATION PASSWORD {}"
-                ).format(sql.Identifier("nexoeventos_migrator"), sql.Literal(migration_password))
+                sql.SQL("ALTER ROLE {} PASSWORD {}").format(
+                    sql.Identifier("nexoeventos_migrator"), sql.Literal(migration_password)
+                )
             )
             cursor.execute(
-                sql.SQL(
-                    "ALTER ROLE {} WITH LOGIN NOCREATEDB NOCREATEROLE NOREPLICATION PASSWORD {}"
-                ).format(sql.Identifier("nexoeventos_app"), sql.Literal(app_password))
+                sql.SQL("ALTER ROLE {} PASSWORD {}").format(
+                    sql.Identifier("nexoeventos_app"), sql.Literal(app_password)
+                )
             )
             cursor.execute(
                 sql.SQL("GRANT {} TO {}").format(
@@ -81,7 +119,10 @@ def main() -> None:
                 )
             )
 
-    print("Roles owner/migrator/app preparados; no se mostró ninguna contraseña.")
+    print(
+        "Roles owner/migrator/app preparados y comprobados sin atributos elevados; "
+        "no se mostró ninguna contraseña."
+    )
 
 
 if __name__ == "__main__":
