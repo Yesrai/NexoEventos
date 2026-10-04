@@ -3,9 +3,9 @@
 | Dato | Valor |
 |---|---|
 | Fecha de corte | 4 de octubre de 2026 (Lima) |
-| Commit de referencia | `545a7f3` — *docs: record stopped AWS demo state*; la revisión recibió cambios locales de Claude sin commit y los conservó |
+| Commit de referencia | `7e879ad` — *docs: prepare verified cloud evidence session* |
 | URL pública | `https://nexoeventos-demo.duckdns.org`, **fuera de servicio mientras EC2 y RDS estén detenidas** |
-| Estado AWS informado | EC2 y RDS `stopped` (confirmado por AWS el 3 de octubre); no se volvió a consultar AWS en esta revisión |
+| Estado AWS comprobado | 4 de octubre: Academy autoarrancó la EC2; se detuvo desde la consola y quedó `Detenida`. RDS quedó en `Detención temporal`. No se creó RDS temporal |
 | Entrega final | 26 de noviembre de 2026 |
 
 Convención de este documento:
@@ -34,7 +34,7 @@ Convención de este documento:
 | Capturas de consola sanitizadas EV02, EV03, EV04, EV06, EV07, EV08 | requiere arrancar recursos | script y checklist revisados localmente; ejecución AWS pendiente |
 | Prueba de carga E01 (20 usuarios × 5 min) | no ejecutada; **no hay resultados de rendimiento** | `scripts/cloud/load-test.py`, EV11 |
 | Scripts operativos contra AWS | revisados y comprobados sintácticamente, pero no ejecutados contra AWS | la próxima sesión debe confirmar permisos, estados y fallos parciales reales |
-| Configuración operativa protegida | falta `work/terraform-envs/academy.tfvars` en el Mac | recrearla desde el ejemplo con cuenta/región reales, modo `0600`, sin Git ni capturas |
+| Configuración operativa protegida | completada localmente | reconstruida desde el estado real `academy-current` (serial 32), ignorada por Git y modo `0600`; valores no impresos |
 | Restauración cloud aislada y cronometrada (R01) | no ejecutada; **punto recuperable, recuperación de datos y servicio completo no medidos** | línea base exacta, QR y limpieza por recibo preparados; ejecución AWS pendiente |
 | Arranque/apagado verificable | hoy es manual | `scripts/cloud/cloud-session.sh` |
 | Plan Terraform posterior sin cambios (I01/EV09) | refresh bloqueado por la SCP S3; deriva posible por AMI; advertencia de almacenamiento RDS | propuesta en `docs/operacion/terraform-advertencias.md` (no aplicada) |
@@ -69,7 +69,8 @@ Convención de este documento:
 7. **Rendimiento y recuperación sin medir en cloud.** La restauración local no acredita RTO/RPO cloud.
 8. **Cámara física no probada.**
 9. **Demostración académica, no lista para producción.** MFA, recuperación de cuenta e interfaz de auditoría no están implementados.
+10. **Credenciales Academy bloqueadas el 4 de octubre.** Un bloque completo recién emitido con el laboratorio listo falló en STS con `InvalidClientTokenId`; no se inició la carga ni la restauración. La consola sí permitió detener la EC2 autoarrancada y confirmar RDS detenida. Véase `outputs/informe-sesion-aws-2026-10-04.md`.
 
 ## Siguiente paso
 
-Aprobar una ventana controlada descrita en [docs/operacion/sesion-cloud-siguiente.md](operacion/sesion-cloud-siguiente.md) después de comprobar el estado real de RDS y el consumo. El identificador `Equipo XX` queda pendiente, pero no bloquea las pruebas técnicas ni la documentación local.
+Solicitar a docente/soporte que revise la emisión de credenciales del Learner Lab y, cuando STS funcione, retomar la ventana controlada descrita en [docs/operacion/sesion-cloud-siguiente.md](operacion/sesion-cloud-siguiente.md). Primero se debe consultar el estado real de EC2/RDS; no se asume a partir de esta sesión. El identificador `Equipo XX` queda pendiente, pero no bloquea el resto.

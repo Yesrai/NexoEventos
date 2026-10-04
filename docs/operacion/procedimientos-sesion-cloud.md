@@ -20,7 +20,9 @@ Todos los scripts:
 | `scripts/cloud/restore-drill.sh run/cleanup` | **sí** | restauración aislada cronometrada y eliminación de la copia temporal |
 | `deploy/verify-restore.sh` | no (solo lectura en BD) | verificación dentro de la EC2; viaja por SSM, no requiere redeploy |
 
-Los recursos reales usan el prefijo `nexoeventos-academy-` (entorno `academy`; confirmado en el registro del plan). En la revisión del 4 de octubre no existe `work/terraform-envs/academy.tfvars`. Antes de una sesión se debe recrear desde `infra/aws/environments/academy.tfvars.example`, completar personalmente la cuenta esperada y protegerlo con modo `0600`, o indicar una copia ya protegida mediante `NEXO_TFVARS=/ruta/academy.tfvars`. El archivo no se imprime ni se versiona. Los scripts verifican además que `project_slug` + `environment` produzcan exactamente `nexoeventos-academy`.
+Los recursos reales usan el prefijo `nexoeventos-academy-` (entorno `academy`; confirmado en el estado y el registro del plan). El 4 de octubre se reconstruyó `work/terraform-envs/academy.tfvars` desde el estado real `academy-current`, sin inventar valores, y quedó ignorado por Git con modo `0600`. Si vuelve a faltar, usar `scripts/reconstruct-academy-tfvars.py`; el script falla si no reconoce exactamente el estado y los nombres esperados. El archivo no se imprime ni se versiona. Los scripts verifican además que `project_slug` + `environment` produzcan exactamente `nexoeventos-academy`.
+
+Si un bloque completo recién emitido con `Lab environment ready` vuelve a fallar en STS, no regenerarlo en bucle ni arrancar recursos a ciegas. Registrar hora, estado del lab y código de error sin secretos, y escalarlo a docente/soporte. Incidencia del 4 de octubre: `outputs/informe-sesion-aws-2026-10-04.md`.
 
 Antes de empezar, cada terminal necesita la sesión AWS temporal del Learner Lab en un entorno aislado (como en EV09). No pegar credenciales en chats ni capturas.
 

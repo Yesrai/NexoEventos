@@ -1,6 +1,6 @@
 # Siguiente sesión cloud: alcance, costo y riesgos
 
-**Propuesta para aprobación. No autoriza ningún cambio externo.** Revisada el 4 de octubre de 2026 (Lima) sobre el trabajo posterior a `545a7f3`, con EC2 y RDS detenidas según el último informe; no se volvió a consultar AWS. Los procedimientos están en [procedimientos-sesion-cloud.md](procedimientos-sesion-cloud.md).
+**Procedimiento aprobado para la próxima reanudación, no ejecutado por el bloqueo de credenciales.** Revisado el 4 de octubre de 2026 (Lima) sobre `7e879ad`. Academy autoarrancó la EC2 al iniciar el lab; se detuvo desde la consola y quedó `Detenida`. RDS quedó en `Detención temporal`. La carga/restauración no comenzó porque STS rechazó un bloque recién emitido con `InvalidClientTokenId`. Los procedimientos están en [procedimientos-sesion-cloud.md](procedimientos-sesion-cloud.md).
 
 ## Fecha sugerida
 
@@ -46,6 +46,7 @@ Reglas de crédito que se mantienen: al observar USD 30, reconciliar el inventar
 | Riesgo | Probabilidad | Impacto | Mitigación |
 |---|---|---|---|
 | La sesión del Learner Lab expira a mitad de una tarea (credenciales temporales) | media | restauración o parada a medias | iniciar con la sesión recién renovada, dejar la restauración antes del final y repetir `status`/`stop` al renovar |
+| STS rechaza un bloque recién emitido (`InvalidClientTokenId`) | observado el 4-oct | impide inventario y cualquier operación segura | detenerse, conservar todo apagado, presentar el reporte sanitizado y pedir revisión a docente/soporte; no regenerar en bucle |
 | DuckDNS tarda en actualizar la IPv4 nueva | media | HTTPS falla temporalmente | `check` espera hasta 6 min; si no basta, revisar el timer por Session Manager |
 | `ssm:SendCommand` denegado al usuario del laboratorio | desconocida | no se verifica la copia restaurada desde el Mac | ejecutar `verify-restore.sh` manualmente en una sesión de Session Manager y registrar las marcas de tiempo a mano |
 | `restore-db-instance-to-point-in-time` o SSM se rechaza | desconocida | no hay medición completa | registrar el error; no sustituirlo por una afirmación; una restauración desde snapshot puede demostrar integridad pero solo cumple RPO si coincide con la línea base |

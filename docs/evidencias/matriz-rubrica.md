@@ -14,7 +14,7 @@ No se acepta como evidencia una pantalla de configuración sin resultado. Las ca
 | EV08 | Observabilidad | CloudWatch Logs y alarma CPU | Logs sanitizados, retención y estado de alarma | inventario y ausencia de QR en log API | **Recursos desplegados; sanitización API comprobada**; falta captura CloudWatch |
 | EV09 | IaC | Terraform AWS | identidad, estado separado, plan y aplicación controlada | estado protegido + resumen 30 altas | **30 recursos administrados presentes**; refresh general limitado por SCP S3 y deriva de AMI |
 | EV10 | Flujo público seguro | DuckDNS + Let's Encrypt + aplicación | iniciar sesión → reservar → ver QR → validar una vez | URL real, suite y captura sin secretos | **Comprobado públicamente por HTTPS**; cámara física pendiente |
-| EV11 | C4/C5: escalabilidad y pruebas | EC2 + RDS + CloudWatch | 20 usuarios virtuales × 5 min; p95 y errores inesperados; evento `[CARGA]` si hay reservas | `EV11/README.md` + `resumen.md` + gráfico CPU | **No ejecutada**; script revisado localmente, no probado contra AWS |
+| EV11 | C4/C5: escalabilidad y pruebas | EC2 + RDS + CloudWatch | 20 usuarios virtuales × 5 min; p95 y errores inesperados; evento `[CARGA]` si hay reservas | `EV11/README.md` + `resumen.md` + gráfico CPU | **No ejecutada**; intento del 4 de octubre detenido antes del arranque por `InvalidClientTokenId` con credenciales recién emitidas |
 
 ## Cifras que no son mediciones
 
