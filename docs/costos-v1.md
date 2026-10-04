@@ -22,7 +22,9 @@ Una jornada aislada de ocho horas cuesta USD 0.3504 en EC2/RDS/IPv4. Prorrateand
 
 ## Calendario real propuesto hasta la entrega
 
-No existe una fecha real de creación porque aún no se ejecutó `apply`: el costo cloud actual atribuible a esta V1 es USD 0. Para no conservar la fecha hipotética anterior, la previsión usa el escenario más temprano posible: **2 de octubre de 2026 15:00 (Lima)**, después de generar y aprobar un plan válido, hasta **26 de noviembre de 2026 23:59 (Lima)**. Son 1,328.983 horas, equivalentes a 1.845810 periodos de 720 horas. Tras un eventual `apply`, se sustituirá este supuesto por los timestamps reales observados.
+> **Actualización del 4 de octubre de 2026:** la V1 se desplegó el 3 de octubre y EC2/RDS quedaron detenidas al final de la sesión. Por tanto, ya no es correcto afirmar costo cloud cero ni `apply` pendiente. Aún faltan consolidar `LaunchTime`, `InstanceCreateTime` y el consumo observado; hasta entonces el cuadro siguiente se conserva como **forecast previo**, no como costo real.
+
+El forecast histórico usa el escenario conservador desde **2 de octubre de 2026 15:00 (Lima)** hasta **26 de noviembre de 2026 23:59 (Lima)**: 1,328.983 horas, equivalentes a 1.845810 periodos de 720 horas. Se reemplazará por horas observadas cuando se capture el inventario.
 
 | Componente | Horas/periodo | Importe previsto |
 |---|---:|---:|
@@ -35,7 +37,7 @@ No existe una fecha real de creación porque aún no se ejecutó `apply`: el cos
 | margen explícito para solicitudes S3, transferencia, créditos T3, más logs y desvíos | | **USD 3.000** |
 | **techo planificado** | | **USD 13.719** |
 
-Después del despliegue se sustituirá la fecha hipotética por el `LaunchTime`/`InstanceCreateTime` observado y se registrarán horas reales. `scripts/calculate-aws-budget.py` reproduce el cálculo. La estimación no demuestra elegibilidad de servicios ni garantiza el precio final.
+`scripts/calculate-aws-budget.py` reproduce el forecast. Falta reconciliarlo con timestamps y consumo reales; la estimación no demuestra elegibilidad de servicios ni garantiza el precio final.
 
 ## Qué continúa cobrando
 

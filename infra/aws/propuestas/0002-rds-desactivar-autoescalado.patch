@@ -1,0 +1,32 @@
+diff -ruN a/infra/aws/database.tf c/infra/aws/database.tf
+--- a/infra/aws/database.tf	2026-10-04 02:10:44.467000743 +0000
++++ b/infra/aws/database.tf	2026-10-04 02:10:44.688000743 +0000
+@@ -9,7 +9,7 @@
+   engine                       = "postgres"
+   instance_class               = var.db_instance_class
+   allocated_storage            = var.db_allocated_storage_gib
+-  max_allocated_storage        = var.db_allocated_storage_gib
++  max_allocated_storage        = var.db_max_allocated_storage_gib
+   storage_type                 = "gp2"
+   storage_encrypted            = true
+   db_name                      = "nexoeventos"
+diff -ruN a/infra/aws/variables.tf c/infra/aws/variables.tf
+--- a/infra/aws/variables.tf	2026-10-04 02:10:44.476000743 +0000
++++ b/infra/aws/variables.tf	2026-10-04 02:10:44.688000743 +0000
+@@ -99,6 +99,16 @@
+   }
+ }
+ 
++variable "db_max_allocated_storage_gib" {
++  description = "Autoescalado de almacenamiento RDS. 0 lo desactiva explícitamente (provider AWS 6.67.0). Si se habilita, debe superar al almacenamiento asignado y no pasar de 100 GiB (Learner Lab)."
++  type        = number
++  default     = 0
++  validation {
++    condition     = var.db_max_allocated_storage_gib == 0 || (var.db_max_allocated_storage_gib > var.db_allocated_storage_gib && var.db_max_allocated_storage_gib <= 100)
++    error_message = "Usa 0 (sin autoescalado) o un valor mayor que db_allocated_storage_gib y como máximo 100."
++  }
++}
++
+ variable "backup_retention_days" {
+   type    = number
+   default = 7

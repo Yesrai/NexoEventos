@@ -8,6 +8,10 @@
 ./scripts/test-restore-local.sh
 ```
 
+## Estado al 3 de octubre de 2026
+
+Realizado en AWS: dump con `pg_dump` 18.6, empaquetado como CMS cifrado con clave pública, subido al bucket privado, cifrado y versionado; copia externa `0600` con hash coincidente; claves QR/hash cifradas fuera de AWS y del repositorio; snapshot manual cifrado de 20 GiB `available` (EV07). En el despliegue se usó CMS con clave pública en lugar de la contraseña AES/PBKDF2 de `create-portable-backup.sh`. **Pendiente:** ensayo de restauración cloud aislado y cronometrado (`scripts/cloud/restore-drill.sh`, ver `procedimientos-sesion-cloud.md` § 4). RTO/RPO siguen sin medir.
+
 ## Capas previstas en AWS
 
 1. Backups automáticos RDS con retención de siete días.

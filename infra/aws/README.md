@@ -14,16 +14,19 @@ Los ejemplos están en `environments/academy.tfvars.example` y `environments/aut
 ./scripts/terraform-account.sh plan academy
 ```
 
-El wrapper consulta STS y cancela si la identidad difiere de `expected_account_id`; no muestra el ID. Mantiene estado, caché y plan separados por nombre de entorno bajo `work/`, ignorado por Git. El subcomando `apply` exige además `NEXO_ALLOW_APPLY=YES` y un plan guardado, pero **no está autorizado en esta etapa**.
+El wrapper consulta STS y cancela si la identidad difiere de `expected_account_id`; no muestra el ID. Mantiene estado, caché y plan separados por nombre de entorno bajo `work/`, ignorado por Git. El subcomando `apply` exige además `NEXO_ALLOW_APPLY=YES` y un plan guardado; cada aplicación necesita aprobación explícita de su plan.
 
 No se debe reutilizar el estado Academy para otra cuenta. Una cuenta normal necesita su propio perfil IAM autorizado; no se presupone que `LabRole` o `LabInstanceProfile` existan. También deben reevaluarse permisos, SCP, cuotas, regiones, costos y financiación.
 
 ## Estado de comprobación
 
-El plan autenticado histórico del commit `25a12c1` no se reutilizó. El 2 de octubre se recuperó el token completo de la misma sesión —la vista accesible lo había truncado— y se creó un entorno AWS aislado fuera del repositorio, sin variables heredadas ni cambios en perfiles ajenos. STS validó la identidad y el plan vigente resultó en **30 altas, 0 cambios y 0 eliminaciones**, sin advertencias. El binario actual está protegido con modo `0600` en `work/terraform-plans/academy.tfplan`; no se ejecutó `apply` ni `destroy`.
+**Actualización del 3 de octubre de 2026:** la V1 quedó desplegada; el estado protegido contiene los 30 recursos del plan. Session Manager y la lectura del secreto maestro con el rol de instancia se comprobaron en la EC2 real. Quedan tres advertencias abiertas, con correcciones propuestas y no aplicadas en [`docs/operacion/terraform-advertencias.md`](../../docs/operacion/terraform-advertencias.md): AMI `most_recent` (riesgo de reemplazo de la EC2), `max_allocated_storage` igual al asignado y `s3:GetBucketObjectLockConfiguration` denegado (impide un refresh general). Los párrafos siguientes conservan el registro previo al despliegue.
 
-La vía de administración prevista es Systems Manager Session Manager mediante `LabInstanceProfile`/`LabRole`, tal como indican las instrucciones del Learner Lab. La EC2 tiene salida HTTPS y Amazon Linux 2023 incluye el agente SSM en las AMI oficiales. SSH permanece cerrado cuando `admin_cidr = ""`. La existencia del perfil está documentada por Academy, pero una sesión SSM real no puede probarse antes de crear la instancia; no se interpreta como permiso operativo confirmado.
 
-Academy confirmó que `LabInstanceProfile` existía y contenía `LabRole`, pero denegó `iam:GetPolicy`. La lectura del secreto maestro administrado por RDS no puede probarse hasta que exista: `deploy/bootstrap-rds-secrets.sh` la intenta en la EC2 y falla de forma cerrada a entrada manual sin eco, sin ampliar permisos.
+Registro histórico previo al despliegue: el plan del commit `25a12c1` no se reutilizó; se renovó la sesión, STS validó identidad y un plan nuevo mostró **30 altas, 0 cambios y 0 eliminaciones**. Ese plan fue aplicado después con autorización y produjo la V1 del 3 de octubre. No se ejecutó `destroy`. Los planes bajo `work/` son artefactos sensibles/efímeros y no deben tratarse como vigentes sin regenerarlos.
+
+La vía de administración comprobada es Systems Manager Session Manager mediante `LabInstanceProfile`/`LabRole`. SSH permanece cerrado cuando `admin_cidr = ""`. Esos nombres pertenecen a Academy y no se presuponen en otra cuenta.
+
+Academy confirmó que `LabInstanceProfile` existía y contenía `LabRole`, pero denegó `iam:GetPolicy`. En la EC2 desplegada se comprobó la lectura autorizada del secreto maestro administrado por RDS; el bootstrap lo usa en memoria y conserva el fallback manual sin eco, sin ampliar permisos.
 
 Planes y estados pueden contener IDs, endpoints y ARN/metadata sensible. Deben quedar con permisos restrictivos bajo `work/`; nunca en Git, capturas o informes. Ningún secreto de aplicación entra en Terraform o `user_data`.

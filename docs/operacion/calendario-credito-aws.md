@@ -1,6 +1,6 @@
 # Calendario de uso del crédito AWS hasta el 26 de noviembre
 
-Propuesta operativa; no autoriza `apply` ni `destroy`. El escenario más temprano revisado usa el 2 de octubre a las 15:00 y persistencia hasta el 26 de noviembre a las 23:59 (Lima): 1,328.983 horas. No es una fecha real de creación; después de un eventual `apply` se reemplazará por los timestamps observados. Las ventanas activas máximas suman 37 horas.
+Propuesta operativa; no autoriza `apply` ni `destroy`. **La primera ventana se usó para el despliegue verificado del 3 de octubre de 2026.** El escenario histórico de costos usa el 2 de octubre a las 15:00 y persistencia hasta el 26 de noviembre a las 23:59 (Lima): 1,328.983 horas. La V1 ya existe; faltan los timestamps reales y el consumo observado para sustituir el forecast. Las ventanas activas máximas suman 37 horas y las fechas futuras pueden reordenarse según el estado real de RDS.
 
 | Fecha | Ventana máxima | Objetivo |
 |---|---:|---|
@@ -12,7 +12,7 @@ Propuesta operativa; no autoriza `apply` ni `destroy`. El escenario más tempran
 | 24 nov | 4 h | cierre de evidencias y documentación |
 | 26 nov | 3 h | ventana final y contingencia |
 
-Forecast corregido: USD 1.621 de EC2/RDS/IPv4, USD 8.175 de almacenamiento/servicios persistentes y USD 0.923 de consumo variable base; subtotal USD 10.719 y techo con margen USD 13.719. Las fechas de creación se reemplazarán por timestamps reales después de un eventual `apply`.
+Forecast histórico: USD 1.621 de EC2/RDS/IPv4, USD 8.175 de almacenamiento/servicios persistentes y USD 0.923 de consumo variable base; subtotal USD 10.719 y techo con margen USD 13.719. Debe reconciliarse con timestamps y consumo reales del despliegue del 3 de octubre.
 
 ## Operación por sesión
 

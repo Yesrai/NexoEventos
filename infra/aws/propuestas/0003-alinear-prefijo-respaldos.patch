@@ -1,0 +1,15 @@
+diff --git a/infra/aws/storage_observability.tf b/infra/aws/storage_observability.tf
+--- a/infra/aws/storage_observability.tf
++++ b/infra/aws/storage_observability.tf
+@@ -31,10 +31,10 @@
+ resource "aws_s3_bucket_lifecycle_configuration" "private" {
+   bucket = aws_s3_bucket.private.id
+   rule {
+     id     = "expire-demo-backups"
+     status = "Enabled"
+-    filter { prefix = "database-backups/" }
++    filter { prefix = "backups/database/" }
+     expiration { days = var.backup_retention_days }
+     noncurrent_version_expiration { noncurrent_days = var.backup_retention_days }
+   }
+ }

@@ -7,8 +7,9 @@ Base local del proyecto universitario de Cloud Computing para una plataforma fic
 - Frontend: React + TypeScript + Vite.
 - Backend: FastAPI con autenticación, autorización por rol, catálogo, reservas simuladas, entradas QR y validación de ingreso.
 - Persistencia: PostgreSQL 14 local con migraciones Alembic y datos ficticios reproducibles.
-- Infraestructura: Terraform AWS V1 preparado y validado localmente; Azure y GCP permanecen como referencias sin recursos.
-- Cloud: no se ha creado, modificado ni eliminado ningún recurso.
+- Infraestructura: Terraform AWS V1 **desplegado y verificado el 3 de octubre de 2026** en `us-east-1` (30 recursos: VPC, subredes, EC2 AL2023, RDS PostgreSQL 18.3 privada, S3 privado, CloudWatch). Azure y GCP permanecen como referencias sin recursos.
+- Cloud: `https://nexoeventos-demo.duckdns.org` probado públicamente por HTTPS; EC2 y RDS quedan **detenidas** entre sesiones para ahorrar crédito, por lo que la URL solo responde en ventanas activas.
+- Estado consolidado, pendientes y limitaciones: [docs/estado-proyecto.md](docs/estado-proyecto.md). Revisión frente a la rúbrica: [docs/evidencias/revision-rubrica.md](docs/evidencias/revision-rubrica.md).
 
 ## Inicio rápido
 
@@ -68,4 +69,4 @@ No existe un endpoint público para enumerar reservas o entradas. Consulta [docs
 ./scripts/check-local.sh
 ```
 
-Consulta [docs/diagnostico-entorno.md](docs/diagnostico-entorno.md), [docs/arquitectura-inicial.md](docs/arquitectura-inicial.md), [infra/aws/README.md](infra/aws/README.md), [docs/costos-v1.md](docs/costos-v1.md) y [docs/operacion/migracion-entre-cuentas.md](docs/operacion/migracion-entre-cuentas.md) antes de cualquier despliegue. La configuración reproducible de Amazon Linux 2023, Nginx/systemd, DuckDNS y ACME está en `deploy/`; el FQDN confirmado es `nexoeventos-demo.duckdns.org`, pero HTTPS no estará operativo hasta publicar la IP, emitir el certificado y verificar el servicio.
+Consulta [docs/diagnostico-entorno.md](docs/diagnostico-entorno.md), [docs/arquitectura-inicial.md](docs/arquitectura-inicial.md), [infra/aws/README.md](infra/aws/README.md), [docs/costos-v1.md](docs/costos-v1.md) y [docs/operacion/migracion-entre-cuentas.md](docs/operacion/migracion-entre-cuentas.md) antes de cualquier despliegue. La configuración reproducible de Amazon Linux 2023, Nginx/systemd, DuckDNS y ACME está en `deploy/`; el FQDN `nexoeventos-demo.duckdns.org` tiene certificado Let's Encrypt válido hasta el 1 de enero de 2027. La operación de sesiones (arranque, comprobación de DNS/HTTPS/respaldos, capturas, carga, restauración y apagado) está en [docs/operacion/procedimientos-sesion-cloud.md](docs/operacion/procedimientos-sesion-cloud.md).

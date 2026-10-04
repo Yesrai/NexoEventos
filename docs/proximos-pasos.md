@@ -1,11 +1,21 @@
 # Próximos pasos
 
-1. Regenerar personalmente el token de `nexoeventos-demo.duckdns.org` justo antes del despliegue; introducirlo solo mediante el prompt sin eco.
-2. Mantener la credencial Academy en un entorno temporal aislado y renovarla cuando expire; el perfil global no es necesario para el plan actual.
-3. Revisar el plan vigente 30/0/0 guardado con modo `0600` en `work/terraform-plans/academy.tfplan`. El plan histórico de `25a12c1` no se reutilizó.
-4. Revisar permisos pendientes y aprobar explícitamente antes de cualquier `apply`; el costo documentado no se recalculó en esta comprobación.
-5. Si se aprueba, desplegar por etapas, comprobar lectura del secreto maestro, instalar AL2023, crear roles limitados y emitir HTTPS.
-6. Registrar timestamps reales, estados y consumo; revisar al observar USD 30 y USD 40. No interpretar esos puntos como límites automáticos.
-7. Reunir EV02–EV10 y medir rendimiento/RTO/RPO. No marcar evidencia cloud antes de observarla.
-8. Mantener la migración a otra cuenta como pendiente hasta verificar destino, restaurar una copia y ejecutar la lista de comprobación.
-9. Completar aparte Azure tras selección de cuenta/MFA, solo lectura.
+Actualizado el 4 de octubre de 2026 durante la revisión local posterior a `545a7f3`. Estado completo: [estado-proyecto.md](estado-proyecto.md).
+
+## Locales (sin AWS)
+
+1. Mantener `Equipo XX` como pendiente hasta recibir el identificador docente; registrar a Yesenia como autora individual y avanzar con el resto.
+2. Ensayar `scripts/cloud/load-test.py` contra el backend local (5 usuarios × 30 s) para validar el script.
+3. Preparar el Entregable 2 con el contraste oficial de [evidencias/revision-rubrica.md](evidencias/revision-rubrica.md).
+4. Revisar por separado las propuestas de AMI fija y RDS en [operacion/terraform-advertencias.md](operacion/terraform-advertencias.md); el bucket permanece en estado.
+
+## Siguiente sesión cloud (requiere aprobación)
+
+5. Aprobar [operacion/sesion-cloud-siguiente.md](operacion/sesion-cloud-siguiente.md): máximo 3.5 h y techo estimado USD 0.75, después de comprobar el límite real de RDS.
+6. Ejecutar en orden: `start`/`check`, inventario y capturas EV02–EV08/EV10, carga E01 (EV11), restauración `--pitr` + `cleanup` (EV07), `check` y `stop`. Procedimientos: [operacion/procedimientos-sesion-cloud.md](operacion/procedimientos-sesion-cloud.md).
+7. Registrar el consumo del panel Academy antes y después. Revisar al observar USD 30 y USD 40; no son límites automáticos.
+
+## Sesión dedicada posterior
+
+8. Aplicar las correcciones de Terraform solo si el plan muestra 0 reemplazos y 0 eliminaciones; después, `plan` sin cambios para I01/EV09.
+9. Mantener migración entre cuentas y Azure/GCP como mejoras pendientes; los Word oficiales no imponen esos proveedores.

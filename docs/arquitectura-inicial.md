@@ -4,7 +4,9 @@
 
 React/TypeScript consume FastAPI; FastAPI usa PostgreSQL para catálogo, usuarios, sesiones, reservas, entradas y auditoría. Las reservas bloquean la fila del evento, tienen idempotencia por usuario y generan una entrada por cupo. Las pruebas automatizadas cubren autorización y concurrencia. Los pagos permanecen simulados.
 
-## Despliegue AWS preparado, aún no ejecutado
+## Despliegue AWS V1 implementado
+
+Desplegado y verificado el 3 de octubre de 2026 en `us-east-1` (ver `outputs/informe-despliegue-aws-2026-10-03.md`). Entre sesiones EC2 y RDS permanecen detenidas. El diagrama corresponde a los recursos reales del estado Terraform; las capturas de consola de red y seguridad (EV02–EV04) siguen pendientes.
 
 ```text
 Internet
@@ -31,6 +33,14 @@ No hay NAT Gateway, balanceador, Auto Scaling, réplica ni Multi-AZ. La V1 prior
 
 ## Seguridad de red y aplicación
 
-Nginx es el único punto HTTP(S); FastAPI escucha en loopback y PostgreSQL nunca se expone a Internet. SSH está cerrado de forma predeterminada; la administración preferida es Session Manager con el perfil existente, y un `/32` temporal queda solo como contingencia. Las cookies se exigen `Secure` en producción, los orígenes CSRF son explícitos y HTTPS usará `nexoeventos-demo.duckdns.org` con Let's Encrypt; aún no está operativo.
+Nginx es el único punto HTTP(S); FastAPI escucha en loopback y PostgreSQL nunca se expone a Internet. SSH está cerrado de forma predeterminada; la administración preferida es Session Manager con el perfil existente, y un `/32` temporal queda solo como contingencia. Las cookies se exigen `Secure` en producción, los orígenes CSRF son explícitos y HTTPS opera en `nexoeventos-demo.duckdns.org` con Let's Encrypt (comprobado el 3 de octubre de 2026). La administración se realizó por Session Manager, sin abrir SSH.
 
-Terraform fue formateado y validado sin credenciales. El plan autenticado, permisos efectivos, cuotas y despliegue siguen pendientes; ver `infra/aws/README.md` y `docs/costos-v1.md`.
+Componentes reales añadidos al diagrama lógico: secreto maestro administrado por RDS (Secrets Manager), Systems Manager Session Manager, DuckDNS + Let's Encrypt, snapshot manual cifrado y copia externa del respaldo.
+
+| Tipo | Contenido |
+|---|---|
+| Medido | 30 recursos desplegados; suite pública HTTPS; persistencia RDS tras reinicio; respaldo cifrado en S3, copia externa y snapshot |
+| Objetivo | E01 (20 usuarios/5 min, p95 < 2 s, errores < 1 %), R01 (RTO ≤ 60 min, RPO ≤ 24 h), I01 (plan posterior sin cambios) — **sin medir** |
+| Supuesto | cifras del caso empresarial y estimación de costos |
+
+Advertencias abiertas de Terraform (AMI `most_recent`, máximo de almacenamiento RDS y lectura S3 denegada): `docs/operacion/terraform-advertencias.md`.

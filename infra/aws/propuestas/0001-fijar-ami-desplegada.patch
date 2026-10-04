@@ -1,0 +1,72 @@
+diff -ruN a/infra/aws/compute.tf b/infra/aws/compute.tf
+--- a/infra/aws/compute.tf	2026-10-04 02:10:44.466000743 +0000
++++ b/infra/aws/compute.tf	2026-10-04 02:10:44.645000743 +0000
+@@ -1,26 +1,9 @@
+-data "aws_ami" "amazon_linux_2023" {
+-  most_recent = true
+-  owners      = ["137112412989"]
+-  filter {
+-    name   = "name"
+-    values = ["al2023-ami-2023.*-x86_64"]
+-  }
+-  filter {
+-    name   = "architecture"
+-    values = ["x86_64"]
+-  }
+-  filter {
+-    name   = "root-device-type"
+-    values = ["ebs"]
+-  }
+-}
+-
+ data "aws_iam_instance_profile" "app" {
+   name = var.instance_profile_name
+ }
+ 
+ resource "aws_instance" "app" {
+-  ami                         = data.aws_ami.amazon_linux_2023.id
++  ami                         = var.ec2_ami_id
+   instance_type               = var.ec2_instance_type
+   subnet_id                   = aws_subnet.public_a.id
+   vpc_security_group_ids      = [aws_security_group.web.id]
+diff -ruN a/infra/aws/environments/academy.tfvars.example b/infra/aws/environments/academy.tfvars.example
+--- a/infra/aws/environments/academy.tfvars.example	2026-10-04 02:10:44.481000743 +0000
++++ b/infra/aws/environments/academy.tfvars.example	2026-10-04 02:10:44.655000743 +0000
+@@ -8,6 +8,7 @@
+ final_snapshot_identifier = "nexoeventos-academy-final-20261126"
+ 
+ admin_cidr              = ""
++ec2_ami_id              = "ami-0d27e0fb3bac4d724" # AMI desplegada el 3-oct-2026 en us-east-1
+ ec2_instance_type       = "t3.small"
+ ec2_root_volume_gib     = 20
+ db_instance_class       = "db.t3.micro"
+diff -ruN a/infra/aws/environments/authorized-account.tfvars.example b/infra/aws/environments/authorized-account.tfvars.example
+--- a/infra/aws/environments/authorized-account.tfvars.example	2026-10-04 02:10:44.482000743 +0000
++++ b/infra/aws/environments/authorized-account.tfvars.example	2026-10-04 02:10:44.665000743 +0000
+@@ -8,6 +8,7 @@
+ final_snapshot_identifier = "nexoeventos-destination-final-20261126"
+ 
+ admin_cidr               = ""
++ec2_ami_id              = "ami-REEMPLAZAR" # elegir explícitamente la AMI AL2023 de la región y registrarla
+ ec2_instance_type        = "t3.small"
+ ec2_root_volume_gib      = 20
+ db_instance_class        = "db.t3.micro"
+diff -ruN a/infra/aws/variables.tf b/infra/aws/variables.tf
+--- a/infra/aws/variables.tf	2026-10-04 02:10:44.476000743 +0000
++++ b/infra/aws/variables.tf	2026-10-04 02:10:44.645000743 +0000
+@@ -68,6 +68,15 @@
+   default     = "t3.small"
+ }
+ 
++variable "ec2_ami_id" {
++  description = "AMI explícita de la EC2. En academy-current es la imagen desplegada (al2023-ami-2023.12.20260930.0-kernel-6.18-x86_64). Cambiarla reemplaza la instancia y exige plan y aprobación propios."
++  type        = string
++  validation {
++    condition     = can(regex("^ami-[0-9a-f]{8,17}$", var.ec2_ami_id))
++    error_message = "ec2_ami_id debe ser un ID ami-... explícito; no se selecciona la AMI más reciente automáticamente."
++  }
++}
++
+ variable "ec2_root_volume_gib" {
+   type    = number
+   default = 20
