@@ -35,9 +35,19 @@ nginx -t
 systemctl enable --now nginx nexoeventos-duckdns.timer
 systemctl start nexoeventos-duckdns.service
 
-echo "Comprueba que $DOMAIN resuelva a esta EC2. Certbot solicitará correo y aceptación directamente."
-/usr/local/bin/certbot certonly --webroot \
-  --webroot-path "$PROJECT_ROOT/frontend/dist" --domain "$DOMAIN"
+certbot_args=(
+  certonly
+  --webroot
+  --webroot-path "$PROJECT_ROOT/frontend/dist"
+  --domain "$DOMAIN"
+)
+if [[ "${NEXO_CERTBOT_NONINTERACTIVE:-NO}" == "YES" ]]; then
+  certbot_args+=(--non-interactive --agree-tos --register-unsafely-without-email)
+  echo "Solicitud ACME no interactiva autorizada, sin registrar correo."
+else
+  echo "Comprueba que $DOMAIN resuelva a esta EC2. Certbot solicitará correo y aceptación directamente."
+fi
+/usr/local/bin/certbot "${certbot_args[@]}"
 
 render "$PROJECT_ROOT/deploy/nginx/nexoeventos.conf.template" "$NGINX_CONFIG"
 nginx -t

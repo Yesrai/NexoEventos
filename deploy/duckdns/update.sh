@@ -9,8 +9,7 @@ if [[ ! "$DUCKDNS_DOMAIN" =~ ^[a-z0-9-]+$ ]] || [[ ! "$DUCKDNS_TOKEN" =~ ^[A-Za-
 fi
 
 response="$(printf '%s\n' \
-  'url = "https://www.duckdns.org/update"' \
-  "data = \"domains=${DUCKDNS_DOMAIN}&token=${DUCKDNS_TOKEN}&ip=\"" \
+  "url = \"https://www.duckdns.org/update?domains=${DUCKDNS_DOMAIN}&token=${DUCKDNS_TOKEN}&ip=\"" \
   'silent' 'show-error' 'fail' | curl --config -)"
 if [[ "$response" != "OK" ]]; then
   echo "DuckDNS rechazó la actualización." >&2

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare local-only secrets and privileged demo accounts for NexoEventos."""
+"""Prepare secrets and privileged accounts for an explicitly authorized demo."""
 from __future__ import annotations
 
 import argparse
@@ -50,11 +50,21 @@ def main() -> None:
     parser.add_argument("--operator-email", default="operador.demo@example.com")
     parser.add_argument("--organizer-event", type=int, action="append", default=[1, 2])
     parser.add_argument("--operator-event", type=int, action="append", default=[1])
+    parser.add_argument(
+        "--deployed-demo",
+        action="store_true",
+        help="Use protected environment files on an authorized non-production demo host.",
+    )
     args = parser.parse_args()
-    if os.getenv("APP_ENV", "development") != "development":
-        raise SystemExit("Este procedimiento solo puede ejecutarse con APP_ENV=development.")
-
-    ensure_local_key()
+    deployed_demo_allowed = (
+        args.deployed_demo
+        and os.getenv("NEXO_ALLOW_DEPLOYED_DEMO") == "YES"
+        and os.getenv("APP_ENV") == "production"
+    )
+    if not deployed_demo_allowed:
+        if args.deployed_demo or os.getenv("APP_ENV", "development") != "development":
+            raise SystemExit("Este procedimiento solo admite desarrollo local o una demo desplegada explícita.")
+        ensure_local_key()
     sys.path.insert(0, str(BACKEND))
     from app.auth import hash_password, normalize_email
 

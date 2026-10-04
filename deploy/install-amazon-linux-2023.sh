@@ -24,7 +24,7 @@ fi
 
 # AL2023 instala curl-minimal de forma predeterminada; pedir `curl` fuerza un
 # reemplazo conflictivo. Ambos proporcionan el binario que necesita el script.
-dnf install -y nginx python3.11 python3.11-pip tar xz jq postgresql15 awscli-2
+dnf install -y nginx python3.11 python3.11-pip tar xz jq postgresql18 awscli-2
 
 if ! id nexoeventos >/dev/null 2>&1; then
   useradd --system --home-dir /opt/nexoeventos --shell /sbin/nologin nexoeventos
