@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 
 type Role = 'client' | 'organizer' | 'operator'
@@ -17,6 +17,7 @@ type View = 'catalog' | 'auth' | 'account' | 'operator' | 'organizer'
 type BarcodeResult = { rawValue: string }
 type BarcodeDetectorInstance = { detect(source: HTMLVideoElement): Promise<BarcodeResult[]> }
 type BarcodeDetectorConstructor = new (options: { formats: string[] }) => BarcodeDetectorInstance
+type IconName = 'arrow' | 'calendar' | 'check' | 'close' | 'location' | 'minus' | 'plus' | 'qr' | 'search' | 'ticket' | 'user'
 
 const configuredApiUrl = import.meta.env.VITE_API_URL
 const apiUrl = configuredApiUrl !== undefined
@@ -48,6 +49,23 @@ function formatDate(value: string) {
 function messageFrom(body: unknown, fallback: string) {
   if (typeof body === 'object' && body && 'detail' in body && typeof body.detail === 'string') return body.detail
   return fallback
+}
+
+function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
+  const paths: Record<IconName, ReactNode> = {
+    arrow: <><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></>,
+    calendar: <><path d="M7 2v3M17 2v3M3 9h18" /><rect x="3" y="4" width="18" height="17" rx="3" /></>,
+    check: <path d="m5 12 4 4L19 6" />,
+    close: <><path d="m6 6 12 12M18 6 6 18" /></>,
+    location: <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></>,
+    minus: <path d="M5 12h14" />,
+    plus: <><path d="M12 5v14M5 12h14" /></>,
+    qr: <><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 20h1M20 14h1" /></>,
+    search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></>,
+    ticket: <><path d="M3 9a3 3 0 0 0 0 6v4h18v-4a3 3 0 0 0 0-6V5H3v4Z" /><path d="M13 7v2M13 13v4" /></>,
+    user: <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>,
+  }
+  return <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>
 }
 
 export default function App() {
@@ -99,6 +117,8 @@ export default function App() {
       const response = await api(`/api/events/${eventId}`)
       if (!response.ok) throw new Error()
       setSelected(await response.json() as EventDetail)
+      setQuantity(1)
+      window.setTimeout(() => document.querySelector('.event-detail')?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }), 0)
     } catch {
       setReservationError('No pudimos cargar el detalle del evento.')
     } finally { setDetailLoading(false) }
@@ -141,20 +161,30 @@ export default function App() {
     [events, query],
   )
 
-  return (
-    <main>
-      <nav className="nav" aria-label="Navegación principal">
-        <button className="brand link-button" onClick={() => setView('catalog')}>Nexo<span>Eventos</span></button>
-        <div className="nav-actions">
-          <button className="nav-link link-button" onClick={() => setView('catalog')}>Eventos</button>
-          {user?.role === 'client' && <button className="nav-link link-button" onClick={() => setView('account')}>Mis entradas</button>}
-          {user?.role === 'operator' && <button className="nav-link link-button" onClick={() => setView('operator')}>Control de acceso</button>}
-          {user?.role === 'organizer' && <button className="nav-link link-button" onClick={() => setView('organizer')}>Mis eventos</button>}
-          {user ? <button className="outline" onClick={() => void logout()}>Cerrar sesión</button> : <button className="outline" onClick={() => setView('auth')}>Ingresar</button>}
-        </div>
-      </nav>
+  const quantityLimit = selected ? Math.min(10, selected.available_capacity) : 1
 
-      {sessionNotice && <div className="notice" role="status">{sessionNotice}<button aria-label="Cerrar aviso" onClick={() => setSessionNotice(null)}>×</button></div>}
+  function changeQuantity(next: number) {
+    setQuantity(Math.max(1, Math.min(quantityLimit, next)))
+    idempotencyKey.current = null
+  }
+
+  return (
+    <main className="app-shell">
+      <header className="site-header">
+        <nav className="nav" aria-label="Navegación principal">
+          <button className="brand link-button" onClick={() => setView('catalog')} aria-label="Ir al inicio de NexoEventos"><span className="brand-mark">N</span><span>Nexo<strong>Eventos</strong></span></button>
+          {view === 'catalog' && <label className="header-search"><span className="sr-only">Buscar eventos</span><Icon name="search" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar eventos, lugares o categorías" /></label>}
+          <div className="nav-actions">
+            <button className="nav-link link-button" onClick={() => setView('catalog')}>Eventos</button>
+            {user?.role === 'client' && <button className="nav-link link-button" onClick={() => setView('account')}>Mis entradas</button>}
+            {user?.role === 'operator' && <button className="nav-link link-button" onClick={() => setView('operator')}>Control de acceso</button>}
+            {user?.role === 'organizer' && <button className="nav-link link-button" onClick={() => setView('organizer')}>Mis eventos</button>}
+            {user ? <button className="button secondary compact-button" onClick={() => void logout()}>Cerrar sesión</button> : <button className="button secondary compact-button" onClick={() => setView('auth')}><Icon name="user" size={18} /> Ingresar</button>}
+          </div>
+        </nav>
+      </header>
+
+      {sessionNotice && <div className="notice" role="status">{sessionNotice}<button aria-label="Cerrar aviso" onClick={() => setSessionNotice(null)}><Icon name="close" /></button></div>}
       {!sessionReady && <div className="status dark" role="status">Comprobando sesión…</div>}
 
       {view === 'auth' && <AuthPanel onAuthenticated={(value) => { setUser(value); setSessionNotice(null); setView(value.role === 'client' ? 'account' : value.role === 'operator' ? 'operator' : 'organizer') }} />}
@@ -164,33 +194,41 @@ export default function App() {
 
       {view === 'catalog' && <>
         <header className="hero" id="inicio">
-          <div className="eyebrow">Reserva. Conecta. Celebra.</div>
-          <h1>Tu próxima experiencia empieza aquí.</h1>
-          <p>Inicia sesión, reserva con datos ficticios y consulta cada entrada QR desde tu cuenta.</p>
-          <a className="primary" href="#catalogo">Explorar eventos</a>
+          <div className="hero-copy"><p className="eyebrow">Eventos para recordar</p><h1>Tu próxima experiencia empieza aquí.</h1><p>Descubre eventos, reserva tus entradas y lleva tu QR contigo, todo desde una experiencia simple y segura.</p><a className="button primary" href="#catalogo">Explorar eventos <Icon name="arrow" /></a></div>
+          <div className="hero-poster" aria-hidden="true"><span>NexoEventos</span><strong>Momentos que conectan.</strong><small>Reserva · disfruta · comparte</small></div>
         </header>
         <section className="catalog" id="catalogo" aria-labelledby="catalog-title">
           <div className="section-heading">
-            <div><p className="eyebrow">Cartelera</p><h2 id="catalog-title">Eventos destacados</h2></div>
-            <label className="search"><span className="sr-only">Buscar eventos</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por nombre, lugar…" /></label>
+            <div><p className="eyebrow">Cartelera</p><h2 id="catalog-title">Encuentra tu próximo evento</h2><p>Experiencias disponibles para reservar ahora.</p></div>
+            <label className="search"><Icon name="search" /><span className="sr-only">Buscar eventos</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por nombre o lugar" /></label>
           </div>
           {loading && <div className="status" role="status">Cargando experiencias…</div>}
           {error && <div className="status error" role="alert"><p>{error}</p><button onClick={() => void loadEvents()}>Reintentar</button></div>}
           {!loading && !error && filtered.length === 0 && <div className="status">No encontramos eventos con ese criterio.</div>}
           {!loading && !error && filtered.length > 0 && <div className="grid">{filtered.map((item, index) => (
             <article className="card" key={item.id}>
-              <div className={`card-art art-${index % 3}`}><span>{item.category}</span></div>
-              <div className="card-body"><p className="date">{formatDate(item.date)}</p><h3>{item.name}</h3><p className="venue">{item.venue}</p>
+              <button className={`card-art art-${index % 3}`} onClick={() => void openDetail(item.id)} aria-label={`Ver ${item.name}`}><span className="poster-brand">NexoEventos</span><strong>{item.category}</strong><span className="category-pill">{item.category}</span></button>
+              <div className="card-body"><p className="date"><Icon name="calendar" size={16} />{formatDate(item.date)}</p><h3>{item.name}</h3><p className="venue"><Icon name="location" size={17} />{item.venue}</p>
                 <div className="card-footer"><strong>S/ {item.price.toFixed(2)}</strong><span>{item.available_capacity} disponibles</span></div>
-                <button className="detail-button" onClick={() => void openDetail(item.id)}>Ver detalle y reservar</button>
+                <button className="button secondary detail-button" onClick={() => void openDetail(item.id)}>Ver detalle <Icon name="arrow" size={18} /></button>
               </div>
             </article>
           ))}</div>}
         </section>
-        {(detailLoading || selected || reservationError) && <section className="detail" aria-live="polite">
-          {detailLoading && <p>Cargando detalle…</p>}
-          {selected && !detailLoading && <div className="detail-layout"><div><p className="eyebrow">Detalle del evento</p><h2>{selected.name}</h2><p>{selected.description}</p><p><strong>{formatDate(selected.date)}</strong> · {selected.venue}</p><p>{selected.available_capacity} cupos disponibles de {selected.capacity}</p></div>
-            <form className="panel-form" onSubmit={(event) => void submitReservation(event)}><h3>Compra simulada</h3><label>Cantidad<input type="number" value={quantity} onChange={(event) => { setQuantity(Number(event.target.value)); idempotencyKey.current = null }} min={1} max={10} required /></label><button className="primary" disabled={reserving || selected.available_capacity === 0}>{reserving ? 'Reservando…' : user?.role === 'client' ? 'Confirmar reserva' : 'Inicia sesión para reservar'}</button><small>No se procesa dinero real. La reserva queda vinculada a tu cuenta.</small>{reservationMessage && <p className="success">{reservationMessage} <button type="button" className="inline-link" onClick={() => setView('account')}>Ver mis entradas</button></p>}{reservationError && <p className="form-error" role="alert">{reservationError}</p>}</form>
+        {(detailLoading || selected || reservationError) && <section className="event-detail" aria-live="polite">
+          {detailLoading && <div className="status" role="status"><span className="spinner" />Cargando detalle…</div>}
+          {selected && !detailLoading && <div className="detail-layout">
+            <article className="event-story"><div className="detail-poster"><span>NexoEventos presenta</span><strong>{selected.name}</strong><small>{selected.category}</small></div><div className="event-copy"><p className="eyebrow">Detalle del evento</p><h2>{selected.name}</h2><div className="event-meta"><span><Icon name="calendar" />{formatDate(selected.date)}</span><span><Icon name="location" />{selected.venue}</span></div><p>{selected.description}</p><span className="availability">{selected.available_capacity} cupos disponibles de {selected.capacity}</span></div></article>
+            <form className="booking-panel" onSubmit={(event) => void submitReservation(event)}>
+              <div className="booking-heading"><div><p className="eyebrow">Tu reserva</p><h3>Selecciona tus entradas</h3></div><Icon name="ticket" size={26} /></div>
+              <div className="ticket-option selected-option"><span className="selection-check"><Icon name="check" size={16} /></span><div><strong>Entrada general</strong><small>Acceso al evento</small></div><b>S/ {selected.price.toFixed(2)}</b></div>
+              <div className="quantity-row"><div><strong>Cantidad</strong><small>Máximo {quantityLimit} por reserva</small></div><div className="stepper" aria-label="Cantidad de entradas"><button type="button" onClick={() => changeQuantity(quantity - 1)} disabled={quantity <= 1} aria-label="Restar una entrada"><Icon name="minus" /></button><output aria-live="polite">{quantity}</output><button type="button" onClick={() => changeQuantity(quantity + 1)} disabled={quantity >= quantityLimit} aria-label="Agregar una entrada"><Icon name="plus" /></button></div></div>
+              <div className="booking-summary"><span>Total</span><strong>S/ {(selected.price * quantity).toFixed(2)}</strong></div>
+              <button className="button primary reserve-button" disabled={reserving || selected.available_capacity === 0} aria-busy={reserving}>{reserving && <span className="spinner" />}{reserving ? 'Confirmando reserva…' : user?.role === 'client' ? 'Confirmar reserva' : 'Inicia sesión para reservar'}</button>
+              <small>No se procesa dinero real. La reserva queda vinculada a tu cuenta.</small>
+              {reservationMessage && <p className="success confirmation" role="status"><Icon name="check" /> <span>{reservationMessage} <button type="button" className="inline-link" onClick={() => setView('account')}>Ver mis entradas</button></span></p>}
+              {reservationError && <p className="form-error" role="alert">{reservationError}</p>}
+            </form>
           </div>}
         </section>}
       </>}
