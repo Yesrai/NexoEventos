@@ -4,7 +4,7 @@
 
 La arquitectura V1 aprobada se desplegó en `us-east-1`. El estado Terraform protegido contiene los 30 recursos administrados del plan: VPC, subred pública, dos subredes privadas de datos, rutas, grupos de seguridad, EC2, RDS PostgreSQL, bucket S3 privado, perfil de instancia, CloudWatch y alarma. No se ejecutó `destroy` ni se abrió SSH.
 
-La aplicación estuvo disponible durante la verificación en `https://nexoeventos-demo.duckdns.org`. Al terminar respaldos y evidencias, EC2 y RDS se detienen para ahorrar crédito; por ello la URL no debe considerarse permanentemente activa.
+La aplicación estuvo disponible durante la verificación en `https://nexoeventos-demo.duckdns.org`. Al terminar respaldos y evidencias, AWS confirmó EC2 y RDS en estado `stopped`; por ello la URL está temporalmente fuera de servicio.
 
 ## Instalación y seguridad comprobadas
 
@@ -58,6 +58,7 @@ Sigue pendiente un ensayo de restauración cloud aislado y cronometrado. No se d
 
 - La política del Learner Lab deniega `s3:GetBucketObjectLockConfiguration`; el bucket tuvo que completarse con un plan objetivo sin reemplazarlo. Un refresh general puede volver a fallar por esa lectura.
 - La AMI se selecciona con `most_recent`; un plan futuro puede proponer reemplazar EC2 aunque no cambie la intención arquitectónica. Debe revisarse antes de cualquier aplicación.
+- RDS emitió una advertencia porque el máximo de autoescalado coincide con los 20 GiB asignados. No se modificó durante esta sesión; debe corregirse mediante un plan revisado antes de depender del autoescalado.
 - Detener EC2 y RDS no elimina cargos de EBS, almacenamiento RDS/backups, S3, logs, secreto administrado ni snapshot.
 - Las cuentas de demo no son un mecanismo de administración para producción.
 - La infraestructura y la aplicación son una demostración académica; no están declaradas listas para producción.
