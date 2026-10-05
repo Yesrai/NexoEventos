@@ -202,6 +202,174 @@ function SelectMenu({ label, value, options, onChange, align = 'start' }: {
   </div>
 }
 
+const weekDays = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do']
+
+function limaToday() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date())
+}
+
+function dateParts(value: string) {
+  const [year, month, day] = value.split('-').map(Number)
+  return { year, month: month - 1, day }
+}
+
+function isoDate(year: number, month: number, day: number) {
+  return new Date(Date.UTC(year, month, day)).toISOString().slice(0, 10)
+}
+
+function addDays(value: string, amount: number) {
+  const { year, month, day } = dateParts(value)
+  return isoDate(year, month, day + amount)
+}
+
+function addMonths(value: string, amount: number) {
+  const { year, month, day } = dateParts(value)
+  const target = new Date(Date.UTC(year, month + amount, 1))
+  const lastDay = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate()
+  return isoDate(target.getUTCFullYear(), target.getUTCMonth(), Math.min(day, lastDay))
+}
+
+function calendarLabel(value: string) {
+  const { year, month, day } = dateParts(value)
+  return new Intl.DateTimeFormat('es-PE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(Date.UTC(year, month, day)))
+}
+
+function shortDate(value: string) {
+  const { year, month, day } = dateParts(value)
+  return new Intl.DateTimeFormat('es-PE', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(Date.UTC(year, month, day)))
+}
+
+function monthDays(monthValue: string) {
+  const { year, month } = dateParts(monthValue)
+  const mondayOffset = (new Date(Date.UTC(year, month, 1)).getUTCDay() + 6) % 7
+  return Array.from({ length: 42 }, (_, index) => isoDate(year, month, index - mondayOffset + 1))
+}
+
+function DateRangePicker({ from, to, onApply, onClear }: {
+  from: string
+  to: string
+  onApply: (from: string, to: string) => void
+  onClear: () => void
+}) {
+  const id = useId()
+  const rootRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const [open, setOpen] = useState(false)
+  const [draftFrom, setDraftFrom] = useState(from)
+  const [draftTo, setDraftTo] = useState(to)
+  const [visibleMonth, setVisibleMonth] = useState((from || limaToday()).slice(0, 7) + '-01')
+  const today = limaToday()
+
+  function closeAndFocus() {
+    setOpen(false)
+    triggerRef.current?.focus()
+  }
+
+  function focusDate(value: string) {
+    window.requestAnimationFrame(() => {
+      panelRef.current?.querySelector<HTMLButtonElement>(`button[data-date="${value}"]`)?.focus()
+    })
+  }
+
+  useEffect(() => {
+    if (!open) return
+    setDraftFrom(from)
+    setDraftTo(to)
+    setVisibleMonth((from || today).slice(0, 7) + '-01')
+    const focusValue = from || today
+    focusDate(focusValue)
+    const closeOutside = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
+    }
+    document.addEventListener('pointerdown', closeOutside)
+    return () => document.removeEventListener('pointerdown', closeOutside)
+  }, [open, from, to, today])
+
+  function selectDate(value: string) {
+    if (!draftFrom || draftTo || value < draftFrom) {
+      setDraftFrom(value)
+      setDraftTo('')
+    } else {
+      setDraftTo(value)
+    }
+  }
+
+  function moveFocus(value: string, key: string) {
+    const { year, month } = dateParts(value)
+    const weekday = (new Date(Date.UTC(year, month, dateParts(value).day)).getUTCDay() + 6) % 7
+    const target = key === 'ArrowLeft' ? addDays(value, -1)
+      : key === 'ArrowRight' ? addDays(value, 1)
+        : key === 'ArrowUp' ? addDays(value, -7)
+          : key === 'ArrowDown' ? addDays(value, 7)
+            : key === 'Home' ? addDays(value, -weekday)
+              : key === 'End' ? addDays(value, 6 - weekday)
+                : key === 'PageUp' ? addMonths(value, -1)
+                  : addMonths(value, 1)
+    const firstVisible = visibleMonth.slice(0, 7)
+    const secondVisible = addMonths(visibleMonth, 1).slice(0, 7)
+    if (target.slice(0, 7) < firstVisible || target.slice(0, 7) > secondVisible) setVisibleMonth(target.slice(0, 7) + '-01')
+    focusDate(target)
+  }
+
+  function Month({ value, secondary = false }: { value: string; secondary?: boolean }) {
+    const { year, month } = dateParts(value)
+    const rawTitle = new Intl.DateTimeFormat('es-PE', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(Date.UTC(year, month, 1)))
+    const title = rawTitle.charAt(0).toUpperCase() + rawTitle.slice(1)
+    return <section className={`calendar-month ${secondary ? 'secondary-month' : ''}`} aria-label={title}>
+      <h4>{title}</h4>
+      <div className="calendar-weekdays" aria-hidden="true">{weekDays.map((day) => <span key={day}>{day}</span>)}</div>
+      <div className="calendar-grid">
+        {monthDays(value).map((date, index) => {
+          const parts = dateParts(date)
+          const outside = parts.month !== month
+          const start = date === draftFrom
+          const end = date === draftTo
+          const inside = Boolean(draftFrom && draftTo && date > draftFrom && date < draftTo)
+          return <button
+            type="button"
+            key={`${date}-${index}`}
+            data-date={date}
+            className={`${outside ? 'outside-month' : ''} ${inside ? 'in-range' : ''} ${start ? 'range-start' : ''} ${end ? 'range-end' : ''}`}
+            aria-label={calendarLabel(date)}
+            aria-current={date === today ? 'date' : undefined}
+            aria-pressed={start || end}
+            onClick={() => selectDate(date)}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') { event.preventDefault(); closeAndFocus(); return }
+              if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'].includes(event.key)) {
+                event.preventDefault(); moveFocus(date, event.key)
+              }
+            }}
+          >{parts.day}</button>
+        })}
+      </div>
+    </section>
+  }
+
+  const appliedLabel = from && to ? `${shortDate(from)} – ${shortDate(to)}` : 'Seleccionar rango'
+  const draftLabel = draftFrom ? draftTo ? `${shortDate(draftFrom)} – ${shortDate(draftTo)}` : `${shortDate(draftFrom)} – selecciona el final` : 'Selecciona la fecha de inicio'
+
+  return <div className="date-picker" ref={rootRef}>
+    <span className="date-picker-label" id={`${id}-label`}>Rango de fechas</span>
+    <button ref={triggerRef} type="button" className="date-picker-trigger" aria-haspopup="dialog" aria-expanded={open} aria-controls={`${id}-panel`} aria-labelledby={`${id}-label ${id}-value`} onClick={() => setOpen((value) => !value)}>
+      <span id={`${id}-value`}><Icon name="calendar" size={18} />{appliedLabel}</span><span className="select-chevron"><Icon name="arrow" size={16} /></span>
+    </button>
+    {open && <div ref={panelRef} className="calendar-popover" id={`${id}-panel`} role="dialog" aria-modal="false" aria-label="Seleccionar rango de fechas" onKeyDown={(event) => { if (event.key === 'Escape') { event.preventDefault(); closeAndFocus() } }}>
+      <div className="calendar-toolbar">
+        <button type="button" aria-label="Mes anterior" onClick={() => setVisibleMonth(addMonths(visibleMonth, -1).slice(0, 7) + '-01')}><Icon name="arrow" size={17} /></button>
+        <div><strong>Elige inicio y fin</strong><span aria-live="polite">{draftLabel}</span></div>
+        <button type="button" aria-label="Mes siguiente" onClick={() => setVisibleMonth(addMonths(visibleMonth, 1).slice(0, 7) + '-01')}><Icon name="arrow" size={17} /></button>
+      </div>
+      <div className="calendar-months"><Month value={visibleMonth} /><Month value={addMonths(visibleMonth, 1).slice(0, 7) + '-01'} secondary /></div>
+      <div className="calendar-actions">
+        <button type="button" className="button secondary" onClick={() => { setDraftFrom(''); setDraftTo(''); onClear(); closeAndFocus() }}>Limpiar</button>
+        <button type="button" className="button primary" disabled={!draftFrom || !draftTo} onClick={() => { onApply(draftFrom, draftTo); closeAndFocus() }}>Aplicar</button>
+      </div>
+    </div>}
+  </div>
+}
+
 export default function App() {
   const [view, setView] = useState<View>('catalog')
   const [user, setUser] = useState<User | null>(null)
@@ -457,12 +625,12 @@ export default function App() {
           </div>
           <div className="compact-filters" aria-label="Filtros del catálogo">
             <SelectMenu label="Ciudad" value={city} onChange={setCity} options={[{ value: '', label: 'Todas' }, ...cities.map((value) => ({ value, label: value }))]} />
-            <SelectMenu label="Fecha" value={dateFilter} onChange={(value) => setDateFilter(value as typeof dateFilter)} options={[{ value: 'all', label: 'Cualquier fecha' }, { value: 'today', label: 'Hoy' }, { value: 'weekend', label: 'Este fin de semana' }, { value: 'range', label: 'Rango personalizado' }]} />
+            <SelectMenu label="Fecha" value={dateFilter} onChange={(value) => { setDateFilter(value as typeof dateFilter); if (value === 'range') setFiltersOpen(true) }} options={[{ value: 'all', label: 'Cualquier fecha' }, { value: 'today', label: 'Hoy' }, { value: 'weekend', label: 'Este fin de semana' }, { value: 'range', label: 'Rango personalizado' }]} />
             <SelectMenu label="Precio" value={priceFilter} align="end" onChange={(value) => setPriceFilter(value as typeof priceFilter)} options={[{ value: 'all', label: 'Todos' }, { value: 'free', label: 'Gratuitos' }, { value: 'paid', label: 'De pago' }]} />
             <button className="more-filters" onClick={() => setFiltersOpen((value) => !value)} aria-expanded={filtersOpen} aria-controls="more-filters-panel"><Icon name="sliders" />Más filtros{activeFilterCount > 0 && <b>{activeFilterCount}</b>}</button>
           </div>
-          {filtersOpen && <div className="more-filters-panel" id="more-filters-panel"><div className="date-range"><label>Desde<input type="date" value={dateFrom} onChange={(event) => { setDateFrom(event.target.value); setDateFilter('range') }} /></label><label>Hasta<input type="date" value={dateTo} min={dateFrom || undefined} onChange={(event) => { setDateTo(event.target.value); setDateFilter('range') }} /></label></div></div>}
-          {(query || category || city || dateFilter !== 'all' || priceFilter !== 'all') && <div className="active-filters" aria-label="Filtros activos">{query && <button onClick={() => setQuery('')}>Búsqueda: {query}<Icon name="close" size={15} /></button>}{category && <button onClick={() => setCategory('')}>{categoryPresentation[category]?.label ?? category}<Icon name="close" size={15} /></button>}{city && <button onClick={() => setCity('')}>Ciudad: {city}<Icon name="close" size={15} /></button>}{dateFilter !== 'all' && <button onClick={() => { setDateFilter('all'); setDateFrom(''); setDateTo('') }}>Fecha: {dateFilter === 'today' ? 'Hoy' : dateFilter === 'weekend' ? 'Este fin de semana' : 'Rango'}<Icon name="close" size={15} /></button>}{priceFilter !== 'all' && <button onClick={() => setPriceFilter('all')}>{priceFilter === 'free' ? 'Gratuitos' : 'De pago'}<Icon name="close" size={15} /></button>}<button className="clear-active" onClick={clearFilters}>Limpiar todos</button></div>}
+          {filtersOpen && <div className="more-filters-panel" id="more-filters-panel"><DateRangePicker from={dateFrom} to={dateTo} onApply={(from, to) => { setDateFrom(from); setDateTo(to); setDateFilter('range') }} onClear={() => { setDateFrom(''); setDateTo(''); if (dateFilter === 'range') setDateFilter('all') }} /></div>}
+          {(query || category || city || dateFilter !== 'all' || priceFilter !== 'all') && <div className="active-filters" aria-label="Filtros activos">{query && <button onClick={() => setQuery('')}>Búsqueda: {query}<Icon name="close" size={15} /></button>}{category && <button onClick={() => setCategory('')}>{categoryPresentation[category]?.label ?? category}<Icon name="close" size={15} /></button>}{city && <button onClick={() => setCity('')}>Ciudad: {city}<Icon name="close" size={15} /></button>}{dateFilter !== 'all' && <button onClick={() => { setDateFilter('all'); setDateFrom(''); setDateTo('') }}>Fecha: {dateFilter === 'today' ? 'Hoy' : dateFilter === 'weekend' ? 'Este fin de semana' : dateFrom && dateTo ? `${shortDate(dateFrom)} – ${shortDate(dateTo)}` : 'Rango'}<Icon name="close" size={15} /></button>}{priceFilter !== 'all' && <button onClick={() => setPriceFilter('all')}>{priceFilter === 'free' ? 'Gratuitos' : 'De pago'}<Icon name="close" size={15} /></button>}<button className="clear-active" onClick={clearFilters}>Limpiar todos</button></div>}
           {loading && <div className="status" role="status">Cargando experiencias…</div>}
           {error && <div className="status error" role="alert"><p>{error}</p><button onClick={() => void loadEvents()}>Reintentar</button></div>}
           {!loading && !error && filtered.length === 0 && <div className="empty-state"><span className="empty-icon"><Icon name="search" /></span><h3>No encontramos eventos</h3><p>Prueba otra fecha, categoría o rango de precio.</p><button className="button secondary" onClick={clearFilters}>Limpiar filtros</button></div>}

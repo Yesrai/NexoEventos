@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
@@ -199,6 +199,41 @@ describe('NexoEventos catalog', () => {
     expect(screen.getByRole('listbox', { name: 'Precio' })).toBeInTheDocument()
     fireEvent.pointerDown(document.body)
     expect(screen.queryByRole('listbox', { name: 'Precio' })).not.toBeInTheDocument()
+  })
+
+  it('selects and applies an accessible date range without native date inputs', async () => {
+    const events = [
+      { ...baseEvent, id: 1, name: 'Dentro del rango', date: '2026-10-12', venue: 'Sala Uno', category: 'Conciertos', price: 20, capacity: 10, available_capacity: 10 },
+      { ...baseEvent, id: 2, name: 'Fuera del rango', date: '2026-10-25', venue: 'Sala Dos', category: 'Talleres', price: 0, capacity: 10, available_capacity: 10 },
+    ]
+    vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request) => String(input).endsWith('/api/auth/session')
+      ? { ok: false, status: 401, json: async () => ({}) }
+      : { ok: true, status: 200, json: async () => events }))
+
+    render(<App />)
+    await screen.findByRole('heading', { name: 'Dentro del rango' })
+    fireEvent.click(screen.getByRole('button', { name: /Más filtros/ }))
+    const trigger = screen.getByRole('button', { name: 'Rango de fechas Seleccionar rango' })
+    fireEvent.click(trigger)
+    expect(screen.getByRole('dialog', { name: 'Seleccionar rango de fechas' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'martes, 20 de octubre de 2026' }))
+    fireEvent.click(screen.getByRole('button', { name: 'miércoles, 7 de octubre de 2026' }))
+    expect(screen.getByText(/07 oct.*selecciona el final/i)).toBeInTheDocument()
+    const start = screen.getByRole('button', { name: 'miércoles, 7 de octubre de 2026' })
+    fireEvent.keyDown(start, { key: 'ArrowRight' })
+    await waitFor(() => expect(screen.getByRole('button', { name: 'jueves, 8 de octubre de 2026' })).toHaveFocus())
+    fireEvent.click(screen.getByRole('button', { name: 'martes, 20 de octubre de 2026' }))
+    expect(screen.getByText(/07 oct.*20 oct/i)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Aplicar' }))
+
+    expect(screen.getByRole('button', { name: /Rango de fechas 07 oct.*20 oct/i })).toHaveFocus()
+    expect(screen.getByRole('heading', { name: 'Dentro del rango' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Fuera del rango' })).not.toBeInTheDocument()
+    expect(document.querySelector('input[type="date"]')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Rango de fechas 07 oct.*20 oct/i }))
+    fireEvent.keyDown(screen.getByRole('dialog', { name: 'Seleccionar rango de fechas' }), { key: 'Escape' })
+    expect(screen.queryByRole('dialog', { name: 'Seleccionar rango de fechas' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Rango de fechas 07 oct.*20 oct/i })).toHaveFocus()
   })
 
   it('selects a numbered seat and uses the server-defined price', async () => {
