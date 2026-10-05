@@ -121,6 +121,60 @@ function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
   return <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>
 }
 
+function AccountMenu({ user, onLogout }: { user: User; onLogout: () => Promise<void> }) {
+  const [open, setOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const logoutRef = useRef<HTMLButtonElement>(null)
+  const menuId = useId()
+  const accountName = user.display_name?.trim() || user.email?.split('@')[0] || 'Usuario'
+  const initial = accountName.charAt(0).toLocaleUpperCase('es-PE')
+
+  useEffect(() => {
+    if (!open) return
+    const closeOutside = (event: PointerEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) setOpen(false)
+    }
+    document.addEventListener('pointerdown', closeOutside)
+    return () => document.removeEventListener('pointerdown', closeOutside)
+  }, [open])
+
+  function openWithKeyboard() {
+    setOpen(true)
+    window.requestAnimationFrame(() => logoutRef.current?.focus())
+  }
+
+  return <div className="account-menu" ref={containerRef}>
+    <button
+      ref={triggerRef}
+      type="button"
+      className="account-trigger"
+      aria-label={`Abrir menú de ${accountName}`}
+      aria-haspopup="menu"
+      aria-expanded={open}
+      aria-controls={open ? menuId : undefined}
+      onClick={() => setOpen((value) => !value)}
+      onKeyDown={(event) => {
+        if (event.key === 'ArrowDown') { event.preventDefault(); openWithKeyboard() }
+      }}
+    >
+      <span className="account-avatar" aria-hidden="true">{initial}</span>
+    </button>
+    {open && <div
+      id={menuId}
+      className="account-popover"
+      role="menu"
+      aria-label="Cuenta"
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') { event.preventDefault(); setOpen(false); triggerRef.current?.focus() }
+      }}
+    >
+      <div className="account-identity"><span>Sesión iniciada como</span><strong>{accountName}</strong></div>
+      <button ref={logoutRef} type="button" role="menuitem" onClick={() => { setOpen(false); void onLogout() }}><Icon name="close" size={17} />Cerrar sesión</button>
+    </div>}
+  </div>
+}
+
 const categoryPresentation: Record<string, { label: string; Icon: IconType }> = {
   Conciertos: { label: 'Conciertos', Icon: GiMicrophone },
   Festivales: { label: 'Festivales', Icon: GiCampingTent },
@@ -627,19 +681,24 @@ export default function App() {
 
   return (
     <main className="app-shell">
+      <div className="promo-banner" role="note" aria-label="Promoción de demostración">
+        <span>Hasta <strong>6 cuotas sin intereses</strong> con tu tarjeta BCP</span>
+        <small>Promoción de ejemplo · No vigente</small>
+      </div>
       <header className="site-header">
         <nav className="nav" aria-label="Navegación principal">
           <button className="brand link-button" onClick={() => setView('catalog')} aria-label="Ir al inicio de NexoEventos"><span className="brand-mark">N</span><span>Nexo<strong>Eventos</strong></span></button>
           <button className="nav-link link-button events-link" onClick={() => setView('catalog')}>Eventos</button>
-          {view === 'catalog' && <form className="header-search" role="search" onSubmit={(event) => { event.preventDefault(); document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' }) }}><label className="sr-only" htmlFor="main-search">Buscar eventos</label><input id="main-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar eventos, lugares o categorías" /><button type="submit" aria-label="Buscar"><Icon name="search" /></button></form>}
+          {view === 'catalog' && <form className="header-search" role="search" onSubmit={(event) => { event.preventDefault(); document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' }) }}><label className="sr-only" htmlFor="main-search">Buscar eventos</label><input id="main-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar eventos" /><button type="submit" aria-label="Buscar"><Icon name="search" /></button></form>}
           <div className="nav-actions">
             {user?.role === 'client' && <button className="nav-link link-button" aria-label="Mis entradas" onClick={() => setView('account')}><Icon name="ticket" size={17} /><span>Mis entradas</span></button>}
             {user?.role === 'operator' && <button className="nav-link link-button" aria-label="Control de acceso" onClick={() => setView('operator')}><Icon name="qr" size={17} /><span>Control de acceso</span></button>}
             {user?.role === 'organizer' && <button className="nav-link link-button" aria-label="Mis eventos" onClick={() => setView('organizer')}><Icon name="calendar" size={17} /><span>Mis eventos</span></button>}
-            {user ? <button className="button secondary compact-button" aria-label="Cerrar sesión" onClick={() => void logout()}><Icon name="close" size={17} /><span>Cerrar sesión</span></button> : <button className="button secondary compact-button" aria-label="Ingresar" onClick={() => setView('auth')}><Icon name="user" size={18} /><span>Ingresar</span></button>}
+            {user ? <AccountMenu user={user} onLogout={logout} /> : <button className="button secondary compact-button" aria-label="Ingresar" onClick={() => setView('auth')}><Icon name="user" size={18} /><span>Ingresar</span></button>}
           </div>
         </nav>
       </header>
+      <div className="demo-strip" role="note"><span>Demo académica</span><i aria-hidden="true">·</i><span>Eventos ficticios</span><i aria-hidden="true">·</i><span>Sin cobros reales</span></div>
 
       {sessionNotice && <div className="notice" role="status">{sessionNotice}<button aria-label="Cerrar aviso" onClick={() => setSessionNotice(null)}><Icon name="close" /></button></div>}
       {!sessionReady && <div className="status dark" role="status">Comprobando sesión…</div>}
@@ -651,13 +710,12 @@ export default function App() {
 
       {view === 'catalog' && <>
         <section className="home-intro" id="inicio" aria-labelledby="featured-title">
-          <div className="home-section-title"><div><p className="eyebrow">Demostración académica</p><h1 id="featured-title">Destacados</h1></div><p>Eventos ficticios y reservas simuladas.</p></div>
+          <div className="home-section-title"><h1 id="featured-title">Destacados</h1></div>
           {loading && <div className="status" role="status">Cargando destacados…</div>}
           {!loading && featured && <div className="featured-layout">
             <article className="featured-main">
               <button className="featured-poster" onClick={() => void openDetail(featured.id)} aria-label={`Abrir evento destacado ${featured.name}`}>
                 {featured.image_path ? <img src={featured.image_path} alt="" /> : <span className="image-fallback">{featured.category}</span>}
-                <span className="demo-label">Evento ficticio</span>
                 <span className="poster-copy"><small>{featured.category}</small><strong>{featured.name}</strong><span>{formatDate(featured.date)} · {formatTime(featured.time)} · {featured.city}</span></span>
               </button>
               <button className="carousel-arrow previous" aria-label="Evento destacado anterior" onClick={() => moveFeatured(-1)}><Icon name="arrow" /></button>

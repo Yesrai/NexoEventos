@@ -146,6 +146,25 @@ describe('NexoEventos catalog', () => {
     expect(screen.getByText('Tu sesión expiró. Vuelve a iniciar sesión.')).toBeInTheDocument()
   })
 
+  it('opens the accessible account menu and performs the real logout action', async () => {
+    const fetchMock = vi.fn(async (input: string | URL | Request) => {
+      const url = String(input)
+      if (url.endsWith('/api/auth/session')) return { ok: true, status: 200, json: async () => ({ id: '1', email: 'client@example.com', display_name: 'Cliente Demo', role: 'client', session_expires_at: '2026-10-05T00:00:00Z' }) }
+      if (url.endsWith('/api/auth/logout')) return { ok: true, status: 204, json: async () => ({}) }
+      return { ok: true, status: 200, json: async () => [] }
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(<App />)
+    const trigger = await screen.findByRole('button', { name: 'Abrir menú de Cliente Demo' })
+    fireEvent.keyDown(trigger, { key: 'ArrowDown' })
+    expect(screen.getByText('Cliente Demo')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Cerrar sesión' }))
+
+    await waitFor(() => expect(fetchMock.mock.calls.some(([input]) => String(input).endsWith('/api/auth/logout'))).toBe(true))
+    expect(screen.getByText('Sesión cerrada correctamente.')).toBeInTheDocument()
+  })
+
   it('combines category and city filters and can clear them', async () => {
     const events = [
       { ...baseEvent, id: 1, name: 'Concierto Lima', date: '2026-10-17', venue: 'Teatro Uno', category: 'Conciertos', price: 20, capacity: 10, available_capacity: 10 },
