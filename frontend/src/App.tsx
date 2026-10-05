@@ -22,7 +22,7 @@ type View = 'catalog' | 'auth' | 'account' | 'operator' | 'organizer'
 type BarcodeResult = { rawValue: string }
 type BarcodeDetectorInstance = { detect(source: HTMLVideoElement): Promise<BarcodeResult[]> }
 type BarcodeDetectorConstructor = new (options: { formats: string[] }) => BarcodeDetectorInstance
-type IconName = 'arrow' | 'calendar' | 'check' | 'clock' | 'close' | 'eye' | 'eyeOff' | 'location' | 'minus' | 'plus' | 'qr' | 'search' | 'ticket' | 'user'
+type IconName = 'arrow' | 'calendar' | 'check' | 'clock' | 'close' | 'eye' | 'eyeOff' | 'fair' | 'location' | 'minus' | 'music' | 'plus' | 'qr' | 'search' | 'sliders' | 'sport' | 'theater' | 'ticket' | 'user' | 'workshop'
 
 const configuredApiUrl = import.meta.env.VITE_API_URL
 const apiUrl = configuredApiUrl !== undefined
@@ -76,13 +76,19 @@ function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
     close: <><path d="m6 6 12 12M18 6 6 18" /></>,
     eye: <><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" /><circle cx="12" cy="12" r="2.5" /></>,
     eyeOff: <><path d="m3 3 18 18" /><path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6.5 0 10 6 10 6a17 17 0 0 1-2.1 2.9M6.6 6.6C3.6 8.4 2 12 2 12s3.5 6 10 6c1.3 0 2.5-.2 3.5-.6" /></>,
+    fair: <><path d="M4 10h16l-2-5H6l-2 5Z" /><path d="M5 10v9h14v-9M9 19v-5h6v5" /><path d="M4 10c0 2 3 2 4 0 1 2 3 2 4 0 1 2 3 2 4 0 1 2 4 2 4 0" /></>,
     location: <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></>,
     minus: <path d="M5 12h14" />,
+    music: <><path d="M9 18V5l10-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="16" cy="16" r="3" /></>,
     plus: <><path d="M12 5v14M5 12h14" /></>,
     qr: <><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 20h1M20 14h1" /></>,
     search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></>,
+    sliders: <><path d="M4 6h16M4 12h16M4 18h16" /><circle cx="8" cy="6" r="2" fill="white" /><circle cx="15" cy="12" r="2" fill="white" /><circle cx="10" cy="18" r="2" fill="white" /></>,
+    sport: <><circle cx="12" cy="12" r="9" /><path d="m8.5 4.8 3.5 2.6 3.5-2.6M3.5 10l4.2 1.4 1.6 4.8-2.7 3.1M20.5 10l-4.2 1.4-1.6 4.8 2.7 3.1M9.3 16.2h5.4" /></>,
+    theater: <><path d="M4 5c3-2 6-2 9 0v8c-2 4-7 4-9 0V5Z" /><path d="M7 8h.01M10 8h.01M7 12c1 .8 2 .8 3 0" /><path d="M14 7c2-1 4-1 6 0v7c-1 3-4 4-6 2" /></>,
     ticket: <><path d="M3 9a3 3 0 0 0 0 6v4h18v-4a3 3 0 0 0 0-6V5H3v4Z" /><path d="M13 7v2M13 13v4" /></>,
     user: <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>,
+    workshop: <><path d="M4 20h16M7 20V9l5-5 5 5v11" /><path d="M9 13h6M12 10v6" /></>,
   }
   return <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>
 }
@@ -104,6 +110,7 @@ export default function App() {
   const [priceFilter, setPriceFilter] = useState<'all' | 'free' | 'paid'>('all')
   const [sort, setSort] = useState<'date' | 'price-asc' | 'price-desc'>('date')
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [featuredIndex, setFeaturedIndex] = useState(0)
   const [selected, setSelected] = useState<EventDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [quantity, setQuantity] = useState(1)
@@ -243,9 +250,30 @@ export default function App() {
   const categories = useMemo(() => [...new Set(events.map((item) => item.category))].sort(), [events])
   const cities = useMemo(() => [...new Set(events.map((item) => item.city))].sort(), [events])
   const activeFilterCount = [category, city, dateFilter !== 'all', priceFilter !== 'all'].filter(Boolean).length
+  const curatedFeatured = [1002, 1004, 1010, 1013, 1016, 1003].flatMap((id) => {
+    const item = events.find((event) => event.id === id)
+    return item ? [item] : []
+  })
+  const featuredEvents = curatedFeatured.length ? curatedFeatured : events.slice(0, 6)
+  const featured = featuredEvents[featuredIndex % Math.max(featuredEvents.length, 1)]
+  const sideFeatured = featuredEvents.length > 1
+    ? [...featuredEvents.slice(featuredIndex + 1), ...featuredEvents.slice(0, featuredIndex)].slice(0, 3)
+    : []
+  const categoryPresentation: Record<string, { label: string; icon: IconName }> = {
+    Conciertos: { label: 'Conciertos', icon: 'music' },
+    Deportes: { label: 'Deportes', icon: 'sport' },
+    Ferias: { label: 'Ferias', icon: 'fair' },
+    Talleres: { label: 'Talleres', icon: 'workshop' },
+    'Teatro y stand-up': { label: 'Teatro', icon: 'theater' },
+  }
 
   function clearFilters() {
     setQuery(''); setCategory(''); setCity(''); setDateFilter('all'); setDateFrom(''); setDateTo(''); setPriceFilter('all'); setSort('date')
+  }
+
+  function moveFeatured(direction: number) {
+    if (!featuredEvents.length) return
+    setFeaturedIndex((value) => (value + direction + featuredEvents.length) % featuredEvents.length)
   }
 
   const activeZone = selected?.zones?.find((zone) => zone.id === zoneId) ?? null
@@ -275,13 +303,13 @@ export default function App() {
       <header className="site-header">
         <nav className="nav" aria-label="Navegación principal">
           <button className="brand link-button" onClick={() => setView('catalog')} aria-label="Ir al inicio de NexoEventos"><span className="brand-mark">N</span><span>Nexo<strong>Eventos</strong></span></button>
-          {view === 'catalog' && <label className="header-search"><span className="sr-only">Buscar eventos</span><Icon name="search" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar eventos, lugares o categorías" /></label>}
+          <button className="nav-link link-button events-link" onClick={() => setView('catalog')}>Eventos</button>
+          {view === 'catalog' && <form className="header-search" role="search" onSubmit={(event) => { event.preventDefault(); document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' }) }}><label className="sr-only" htmlFor="main-search">Buscar eventos</label><input id="main-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar eventos, lugares o categorías" /><button type="submit" aria-label="Buscar"><Icon name="search" /></button></form>}
           <div className="nav-actions">
-            <button className="nav-link link-button" onClick={() => setView('catalog')}>Eventos</button>
-            {user?.role === 'client' && <button className="nav-link link-button" onClick={() => setView('account')}>Mis entradas</button>}
-            {user?.role === 'operator' && <button className="nav-link link-button" onClick={() => setView('operator')}>Control de acceso</button>}
-            {user?.role === 'organizer' && <button className="nav-link link-button" onClick={() => setView('organizer')}>Mis eventos</button>}
-            {user ? <button className="button secondary compact-button" onClick={() => void logout()}>Cerrar sesión</button> : <button className="button secondary compact-button" onClick={() => setView('auth')}><Icon name="user" size={18} /> Ingresar</button>}
+            {user?.role === 'client' && <button className="nav-link link-button" aria-label="Mis entradas" onClick={() => setView('account')}><Icon name="ticket" size={17} /><span>Mis entradas</span></button>}
+            {user?.role === 'operator' && <button className="nav-link link-button" aria-label="Control de acceso" onClick={() => setView('operator')}><Icon name="qr" size={17} /><span>Control de acceso</span></button>}
+            {user?.role === 'organizer' && <button className="nav-link link-button" aria-label="Mis eventos" onClick={() => setView('organizer')}><Icon name="calendar" size={17} /><span>Mis eventos</span></button>}
+            {user ? <button className="button secondary compact-button" aria-label="Cerrar sesión" onClick={() => void logout()}><Icon name="close" size={17} /><span>Cerrar sesión</span></button> : <button className="button secondary compact-button" aria-label="Ingresar" onClick={() => setView('auth')}><Icon name="user" size={18} /><span>Ingresar</span></button>}
           </div>
         </nav>
       </header>
@@ -295,22 +323,37 @@ export default function App() {
       {view === 'organizer' && user?.role === 'organizer' && <OrganizerPanel />}
 
       {view === 'catalog' && <>
-        <header className="discovery-header" id="inicio"><div><p className="eyebrow">Catálogo académico de demostración</p><h1>Eventos en Lima</h1><p>Conciertos, teatro, stand-up, talleres, ferias y deportes con reservas simuladas. Las fotografías son ilustrativas.</p></div><div className="category-links" aria-label="Categorías">{categories.map((value) => <button key={value} className={category === value ? 'selected' : ''} onClick={() => setCategory(category === value ? '' : value)}>{value}</button>)}</div></header>
+        <section className="home-intro" id="inicio" aria-labelledby="featured-title">
+          <div className="home-section-title"><div><p className="eyebrow">Demostración académica</p><h1 id="featured-title">Destacados</h1></div><p>Eventos ficticios y reservas simuladas.</p></div>
+          {loading && <div className="status" role="status">Cargando destacados…</div>}
+          {!loading && featured && <div className="featured-layout">
+            <article className="featured-main">
+              <button className="featured-poster" onClick={() => void openDetail(featured.id)} aria-label={`Abrir evento destacado ${featured.name}`}>
+                {featured.image_path ? <img src={featured.image_path} alt="" /> : <span className="image-fallback">{featured.category}</span>}
+                <span className="demo-label">Evento ficticio</span>
+                <span className="poster-copy"><small>{featured.category}</small><strong>{featured.name}</strong><span>{formatDate(featured.date)} · {formatTime(featured.time)} · {featured.city}</span></span>
+              </button>
+              <button className="carousel-arrow previous" aria-label="Evento destacado anterior" onClick={() => moveFeatured(-1)}><Icon name="arrow" /></button>
+              <button className="carousel-arrow next" aria-label="Siguiente evento destacado" onClick={() => moveFeatured(1)}><Icon name="arrow" /></button>
+              <div className="carousel-dots" aria-label="Seleccionar evento destacado">{featuredEvents.map((item, index) => <button key={item.id} className={index === featuredIndex ? 'active' : ''} aria-label={`Mostrar ${item.name}`} aria-current={index === featuredIndex ? 'true' : undefined} onClick={() => setFeaturedIndex(index)} />)}</div>
+            </article>
+            <aside className="featured-side" aria-label="Más eventos destacados">{sideFeatured.map((item) => <button key={item.id} onClick={() => void openDetail(item.id)} aria-label={`Abrir ${item.name}`}>{item.image_path ? <img src={item.image_path} alt="" /> : <span className="image-fallback">{item.category}</span>}<span><small>{formatDate(item.date)} · {item.category}</small><strong>{item.name}</strong><em>{item.price === 0 ? 'Gratis' : `Desde S/ ${item.price.toFixed(2)}`}</em></span></button>)}</aside>
+          </div>}
+          <section className="category-section" aria-labelledby="categories-title"><div className="home-section-title compact"><h2 id="categories-title">Categorías</h2></div><div className="category-links" aria-label="Categorías">{categories.map((value) => { const presentation = categoryPresentation[value] ?? { label: value, icon: 'ticket' as IconName }; return <button key={value} aria-pressed={category === value} className={category === value ? 'selected' : ''} onClick={() => setCategory(category === value ? '' : value)}><span><Icon name={presentation.icon} /></span>{presentation.label}</button> })}</div></section>
+        </section>
         <section className="catalog" id="catalogo" aria-labelledby="catalog-title">
           <div className="section-heading">
-            <div><p className="eyebrow">Cartelera demo</p><h2 id="catalog-title">{category || 'Próximos eventos'}</h2><p>{filtered.length} resultado{filtered.length === 1 ? '' : 's'} con los filtros actuales.</p></div>
-            <button className="button secondary filter-toggle" onClick={() => setFiltersOpen((value) => !value)} aria-expanded={filtersOpen}>Filtros{activeFilterCount > 0 && <span>{activeFilterCount}</span>}</button>
+            <div><h2 id="catalog-title">Próximos eventos</h2></div>
+            <div className="results-sort"><span>{filtered.length} resultado{filtered.length === 1 ? '' : 's'}</span><label>Ordenar<select value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}><option value="date">Fecha próxima</option><option value="price-asc">Precio menor</option><option value="price-desc">Precio mayor</option></select></label></div>
           </div>
-          <div className={`filters-panel ${filtersOpen ? 'open' : ''}`}>
-            <label className="search filter-search"><Icon name="search" /><span className="sr-only">Buscar eventos</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por nombre o lugar" /></label>
-            <label>Categoría<select value={category} onChange={(event) => setCategory(event.target.value)}><option value="">Todas</option>{categories.map((value) => <option key={value}>{value}</option>)}</select></label>
-            <label>Ciudad<select value={city} onChange={(event) => setCity(event.target.value)}><option value="">Todas</option>{cities.map((value) => <option key={value}>{value}</option>)}</select></label>
-            <label>Fecha<select value={dateFilter} onChange={(event) => setDateFilter(event.target.value as typeof dateFilter)}><option value="all">Cualquier fecha</option><option value="today">Hoy</option><option value="weekend">Este fin de semana</option><option value="range">Rango de fechas</option></select></label>
-            <label>Precio<select value={priceFilter} onChange={(event) => setPriceFilter(event.target.value as typeof priceFilter)}><option value="all">Todos</option><option value="free">Gratuitos</option><option value="paid">De pago</option></select></label>
-            <label>Ordenar<select value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}><option value="date">Fecha próxima</option><option value="price-asc">Precio menor</option><option value="price-desc">Precio mayor</option></select></label>
-            {dateFilter === 'range' && <div className="date-range"><label>Desde<input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} /></label><label>Hasta<input type="date" value={dateTo} min={dateFrom || undefined} onChange={(event) => setDateTo(event.target.value)} /></label></div>}
-            <button className="inline-link clear-filters" onClick={clearFilters}>Limpiar filtros</button>
+          <div className="compact-filters" aria-label="Filtros del catálogo">
+            <label><span>Ciudad</span><select value={city} onChange={(event) => setCity(event.target.value)}><option value="">Todas</option>{cities.map((value) => <option key={value}>{value}</option>)}</select></label>
+            <label><span>Fecha</span><select value={dateFilter} onChange={(event) => setDateFilter(event.target.value as typeof dateFilter)}><option value="all">Cualquier fecha</option><option value="today">Hoy</option><option value="weekend">Este fin de semana</option><option value="range">Rango personalizado</option></select></label>
+            <label><span>Precio</span><select value={priceFilter} onChange={(event) => setPriceFilter(event.target.value as typeof priceFilter)}><option value="all">Todos</option><option value="free">Gratuitos</option><option value="paid">De pago</option></select></label>
+            <button className="more-filters" onClick={() => setFiltersOpen((value) => !value)} aria-expanded={filtersOpen} aria-controls="more-filters-panel"><Icon name="sliders" />Más filtros{activeFilterCount > 0 && <b>{activeFilterCount}</b>}</button>
           </div>
+          {filtersOpen && <div className="more-filters-panel" id="more-filters-panel"><div className="date-range"><label>Desde<input type="date" value={dateFrom} onChange={(event) => { setDateFrom(event.target.value); setDateFilter('range') }} /></label><label>Hasta<input type="date" value={dateTo} min={dateFrom || undefined} onChange={(event) => { setDateTo(event.target.value); setDateFilter('range') }} /></label></div></div>}
+          {(query || category || city || dateFilter !== 'all' || priceFilter !== 'all') && <div className="active-filters" aria-label="Filtros activos">{query && <button onClick={() => setQuery('')}>Búsqueda: {query}<Icon name="close" size={15} /></button>}{category && <button onClick={() => setCategory('')}>{categoryPresentation[category]?.label ?? category}<Icon name="close" size={15} /></button>}{city && <button onClick={() => setCity('')}>Ciudad: {city}<Icon name="close" size={15} /></button>}{dateFilter !== 'all' && <button onClick={() => { setDateFilter('all'); setDateFrom(''); setDateTo('') }}>Fecha: {dateFilter === 'today' ? 'Hoy' : dateFilter === 'weekend' ? 'Este fin de semana' : 'Rango'}<Icon name="close" size={15} /></button>}{priceFilter !== 'all' && <button onClick={() => setPriceFilter('all')}>{priceFilter === 'free' ? 'Gratuitos' : 'De pago'}<Icon name="close" size={15} /></button>}<button className="clear-active" onClick={clearFilters}>Limpiar todos</button></div>}
           {loading && <div className="status" role="status">Cargando experiencias…</div>}
           {error && <div className="status error" role="alert"><p>{error}</p><button onClick={() => void loadEvents()}>Reintentar</button></div>}
           {!loading && !error && filtered.length === 0 && <div className="empty-state"><span className="empty-icon"><Icon name="search" /></span><h3>No encontramos eventos</h3><p>Prueba otra fecha, categoría o rango de precio.</p><button className="button secondary" onClick={clearFilters}>Limpiar filtros</button></div>}

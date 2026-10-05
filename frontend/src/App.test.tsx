@@ -157,11 +157,15 @@ describe('NexoEventos catalog', () => {
 
     render(<App />)
     expect(await screen.findByRole('heading', { name: 'Concierto Lima' })).toBeInTheDocument()
-    fireEvent.change(screen.getByLabelText('Categoría'), { target: { value: 'Talleres' } })
+    expect(screen.getAllByRole('textbox', { name: 'Buscar eventos' })).toHaveLength(1)
+    fireEvent.click(screen.getByRole('button', { name: 'Siguiente evento destacado' }))
+    expect(screen.getByRole('button', { name: 'Abrir evento destacado Taller Callao' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Talleres' }))
     fireEvent.change(screen.getByLabelText('Ciudad'), { target: { value: 'Callao' } })
     expect(screen.queryByRole('heading', { name: 'Concierto Lima' })).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Taller Callao' })).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
+    expect(screen.getByRole('button', { name: 'Ciudad: Callao' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Limpiar todos' }))
     expect(screen.getByRole('heading', { name: 'Concierto Lima' })).toBeInTheDocument()
   })
 
