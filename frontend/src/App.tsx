@@ -1,5 +1,23 @@
 import { FormEvent, KeyboardEvent as ReactKeyboardEvent, ReactNode, useEffect, useId, useMemo, useRef, useState } from 'react'
 import QRCode from 'qrcode'
+import type { IconType } from 'react-icons'
+import {
+  GiBallerinaShoes,
+  GiBearFace,
+  GiCampingTent,
+  GiClapperboard,
+  GiDramaMasks,
+  GiHammerNails,
+  GiKnifeFork,
+  GiMeshNetwork,
+  GiMicrochip,
+  GiMicrophone,
+  GiPalette,
+  GiPublicSpeaker,
+  GiShop,
+  GiSoccerBall,
+  GiWoodFrame,
+} from 'react-icons/gi'
 
 type Role = 'client' | 'organizer' | 'operator'
 type User = { id: string; email: string; display_name: string; role: Role; session_expires_at: string }
@@ -103,22 +121,22 @@ function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
   return <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>
 }
 
-const categoryPresentation: Record<string, { label: string; icon: IconName }> = {
-  Conciertos: { label: 'Conciertos', icon: 'music' },
-  Festivales: { label: 'Festivales', icon: 'festival' },
-  'Teatro y stand-up': { label: 'Teatro', icon: 'theater' },
-  Danza: { label: 'Danza', icon: 'dance' },
-  Cine: { label: 'Cine', icon: 'cinema' },
-  Deportes: { label: 'Deportes', icon: 'sport' },
-  Gastronomía: { label: 'Gastronomía', icon: 'food' },
-  Ferias: { label: 'Ferias', icon: 'fair' },
-  Exposiciones: { label: 'Exposiciones', icon: 'exhibition' },
-  'Arte y cultura': { label: 'Arte y cultura', icon: 'art' },
-  Talleres: { label: 'Talleres', icon: 'workshop' },
-  Infantil: { label: 'Infantil', icon: 'kids' },
-  Conferencias: { label: 'Conferencias', icon: 'conference' },
-  Networking: { label: 'Networking', icon: 'networking' },
-  Tecnología: { label: 'Tecnología', icon: 'technology' },
+const categoryPresentation: Record<string, { label: string; Icon: IconType }> = {
+  Conciertos: { label: 'Conciertos', Icon: GiMicrophone },
+  Festivales: { label: 'Festivales', Icon: GiCampingTent },
+  'Teatro y stand-up': { label: 'Teatro', Icon: GiDramaMasks },
+  Danza: { label: 'Danza', Icon: GiBallerinaShoes },
+  Cine: { label: 'Cine', Icon: GiClapperboard },
+  Deportes: { label: 'Deportes', Icon: GiSoccerBall },
+  Gastronomía: { label: 'Gastronomía', Icon: GiKnifeFork },
+  Ferias: { label: 'Ferias', Icon: GiShop },
+  Exposiciones: { label: 'Exposiciones', Icon: GiWoodFrame },
+  'Arte y cultura': { label: 'Arte y cultura', Icon: GiPalette },
+  Talleres: { label: 'Talleres', Icon: GiHammerNails },
+  Infantil: { label: 'Infantil', Icon: GiBearFace },
+  Conferencias: { label: 'Conferencias', Icon: GiPublicSpeaker },
+  Networking: { label: 'Networking', Icon: GiMeshNetwork },
+  Tecnología: { label: 'Tecnología', Icon: GiMicrochip },
 }
 
 const categoryOrder = Object.keys(categoryPresentation)
@@ -428,6 +446,7 @@ export default function App() {
   const [reservationError, setReservationError] = useState<string | null>(null)
   const [reserving, setReserving] = useState(false)
   const idempotencyKey = useRef<string | null>(null)
+  const categoryListRef = useRef<HTMLDivElement>(null)
 
   async function loadEvents() {
     setLoading(true)
@@ -580,6 +599,10 @@ export default function App() {
     setFeaturedIndex((value) => (value + direction + featuredEvents.length) % featuredEvents.length)
   }
 
+  function moveCategories(direction: number) {
+    categoryListRef.current?.scrollBy({ left: direction * 620, behavior: 'smooth' })
+  }
+
   const activeZone = selected?.zones?.find((zone) => zone.id === zoneId) ?? null
   const quantityLimit = selected ? Math.min(10, activeZone?.available_capacity ?? selected.available_capacity) : 1
   const currentPrice = selected ? activeZone?.price ?? selected.price : 0
@@ -643,7 +666,17 @@ export default function App() {
             </article>
             <aside className="featured-side" aria-label="Más eventos destacados">{sideFeatured.map((item) => <button key={item.id} onClick={() => void openDetail(item.id)} aria-label={`Abrir ${item.name}`}>{item.image_path ? <img src={item.image_path} alt="" /> : <span className="image-fallback">{item.category}</span>}<span><small>{formatDate(item.date)} · {item.category}</small><strong>{item.name}</strong><em>{item.price === 0 ? 'Gratis' : `Desde S/ ${item.price.toFixed(2)}`}</em></span></button>)}</aside>
           </div>}
-          <section className="category-section" aria-labelledby="categories-title"><div className="home-section-title compact"><h2 id="categories-title">Categorías</h2><p>Explora por tipo de evento</p></div><div className="category-links" aria-label="Categorías">{categories.map((value) => { const presentation = categoryPresentation[value] ?? { label: value, icon: 'ticket' as IconName }; return <button key={value} aria-pressed={category === value} className={category === value ? 'selected' : ''} onClick={() => setCategory(category === value ? '' : value)}><span><Icon name={presentation.icon} size={22} /></span>{presentation.label}</button> })}</div></section>
+          <section className="category-section" aria-labelledby="categories-title">
+            <div className="home-section-title compact"><h2 id="categories-title">Categorías</h2><p>Explora por tipo de evento</p></div>
+            <div className="category-carousel">
+              <button type="button" className="category-arrow previous" aria-label="Ver categorías anteriores" onClick={() => moveCategories(-1)}><Icon name="arrow" size={19} /></button>
+              <div className="category-links" aria-label="Categorías" ref={categoryListRef}>{categories.map((value) => {
+                const presentation = categoryPresentation[value] ?? { label: value, Icon: GiClapperboard }
+                return <button key={value} aria-pressed={category === value} className={category === value ? 'selected' : ''} onClick={() => setCategory(category === value ? '' : value)}><span className="category-icon"><presentation.Icon aria-hidden="true" /></span><span className="category-name">{presentation.label}</span></button>
+              })}</div>
+              <button type="button" className="category-arrow next" aria-label="Ver más categorías" onClick={() => moveCategories(1)}><Icon name="arrow" size={19} /></button>
+            </div>
+          </section>
         </section>
         <section className="catalog" id="catalogo" aria-labelledby="catalog-title">
           <div className="section-heading">
