@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime, timezone
+from datetime import date, datetime, time, timezone
 from decimal import Decimal
 
 from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint, func
@@ -53,12 +53,17 @@ class Event(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False)
     name: Mapped[str] = mapped_column(String(160))
     event_date: Mapped[date] = mapped_column(Date)
+    event_time: Mapped[time | None] = mapped_column(nullable=True)
     venue: Mapped[str] = mapped_column(String(180))
+    city: Mapped[str] = mapped_column(String(80), default="Lima", server_default="Lima")
     category: Mapped[str] = mapped_column(String(80))
     description: Mapped[str] = mapped_column(Text)
     price: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     capacity: Mapped[int] = mapped_column(Integer)
     reserved_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    image_path: Mapped[str | None] = mapped_column(String(240), nullable=True)
+    ticket_mode: Mapped[str] = mapped_column(String(20), default="general", server_default="general")
+    is_demo: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
     organizer_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 
 
@@ -85,6 +90,36 @@ class OperatorEventAssignment(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class EventZone(Base):
+    __tablename__ = "event_zones"
+    __table_args__ = (
+        CheckConstraint("price >= 0", name="ck_event_zones_price_nonnegative"),
+        CheckConstraint("capacity >= 0", name="ck_event_zones_capacity_nonnegative"),
+        CheckConstraint("reserved_count BETWEEN 0 AND capacity", name="ck_event_zones_reserved_within_capacity"),
+        UniqueConstraint("event_id", "name", name="uq_event_zones_event_name"),
+    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(80))
+    price: Mapped[Decimal] = mapped_column(Numeric(10, 2))
+    capacity: Mapped[int] = mapped_column(Integer)
+    reserved_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+
+
+class EventSeat(Base):
+    __tablename__ = "event_seats"
+    __table_args__ = (
+        CheckConstraint("seat_number > 0", name="ck_event_seats_number_positive"),
+        UniqueConstraint("event_id", "zone_id", "row_label", "seat_number", name="uq_event_seats_position"),
+    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id", ondelete="CASCADE"), index=True)
+    zone_id: Mapped[int] = mapped_column(ForeignKey("event_zones.id", ondelete="CASCADE"))
+    row_label: Mapped[str] = mapped_column(String(12))
+    seat_number: Mapped[int] = mapped_column(Integer)
+    reservation_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("reservations.id", ondelete="RESTRICT"), index=True, nullable=True)
+
+
 class Ticket(Base):
     __tablename__ = "tickets"
     __table_args__ = (UniqueConstraint("token_hash", name="uq_tickets_token_hash"),)
@@ -94,6 +129,10 @@ class Ticket(Base):
     owner_user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"), index=True)
     token_hash: Mapped[str] = mapped_column(String(64))
     token_ciphertext: Mapped[str] = mapped_column(Text)
+    ticket_type: Mapped[str] = mapped_column(String(20), default="general", server_default="general")
+    zone_id: Mapped[int | None] = mapped_column(ForeignKey("event_zones.id", ondelete="RESTRICT"), nullable=True)
+    seat_id: Mapped[int | None] = mapped_column(ForeignKey("event_seats.id", ondelete="RESTRICT"), nullable=True, unique=True)
+    unit_price: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     used_by_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"), nullable=True)

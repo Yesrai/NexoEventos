@@ -9,10 +9,19 @@ afterEach(() => {
 })
 
 describe('NexoEventos catalog', () => {
+  const baseEvent = {
+    time: '19:30:00',
+    city: 'Lima',
+    image_path: null,
+    ticket_mode: 'general' as const,
+    is_demo: true,
+  }
+
   it('renders events returned by the API', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
       json: async () => [{
+        ...baseEvent,
         id: 1,
         name: 'Evento persistente',
         date: '2026-10-17',
@@ -32,6 +41,7 @@ describe('NexoEventos catalog', () => {
 
   it('updates quantity and total while respecting the minimum', async () => {
     const event = {
+      ...baseEvent,
       id: 1,
       name: 'Evento persistente',
       date: '2026-10-17',
@@ -44,7 +54,7 @@ describe('NexoEventos catalog', () => {
     vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request) => {
       const url = String(input)
       if (url.endsWith('/api/auth/session')) return { ok: false, status: 401, json: async () => ({}) }
-      if (url.endsWith('/api/events/1')) return { ok: true, status: 200, json: async () => ({ ...event, description: 'Descripción de prueba' }) }
+      if (url.endsWith('/api/events/1')) return { ok: true, status: 200, json: async () => ({ ...event, description: 'Descripción de prueba', zones: [], seats: [] }) }
       return { ok: true, status: 200, json: async () => [event] }
     }))
 
@@ -54,7 +64,7 @@ describe('NexoEventos catalog', () => {
     const minus = await screen.findByRole('button', { name: 'Restar una entrada' })
     const plus = screen.getByRole('button', { name: 'Agregar una entrada' })
     expect(minus).toBeDisabled()
-    expect(screen.getAllByText('S/ 10.00')).toHaveLength(3)
+    expect(screen.getAllByText('S/ 10.00')).toHaveLength(2)
 
     fireEvent.click(plus)
     expect(minus).toBeEnabled()
@@ -103,11 +113,11 @@ describe('NexoEventos catalog', () => {
   })
 
   it('preserves the pending event and quantity when authentication is required', async () => {
-    const event = { id: 1, name: 'Evento pendiente', date: '2026-10-17', venue: 'Lima', category: 'Prueba', price: 10, capacity: 5, available_capacity: 5 }
+    const event = { ...baseEvent, id: 1, name: 'Evento pendiente', date: '2026-10-17', venue: 'Lima', category: 'Prueba', price: 10, capacity: 5, available_capacity: 5 }
     vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request) => {
       const url = String(input)
       if (url.endsWith('/api/auth/session')) return { ok: false, status: 401, json: async () => ({}) }
-      if (url.endsWith('/api/events/1')) return { ok: true, status: 200, json: async () => ({ ...event, description: 'Descripción suficiente' }) }
+      if (url.endsWith('/api/events/1')) return { ok: true, status: 200, json: async () => ({ ...event, description: 'Descripción suficiente', zones: [], seats: [] }) }
       return { ok: true, status: 200, json: async () => [event] }
     }))
 
@@ -134,5 +144,43 @@ describe('NexoEventos catalog', () => {
 
     expect(await screen.findByRole('heading', { name: 'Inicia sesión' })).toBeInTheDocument()
     expect(screen.getByText('Tu sesión expiró. Vuelve a iniciar sesión.')).toBeInTheDocument()
+  })
+
+  it('combines category and city filters and can clear them', async () => {
+    const events = [
+      { ...baseEvent, id: 1, name: 'Concierto Lima', date: '2026-10-17', venue: 'Teatro Uno', category: 'Conciertos', price: 20, capacity: 10, available_capacity: 10 },
+      { ...baseEvent, id: 2, name: 'Taller Callao', date: '2026-10-18', venue: 'Centro Dos', city: 'Callao', category: 'Talleres', price: 0, capacity: 10, available_capacity: 10 },
+    ]
+    vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request) => String(input).endsWith('/api/auth/session')
+      ? { ok: false, status: 401, json: async () => ({}) }
+      : { ok: true, status: 200, json: async () => events }))
+
+    render(<App />)
+    expect(await screen.findByRole('heading', { name: 'Concierto Lima' })).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Categoría'), { target: { value: 'Talleres' } })
+    fireEvent.change(screen.getByLabelText('Ciudad'), { target: { value: 'Callao' } })
+    expect(screen.queryByRole('heading', { name: 'Concierto Lima' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Taller Callao' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
+    expect(screen.getByRole('heading', { name: 'Concierto Lima' })).toBeInTheDocument()
+  })
+
+  it('selects a numbered seat and uses the server-defined price', async () => {
+    const event = { ...baseEvent, id: 3, name: 'Teatro numerado', date: '2026-10-19', venue: 'Sala Central', category: 'Teatro', price: 30, capacity: 2, available_capacity: 2, ticket_mode: 'seats' as const }
+    vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request) => {
+      const url = String(input)
+      if (url.endsWith('/api/auth/session')) return { ok: false, status: 401, json: async () => ({}) }
+      if (url.endsWith('/api/events/3')) return { ok: true, status: 200, json: async () => ({ ...event, description: 'Obra ficticia', zones: [{ id: 8, name: 'Platea', price: 42, capacity: 2, available_capacity: 2 }], seats: [{ id: 41, zone_id: 8, zone_name: 'Platea', row: 'A', number: 1, price: 42, available: true }, { id: 42, zone_id: 8, zone_name: 'Platea', row: 'A', number: 2, price: 42, available: false }] }) }
+      return { ok: true, status: 200, json: async () => [event] }
+    }))
+
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver detalle' }))
+    const available = await screen.findByRole('button', { name: 'Fila A, asiento 1, disponible' })
+    const occupied = screen.getByRole('button', { name: 'Fila A, asiento 2, ocupado' })
+    expect(occupied).toBeDisabled()
+    fireEvent.click(available)
+    expect(screen.getByText('Platea A-1')).toBeInTheDocument()
+    expect(screen.getByText('S/ 42.00')).toBeInTheDocument()
   })
 })

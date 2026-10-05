@@ -30,8 +30,15 @@ from app.auth import (
 )
 from app.config import ALLOWED_ORIGINS, validate_production_config
 from app.database import build_engine, build_session_factory, get_session
-from app.models import AuthSession, Event, OperatorEventAssignment, Reservation, Ticket, User
-from app.reservations import CapacityExceededError, EventNotFoundError, IdempotencyConflictError, create_reservation
+from app.models import AuthSession, Event, EventSeat, EventZone, OperatorEventAssignment, Reservation, Ticket, User
+from app.reservations import (
+    CapacityExceededError,
+    EventNotFoundError,
+    IdempotencyConflictError,
+    InvalidSelectionError,
+    SelectionConflictError,
+    create_reservation,
+)
 from app.rate_limit import (
     LoginRateLimitedError,
     check_login_allowed,
@@ -50,6 +57,8 @@ from app.schemas import (
     ReservationCreate,
     ReservationCreated,
     TicketView,
+    SeatView,
+    ZoneView,
     UserView,
     ValidationRequest,
     ValidationResult,
@@ -62,11 +71,31 @@ def _event_summary(event: Event) -> EventSummary:
         id=event.id,
         name=event.name,
         date=event.event_date,
+        time=event.event_time,
         venue=event.venue,
+        city=event.city,
         category=event.category,
         price=float(event.price),
         capacity=event.capacity,
         available_capacity=event.capacity - event.reserved_count,
+        image_path=event.image_path,
+        ticket_mode=event.ticket_mode,
+        is_demo=event.is_demo,
+    )
+
+
+def _event_detail(event: Event, session: Session) -> EventDetail:
+    zones = session.scalars(select(EventZone).where(EventZone.event_id == event.id).order_by(EventZone.price, EventZone.id)).all()
+    zone_names = {zone.id: zone.name for zone in zones}
+    seats = session.scalars(
+        select(EventSeat).where(EventSeat.event_id == event.id).order_by(EventSeat.zone_id, EventSeat.row_label, EventSeat.seat_number)
+    ).all() if event.ticket_mode == "seats" else []
+    zone_prices = {zone.id: float(zone.price) for zone in zones}
+    return EventDetail(
+        **_event_summary(event).model_dump(),
+        description=event.description,
+        zones=[ZoneView(id=zone.id, name=zone.name, price=float(zone.price), capacity=zone.capacity, available_capacity=zone.capacity - zone.reserved_count) for zone in zones],
+        seats=[SeatView(id=seat.id, zone_id=seat.zone_id, zone_name=zone_names[seat.zone_id], row=seat.row_label, number=seat.seat_number, price=zone_prices[seat.zone_id], available=seat.reservation_id is None) for seat in seats],
     )
 
 
@@ -176,7 +205,7 @@ def create_app(database_url: str | None = None) -> FastAPI:
 
     @application.get("/api/events", response_model=list[EventSummary])
     def list_events(session: Session = Depends(get_session)) -> list[EventSummary]:
-        events = session.scalars(select(Event).order_by(Event.event_date, Event.id)).all()
+        events = session.scalars(select(Event).where(Event.is_demo.is_(True)).order_by(Event.event_date, Event.id)).all()
         return [_event_summary(event) for event in events]
 
     @application.get("/api/events/{event_id}", response_model=EventDetail)
@@ -184,7 +213,7 @@ def create_app(database_url: str | None = None) -> FastAPI:
         event = session.get(Event, event_id)
         if event is None:
             raise HTTPException(status_code=404, detail="Evento no encontrado")
-        return EventDetail(**_event_summary(event).model_dump(), description=event.description)
+        return _event_detail(event, session)
 
     @application.post("/api/events/{event_id}/reservations", response_model=ReservationCreated)
     def reserve(
@@ -201,6 +230,10 @@ def create_app(database_url: str | None = None) -> FastAPI:
             raise HTTPException(status_code=404, detail="Evento no encontrado") from None
         except CapacityExceededError:
             raise HTTPException(status_code=409, detail="No hay cupos suficientes") from None
+        except SelectionConflictError:
+            raise HTTPException(status_code=409, detail="Una o más entradas seleccionadas ya no están disponibles") from None
+        except InvalidSelectionError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from None
         except IdempotencyConflictError:
             raise HTTPException(status_code=409, detail="La clave de idempotencia ya fue usada por otra solicitud") from None
         response.status_code = status.HTTP_200_OK if result.replayed else status.HTTP_201_CREATED
@@ -211,6 +244,8 @@ def create_app(database_url: str | None = None) -> FastAPI:
             available_capacity=result.available_capacity,
             ticket_count=result.ticket_count,
             replayed=result.replayed,
+            total=float(result.total),
+            ticket_mode=result.ticket_mode,
         )
 
     @application.get("/api/me/reservations", response_model=list[MyReservation])
@@ -232,6 +267,8 @@ def create_app(database_url: str | None = None) -> FastAPI:
         if row is None:
             raise HTTPException(status_code=404, detail="Entrada no encontrada")
         ticket, event = row
+        zone = session.get(EventZone, ticket.zone_id) if ticket.zone_id else None
+        seat = session.get(EventSeat, ticket.seat_id) if ticket.seat_id else None
         return TicketView(
             id=ticket.id,
             reservation_id=ticket.reservation_id,
@@ -239,6 +276,14 @@ def create_app(database_url: str | None = None) -> FastAPI:
             event_name=event.name,
             event_date=event.event_date,
             event_venue=event.venue,
+            event_city=event.city,
+            event_time=event.event_time,
+            image_path=event.image_path,
+            ticket_type=ticket.ticket_type,
+            zone=zone.name if zone else None,
+            row=seat.row_label if seat else None,
+            seat=seat.seat_number if seat else None,
+            unit_price=float(ticket.unit_price if ticket.unit_price is not None else event.price),
             qr_token=reveal_ticket_secret(ticket.token_ciphertext),
             used_at=ticket.used_at,
         )
@@ -275,7 +320,7 @@ def create_app(database_url: str | None = None) -> FastAPI:
         for field, value in changes.items():
             setattr(event, field, value)
         session.commit()
-        return EventDetail(**_event_summary(event).model_dump(), description=event.description)
+        return _event_detail(event, session)
 
     @application.get("/api/operator/events", response_model=list[EventSummary])
     def operator_events(context: AuthContext = Depends(require_role("operator")), session: Session = Depends(get_session)) -> list[EventSummary]:

@@ -36,7 +36,8 @@ def test_health_and_catalog_come_from_postgresql() -> None:
         assert client.get("/ready").json() == {"status": "ready"}
         response = client.get("/api/events")
         assert response.status_code == 200
-        assert [event["id"] for event in response.json()][:3] == [1, 2, 3]
+        assert [event["id"] for event in response.json()][:3] == [9001, 9002, 9003]
+        assert all(event["is_demo"] for event in response.json())
         detail = client.get("/api/events/1").json()
         assert detail["name"] == "Noche Prisma"
         assert detail["available_capacity"] == 240
@@ -144,6 +145,58 @@ def test_two_concurrent_requests_for_last_seat_create_exactly_one_reservation() 
         assert connection.scalar(text("SELECT count(*) FROM reservations WHERE event_id = 9001")) == 1
         assert connection.scalar(text("SELECT reserved_count FROM events WHERE id = 9001")) == 1
         assert connection.scalar(text("SELECT count(*) FROM tickets WHERE event_id = 9001")) == 1
+
+
+def test_zone_reservation_uses_server_price_and_creates_individual_tickets() -> None:
+    app = create_app(TEST_APP_URL)
+    with TestClient(app) as client:
+        register_client(client)
+        detail = client.get("/api/events/9003").json()
+        zone = detail["zones"][0]
+        response = client.post(
+            "/api/events/9003/reservations",
+            headers={**csrf_headers(client), "Idempotency-Key": "zone-price-key"},
+            json={"quantity": 2, "zone_id": zone["id"]},
+        )
+        assert response.status_code == 201, response.text
+        assert response.json()["total"] == 50.0
+        assert response.json()["ticket_mode"] == "zones"
+        tickets = client.get("/api/me/tickets").json()
+        assert len(tickets) == 2
+        assert all(ticket["zone"] == "Preferencial" and ticket["unit_price"] == 25.0 for ticket in tickets)
+        manipulated = client.post(
+            "/api/events/9003/reservations",
+            headers={**csrf_headers(client), "Idempotency-Key": "manipulated-price-key"},
+            json={"quantity": 1, "zone_id": zone["id"], "price": 0},
+        )
+        assert manipulated.status_code == 422
+    app.state.engine.dispose()
+
+
+def test_two_clients_cannot_reserve_the_same_numbered_seat() -> None:
+    with create_engine(TEST_ADMIN_URL).connect() as connection:
+        seat_id = connection.scalar(text("SELECT id FROM event_seats WHERE event_id=9004 AND seat_number=1"))
+    barrier = Barrier(2)
+
+    def attempt(index: int) -> int:
+        local_app = create_app(TEST_APP_URL)
+        with TestClient(local_app) as client:
+            register_client(client, f"asiento-{index}@example.com")
+            barrier.wait()
+            response = client.post(
+                "/api/events/9004/reservations",
+                headers={**csrf_headers(client), "Idempotency-Key": f"seat-key-{index}"},
+                json={"quantity": 1, "seat_ids": [seat_id]},
+            )
+        local_app.state.engine.dispose()
+        return response.status_code
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        statuses = sorted(pool.map(attempt, [1, 2]))
+    assert statuses == [201, 409]
+    with create_engine(TEST_ADMIN_URL).connect() as connection:
+        assert connection.scalar(text("SELECT count(*) FROM tickets WHERE seat_id=:seat"), {"seat": seat_id}) == 1
+        assert connection.scalar(text("SELECT count(*) FROM reservations WHERE event_id=9004")) == 1
 
 
 def test_idempotency_replay_conflicts_and_is_scoped_to_owner() -> None:

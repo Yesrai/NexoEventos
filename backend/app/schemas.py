@@ -1,4 +1,4 @@
-from datetime import date as DateValue, datetime
+from datetime import date as DateValue, datetime, time as TimeValue
 from typing import Literal
 from uuid import UUID
 
@@ -37,15 +37,40 @@ class EventSummary(BaseModel):
     id: int
     name: str
     date: DateValue
+    time: TimeValue | None
     venue: str
+    city: str
     category: str
+    price: float
+    capacity: int
+    available_capacity: int
+    image_path: str | None
+    ticket_mode: Literal["general", "zones", "seats"]
+    is_demo: bool
+
+
+class ZoneView(BaseModel):
+    id: int
+    name: str
     price: float
     capacity: int
     available_capacity: int
 
 
+class SeatView(BaseModel):
+    id: int
+    zone_id: int
+    zone_name: str
+    row: str
+    number: int
+    price: float
+    available: bool
+
+
 class EventDetail(EventSummary):
     description: str
+    zones: list[ZoneView] = Field(default_factory=list)
+    seats: list[SeatView] = Field(default_factory=list)
 
 
 class EventUpdate(StrictModel):
@@ -60,6 +85,8 @@ class EventUpdate(StrictModel):
 
 class ReservationCreate(StrictModel):
     quantity: int = Field(ge=1, le=10)
+    zone_id: int | None = None
+    seat_ids: list[int] = Field(default_factory=list, max_length=10)
 
 
 class ReservationCreated(BaseModel):
@@ -69,6 +96,8 @@ class ReservationCreated(BaseModel):
     available_capacity: int
     ticket_count: int
     replayed: bool
+    total: float
+    ticket_mode: Literal["general", "zones", "seats"]
 
 
 class MyReservation(BaseModel):
@@ -86,6 +115,14 @@ class TicketView(BaseModel):
     event_name: str
     event_date: DateValue
     event_venue: str
+    event_city: str
+    event_time: TimeValue | None
+    image_path: str | None
+    ticket_type: Literal["general", "zones", "seats"]
+    zone: str | None
+    row: str | None
+    seat: int | None
+    unit_price: float
     qr_token: str
     used_at: datetime | None
 
