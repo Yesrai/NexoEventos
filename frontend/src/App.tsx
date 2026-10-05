@@ -1,4 +1,4 @@
-import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
+import { FormEvent, KeyboardEvent as ReactKeyboardEvent, ReactNode, useEffect, useId, useMemo, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 
 type Role = 'client' | 'organizer' | 'operator'
@@ -91,6 +91,115 @@ function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
     workshop: <><path d="M4 20h16M7 20V9l5-5 5 5v11" /><path d="M9 13h6M12 10v6" /></>,
   }
   return <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>
+}
+
+type SelectOption = { value: string; label: string }
+
+function SelectMenu({ label, value, options, onChange, align = 'start' }: {
+  label: string
+  value: string
+  options: readonly SelectOption[]
+  onChange: (value: string) => void
+  align?: 'start' | 'end'
+}) {
+  const id = useId()
+  const rootRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const listRef = useRef<HTMLUListElement>(null)
+  const selectedIndex = Math.max(0, options.findIndex((option) => option.value === value))
+  const [open, setOpen] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(selectedIndex)
+  const selected = options[selectedIndex]
+
+  useEffect(() => {
+    if (!open) return
+    setActiveIndex(selectedIndex)
+    window.requestAnimationFrame(() => listRef.current?.focus())
+    const closeOutside = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
+    }
+    document.addEventListener('pointerdown', closeOutside)
+    return () => document.removeEventListener('pointerdown', closeOutside)
+  }, [open, selectedIndex])
+
+  function closeAndFocus() {
+    setOpen(false)
+    triggerRef.current?.focus()
+  }
+
+  function choose(index: number) {
+    onChange(options[index].value)
+    closeAndFocus()
+  }
+
+  function handleListKey(event: ReactKeyboardEvent<HTMLUListElement>) {
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      closeAndFocus()
+    } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault()
+      const offset = event.key === 'ArrowDown' ? 1 : -1
+      setActiveIndex((current) => (current + offset + options.length) % options.length)
+    } else if (event.key === 'Home' || event.key === 'End') {
+      event.preventDefault()
+      setActiveIndex(event.key === 'Home' ? 0 : options.length - 1)
+    } else if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      choose(activeIndex)
+    } else if (event.key === 'Tab') {
+      setOpen(false)
+    } else if (event.key.length === 1) {
+      const match = options.findIndex((option) => option.label.toLocaleLowerCase('es').startsWith(event.key.toLocaleLowerCase('es')))
+      if (match >= 0) setActiveIndex(match)
+    }
+  }
+
+  return <div className={`select-menu align-${align}`} ref={rootRef}>
+    <span className="select-label" id={`${id}-label`}>{label}</span>
+    <button
+      ref={triggerRef}
+      type="button"
+      className="select-trigger"
+      aria-haspopup="listbox"
+      aria-expanded={open}
+      aria-labelledby={`${id}-label ${id}-value`}
+      aria-controls={`${id}-listbox`}
+      onClick={() => setOpen((current) => !current)}
+      onKeyDown={(event) => {
+        if (!open && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+          event.preventDefault()
+          setOpen(true)
+        }
+      }}
+    >
+      <span id={`${id}-value`}>{selected.label}</span>
+      <span className="select-chevron"><Icon name="arrow" size={16} /></span>
+    </button>
+    {open && <ul
+      ref={listRef}
+      id={`${id}-listbox`}
+      className="select-popover"
+      role="listbox"
+      aria-labelledby={`${id}-label`}
+      aria-activedescendant={`${id}-option-${activeIndex}`}
+      tabIndex={-1}
+      onKeyDown={handleListKey}
+    >
+      {options.map((option, index) => <li
+        key={option.value}
+        id={`${id}-option-${index}`}
+        role="option"
+        aria-selected={option.value === value}
+        className={`${option.value === value ? 'selected' : ''} ${index === activeIndex ? 'active' : ''}`}
+        onPointerMove={() => setActiveIndex(index)}
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => choose(index)}
+      >
+        <span>{option.label}</span>
+        {option.value === value && <Icon name="check" size={17} />}
+      </li>)}
+    </ul>}
+  </div>
 }
 
 export default function App() {
@@ -344,12 +453,12 @@ export default function App() {
         <section className="catalog" id="catalogo" aria-labelledby="catalog-title">
           <div className="section-heading">
             <div><h2 id="catalog-title">Próximos eventos</h2></div>
-            <div className="results-sort"><span>{filtered.length} resultado{filtered.length === 1 ? '' : 's'}</span><label>Ordenar<select value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}><option value="date">Fecha próxima</option><option value="price-asc">Precio menor</option><option value="price-desc">Precio mayor</option></select></label></div>
+            <div className="results-sort"><span>{filtered.length} resultado{filtered.length === 1 ? '' : 's'}</span><SelectMenu label="Ordenar" value={sort} align="end" onChange={(value) => setSort(value as typeof sort)} options={[{ value: 'date', label: 'Fecha próxima' }, { value: 'price-asc', label: 'Precio menor' }, { value: 'price-desc', label: 'Precio mayor' }]} /></div>
           </div>
           <div className="compact-filters" aria-label="Filtros del catálogo">
-            <label><span>Ciudad</span><select value={city} onChange={(event) => setCity(event.target.value)}><option value="">Todas</option>{cities.map((value) => <option key={value}>{value}</option>)}</select></label>
-            <label><span>Fecha</span><select value={dateFilter} onChange={(event) => setDateFilter(event.target.value as typeof dateFilter)}><option value="all">Cualquier fecha</option><option value="today">Hoy</option><option value="weekend">Este fin de semana</option><option value="range">Rango personalizado</option></select></label>
-            <label><span>Precio</span><select value={priceFilter} onChange={(event) => setPriceFilter(event.target.value as typeof priceFilter)}><option value="all">Todos</option><option value="free">Gratuitos</option><option value="paid">De pago</option></select></label>
+            <SelectMenu label="Ciudad" value={city} onChange={setCity} options={[{ value: '', label: 'Todas' }, ...cities.map((value) => ({ value, label: value }))]} />
+            <SelectMenu label="Fecha" value={dateFilter} onChange={(value) => setDateFilter(value as typeof dateFilter)} options={[{ value: 'all', label: 'Cualquier fecha' }, { value: 'today', label: 'Hoy' }, { value: 'weekend', label: 'Este fin de semana' }, { value: 'range', label: 'Rango personalizado' }]} />
+            <SelectMenu label="Precio" value={priceFilter} align="end" onChange={(value) => setPriceFilter(value as typeof priceFilter)} options={[{ value: 'all', label: 'Todos' }, { value: 'free', label: 'Gratuitos' }, { value: 'paid', label: 'De pago' }]} />
             <button className="more-filters" onClick={() => setFiltersOpen((value) => !value)} aria-expanded={filtersOpen} aria-controls="more-filters-panel"><Icon name="sliders" />Más filtros{activeFilterCount > 0 && <b>{activeFilterCount}</b>}</button>
           </div>
           {filtersOpen && <div className="more-filters-panel" id="more-filters-panel"><div className="date-range"><label>Desde<input type="date" value={dateFrom} onChange={(event) => { setDateFrom(event.target.value); setDateFilter('range') }} /></label><label>Hasta<input type="date" value={dateTo} min={dateFrom || undefined} onChange={(event) => { setDateTo(event.target.value); setDateFilter('range') }} /></label></div></div>}

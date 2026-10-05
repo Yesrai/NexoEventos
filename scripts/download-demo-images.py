@@ -18,7 +18,7 @@ ATTRIBUTIONS = ROOT / "docs" / "atribuciones-imagenes.md"
 API = "https://commons.wikimedia.org/w/api.php"
 TLS = ssl.create_default_context(cafile=certifi.where())
 FILES = [
-    ("concert-crowd", "File:CrowdAtFortKnoxConcert.jpg"),
+    ("concert-live", "File:Musicians perform on stage during live concert.jpg"),
     ("concert-stage", "File:Heritage Live concert crowd and stage at Sandringham 2023 - geograph.org.uk - 7586057.jpg"),
     ("concert-energy", "File:Stage diving.jpg"),
     ("dance-stage", "File:783 3 (+ 3) dancers performing on stage V-P.jpg"),

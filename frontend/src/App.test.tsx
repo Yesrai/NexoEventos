@@ -161,12 +161,44 @@ describe('NexoEventos catalog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Siguiente evento destacado' }))
     expect(screen.getByRole('button', { name: 'Abrir evento destacado Taller Callao' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Talleres' }))
-    fireEvent.change(screen.getByLabelText('Ciudad'), { target: { value: 'Callao' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Ciudad Todas' }))
+    fireEvent.click(screen.getByRole('option', { name: 'Callao' }))
     expect(screen.queryByRole('heading', { name: 'Concierto Lima' })).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Taller Callao' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Ciudad: Callao' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Limpiar todos' }))
     expect(screen.getByRole('heading', { name: 'Concierto Lima' })).toBeInTheDocument()
+  })
+
+  it('operates the custom filters with keyboard and restores focus', async () => {
+    const events = [
+      { ...baseEvent, id: 1, name: 'Evento Lima', date: '2026-10-17', venue: 'Sala Uno', category: 'Conciertos', price: 20, capacity: 10, available_capacity: 10 },
+      { ...baseEvent, id: 2, name: 'Evento Callao', date: '2026-10-18', venue: 'Sala Dos', city: 'Callao', category: 'Talleres', price: 0, capacity: 10, available_capacity: 10 },
+    ]
+    vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request) => String(input).endsWith('/api/auth/session')
+      ? { ok: false, status: 401, json: async () => ({}) }
+      : { ok: true, status: 200, json: async () => events }))
+
+    render(<App />)
+    await screen.findByRole('heading', { name: 'Evento Lima' })
+    const city = screen.getByRole('button', { name: 'Ciudad Todas' })
+    city.focus()
+    fireEvent.keyDown(city, { key: 'ArrowDown' })
+    const listbox = await screen.findByRole('listbox', { name: 'Ciudad' })
+    fireEvent.keyDown(listbox, { key: 'ArrowDown' })
+    fireEvent.keyDown(listbox, { key: 'Enter' })
+
+    expect(screen.getByRole('button', { name: 'Ciudad Callao' })).toHaveFocus()
+    expect(screen.getByRole('button', { name: 'Ciudad: Callao' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Fecha Cualquier fecha' }))
+    const dateListbox = screen.getByRole('listbox', { name: 'Fecha' })
+    fireEvent.keyDown(dateListbox, { key: 'Escape' })
+    expect(screen.queryByRole('listbox', { name: 'Fecha' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Fecha Cualquier fecha' })).toHaveFocus()
+    fireEvent.click(screen.getByRole('button', { name: 'Precio Todos' }))
+    expect(screen.getByRole('listbox', { name: 'Precio' })).toBeInTheDocument()
+    fireEvent.pointerDown(document.body)
+    expect(screen.queryByRole('listbox', { name: 'Precio' })).not.toBeInTheDocument()
   })
 
   it('selects a numbered seat and uses the server-defined price', async () => {

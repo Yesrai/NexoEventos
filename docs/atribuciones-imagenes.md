@@ -4,7 +4,7 @@ Las fotografías son ilustrativas y no representan eventos reales anunciados por
 
 | Archivo local | Fuente | Autor/crédito | Licencia |
 |---|---|---|---|
-| `frontend/public/events/concert-crowd.jpg` | [CrowdAtFortKnoxConcert.jpg](https://commons.wikimedia.org/wiki/File:CrowdAtFortKnoxConcert.jpg) | US Army - Rob McIlvaine, FMWRC | Public domain |
+| `frontend/public/events/concert-live.jpg` | [Musicians perform on stage during live concert.jpg](https://commons.wikimedia.org/wiki/File:Musicians_perform_on_stage_during_live_concert.jpg) | Shixart1985 | CC BY 2.0 |
 | `frontend/public/events/concert-stage.jpg` | [Heritage Live concert crowd and stage at Sandringham 2023 - geograph.org.uk - 7586057.jpg](https://commons.wikimedia.org/wiki/File:Heritage_Live_concert_crowd_and_stage_at_Sandringham_2023_-_geograph.org.uk_-_7586057.jpg) | Richard Humphrey | CC BY-SA 2.0 |
 | `frontend/public/events/concert-energy.jpg` | [Stage diving.jpg](https://commons.wikimedia.org/wiki/File:Stage_diving.jpg) | Бурнайкин Максим | CC BY 3.0 |
 | `frontend/public/events/dance-stage.jpg` | [783 3 (+ 3) dancers performing on stage V-P.jpg](https://commons.wikimedia.org/wiki/File:783_3_(%2B_3)_dancers_performing_on_stage_V-P.jpg) | Virtual-Pano | CC BY-SA 4.0 |

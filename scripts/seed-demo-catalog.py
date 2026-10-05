@@ -8,7 +8,7 @@ from datetime import date, time, timedelta
 from sqlalchemy import create_engine, text
 
 EVENTS = [
-    (1001, "Ritmos del Malecón", "Conciertos", 5, time(20, 0), "Anfiteatro del Parque", "Lima", "Una noche de bandas independientes junto al mar.", 45, 180, "general", "concert-crowd"),
+    (1001, "Ritmos del Malecón", "Conciertos", 5, time(20, 0), "Anfiteatro del Parque", "Lima", "Una noche de bandas independientes junto al mar.", 45, 180, "general", "concert-live"),
     (1002, "Sesiones del Centro", "Conciertos", 12, time(19, 30), "Centro Cultural Metropolitano", "Lima", "Encuentro acústico con proyectos musicales ficticios de la ciudad.", 55, 240, "zones", "concert-stage"),
     (1003, "Pulso Eléctrico", "Conciertos", 19, time(21, 0), "Teatro Urbano", "Lima", "Concierto demo de rock alternativo con asientos numerados.", 70, 48, "seats", "concert-energy"),
     (1004, "Movimiento en Escena", "Teatro y stand-up", 8, time(19, 0), "Sala Miraflores", "Lima", "Obra de danza contemporánea creada para el catálogo académico.", 52, 48, "seats", "dance-stage"),
