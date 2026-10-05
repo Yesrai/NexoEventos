@@ -22,7 +22,7 @@ type View = 'catalog' | 'auth' | 'account' | 'operator' | 'organizer'
 type BarcodeResult = { rawValue: string }
 type BarcodeDetectorInstance = { detect(source: HTMLVideoElement): Promise<BarcodeResult[]> }
 type BarcodeDetectorConstructor = new (options: { formats: string[] }) => BarcodeDetectorInstance
-type IconName = 'arrow' | 'calendar' | 'check' | 'clock' | 'close' | 'eye' | 'eyeOff' | 'fair' | 'location' | 'minus' | 'music' | 'plus' | 'qr' | 'search' | 'sliders' | 'sport' | 'theater' | 'ticket' | 'user' | 'workshop'
+type IconName = 'arrow' | 'art' | 'calendar' | 'check' | 'cinema' | 'clock' | 'close' | 'conference' | 'dance' | 'exhibition' | 'eye' | 'eyeOff' | 'fair' | 'festival' | 'food' | 'kids' | 'location' | 'minus' | 'music' | 'networking' | 'plus' | 'qr' | 'search' | 'sliders' | 'sport' | 'technology' | 'theater' | 'ticket' | 'user' | 'workshop'
 
 const configuredApiUrl = import.meta.env.VITE_API_URL
 const apiUrl = configuredApiUrl !== undefined
@@ -70,28 +70,58 @@ function requestError(caught: unknown, fallback: string) {
 function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
   const paths: Record<IconName, ReactNode> = {
     arrow: <><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></>,
+    art: <><path d="M12 3a9 9 0 1 0 0 18h1.5a2 2 0 0 0 0-4H12a1.5 1.5 0 0 1 0-3h3a6 6 0 0 0 6-6c0-3-4-5-9-5Z" /><circle cx="7.5" cy="10" r=".8" fill="currentColor" /><circle cx="10" cy="6.8" r=".8" fill="currentColor" /><circle cx="15" cy="7" r=".8" fill="currentColor" /></>,
     calendar: <><path d="M7 2v3M17 2v3M3 9h18" /><rect x="3" y="4" width="18" height="17" rx="3" /></>,
     check: <path d="m5 12 4 4L19 6" />,
+    cinema: <><rect x="3" y="7" width="18" height="13" rx="2" /><path d="m3 7 3-4h4L7 7m7 0 3-4h4l-3 4M8 12l6 3-6 3v-6Z" /></>,
     clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
     close: <><path d="m6 6 12 12M18 6 6 18" /></>,
+    conference: <><circle cx="12" cy="5" r="2" /><path d="M8 10c1-2 7-2 8 0M12 9v4" /><rect x="5" y="12" width="14" height="8" rx="2" /><path d="M9 16h6M12 12v8" /></>,
+    dance: <><circle cx="13" cy="4" r="2" /><path d="m11 7-3 5 4 2 2 6M11 8l5 3 3-2M8 12l-4 4M12 14l-5 6" /></>,
+    exhibition: <><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m5 17 4-4 3 3 3-4 4 5" /></>,
     eye: <><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" /><circle cx="12" cy="12" r="2.5" /></>,
     eyeOff: <><path d="m3 3 18 18" /><path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6.5 0 10 6 10 6a17 17 0 0 1-2.1 2.9M6.6 6.6C3.6 8.4 2 12 2 12s3.5 6 10 6c1.3 0 2.5-.2 3.5-.6" /></>,
-    fair: <><path d="M4 10h16l-2-5H6l-2 5Z" /><path d="M5 10v9h14v-9M9 19v-5h6v5" /><path d="M4 10c0 2 3 2 4 0 1 2 3 2 4 0 1 2 3 2 4 0 1 2 4 2 4 0" /></>,
+    fair: <><path d="M3 10h18l-3-5H6l-3 5Z" /><path d="M5 10v9h14v-9M8 19v-5h8v5" /><path d="M3 10c0 2 3 2 4.5 0 1.5 2 3 2 4.5 0 1.5 2 3 2 4.5 0 1.5 2 4.5 2 4.5 0" /></>,
+    festival: <><path d="M4 5h16M6 5l2 4 2-4 2 4 2-4 2 4 2-4" /><path d="M7 14h.01M17 13h.01M12 17h.01" /><path d="m5 18 1 1m12-2 1-1m-7-4v-2" /></>,
+    food: <><path d="M6 3v8M3.5 3v5a2.5 2.5 0 0 0 5 0V3M6 11v10" /><path d="M16 3c-2 2-3 5-3 8h4v10M17 3v8" /></>,
+    kids: <><path d="m12 3 6 6-6 6-6-6 6-6Z" /><path d="m12 15 2 2-2 2 2 2M9 6l6 6M15 6 9 12" /></>,
     location: <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></>,
     minus: <path d="M5 12h14" />,
-    music: <><path d="M9 18V5l10-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="16" cy="16" r="3" /></>,
+    music: <><path d="M9 18V6l10-2v12" /><path d="M9 9l10-2" /><circle cx="6" cy="18" r="3" /><circle cx="16" cy="16" r="3" /></>,
+    networking: <><circle cx="8" cy="8" r="3" /><circle cx="17" cy="7" r="2.5" /><path d="M3 20a5 5 0 0 1 10 0M13 14a4 4 0 0 1 8 3M11 10l3-1" /></>,
     plus: <><path d="M12 5v14M5 12h14" /></>,
     qr: <><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 20h1M20 14h1" /></>,
     search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></>,
     sliders: <><path d="M4 6h16M4 12h16M4 18h16" /><circle cx="8" cy="6" r="2" fill="white" /><circle cx="15" cy="12" r="2" fill="white" /><circle cx="10" cy="18" r="2" fill="white" /></>,
-    sport: <><circle cx="12" cy="12" r="9" /><path d="m8.5 4.8 3.5 2.6 3.5-2.6M3.5 10l4.2 1.4 1.6 4.8-2.7 3.1M20.5 10l-4.2 1.4-1.6 4.8 2.7 3.1M9.3 16.2h5.4" /></>,
-    theater: <><path d="M4 5c3-2 6-2 9 0v8c-2 4-7 4-9 0V5Z" /><path d="M7 8h.01M10 8h.01M7 12c1 .8 2 .8 3 0" /><path d="M14 7c2-1 4-1 6 0v7c-1 3-4 4-6 2" /></>,
+    sport: <><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z" /><path d="M8 6H4v1a4 4 0 0 0 4 4M16 6h4v1a4 4 0 0 1-4 4M12 12v4M8 20h8M9 16h6" /></>,
+    technology: <><rect x="6" y="6" width="12" height="12" rx="2" /><rect x="9" y="9" width="6" height="6" rx="1" /><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4" /></>,
+    theater: <><path d="M3 5c3-2 6-2 9 0v8c-2 4-7 4-9 0V5Z" /><path d="M6 8h.01M9 8h.01M6 12c1 .8 2 .8 3 0M13 6c3-1 6 0 8 2v7c-1 4-5 5-8 2" /><path d="M16 10h.01M19 11h.01M16 15c1-1 2-1 3 0" /></>,
     ticket: <><path d="M3 9a3 3 0 0 0 0 6v4h18v-4a3 3 0 0 0 0-6V5H3v4Z" /><path d="M13 7v2M13 13v4" /></>,
     user: <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>,
-    workshop: <><path d="M4 20h16M7 20V9l5-5 5 5v11" /><path d="M9 13h6M12 10v6" /></>,
+    workshop: <><path d="m14 6 4-4 4 4-4 4M15 9 5 19H2v-3L12 6" /><path d="M5 5h5M7.5 2.5v5" /></>,
   }
   return <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>
 }
+
+const categoryPresentation: Record<string, { label: string; icon: IconName }> = {
+  Conciertos: { label: 'Conciertos', icon: 'music' },
+  Festivales: { label: 'Festivales', icon: 'festival' },
+  'Teatro y stand-up': { label: 'Teatro', icon: 'theater' },
+  Danza: { label: 'Danza', icon: 'dance' },
+  Cine: { label: 'Cine', icon: 'cinema' },
+  Deportes: { label: 'Deportes', icon: 'sport' },
+  Gastronomía: { label: 'Gastronomía', icon: 'food' },
+  Ferias: { label: 'Ferias', icon: 'fair' },
+  Exposiciones: { label: 'Exposiciones', icon: 'exhibition' },
+  'Arte y cultura': { label: 'Arte y cultura', icon: 'art' },
+  Talleres: { label: 'Talleres', icon: 'workshop' },
+  Infantil: { label: 'Infantil', icon: 'kids' },
+  Conferencias: { label: 'Conferencias', icon: 'conference' },
+  Networking: { label: 'Networking', icon: 'networking' },
+  Tecnología: { label: 'Tecnología', icon: 'technology' },
+}
+
+const categoryOrder = Object.keys(categoryPresentation)
 
 type SelectOption = { value: string; label: string }
 
@@ -524,7 +554,12 @@ export default function App() {
     return [...values].sort((a, b) => sort === 'date' ? a.date.localeCompare(b.date) : sort === 'price-asc' ? a.price - b.price : b.price - a.price)
   }, [events, query, category, city, dateFilter, dateFrom, dateTo, priceFilter, sort])
 
-  const categories = useMemo(() => [...new Set(events.map((item) => item.category))].sort(), [events])
+  const categories = useMemo(() => [...new Set(events.map((item) => item.category))].sort((left, right) => {
+    const leftIndex = categoryOrder.indexOf(left)
+    const rightIndex = categoryOrder.indexOf(right)
+    if (leftIndex < 0 || rightIndex < 0) return leftIndex < 0 ? rightIndex < 0 ? left.localeCompare(right, 'es') : 1 : -1
+    return leftIndex - rightIndex
+  }), [events])
   const cities = useMemo(() => [...new Set(events.map((item) => item.city))].sort(), [events])
   const activeFilterCount = [category, city, dateFilter !== 'all', priceFilter !== 'all'].filter(Boolean).length
   const curatedFeatured = [1002, 1004, 1010, 1013, 1016, 1003].flatMap((id) => {
@@ -536,14 +571,6 @@ export default function App() {
   const sideFeatured = featuredEvents.length > 1
     ? [...featuredEvents.slice(featuredIndex + 1), ...featuredEvents.slice(0, featuredIndex)].slice(0, 3)
     : []
-  const categoryPresentation: Record<string, { label: string; icon: IconName }> = {
-    Conciertos: { label: 'Conciertos', icon: 'music' },
-    Deportes: { label: 'Deportes', icon: 'sport' },
-    Ferias: { label: 'Ferias', icon: 'fair' },
-    Talleres: { label: 'Talleres', icon: 'workshop' },
-    'Teatro y stand-up': { label: 'Teatro', icon: 'theater' },
-  }
-
   function clearFilters() {
     setQuery(''); setCategory(''); setCity(''); setDateFilter('all'); setDateFrom(''); setDateTo(''); setPriceFilter('all'); setSort('date')
   }
@@ -616,7 +643,7 @@ export default function App() {
             </article>
             <aside className="featured-side" aria-label="Más eventos destacados">{sideFeatured.map((item) => <button key={item.id} onClick={() => void openDetail(item.id)} aria-label={`Abrir ${item.name}`}>{item.image_path ? <img src={item.image_path} alt="" /> : <span className="image-fallback">{item.category}</span>}<span><small>{formatDate(item.date)} · {item.category}</small><strong>{item.name}</strong><em>{item.price === 0 ? 'Gratis' : `Desde S/ ${item.price.toFixed(2)}`}</em></span></button>)}</aside>
           </div>}
-          <section className="category-section" aria-labelledby="categories-title"><div className="home-section-title compact"><h2 id="categories-title">Categorías</h2></div><div className="category-links" aria-label="Categorías">{categories.map((value) => { const presentation = categoryPresentation[value] ?? { label: value, icon: 'ticket' as IconName }; return <button key={value} aria-pressed={category === value} className={category === value ? 'selected' : ''} onClick={() => setCategory(category === value ? '' : value)}><span><Icon name={presentation.icon} /></span>{presentation.label}</button> })}</div></section>
+          <section className="category-section" aria-labelledby="categories-title"><div className="home-section-title compact"><h2 id="categories-title">Categorías</h2><p>Explora por tipo de evento</p></div><div className="category-links" aria-label="Categorías">{categories.map((value) => { const presentation = categoryPresentation[value] ?? { label: value, icon: 'ticket' as IconName }; return <button key={value} aria-pressed={category === value} className={category === value ? 'selected' : ''} onClick={() => setCategory(category === value ? '' : value)}><span><Icon name={presentation.icon} size={22} /></span>{presentation.label}</button> })}</div></section>
         </section>
         <section className="catalog" id="catalogo" aria-labelledby="catalog-title">
           <div className="section-heading">

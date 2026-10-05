@@ -36,6 +36,15 @@ FILES = [
     ("running-field", "File:7° B.Est cross country - 2018.jpg"),
     ("running-race", "File:A high school cross country runner runs during a race at a meet in North Carolina 01.jpg"),
     ("running-road", "File:September 2002, Running race in Rennes.jpg"),
+    ("conference-speaker", "File:Person speaking at the conference.jpg"),
+    ("festival-stage", "File:Live music performance at a summer festival with energetic crowd and talented musicians on stage.jpg"),
+    ("art-exhibition", "File:Exhibition of Alfrid Shaimardanov (2021-05-15) 01.jpg"),
+    ("networking-professionals", "File:British Asian professionals at a networking event in the City of London.jpg"),
+    ("cooking-workshop", "File:Cooking workshop at Nina community centre, Herzliya.jpg"),
+    ("children-workshop", "File:EduWiki Workshop \"Children and Wikis\" October 2025 03.jpg"),
+    ("cinema-room", "File:Landmark's Atlantic Plumbing Cinema screening room.jpg"),
+    ("technology-exhibition", "File:15th Iran Media Technology Exhibition & Conference (02).jpg"),
+    ("culture-museum", "File:SZ Shenzhen Futian Shennan Middle Road Shenzhen Museum Ancient Art Museum 深圳博物馆陶瓷器展 exhibition of Chinaware Culture March 2025 R12S 802.jpg"),
 ]
 
 

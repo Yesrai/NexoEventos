@@ -170,6 +170,28 @@ describe('NexoEventos catalog', () => {
     expect(screen.getByRole('heading', { name: 'Concierto Lima' })).toBeInTheDocument()
   })
 
+  it('renders the expanded category set with icons and keeps selection functional', async () => {
+    const events = [
+      { ...baseEvent, id: 1, name: 'Foro digital', date: '2026-10-17', venue: 'Hub Uno', category: 'Tecnología', price: 20, capacity: 10, available_capacity: 10 },
+      { ...baseEvent, id: 2, name: 'Encuentro profesional', date: '2026-10-18', venue: 'Centro Dos', category: 'Networking', price: 0, capacity: 10, available_capacity: 10 },
+      { ...baseEvent, id: 3, name: 'Muestra visual', date: '2026-10-19', venue: 'Galería Tres', category: 'Exposiciones', price: 15, capacity: 10, available_capacity: 10 },
+    ]
+    vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request) => String(input).endsWith('/api/auth/session')
+      ? { ok: false, status: 401, json: async () => ({}) }
+      : { ok: true, status: 200, json: async () => events }))
+
+    render(<App />)
+    await screen.findByRole('heading', { name: 'Foro digital' })
+    const technology = screen.getByRole('button', { name: 'Tecnología' })
+    expect(technology.querySelector('svg')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Networking' }).querySelector('svg')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Exposiciones' }).querySelector('svg')).toBeInTheDocument()
+    fireEvent.click(technology)
+    expect(technology).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('heading', { name: 'Foro digital' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Encuentro profesional' })).not.toBeInTheDocument()
+  })
+
   it('operates the custom filters with keyboard and restores focus', async () => {
     const events = [
       { ...baseEvent, id: 1, name: 'Evento Lima', date: '2026-10-17', venue: 'Sala Uno', category: 'Conciertos', price: 20, capacity: 10, available_capacity: 10 },
