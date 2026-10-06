@@ -66,7 +66,23 @@ from app.schemas import (
 from app.ticket_tokens import reveal_ticket_secret
 
 
-def _event_summary(event: Event) -> EventSummary:
+def _zone_pricing(session: Session, event_ids: list[int]) -> dict[int, tuple[float, bool]]:
+    if not event_ids:
+        return {}
+    prices_by_event: dict[int, set[float]] = {}
+    for event_id, price in session.execute(
+        select(EventZone.event_id, EventZone.price).where(EventZone.event_id.in_(event_ids))
+    ):
+        prices_by_event.setdefault(event_id, set()).add(float(price))
+    return {
+        event_id: (min(prices), len(prices) > 1)
+        for event_id, prices in prices_by_event.items()
+        if prices
+    }
+
+
+def _event_summary(event: Event, pricing: tuple[float, bool] | None = None) -> EventSummary:
+    display_price, has_multiple_prices = pricing or (float(event.price), False)
     return EventSummary(
         id=event.id,
         name=event.name,
@@ -75,7 +91,8 @@ def _event_summary(event: Event) -> EventSummary:
         venue=event.venue,
         city=event.city,
         category=event.category,
-        price=float(event.price),
+        price=display_price,
+        has_multiple_prices=has_multiple_prices,
         capacity=event.capacity,
         available_capacity=event.capacity - event.reserved_count,
         image_path=event.image_path,
@@ -91,8 +108,10 @@ def _event_detail(event: Event, session: Session) -> EventDetail:
         select(EventSeat).where(EventSeat.event_id == event.id).order_by(EventSeat.zone_id, EventSeat.row_label, EventSeat.seat_number)
     ).all() if event.ticket_mode == "seats" else []
     zone_prices = {zone.id: float(zone.price) for zone in zones}
+    distinct_prices = {float(zone.price) for zone in zones}
+    pricing = (min(distinct_prices), len(distinct_prices) > 1) if distinct_prices else None
     return EventDetail(
-        **_event_summary(event).model_dump(),
+        **_event_summary(event, pricing).model_dump(),
         description=event.description,
         zones=[ZoneView(id=zone.id, name=zone.name, price=float(zone.price), capacity=zone.capacity, available_capacity=zone.capacity - zone.reserved_count) for zone in zones],
         seats=[SeatView(id=seat.id, zone_id=seat.zone_id, zone_name=zone_names[seat.zone_id], row=seat.row_label, number=seat.seat_number, price=zone_prices[seat.zone_id], available=seat.reservation_id is None) for seat in seats],
@@ -206,7 +225,8 @@ def create_app(database_url: str | None = None) -> FastAPI:
     @application.get("/api/events", response_model=list[EventSummary])
     def list_events(session: Session = Depends(get_session)) -> list[EventSummary]:
         events = session.scalars(select(Event).where(Event.is_demo.is_(True)).order_by(Event.event_date, Event.id)).all()
-        return [_event_summary(event) for event in events]
+        pricing = _zone_pricing(session, [event.id for event in events])
+        return [_event_summary(event, pricing.get(event.id)) for event in events]
 
     @application.get("/api/events/{event_id}", response_model=EventDetail)
     def event_detail(event_id: int, session: Session = Depends(get_session)) -> EventDetail:
@@ -300,7 +320,8 @@ def create_app(database_url: str | None = None) -> FastAPI:
     @application.get("/api/organizer/events", response_model=list[EventSummary])
     def organizer_events(context: AuthContext = Depends(require_role("organizer")), session: Session = Depends(get_session)) -> list[EventSummary]:
         events = session.scalars(select(Event).where(Event.organizer_user_id == context.user.id).order_by(Event.event_date)).all()
-        return [_event_summary(event) for event in events]
+        pricing = _zone_pricing(session, [event.id for event in events])
+        return [_event_summary(event, pricing.get(event.id)) for event in events]
 
     @application.patch("/api/organizer/events/{event_id}", response_model=EventDetail)
     def update_event(
@@ -327,7 +348,8 @@ def create_app(database_url: str | None = None) -> FastAPI:
         events = session.scalars(
             select(Event).join(OperatorEventAssignment).where(OperatorEventAssignment.operator_user_id == context.user.id)
         ).all()
-        return [_event_summary(event) for event in events]
+        pricing = _zone_pricing(session, [event.id for event in events])
+        return [_event_summary(event, pricing.get(event.id)) for event in events]
 
     @application.post("/api/operator/validate", response_model=ValidationResult)
     def validate_entry(

@@ -1,7 +1,10 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import axe from 'axe-core'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
+
+vi.mock('qrcode', () => ({ default: { toDataURL: vi.fn().mockResolvedValue('data:image/png;base64,dGVzdA==') } }))
 
 afterEach(() => {
   cleanup()
@@ -15,7 +18,36 @@ describe('NexoEventos catalog', () => {
     image_path: null,
     ticket_mode: 'general' as const,
     is_demo: true,
+    has_multiple_prices: false,
   }
+
+  async function expectNoAccessibilityViolations() {
+    // JSDOM has no layout engine; contrast is checked against the rendered palette separately.
+    const results = await axe.run(document.body, { rules: { 'color-contrast': { enabled: false } } })
+    const report = results.violations.map((violation) => `${violation.id}: ${violation.help}`).join('\n')
+    expect(results.violations, report).toEqual([])
+  }
+
+  it('passes automated accessibility checks on catalog, date dialog and authentication', async () => {
+    const event = { ...baseEvent, id: 1, name: 'Evento accesible', date: '2026-10-17', venue: 'Sala Uno', category: 'Conciertos', price: 20, has_multiple_prices: false, capacity: 10, available_capacity: 10 }
+    vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request) => String(input).endsWith('/api/auth/session')
+      ? { ok: false, status: 401, json: async () => ({}) }
+      : { ok: true, status: 200, json: async () => [event] }))
+
+    render(<App />)
+    await screen.findByRole('heading', { name: 'Evento accesible' })
+    await expectNoAccessibilityViolations()
+
+    fireEvent.click(screen.getByRole('button', { name: /Más filtros/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Rango de fechas Seleccionar rango' }))
+    await screen.findByRole('dialog', { name: 'Seleccionar rango de fechas' })
+    await expectNoAccessibilityViolations()
+    fireEvent.keyDown(screen.getByRole('dialog', { name: 'Seleccionar rango de fechas' }), { key: 'Escape' })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ingresar' }))
+    await screen.findByRole('heading', { name: 'Inicia sesión' })
+    await expectNoAccessibilityViolations()
+  })
 
   it('renders events returned by the API', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
@@ -37,6 +69,22 @@ describe('NexoEventos catalog', () => {
 
     expect(await screen.findByRole('heading', { name: 'Evento persistente' })).toBeInTheDocument()
     expect(screen.getByText('19 disponibles')).toBeInTheDocument()
+  })
+
+  it('uses Desde only when the API confirms multiple real prices', async () => {
+    const events = [
+      { ...baseEvent, id: 1, name: 'Precio único', date: '2026-10-17', venue: 'Sala Uno', category: 'Conciertos', price: 20, has_multiple_prices: false, capacity: 10, available_capacity: 10 },
+      { ...baseEvent, id: 2, name: 'Varias zonas', date: '2026-10-18', venue: 'Sala Dos', category: 'Teatro', price: 25, has_multiple_prices: true, capacity: 10, available_capacity: 10 },
+    ]
+    vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request) => String(input).endsWith('/api/auth/session')
+      ? { ok: false, status: 401, json: async () => ({}) }
+      : { ok: true, status: 200, json: async () => events }))
+
+    render(<App />)
+    await screen.findByRole('heading', { name: 'Precio único' })
+    expect(screen.queryByText('Desde S/ 20.00')).not.toBeInTheDocument()
+    expect(screen.getAllByText('S/ 20.00').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Desde S/ 25.00').length).toBeGreaterThan(0)
   })
 
   it('updates quantity and total while respecting the minimum', async () => {
@@ -64,7 +112,9 @@ describe('NexoEventos catalog', () => {
     const minus = await screen.findByRole('button', { name: 'Restar una entrada' })
     const plus = screen.getByRole('button', { name: 'Agregar una entrada' })
     expect(minus).toBeDisabled()
-    expect(screen.getAllByText('S/ 10.00')).toHaveLength(2)
+    const booking = screen.getByRole('heading', { name: 'Selecciona tus entradas' }).closest('form')
+    expect(booking).not.toBeNull()
+    expect(within(booking as HTMLFormElement).getAllByText('S/ 10.00')).toHaveLength(2)
 
     fireEvent.click(plus)
     expect(minus).toBeEnabled()
@@ -163,6 +213,29 @@ describe('NexoEventos catalog', () => {
 
     await waitFor(() => expect(fetchMock.mock.calls.some(([input]) => String(input).endsWith('/api/auth/logout'))).toBe(true))
     expect(screen.getByText('Sesión cerrada correctamente.')).toBeInTheDocument()
+  })
+
+  it('moves focus into the private ticket dialog and restores it on Escape', async () => {
+    const reservation = { id: 'reservation-1', event_id: 1, event_name: 'Evento QR', quantity: 1, created_at: '2026-10-06T10:00:00Z' }
+    const ticket = { id: 'ticket-1', reservation_id: 'reservation-1', event_id: 1, event_name: 'Evento QR', event_date: '2026-10-20', event_time: '19:30:00', event_venue: 'Sala Uno', event_city: 'Lima', image_path: null, ticket_type: 'general', zone: null, row: null, seat: null, unit_price: 20, qr_token: 'nexo_token_ficticio_para_prueba', used_at: null }
+    vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request) => {
+      const url = String(input)
+      if (url.endsWith('/api/auth/session')) return { ok: true, status: 200, json: async () => ({ id: '1', email: 'client@example.com', display_name: 'Cliente Demo', role: 'client', session_expires_at: '2026-10-06T18:00:00Z' }) }
+      if (url.endsWith('/api/me/reservations')) return { ok: true, status: 200, json: async () => [reservation] }
+      if (url.endsWith('/api/me/tickets')) return { ok: true, status: 200, json: async () => [ticket] }
+      return { ok: true, status: 200, json: async () => [] }
+    }))
+
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Mis entradas' }))
+    const trigger = await screen.findByRole('button', { name: 'Abrir entrada 1 para Evento QR' })
+    trigger.focus()
+    fireEvent.click(trigger)
+    const close = await screen.findByRole('button', { name: 'Cerrar entrada' })
+    await waitFor(() => expect(close).toHaveFocus())
+    await expectNoAccessibilityViolations()
+    fireEvent.keyDown(window, { key: 'Escape' })
+    await waitFor(() => expect(trigger).toHaveFocus())
   })
 
   it('combines category and city filters and can clear them', async () => {

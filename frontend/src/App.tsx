@@ -23,7 +23,7 @@ type Role = 'client' | 'organizer' | 'operator'
 type User = { id: string; email: string; display_name: string; role: Role; session_expires_at: string }
 type EventItem = {
   id: number; name: string; date: string; time: string | null; venue: string; city: string; category: string
-  price: number; capacity: number; available_capacity: number
+  price: number; has_multiple_prices: boolean; capacity: number; available_capacity: number
   image_path: string | null; ticket_mode: 'general' | 'zones' | 'seats'; is_demo: boolean
 }
 type Zone = { id: number; name: string; price: number; capacity: number; available_capacity: number }
@@ -73,6 +73,11 @@ function formatTime(value: string | null) {
   if (!value) return 'Horario no especificado'
   const [hours, minutes] = value.split(':').map(Number)
   return new Intl.DateTimeFormat('es-PE', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Lima' }).format(new Date(Date.UTC(2026, 0, 1, hours + 5, minutes)))
+}
+
+function formatEventPrice(event: Pick<EventItem, 'price' | 'has_multiple_prices'>) {
+  if (event.price === 0) return 'Gratis'
+  return `${event.has_multiple_prices ? 'Desde ' : ''}S/ ${event.price.toFixed(2)}`
 }
 
 function messageFrom(body: unknown, fallback: string) {
@@ -419,7 +424,7 @@ function DateRangePicker({ from, to, onApply, onClear }: {
     const rawTitle = new Intl.DateTimeFormat('es-PE', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(Date.UTC(year, month, 1)))
     const title = rawTitle.charAt(0).toUpperCase() + rawTitle.slice(1)
     return <section className={`calendar-month ${secondary ? 'secondary-month' : ''}`} aria-label={title}>
-      <h4>{title}</h4>
+      <h3>{title}</h3>
       <div className="calendar-weekdays" aria-hidden="true">{weekDays.map((day) => <span key={day}>{day}</span>)}</div>
       <div className="calendar-grid">
         {monthDays(value).map((date, index) => {
@@ -681,10 +686,6 @@ export default function App() {
 
   return (
     <main className="app-shell">
-      <div className="promo-banner" role="note" aria-label="Promoción de demostración">
-        <span>Hasta <strong>6 cuotas sin intereses</strong> con tu tarjeta BCP</span>
-        <small>Promoción de ejemplo · No vigente</small>
-      </div>
       <header className="site-header">
         <nav className="nav" aria-label="Navegación principal">
           <button className="brand link-button" onClick={() => setView('catalog')} aria-label="Ir al inicio de NexoEventos"><span className="brand-mark">N</span><span>Nexo<strong>Eventos</strong></span></button>
@@ -722,7 +723,7 @@ export default function App() {
               <button className="carousel-arrow next" aria-label="Siguiente evento destacado" onClick={() => moveFeatured(1)}><Icon name="arrow" /></button>
               <div className="carousel-dots" aria-label="Seleccionar evento destacado">{featuredEvents.map((item, index) => <button key={item.id} className={index === featuredIndex ? 'active' : ''} aria-label={`Mostrar ${item.name}`} aria-current={index === featuredIndex ? 'true' : undefined} onClick={() => setFeaturedIndex(index)} />)}</div>
             </article>
-            <aside className="featured-side" aria-label="Más eventos destacados">{sideFeatured.map((item) => <button key={item.id} onClick={() => void openDetail(item.id)} aria-label={`Abrir ${item.name}`}>{item.image_path ? <img src={item.image_path} alt="" /> : <span className="image-fallback">{item.category}</span>}<span><small>{formatDate(item.date)} · {item.category}</small><strong>{item.name}</strong><em>{item.price === 0 ? 'Gratis' : `Desde S/ ${item.price.toFixed(2)}`}</em></span></button>)}</aside>
+            <aside className="featured-side" aria-label="Más eventos destacados">{sideFeatured.map((item) => <button key={item.id} onClick={() => void openDetail(item.id)} aria-label={`Abrir ${item.name}`}>{item.image_path ? <img src={item.image_path} alt="" /> : <span className="image-fallback">{item.category}</span>}<span><small>{formatDate(item.date)} · {item.category}</small><strong>{item.name}</strong><em>{formatEventPrice(item)}</em></span></button>)}</aside>
           </div>}
           <section className="category-section" aria-labelledby="categories-title">
             <div className="home-section-title compact"><h2 id="categories-title">Categorías</h2><p>Explora por tipo de evento</p></div>
@@ -756,7 +757,7 @@ export default function App() {
             <article className="card" key={item.id}>
               <button className={`card-art art-${index % 3}`} onClick={() => void openDetail(item.id)} aria-label={`Ver ${item.name}`}>{item.image_path ? <img src={item.image_path} alt="" loading="lazy" /> : <span className="image-fallback">{item.category}</span>}<span className="category-pill">{item.category}</span></button>
               <div className="card-body"><p className="date"><Icon name="calendar" size={16} />{formatDate(item.date)} · {formatTime(item.time)}</p><h3>{item.name}</h3><p className="venue"><Icon name="location" size={17} />{item.venue}, {item.city}</p>
-                <div className="card-footer"><strong>{item.price === 0 ? 'Gratis' : `Desde S/ ${item.price.toFixed(2)}`}</strong><span>{item.available_capacity} disponibles</span></div>
+                <div className="card-footer"><strong>{formatEventPrice(item)}</strong><span>{item.available_capacity} disponibles</span></div>
                 <button className="button secondary detail-button" onClick={() => void openDetail(item.id)}>Ver detalle <Icon name="arrow" size={18} /></button>
               </div>
             </article>
@@ -861,6 +862,12 @@ function ClientAccount({ onExpired }: { onExpired: () => void }) {
   const [qrImage, setQrImage] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const ticketTriggerRef = useRef<HTMLButtonElement | null>(null)
+  const modalCloseRef = useRef<HTMLButtonElement | null>(null)
+  function closeTicket() {
+    setSelected(null)
+    window.requestAnimationFrame(() => ticketTriggerRef.current?.focus())
+  }
   async function loadAccount() {
     setLoading(true); setError(null)
     try {
@@ -879,7 +886,8 @@ function ClientAccount({ onExpired }: { onExpired: () => void }) {
   }, [selected])
   useEffect(() => {
     if (!selected) return
-    const close = (event: KeyboardEvent) => { if (event.key === 'Escape') setSelected(null) }
+    modalCloseRef.current?.focus()
+    const close = (event: KeyboardEvent) => { if (event.key === 'Escape') closeTicket() }
     window.addEventListener('keydown', close)
     return () => window.removeEventListener('keydown', close)
   }, [selected])
@@ -905,7 +913,7 @@ function ClientAccount({ onExpired }: { onExpired: () => void }) {
           {reservationTickets[0]?.image_path ? <img src={reservationTickets[0].image_path} alt="" /> : <span className="ticket-symbol"><Icon name="ticket" /></span>}
           <div><span className="reservation-kicker">Reserva simulada · {reservation.quantity} entrada(s)</span><h3>{reservation.event_name}</h3><small>Confirmada el {formatDate(reservation.created_at)}</small></div>
         </div>
-        {reservationTickets.length === 0 ? <div className="empty-state compact"><p>La reserva existe, pero todavía no encontramos entradas asociadas.</p></div> : <div className="digital-tickets">{reservationTickets.map((ticket, index) => <button className="digital-ticket" key={ticket.id} onClick={() => setSelected(ticket)} aria-label={`Abrir entrada ${index + 1} para ${ticket.event_name}`}>
+        {reservationTickets.length === 0 ? <div className="empty-state compact"><p>La reserva existe, pero todavía no encontramos entradas asociadas.</p></div> : <div className="digital-tickets">{reservationTickets.map((ticket, index) => <button className="digital-ticket" key={ticket.id} onClick={(event) => { ticketTriggerRef.current = event.currentTarget; setSelected(ticket) }} aria-label={`Abrir entrada ${index + 1} para ${ticket.event_name}`}>
           {ticket.image_path && <span className="ticket-photo"><img src={ticket.image_path} alt="" /></span>}
           <span className="ticket-index">Entrada {index + 1} de {reservationTickets.length}</span>
           <div className="ticket-title"><Icon name="ticket" /><strong>{ticket.event_name}</strong></div>
@@ -915,7 +923,7 @@ function ClientAccount({ onExpired }: { onExpired: () => void }) {
         </button>)}</div>}
       </section>)}
     </div>}
-    {selected && <div className="modal-backdrop" onClick={() => setSelected(null)}><section className="ticket-modal" role="dialog" aria-modal="true" aria-labelledby="ticket-dialog-title" onClick={(event) => event.stopPropagation()}><button className="modal-close" aria-label="Cerrar entrada" onClick={() => setSelected(null)}><Icon name="close" /></button><p className="eyebrow">Entrada digital privada</p><h2 id="ticket-dialog-title">{selected.event_name}</h2><strong className="modal-ticket-kind">{ticketLabel(selected)}</strong><div className="modal-event-meta"><span><Icon name="calendar" />{formatDate(selected.event_date)} · {formatTime(selected.event_time)}</span><span><Icon name="location" />{selected.event_venue}, {selected.event_city}</span></div><div className="qr-frame">{qrImage ? <img className="qr-image" src={qrImage} alt="Código QR de la entrada" /> : <div className="qr-loading" role="status"><span className="spinner" />Preparando QR…</div>}</div><p className={selected.used_at ? 'used-badge' : 'valid-badge'}><Icon name={selected.used_at ? 'close' : 'check'} size={16} />{selected.used_at ? 'Entrada utilizada' : 'Disponible para validar'}</p><p className="ticket-instruction">Presenta este QR completo y con buen brillo al operador en el ingreso. Abrirlo no consume la entrada. No compartas capturas.</p></section></div>}
+    {selected && <div className="modal-backdrop" onClick={closeTicket}><section className="ticket-modal" role="dialog" aria-modal="true" aria-labelledby="ticket-dialog-title" aria-describedby="ticket-dialog-instruction" onClick={(event) => event.stopPropagation()}><button ref={modalCloseRef} className="modal-close" aria-label="Cerrar entrada" onClick={closeTicket}><Icon name="close" /></button><p className="eyebrow">Entrada digital privada</p><h2 id="ticket-dialog-title">{selected.event_name}</h2><strong className="modal-ticket-kind">{ticketLabel(selected)}</strong><div className="modal-event-meta"><span><Icon name="calendar" />{formatDate(selected.event_date)} · {formatTime(selected.event_time)}</span><span><Icon name="location" />{selected.event_venue}, {selected.event_city}</span></div><div className="qr-frame">{qrImage ? <img className="qr-image" src={qrImage} alt="Código QR de la entrada" /> : <div className="qr-loading" role="status"><span className="spinner" />Preparando QR…</div>}</div><p className={selected.used_at ? 'used-badge' : 'valid-badge'}><Icon name={selected.used_at ? 'close' : 'check'} size={16} />{selected.used_at ? 'Entrada utilizada' : 'Disponible para validar'}</p><p className="ticket-instruction" id="ticket-dialog-instruction">Presenta este QR completo y con buen brillo al operador en el ingreso. Abrirlo no consume la entrada. No compartas capturas.</p></section></div>}
   </section>
 }
 

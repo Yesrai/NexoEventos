@@ -42,6 +42,7 @@ class EventSummary(BaseModel):
     city: str
     category: str
     price: float
+    has_multiple_prices: bool
     capacity: int
     available_capacity: int
     image_path: str | None

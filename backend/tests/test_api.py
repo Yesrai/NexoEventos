@@ -38,6 +38,12 @@ def test_health_and_catalog_come_from_postgresql() -> None:
         assert response.status_code == 200
         assert [event["id"] for event in response.json()][:3] == [9001, 9002, 9003]
         assert all(event["is_demo"] for event in response.json())
+        summaries = {event["id"]: event for event in response.json()}
+        assert summaries[9001]["has_multiple_prices"] is False
+        assert summaries[9003]["price"] == 25.0
+        assert summaries[9003]["has_multiple_prices"] is True
+        assert summaries[9004]["price"] == 30.0
+        assert summaries[9004]["has_multiple_prices"] is False
         detail = client.get("/api/events/1").json()
         assert detail["name"] == "Noche Prisma"
         assert detail["available_capacity"] == 240

@@ -62,7 +62,9 @@ def reset_isolated_test_database() -> Iterator[None]:
         connection.execute(text("UPDATE events SET ticket_mode='seats' WHERE id=9004"))
         connection.execute(text("""
             INSERT INTO event_zones (event_id, name, price, capacity, reserved_count)
-            VALUES (9003, 'Preferencial', 25.00, 4, 0)
+            VALUES
+              (9003, 'Preferencial', 25.00, 4, 0),
+              (9003, 'VIP agotada', 40.00, 0, 0)
         """))
         seat_zone = connection.scalar(text("""
             INSERT INTO event_zones (event_id, name, price, capacity, reserved_count)
