@@ -32,6 +32,7 @@ Bloqueo real: falta el ejecutable Session Manager Plugin en el Mac. La colecció
 - Terraform `fmt` y `validate`: OK.
 - Bash `-n` para wrappers/artefacto/validador: OK.
 - Ansible `--syntax-check` para deploy y rollback: OK.
+- Empaquetador versionado: probado; evita el Git incompatible de `/usr/local/bin`, genera archivo/hash protegidos y excluye `work/`, estados, planes y secretos.
 - Frontend: 15 pruebas aprobadas y build Vite (49 módulos) aprobado.
 - Backend: 19 pruebas aprobadas; una advertencia de deprecación de Starlette/httpx pendiente, sin fallo.
 
