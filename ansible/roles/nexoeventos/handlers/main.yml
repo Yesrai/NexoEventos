@@ -1,0 +1,13 @@
+---
+- name: Reiniciar API
+  ansible.builtin.systemd_service:
+    name: nexoeventos-api
+    state: restarted
+    enabled: true
+    daemon_reload: true
+
+- name: Recargar Nginx
+  ansible.builtin.systemd_service:
+    name: nginx
+    state: reloaded
+    enabled: true

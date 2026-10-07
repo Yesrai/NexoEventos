@@ -20,7 +20,7 @@ No se debe reutilizar el estado Academy para otra cuenta. Una cuenta normal nece
 
 ## Estado de comprobación
 
-**Actualización del 3 de octubre de 2026:** la V1 quedó desplegada; el estado protegido contiene los 30 recursos del plan. Session Manager y la lectura del secreto maestro con el rol de instancia se comprobaron en la EC2 real. Quedan tres advertencias abiertas, con correcciones propuestas y no aplicadas en [`docs/operacion/terraform-advertencias.md`](../../docs/operacion/terraform-advertencias.md): AMI `most_recent` (riesgo de reemplazo de la EC2), `max_allocated_storage` igual al asignado y `s3:GetBucketObjectLockConfiguration` denegado (impide un refresh general). Los párrafos siguientes conservan el registro previo al despliegue.
+**Actualización del 7 de octubre de 2026:** la V1 desplegada conserva 30 recursos en el estado protegido `academy-current`. Localmente se fijó la AMI observada, se desactivó explícitamente el autoescalado RDS y se alineó el ciclo de vida con `backups/database/`; `fmt` y `validate` aprobaron. Esos cambios **no están aplicados** y requieren un plan autenticado. `s3:GetBucketObjectLockConfiguration` sigue siendo una limitación de refresh. Véase [`docs/operacion/terraform-advertencias.md`](../../docs/operacion/terraform-advertencias.md).
 
 
 Registro histórico previo al despliegue: el plan del commit `25a12c1` no se reutilizó; se renovó la sesión, STS validó identidad y un plan nuevo mostró **30 altas, 0 cambios y 0 eliminaciones**. Ese plan fue aplicado después con autorización y produjo la V1 del 3 de octubre. No se ejecutó `destroy`. Los planes bajo `work/` son artefactos sensibles/efímeros y no deben tratarse como vigentes sin regenerarlos.

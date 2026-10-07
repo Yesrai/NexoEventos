@@ -1,6 +1,6 @@
 # Procedimientos para la siguiente sesión cloud
 
-Preparado el 3 de octubre de 2026 (Lima) sobre el commit `545a7f3`. **Ningún procedimiento de este documento se ha ejecutado todavía**; los resultados se registrarán solo después de observarlos. Plan, alcance, costo y riesgos: [sesion-cloud-siguiente.md](sesion-cloud-siguiente.md).
+Preparado el 3 de octubre y revisado el 7 de octubre de 2026 (Lima). Los scripts de carga/restauración aún no se han ejecutado contra AWS; no se inventan resultados. Plan, alcance, costo y riesgos: [sesion-cloud-siguiente.md](sesion-cloud-siguiente.md). La actualización versionada de la aplicación tiene un procedimiento separado en [ansible-despliegue.md](ansible-despliegue.md).
 
 Todos los scripts:
 
@@ -22,7 +22,7 @@ Todos los scripts:
 
 Los recursos reales usan el prefijo `nexoeventos-academy-` (entorno `academy`; confirmado en el estado y el registro del plan). El 4 de octubre se reconstruyó `work/terraform-envs/academy.tfvars` desde el estado real `academy-current`, sin inventar valores, y quedó ignorado por Git con modo `0600`. Si vuelve a faltar, usar `scripts/reconstruct-academy-tfvars.py`; el script falla si no reconoce exactamente el estado y los nombres esperados. El archivo no se imprime ni se versiona. Los scripts verifican además que `project_slug` + `environment` produzcan exactamente `nexoeventos-academy`.
 
-Si un bloque completo recién emitido con `Lab environment ready` vuelve a fallar en STS, no regenerarlo en bucle ni arrancar recursos a ciegas. Registrar hora, estado del lab y código de error sin secretos, y escalarlo a docente/soporte. Incidencia del 4 de octubre: `outputs/informe-sesion-aws-2026-10-04.md`.
+El 7 de octubre el archivo seguía conteniendo el bloque temporal del 2 de octubre y STS respondió `InvalidClientTokenId`; no había variables AWS sustituyéndolo y la hora era correcta. Eso exige una renovación normal, no demuestra un fallo nuevo del laboratorio. Si un bloque **recién emitido** con `Lab environment ready` vuelve a fallar, no regenerarlo en bucle ni arrancar recursos a ciegas; registrar hora/estado/código sin secretos y escalarlo. Incidencia previa: `outputs/informe-sesion-aws-2026-10-04.md`.
 
 Antes de empezar, cada terminal necesita la sesión AWS temporal del Learner Lab en un entorno aislado (como en EV09). No pegar credenciales en chats ni capturas.
 

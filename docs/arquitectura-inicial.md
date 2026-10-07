@@ -43,4 +43,4 @@ Componentes reales añadidos al diagrama lógico: secreto maestro administrado p
 | Objetivo | E01 (20 usuarios/5 min, p95 < 2 s, errores < 1 %), R01 (RTO ≤ 60 min, RPO ≤ 24 h), I01 (plan posterior sin cambios) — **sin medir** |
 | Supuesto | cifras del caso empresarial y estimación de costos |
 
-Advertencias abiertas de Terraform (AMI `most_recent`, máximo de almacenamiento RDS y lectura S3 denegada): `docs/operacion/terraform-advertencias.md`.
+Cambios Terraform locales pendientes de plan (AMI fija, máximo de almacenamiento RDS, prefijo de respaldos) y lectura Object Lock denegada: `docs/operacion/terraform-advertencias.md`.

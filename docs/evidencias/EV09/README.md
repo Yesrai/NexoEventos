@@ -15,5 +15,5 @@ Diagnóstico del bloqueo: no había variables `AWS_*` ni rutas de archivos alter
 ## Después del despliegue (3 de octubre de 2026)
 
 - El estado protegido contiene los 30 recursos administrados del plan (`outputs/informe-despliegue-aws-2026-10-03.md`). El bucket se completó con un plan dirigido porque el laboratorio deniega `s3:GetBucketObjectLockConfiguration`.
-- **Falta la evidencia I01:** un `plan` posterior con *No changes*. Hoy un refresh general puede fallar por la lectura S3, y la AMI `most_recent` podría proponer reemplazar la EC2. Las correcciones propuestas, sin aplicar, están en `docs/operacion/terraform-advertencias.md`.
+- **Falta la evidencia I01:** un plan autenticado posterior. El 7 de octubre se corrigieron localmente AMI fija, almacenamiento RDS y prefijo S3, pero no se aplicaron. Un refresh general todavía puede fallar por la lectura Object Lock; un plan `-refresh=false` no prueba ausencia de deriva.
 - Ningún plan o estado se adjunta: pueden contener IDs, endpoints y metadata sensible.

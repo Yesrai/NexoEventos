@@ -68,6 +68,15 @@ variable "ec2_instance_type" {
   default     = "t3.small"
 }
 
+variable "ec2_ami_id" {
+  description = "AMI exacta de Amazon Linux 2023 desplegada en este entorno. Se fija por cuenta para evitar reemplazos por most_recent."
+  type        = string
+  validation {
+    condition     = can(regex("^ami-[0-9a-f]{8,17}$", var.ec2_ami_id))
+    error_message = "ec2_ami_id debe ser un identificador AMI válido y explícito."
+  }
+}
+
 variable "ec2_root_volume_gib" {
   type    = number
   default = 20
@@ -96,6 +105,20 @@ variable "db_allocated_storage_gib" {
   validation {
     condition     = var.db_allocated_storage_gib >= 20 && var.db_allocated_storage_gib <= 100
     error_message = "RDS debe usar entre 20 y 100 GiB."
+  }
+}
+
+variable "db_max_allocated_storage_gib" {
+  description = "0 desactiva el autoescalado. Si se habilita, AWS exige al menos 10 % sobre allocated_storage; Academy limita el techo a 100 GiB."
+  type        = number
+  default     = 0
+  validation {
+    condition = (
+      var.db_max_allocated_storage_gib == 0 ||
+      (var.db_max_allocated_storage_gib >= ceil(var.db_allocated_storage_gib * 1.1) &&
+      var.db_max_allocated_storage_gib <= 100)
+    )
+    error_message = "db_max_allocated_storage_gib debe ser 0 o al menos 10 % mayor que el almacenamiento asignado, hasta 100 GiB."
   }
 }
 

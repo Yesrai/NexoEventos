@@ -9,7 +9,7 @@ resource "aws_db_instance" "postgres" {
   engine                       = "postgres"
   instance_class               = var.db_instance_class
   allocated_storage            = var.db_allocated_storage_gib
-  max_allocated_storage        = var.db_allocated_storage_gib
+  max_allocated_storage        = var.db_max_allocated_storage_gib
   storage_type                 = "gp2"
   storage_encrypted            = true
   db_name                      = "nexoeventos"

@@ -1,0 +1,173 @@
+---
+- name: Validar parámetros y plataforma
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.distribution == 'Amazon'
+      - ansible_facts.distribution_major_version == '2023'
+      - release_id is match('^[0-9a-f]{7,40}$')
+      - release_artifact is file
+      - nexoeventos_domain == 'nexoeventos-demo.duckdns.org'
+    fail_msg: Plataforma, dominio o artefacto no válidos; no se modificó la aplicación.
+
+- name: Comprobar secretos y certificado existentes sin leer su contenido
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop:
+    - /etc/nexoeventos/backend.env
+    - "/etc/letsencrypt/live/{{ nexoeventos_domain }}/fullchain.pem"
+    - "/etc/letsencrypt/live/{{ nexoeventos_domain }}/privkey.pem"
+  register: protected_files
+  no_log: true
+
+- name: Exigir secretos y TLS antes de actualizar
+  ansible.builtin.assert:
+    that:
+      - protected_files.results | map(attribute='stat.exists') | min
+    fail_msg: Faltan secretos o certificado existentes; despliegue cancelado sin regenerarlos.
+
+- name: Mantener paquetes base de Amazon Linux 2023
+  ansible.builtin.dnf:
+    name:
+      - nginx
+      - python3.11
+      - python3.11-pip
+    state: present
+
+- name: Preparar directorios de versiones
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: root
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "{{ nexoeventos_release_root }}", group: root, mode: '0755' }
+    - { path: "{{ nexoeventos_release_root }}/releases", group: root, mode: '0755' }
+    - { path: /var/log/nexoeventos, group: nexoeventos, mode: '0750' }
+
+- name: Crear directorio de la nueva versión
+  ansible.builtin.file:
+    path: "{{ nexoeventos_release_root }}/releases/{{ release_id }}"
+    state: directory
+    owner: root
+    group: nexoeventos
+    mode: '0750'
+
+- name: Extraer el artefacto versionado
+  ansible.builtin.unarchive:
+    src: "{{ release_artifact }}"
+    dest: "{{ nexoeventos_release_root }}/releases/{{ release_id }}"
+    owner: root
+    group: nexoeventos
+    mode: u=rwX,g=rX,o=
+
+- name: Crear entorno virtual aislado de la versión
+  ansible.builtin.command:
+    cmd: >-
+      python3.11 -m venv
+      {{ nexoeventos_release_root }}/releases/{{ release_id }}/backend/.venv
+    creates: "{{ nexoeventos_release_root }}/releases/{{ release_id }}/backend/.venv/bin/python"
+
+- name: Instalar dependencias Python fijadas
+  ansible.builtin.command:
+    cmd: >-
+      {{ nexoeventos_release_root }}/releases/{{ release_id }}/backend/.venv/bin/python
+      -m pip install --disable-pip-version-check
+      --requirement {{ nexoeventos_release_root }}/releases/{{ release_id }}/backend/requirements-production.lock
+  register: pip_install
+  changed_when: "'Successfully installed' in pip_install.stdout"
+
+- name: Inspeccionar enlace current sin seguirlo
+  ansible.builtin.stat:
+    path: "{{ nexoeventos_release_root }}/current"
+    follow: false
+  register: current_link
+
+- name: Detectar la instalación inicial anterior a Ansible
+  ansible.builtin.stat:
+    path: /opt/nexoeventos/backend/.venv/bin/uvicorn
+  register: legacy_release
+
+- name: Definir el destino seguro de reversión
+  ansible.builtin.set_fact:
+    rollback_release: >-
+      {{ current_link.stat.lnk_source
+         if (current_link.stat.islnk | default(false))
+         else ('/opt/nexoeventos' if legacy_release.stat.exists else '') }}
+
+- name: Conservar la versión actual como previous
+  ansible.builtin.file:
+    src: "{{ rollback_release }}"
+    dest: "{{ nexoeventos_release_root }}/previous"
+    state: link
+    force: true
+  when: rollback_release | length > 0
+
+- name: Publicar la nueva versión mediante enlace atómico
+  ansible.builtin.file:
+    src: "{{ nexoeventos_release_root }}/releases/{{ release_id }}"
+    dest: "{{ nexoeventos_release_root }}/current"
+    state: link
+    force: true
+
+- name: Instalar unidad systemd versionada
+  ansible.builtin.template:
+    src: nexoeventos-api.service.j2
+    dest: /etc/systemd/system/nexoeventos-api.service
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+  notify: Reiniciar API
+
+- name: Instalar validador seguro del fragmento Nginx
+  ansible.builtin.copy:
+    src: validate-nginx-fragment.sh
+    dest: /usr/local/sbin/nexoeventos-validate-nginx
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Instalar configuración Nginx versionada
+  ansible.builtin.template:
+    src: nexoeventos-nginx.conf.j2
+    dest: /etc/nginx/conf.d/nexoeventos.conf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+    validate: /usr/local/sbin/nexoeventos-validate-nginx %s
+  notify: Recargar Nginx
+
+- name: Aplicar servicios y comprobar la nueva versión
+  block:
+    - name: Ejecutar handlers antes de la prueba
+      ansible.builtin.meta: flush_handlers
+
+    - name: Comprobar salud local de FastAPI
+      ansible.builtin.uri:
+        url: http://127.0.0.1:8000/ready
+        status_code: 200
+        return_content: false
+      register: release_health
+      retries: 10
+      delay: 3
+      until: release_health.status == 200
+  rescue:
+    - name: Restaurar enlace anterior cuando existe
+      ansible.builtin.file:
+        src: "{{ rollback_release }}"
+        dest: "{{ nexoeventos_release_root }}/current"
+        state: link
+        force: true
+      when: rollback_release | length > 0
+
+    - name: Reiniciar API con la versión restaurada
+      ansible.builtin.systemd_service:
+        name: nexoeventos-api
+        state: restarted
+        daemon_reload: true
+
+    - name: Informar reversión automática
+      ansible.builtin.fail:
+        msg: La comprobación de salud falló; se restauró current cuando había versión previa.

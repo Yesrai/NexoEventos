@@ -1,0 +1,59 @@
+---
+- name: Revertir NexoEventos a la versión anterior conservada
+  hosts: nexoeventos_app
+  gather_facts: false
+  become: true
+  vars_files:
+    - "{{ runtime_vars_file | default('../../work/ansible/runtime.yml') }}"
+  vars:
+    ansible_aws_ssm_bucket_name: "{{ ssm_bucket_name }}"
+    ansible_aws_ssm_profile: "{{ aws_profile }}"
+  tasks:
+    - name: Comprobar que existe una versión anterior
+      ansible.builtin.stat:
+        path: /opt/nexoeventos-deploy/previous
+      register: previous_release
+
+    - name: Cancelar sin una versión anterior
+      ansible.builtin.assert:
+        that: previous_release.stat.islnk | default(false)
+        fail_msg: No existe un enlace previous; no se cambió el servicio.
+
+    - name: Leer destinos actual y anterior
+      ansible.builtin.stat:
+        path: "{{ item }}"
+        follow: false
+      loop:
+        - /opt/nexoeventos-deploy/current
+        - /opt/nexoeventos-deploy/previous
+      register: release_links
+
+    - name: Intercambiar current y previous de forma atómica
+      ansible.builtin.file:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        state: link
+        force: true
+      loop:
+        - src: "{{ release_links.results[1].stat.lnk_source }}"
+          dest: /opt/nexoeventos-deploy/current
+        - src: "{{ release_links.results[0].stat.lnk_source }}"
+          dest: /opt/nexoeventos-deploy/previous
+
+    - name: Reiniciar API y recargar Nginx
+      ansible.builtin.systemd_service:
+        name: "{{ item.name }}"
+        state: "{{ item.state }}"
+      loop:
+        - { name: nexoeventos-api, state: restarted }
+        - { name: nginx, state: reloaded }
+
+    - name: Verificar salud tras la reversión
+      ansible.builtin.uri:
+        url: http://127.0.0.1:8000/ready
+        status_code: 200
+        return_content: false
+      register: rollback_health
+      retries: 10
+      delay: 3
+      until: rollback_health.status == 200

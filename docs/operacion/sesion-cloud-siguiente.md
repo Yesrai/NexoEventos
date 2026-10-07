@@ -1,6 +1,6 @@
 # Siguiente sesión cloud: alcance, costo y riesgos
 
-**Procedimiento aprobado para la próxima reanudación, no ejecutado por el bloqueo de credenciales.** Revisado el 4 de octubre de 2026 (Lima) sobre `7e879ad`. Academy autoarrancó la EC2 al iniciar el lab; se detuvo desde la consola y quedó `Detenida`. RDS quedó en `Detención temporal`. La carga/restauración no comenzó porque STS rechazó un bloque recién emitido con `InvalidClientTokenId`. Los procedimientos están en [procedimientos-sesion-cloud.md](procedimientos-sesion-cloud.md).
+**Procedimiento aprobado para la próxima reanudación, no ejecutado por el bloqueo de credenciales.** Revisado el 7 de octubre de 2026 (Lima). El último estado observado, el 4 de octubre, fue EC2 detenida y RDS en detención temporal; debe volver a consultarse. La actualización Ansible es una ventana previa y separada; ver [ansible-despliegue.md](ansible-despliegue.md).
 
 ## Fecha sugerida
 
@@ -54,12 +54,12 @@ Reglas de crédito que se mantienen: al observar USD 30, reconciliar el inventar
 | La carga degrada la demo pública | baja | latencia alta durante 5 min | 20 usuarios con tiempo de espera de 1–3 s, límite duro de 40 y ejecución fuera de horario de revisión |
 | La carga consume cupos de la demo | baja | eventos agotados | por defecto no se reserva; las reservas solo se activan con `--event-id` de un evento ficticio dedicado |
 | Una captura filtra un identificador | media | exposición de la cuenta | checklist del § 2.2, rectángulos opacos y revisión a 200 % antes de cualquier commit |
-| AMI `most_recent` provoca reemplazo de la EC2 | nula en esta sesión | — | no se ejecuta Terraform; la corrección queda para la sesión dedicada |
+| El plan propone reemplazar EC2 pese a fijar la AMI | desconocida hasta plan | pérdida de servicio si se aplicara | detenerse ante `-/+`; no aplicar y contrastar AMI/estado sin `ignore_changes` |
 | RDS se reinicia sola antes de la sesión | media al acercarse al límite de 7 días | cómputo RDS no previsto | comprobar estado/eventos; no asumir que consultar o repetir la parada reinicia el límite |
 
-## Bloqueos previos a resolver localmente
+## Bloqueos previos
 
 1. **Identificador `Equipo XX`:** pendiente de confirmación docente; no se inventa y no bloquea carga, inventario ni recuperación. La autora registrada es Yesenia y el proyecto es individual.
-2. **Config operativa:** recrear o señalar el tfvars protegido de Academy; hoy falta la ruta predeterminada y los scripts fallan de forma cerrada.
-3. Decidir si la sesión incluye también el dump lógico desde S3; requiere la clave privada de recuperación y la credencial maestra solo en memoria.
-4. Aprobación explícita de Yesenia para `start`/`stop`, carga pública, pausa breve de escrituras, creación/eliminación de la RDS temporal y SSM.
+2. **Credenciales:** renovar el bloque completo cuando el laboratorio esté listo. El bloque del 2 de octubre ya no es válido.
+3. **SSM desde Ansible:** instalar/verificar Session Manager Plugin en una tarea autorizada; no se instaló automáticamente. `academy.tfvars` y el estado `academy-current` sí existen y están protegidos.
+4. Decidir si la sesión incluye también el dump lógico desde S3; requiere la clave privada de recuperación y la credencial maestra solo en memoria.

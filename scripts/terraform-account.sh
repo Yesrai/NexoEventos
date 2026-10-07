@@ -18,7 +18,12 @@ fi
 TFVARS="$PROJECT_ROOT/work/terraform-envs/$ENVIRONMENT.tfvars"
 TF_DIR="$PROJECT_ROOT/infra/aws"
 DATA_DIR="$PROJECT_ROOT/work/terraform/$ENVIRONMENT"
-STATE_FILE="$PROJECT_ROOT/work/terraform-state/$ENVIRONMENT/terraform.tfstate"
+# El estado real migrado usa el sufijo -current. Puede sobreescribirse solo de
+# forma explícita para otra cuenta; nunca se crea silenciosamente un estado
+# paralelo con el nombre corto del entorno.
+STATE_NAME="${NEXO_TF_STATE_NAME:-$ENVIRONMENT-current}"
+[[ "$STATE_NAME" =~ ^[a-z][a-z0-9-]{1,40}$ ]] || { echo "NEXO_TF_STATE_NAME inválido." >&2; exit 2; }
+STATE_FILE="$PROJECT_ROOT/work/terraform-state/$STATE_NAME/terraform.tfstate"
 PLAN_FILE="$PROJECT_ROOT/work/terraform-plans/$ENVIRONMENT.tfplan"
 PLAN_TMP="$PROJECT_ROOT/work/terraform-plans/.$ENVIRONMENT.tfplan.tmp"
 cleanup() { rm -f -- "$PLAN_TMP"; }
@@ -30,6 +35,11 @@ if [[ "$ACTION" == "fmt" ]]; then
 fi
 
 mkdir -p "$DATA_DIR" "$(dirname "$STATE_FILE")" "$(dirname "$PLAN_FILE")"
+if [[ ! -f "$STATE_FILE" ]]; then
+  echo "No existe el estado protegido esperado: $STATE_FILE" >&2
+  echo "Se cancela para no inicializar un estado vacío ni duplicar recursos." >&2
+  exit 1
+fi
 export TF_DATA_DIR="$DATA_DIR"
 terraform -chdir="$TF_DIR" init -input=false -reconfigure -backend-config="path=$STATE_FILE" >/dev/null
 

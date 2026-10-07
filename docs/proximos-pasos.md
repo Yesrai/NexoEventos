@@ -1,21 +1,23 @@
 # Próximos pasos
 
-Actualizado el 4 de octubre de 2026 durante la revisión local posterior a `545a7f3`. Estado completo: [estado-proyecto.md](estado-proyecto.md).
+Actualizado el 7 de octubre de 2026. Estado completo: [estado-proyecto.md](estado-proyecto.md).
 
 ## Locales (sin AWS)
 
 1. Mantener `Equipo XX` como pendiente hasta recibir el identificador docente; registrar a Yesenia como autora individual y avanzar con el resto.
-2. Ensayar `scripts/cloud/load-test.py` contra el backend local (5 usuarios × 30 s) para validar el script.
-3. Preparar el Entregable 2 con el contraste oficial de [evidencias/revision-rubrica.md](evidencias/revision-rubrica.md).
-4. Revisar por separado las propuestas de AMI fija y RDS en [operacion/terraform-advertencias.md](operacion/terraform-advertencias.md); el bucket permanece en estado.
+2. Preparar el Entregable 2 con el contraste oficial de [evidencias/revision-rubrica.md](evidencias/revision-rubrica.md) y la [V2 propuesta](arquitectura-v2.md).
+3. Mantener las correcciones Terraform validadas sin apply hasta obtener un plan autenticado; el bucket permanece en estado.
+4. Instalar/verificar Session Manager Plugin solo en una tarea autorizada; después ejecutar el preflight de [Ansible](operacion/ansible-despliegue.md).
 
 ## Siguiente sesión cloud (requiere aprobación)
 
-5. Aprobar [operacion/sesion-cloud-siguiente.md](operacion/sesion-cloud-siguiente.md): máximo 3.5 h y techo estimado USD 0.75, después de comprobar el límite real de RDS.
-6. Ejecutar en orden: `start`/`check`, inventario y capturas EV02–EV08/EV10, carga E01 (EV11), restauración `--pitr` + `cleanup` (EV07), `check` y `stop`. Procedimientos: [operacion/procedimientos-sesion-cloud.md](operacion/procedimientos-sesion-cloud.md).
-7. Registrar el consumo del panel Academy antes y después. Revisar al observar USD 30 y USD 40; no son límites automáticos.
+5. Con el lab listo, renovar credenciales mediante el script protegido; ejecutar STS una sola vez, inventario/consumo y el plan Terraform.
+6. Si el plan no propone reemplazos/eliminaciones, revisar por separado si se autoriza aplicar las tres correcciones. No usar `-refresh=false` como evidencia de ausencia de deriva.
+7. Actualizar la aplicación por Ansible en una ventana de dos horas (margen estimado USD 0.20), probar HTTPS y detener recursos.
+8. En la sesión de evidencias de máximo 3.5 h: `start`/`check`, EV02–EV10, carga 20 VU × 300 s, restauración `--pitr` + limpieza, `stop`. Techo estimado histórico USD 0.75.
+9. Registrar consumo antes/después. Revisar al observar USD 30 y USD 40; no son límites automáticos.
 
 ## Sesión dedicada posterior
 
-8. Aplicar las correcciones de Terraform solo si el plan muestra 0 reemplazos y 0 eliminaciones; después, `plan` sin cambios para I01/EV09.
-9. Mantener migración entre cuentas y Azure/GCP como mejoras pendientes; los Word oficiales no imponen esos proveedores.
+10. Solo después de resultados V1, decidir si la V2 ALB + dos EC2 aporta evidencia suficiente frente a su costo; no usar EKS sin una necesidad demostrada.
+11. Mantener migración entre cuentas y Azure/GCP como mejoras pendientes; los Word oficiales no imponen esos proveedores.

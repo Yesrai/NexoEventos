@@ -1,0 +1,18 @@
+---
+plugin: amazon.aws.aws_ec2
+regions:
+  - us-east-1
+filters:
+  tag:Name: nexoeventos-academy-app
+  instance-state-name:
+    - running
+hostnames:
+  - instance-id
+strict: true
+strict_permissions: true
+groups:
+  nexoeventos_app: "tags.Name == 'nexoeventos-academy-app'"
+compose:
+  ansible_host: instance_id
+  ansible_connection: "'amazon.aws.aws_ssm'"
+  ansible_aws_ssm_region: placement.region

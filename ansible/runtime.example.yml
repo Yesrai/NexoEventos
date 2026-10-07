@@ -1,0 +1,6 @@
+---
+# La versión real se genera en work/ansible/runtime.yml (0600 e ignorada).
+aws_profile: nexoeventos-lab
+ssm_bucket_name: REPLACE_WITH_PRIVATE_BUCKET
+release_id: 0000000000000000000000000000000000000000
+release_artifact: /absolute/protected/path/to/release.tar.gz

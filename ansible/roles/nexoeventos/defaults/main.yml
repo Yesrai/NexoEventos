@@ -1,0 +1,4 @@
+---
+nexoeventos_release_root: /opt/nexoeventos-deploy
+nexoeventos_keep_releases: 3
+nexoeventos_domain: nexoeventos-demo.duckdns.org

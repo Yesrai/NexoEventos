@@ -1,6 +1,6 @@
 # Revisión frente a los documentos oficiales del Entregable 2
 
-Revisión local del 4 de octubre de 2026 sobre el trabajo posterior a `545a7f3`.
+Revisión local actualizada el 7 de octubre de 2026 sobre el repositorio hasta `1d21b7a` y la preparación cloud posterior.
 
 Fuentes oficiales adjuntas, leídas completas:
 
@@ -21,7 +21,7 @@ Este documento no asigna puntajes ni inventa cumplimientos. La rúbrica evalúa 
 
 | Criterio oficial | Secciones indicadas | Estado verificable actual | Pendiente exacto para demostrar el descriptor superior |
 |---|---|---|---|
-| 1. Evolución de V1 a V2 | 2–6 | V1 AWS desplegada, HTTPS y flujo funcional comprobados; problemas y propuestas V2 identificados | documentar la retroalimentación recibida; comparar V1/V2; implementar y medir mejoras V2 significativas, no solo describirlas |
+| 1. Evolución de V1 a V2 | 2–6 | V1 AWS desplegada; V2 mínima ALB + dos EC2 diseñada y comparada con EKS | documentar retroalimentación; obtener plan/costo real e implementar/medir V2 solo si se aprueba y Academy lo permite |
 | 2. Amenazas y vulnerabilidades | 8 y 19 | riesgos V1 identificados: instancia única, RDS Single-AZ, sesión Academy, secretos, deriva y costo | producir análisis técnico estructurado (activo, amenaza, vulnerabilidad, probabilidad/impacto, control, riesgo residual) y evidenciar el tratamiento |
 | 3. Controles de seguridad | 7, 9, 10 y 14 | HTTPS, cookies seguras, CSRF, Argon2, roles de BD limitados, SSH cerrado, SG→SG, IMDSv2, logs y cifrado de respaldo comprobados | capturas sanitizadas de IAM/red/cifrado/monitoreo; prueba de rate limit; definir/implementar controles V2 justificados; no afirmar MFA si no existe |
 | 4. Escalabilidad, disponibilidad y tolerancia a fallos | 11–13 y 15 | SPOF de V1 declarados y escenario de carga preparado | ejecutar 20 VU × 5 min; diseñar V2 coherente para 100→500→1000→5000; justificar redundancia y eliminación de SPOF; medir recuperación de datos y, aparte, servicio completo |
@@ -36,7 +36,7 @@ Este documento no asigna puntajes ni inventa cumplimientos. La rúbrica evalúa 
 | 8 y 19: amenazas y riesgos residuales | lista de limitaciones | matriz de riesgos con tratamiento y riesgo residual por activo |
 | 9: IAM | LabRole/LabInstanceProfile usados según Academy | evidencia sanitizada; diseño portable sin asumir esos roles en otra cuenta |
 | 10: red | VPC, tres subredes, rutas y SG desplegados | EV02–EV04 de consola; propuesta V2 y justificación de segmentación/redundancia |
-| 11: escalabilidad | objetivo E01 y script | resultado real de 20 VU × 5 min con p95 y errores; proyección 100/500/1000/5000 |
+| 11: escalabilidad | objetivo E01, script y V2 propuesta | resultado real de 20 VU × 5 min con p95/errores; luego comparación V1/V2 y proyección 100/500/1000/5000 |
 | 12–13: HA y fallos | SPOF V1 declarados | V2 redundante implementada o limitación honesta; pruebas controladas de falla/recuperación |
 | 14: monitoreo y alertas | log groups y alarma creados | EV08, métricas durante carga, umbrales y respuesta operativa |
 | 15: respaldo y recuperación | dump cifrado S3, copia externa y snapshot RDS | ensayo cloud: línea base, punto recuperable, datos restaurados, reservas y descifrado de todas las entradas; medir servicio completo por separado |
