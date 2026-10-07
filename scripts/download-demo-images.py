@@ -33,6 +33,7 @@ FILES = [
     ("food-cheese", "File:Cheese - food fair london.jpg"),
     ("food-fair", "File:Food at a folk art fair on Rynek Główny in Kraków 02.jpg"),
     ("food-organic", "File:Tomato varieties at Porto Alegre organic food fair - Brazil.jpg"),
+    ("food-local-fair", "File:DFC 3508 A bustling night market food stall displaying bowls of fresh vegetables herbs and colorful produce while a vendor prepares dishes behind the counter.jpg"),
     ("running-field", "File:7° B.Est cross country - 2018.jpg"),
     ("running-race", "File:A high school cross country runner runs during a race at a meet in North Carolina 01.jpg"),
     ("running-road", "File:September 2002, Running race in Rennes.jpg"),

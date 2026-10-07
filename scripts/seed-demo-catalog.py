@@ -20,7 +20,7 @@ EVENTS = [
     (1010, "Cerámica para Empezar", "Talleres", 6, time(10, 0), "Taller Artesano", "Lima", "Sesión introductoria de modelado manual con materiales incluidos.", 60, 30, "general", "pottery-hands"),
     (1011, "Mesa Creativa", "Talleres", 13, time(11, 0), "Laboratorio de Oficios", "Lima", "Taller ficticio de técnicas mixtas y trabajo colaborativo.", 48, 60, "zones", "pottery-table"),
     (1012, "Diseño en Arcilla", "Talleres", 20, time(16, 0), "Estudio Norte", "Callao", "Experiencia guiada para diseñar una pieza pequeña en arcilla.", 72, 48, "seats", "pottery-detail"),
-    (1013, "Feria de Sabores Locales", "Ferias", 7, time(10, 0), "Parque de la Exposición", "Lima", "Feria académica de productores, demostraciones y cocina local.", 0, 400, "general", "food-cheese"),
+    (1013, "Feria de Sabores Locales", "Ferias", 7, time(10, 0), "Parque de la Exposición", "Lima", "Feria académica de productores, demostraciones y cocina local.", 0, 400, "general", "food-local-fair"),
     (1014, "Mercado Creativo", "Ferias", 14, time(11, 0), "Plaza Cultural", "Lima", "Diseño independiente, gastronomía y actividades para toda la familia.", 15, 300, "zones", "food-fair"),
     (1015, "Festival Huerta Urbana", "Ferias", 21, time(9, 30), "Jardín Comunitario", "Callao", "Encuentro ficticio sobre cultivo urbano, alimentos y sostenibilidad.", 12, 220, "general", "food-organic"),
     (1016, "5K Costa Verde", "Deportes", 9, time(7, 0), "Circuito Costa Verde", "Lima", "Carrera recreativa demo con punto de encuentro y control de ingreso.", 0, 500, "general", "running-field"),
