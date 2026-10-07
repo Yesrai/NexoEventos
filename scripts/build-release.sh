@@ -11,6 +11,19 @@ for git_candidate in "$(command -v git 2>/dev/null || true)" /usr/bin/git; do
   fi
 done
 [[ -n "$GIT_BIN" ]] || { echo "No se encontró un Git ejecutable." >&2; exit 1; }
+NODE_BIN_DIR=""
+for node_dir in /opt/homebrew/opt/node@24/bin "$(dirname "$(command -v node 2>/dev/null || echo /nonexistent/node)")"; do
+  if [[ -x "$node_dir/node" && -x "$node_dir/npm" ]] && \
+    [[ "$($node_dir/node --eval 'process.stdout.write(process.versions.node.split(".")[0])')" == 24 ]]; then
+    NODE_BIN_DIR="$node_dir"
+    break
+  fi
+done
+[[ -n "$NODE_BIN_DIR" ]] || {
+  echo "Se requiere Node.js 24 para crear el artefacto; no se modificaron versiones globales." >&2
+  exit 1
+}
+export PATH="$NODE_BIN_DIR:$PATH"
 [[ -z "$($GIT_BIN status --porcelain --untracked-files=no)" ]] || {
   echo "Hay cambios rastreados sin commit; crea y revisa el commit antes de empaquetar." >&2
   exit 1
