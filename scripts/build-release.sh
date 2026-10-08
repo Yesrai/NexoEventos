@@ -41,6 +41,13 @@ rm -rf -- "$STAGE/frontend/dist"
 cp -R "$ROOT/frontend/dist" "$STAGE/frontend/dist"
 mkdir -p "$(dirname "$OUT")"
 umask 077
-tar -czf "$OUT" -C "$STAGE" .
+# BSD tar puede serializar atributos extendidos de macOS como archivos
+# AppleDouble `._*`. Alembic los interpreta como módulos Python si terminan en
+# `.py`, por lo que se desactivan y se comprueba el contenido antes de publicar.
+COPYFILE_DISABLE=1 tar -czf "$OUT" -C "$STAGE" .
+if COPYFILE_DISABLE=1 tar -tzf "$OUT" | grep -Eq '(^|/)\._'; then
+  echo "El artefacto contiene metadatos AppleDouble; se rechaza." >&2
+  exit 1
+fi
 shasum -a 256 "$OUT" >"$OUT.sha256"
 echo "Artefacto protegido creado para $RELEASE_ID en work/releases/."
