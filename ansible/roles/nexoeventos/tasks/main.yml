@@ -61,7 +61,9 @@
     state: directory
     owner: root
     group: nexoeventos
-    mode: '0750'
+    # Nginx necesita atravesar este directorio para servir frontend/dist. El
+    # backend y los secretos conservan permisos más restrictivos debajo.
+    mode: '0755'
 
 - name: Extraer el artefacto versionado
   ansible.builtin.unarchive:
@@ -70,6 +72,34 @@
     owner: root
     group: nexoeventos
     mode: u=rwX,g=rX,o=
+
+- name: Permitir a Nginx recorrer los directorios públicos del frontend
+  ansible.builtin.command:
+    argv:
+      - find
+      - "{{ nexoeventos_release_root }}/releases/{{ release_id }}/frontend/dist"
+      - -type
+      - d
+      - -exec
+      - chmod
+      - '0755'
+      - '{}'
+      - +
+  changed_when: true
+
+- name: Permitir a Nginx leer los archivos públicos del frontend
+  ansible.builtin.command:
+    argv:
+      - find
+      - "{{ nexoeventos_release_root }}/releases/{{ release_id }}/frontend/dist"
+      - -type
+      - f
+      - -exec
+      - chmod
+      - '0644'
+      - '{}'
+      - +
+  changed_when: true
 
 - name: Crear entorno virtual aislado de la versión
   ansible.builtin.command:
