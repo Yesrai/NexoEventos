@@ -73,6 +73,17 @@
     group: nexoeventos
     mode: u=rwX,g=rX,o=
 
+- name: Permitir a Nginx atravesar los padres de la raíz pública
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: nexoeventos
+    mode: '0755'
+  loop:
+    - "{{ nexoeventos_release_root }}/releases/{{ release_id }}"
+    - "{{ nexoeventos_release_root }}/releases/{{ release_id }}/frontend"
+
 - name: Permitir a Nginx recorrer los directorios públicos del frontend
   ansible.builtin.command:
     argv:
