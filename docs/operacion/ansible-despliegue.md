@@ -8,7 +8,7 @@ Preparado localmente y con conexión SSM verificada el **7 de octubre de 2026**.
 2. Confirmar cuenta/región ocultas, una sola EC2 `nexoeventos-academy-app`, SSM `Online` y acceso al bucket privado; generar inventario estático protegido en `work/ansible/`.
 3. Crear desde un commit limpio un artefacto protegido con `scripts/build-release.sh`.
 4. Exigir un recibo `0600` que identifique snapshot/dump preactualización.
-5. Desplegar en `/opt/nexoeventos-deploy/releases/<commit>`, pausar la API, migrar `0003→0005`, sembrar el catálogo ficticio y comprobar Alembic antes de cambiar `current`.
+5. Desplegar en `/opt/nexoeventos-deploy/releases/<commit>`, pausar la API, migrar `0003→0005`, insertar el catálogo ficticio sin alterar IDs ya existentes y comprobar Alembic antes de cambiar `current`. La migración es aditiva, pero el catálogo de esta ventana no habilita asientos numerados ni 3D.
 6. Conservar `previous`, reiniciar FastAPI/recargar Nginx y exigir `/ready = 200`; si falla el código, restaurar el enlace anterior.
 7. Comprobar por HTTPS registro → acceso → reserva simulada → entrada → validación única, sin capturar QR ni datos privados.
 

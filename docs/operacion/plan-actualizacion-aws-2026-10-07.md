@@ -30,7 +30,7 @@ El plan histórico del 2 de octubre fue movido a `work/terraform-plans/archive/`
 2. Arrancar RDS y comprobar estado/backup automático.
 3. Crear snapshot manual preactualización y dump lógico cifrado; verificar copia externa y crear un recibo remoto `0600`.
 4. Crear artefacto del commit aprobado con Node 24 y checksum; desplegarlo como una nueva release sin tocar `/etc/nexoeventos`, claves QR ni `/etc/letsencrypt`.
-5. Con la identidad migradora, ejecutar Alembic `0003 → 0004 → 0005`; después ejecutar el *upsert* de los 27 eventos ficticios. No elimina reservas ni reasigna entradas heredadas.
+5. Con la identidad migradora, ejecutar Alembic `0003 → 0004 → 0005`; después insertar los 27 eventos ficticios. Si un ID ya existe, la siembra no modifica cupos, reservas, propietario, precio, fecha, modalidad ni zonas. En esta ventana el catálogo solo habilita entradas generales o por zonas: asientos numerados y 3D quedan fuera del despliegue.
 6. Exigir `alembic current = 0005`, cambiar el enlace `current`, reiniciar systemd, validar Nginx y `/ready`.
 7. Comprobar HTTPS y el flujo registro → acceso → reserva simulada → entrada → validación única, sin capturar QR utilizables.
 8. Si falla el código, restaurar `previous`. Si falla o debe revertirse la migración/datos, restaurar la RDS preactualización en forma aislada; el rollback de código no deshace esquema.
