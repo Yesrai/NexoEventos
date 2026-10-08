@@ -1,9 +1,18 @@
 ---
+- name: Comprobar Amazon Linux 2023 sin recopilar facts completos
+  ansible.builtin.shell:
+    cmd: >-
+      grep -Eq '^ID="?amzn"?$' /etc/os-release &&
+      grep -Eq '^VERSION_ID="?2023"?$' /etc/os-release
+    executable: /bin/bash
+  register: platform_check
+  changed_when: false
+  failed_when: false
+
 - name: Validar parámetros y plataforma
   ansible.builtin.assert:
     that:
-      - ansible_facts.distribution == 'Amazon'
-      - ansible_facts.distribution_major_version == '2023'
+      - platform_check.rc == 0
       - release_id is match('^[0-9a-f]{7,40}$')
       - release_artifact is file
       - nexoeventos_domain == 'nexoeventos-demo.duckdns.org'

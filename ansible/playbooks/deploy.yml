@@ -1,7 +1,9 @@
 ---
 - name: Desplegar una versión verificable de NexoEventos
   hosts: nexoeventos_app
-  gather_facts: true
+  # La recopilación completa dispara un fallo del worker de Ansible en este Mac
+  # mediante SSM. El rol comprueba de forma explícita solo la plataforma usada.
+  gather_facts: false
   become: true
   vars_files:
     - "{{ runtime_vars_file | default('../../work/ansible/runtime.yml') }}"
