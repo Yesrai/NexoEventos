@@ -8,6 +8,10 @@ TFVARS="$ROOT/work/terraform-envs/academy.tfvars"
 RUNTIME="$ROOT/work/ansible/runtime.yml"
 INVENTORY="$ROOT/work/ansible/inventory.yml"
 export ANSIBLE_CONFIG="$ROOT/ansible/ansible.cfg"
+# Evita que el worker de Ansible muera al bifurcar bibliotecas del sistema en
+# macOS. El alcance queda limitado a este proceso y solo se administra un host.
+export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+export ANSIBLE_FORKS=1
 
 case "$ACTION" in preflight|deploy|rollback) ;; *)
   echo "Uso: $0 {preflight|deploy|rollback}" >&2; exit 2 ;;
