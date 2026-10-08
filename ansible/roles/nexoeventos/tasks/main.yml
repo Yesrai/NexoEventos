@@ -259,6 +259,13 @@
     validate: /usr/local/sbin/nexoeventos-validate-nginx %s
   notify: Recargar Nginx
 
+- name: Arrancar explícitamente la API desde la versión publicada
+  ansible.builtin.systemd_service:
+    name: nexoeventos-api
+    state: restarted
+    enabled: true
+    daemon_reload: true
+
 - name: Aplicar servicios y comprobar la nueva versión
   block:
     - name: Ejecutar handlers antes de la prueba
