@@ -92,7 +92,10 @@ def main() -> None:
         ("instance_profile_name", profile["name"]),
         ("db_instance_class", database["instance_class"]),
         ("db_allocated_storage_gib", database["allocated_storage"]),
-        ("db_max_allocated_storage_gib", database.get("max_allocated_storage", 0) or 0),
+        # Decisión V1 revisada: desactivar explícitamente el autoescalado. El
+        # estado remoto conserva 20, valor igual al asignado que no puede
+        # escalar y que además incumple el margen mínimo documentado por RDS.
+        ("db_max_allocated_storage_gib", 0),
         ("backup_retention_days", database["backup_retention_period"]),
         ("log_retention_days", api_logs["retention_in_days"]),
         ("final_snapshot_identifier", database["final_snapshot_identifier"]),

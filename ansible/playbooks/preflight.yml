@@ -1,0 +1,13 @@
+---
+- name: Verificar conexión Ansible por Session Manager sin cambiar la aplicación
+  hosts: nexoeventos_app
+  gather_facts: false
+  become: false
+  vars_files:
+    - "{{ runtime_vars_file | default('../../work/ansible/runtime.yml') }}"
+  vars:
+    ansible_aws_ssm_bucket_name: "{{ ssm_bucket_name }}"
+    ansible_aws_ssm_profile: "{{ aws_profile }}"
+  tasks:
+    - name: Comprobar ejecución de un módulo por SSM
+      ansible.builtin.ping:

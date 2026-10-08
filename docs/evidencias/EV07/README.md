@@ -10,3 +10,5 @@ Comprobado el 3 de octubre de 2026:
 - snapshot manual RDS cifrado de 20 GiB confirmado `available` después de las pruebas públicas.
 
 No se capturaron claves, contraseñas, contenidos de la base ni tokens QR. Falta ejecutar una restauración cloud aislada desde este respaldo; la restauración local anterior sigue siendo evidencia separada.
+
+Lectura del 7 de octubre: snapshot manual cifrado continúa `available`; el objeto cifrado en `backups/database/` permanece en S3 privado, versionado, AES-256 y con bloqueo público completo. La restauración sigue sin ejecutarse.

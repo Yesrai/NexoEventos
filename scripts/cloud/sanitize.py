@@ -11,7 +11,9 @@ import json
 import re
 import sys
 
-SENSITIVE_KEYS = re.compile(r"(?i)(password|secret|token|cookie|authorization|credential|privatekey|accesskey)")
+SENSITIVE_KEYS = re.compile(
+    r"(?i)(password|secret|token|cookie|authorization|credential|privatekey|accesskey|sessionid|hostid|requestid)"
+)
 INLINE_SENSITIVE = re.compile(r'(?i)("[^"]*(?:password|secret|token|cookie|authorization|credential|privatekey|accesskey)[^"]*"\s*:\s*)"[^"]*"')
 RULES = [
     (re.compile(r"arn:aws[a-z-]*:[a-z0-9-]*:[a-z0-9-]*:\d{12}:[^\s\"]+"), "arn:aws:…(oculto)"),
@@ -20,6 +22,9 @@ RULES = [
      lambda m: f"{m.group(1)}-…{m.group(2)[-4:]}"),
     (re.compile(r"(?<![\d.])\d{12}(?![\d.])"), "<cuenta>"),
     (re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b"), None),  # IPv4: tratamiento especial
+    (re.compile(r"(?i)((?:SessionId|sessionId|RequestID|HostID):?\s*)[^\s,]+"), r"\1<oculto>"),
+    (re.compile(r"\b(?:AIPA|AIDA|AROA)[A-Z0-9]{12,}\b"), "<id-iam-oculto>"),
+    (re.compile(r"\bdb-[A-Z0-9]{12,}\b"), "db-…<oculto>"),
 ]
 
 

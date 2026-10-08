@@ -5,7 +5,7 @@
 | Fecha de corte | 7 de octubre de 2026 (Lima) |
 | Commit de referencia | `1d21b7a` al iniciar esta revisión; los cambios cloud/Ansible quedan en el commit indicado por `git log` |
 | URL pública | `https://nexoeventos-demo.duckdns.org`, **fuera de servicio mientras EC2 y RDS estén detenidas** |
-| Estado AWS comprobado | último estado observado el 4 de octubre: EC2 `Detenida`, RDS en `Detención temporal`, sin RDS temporal. El 7 de octubre STS volvió a rechazar las credenciales antiguas; no se presume el estado actual |
+| Estado AWS comprobado | 7 de octubre, 14:49 Lima: STS correcto; EC2 `running` por arranque de Academy, RDS `stopped`, sin RDS temporal |
 | Entrega final | 26 de noviembre de 2026 |
 
 Convención de este documento:
@@ -31,11 +31,11 @@ Convención de este documento:
 
 | Componente | Local al 7-oct | AWS verificado por última vez | Sincronizado |
 |---|---|---|---|
-| frontend | rediseño y accesibilidad hasta `1d21b7a` | versión desplegada y probada el 3-oct | **No**; falta despliegue versionado y prueba pública |
-| backend/API | controles funcionales ya probados; no se identificó una migración nueva en esta revisión | flujo completo y migraciones `0001`–`0003` probados el 3-oct | no se vuelve a afirmar hasta comparar commits |
+| frontend | rediseño y accesibilidad hasta `1d21b7a` | código legacy del 3-oct; HTTPS `/` responde 200 | **No**; falta despliegue versionado y prueba pública |
+| backend/API | requiere migraciones `0004` y `0005` y catálogo ficticio actual | servicio activo con RDS detenida; archivos `0004`/`0005` ausentes | **No**; `/ready` y eventos no responden hasta arrancar RDS |
 | infraestructura | AMI fija, RDS autoscaling explícito y prefijo S3 corregidos localmente | estado protegido serial 32; configuración remota previa | **No**; falta plan autenticado, no se aplicó Terraform |
 | automatización | Ansible con artefacto, health check y rollback preparado | instalación inicial ejecutada con scripts shell | **No probado en AWS** |
-| evidencias | matriz actualizada; capturas históricas conservadas | no hubo acceso API el 7-oct | faltan EV02–EV04, EV06–EV08 y nueva EV10 |
+| evidencias | matriz actualizada; capturas históricas conservadas | inventario sanitizado de lectura obtenido el 7-oct | faltan capturas de consola EV02–EV04/EV06–EV08 y nueva EV10 |
 
 ## Pendiente
 
@@ -47,8 +47,8 @@ Convención de este documento:
 | Configuración operativa protegida | completada localmente | reconstruida desde el estado real `academy-current` (serial 32), ignorada por Git y modo `0600`; valores no impresos |
 | Restauración cloud aislada y cronometrada (R01) | no ejecutada; **punto recuperable, recuperación de datos y servicio completo no medidos** | línea base exacta, QR y limpieza por recibo preparados; ejecución AWS pendiente |
 | Arranque/apagado verificable | hoy es manual | `scripts/cloud/cloud-session.sh` |
-| Plan Terraform vigente (I01/EV09) | STS inválido; además Object Lock puede bloquear refresh | configuración corregida y validada localmente; falta plan autenticado antes de aplicar |
-| Actualización versionada de AWS | credenciales temporales antiguas inválidas y Session Manager Plugin ausente en el Mac | playbooks y rollback validados sintácticamente; `docs/operacion/ansible-despliegue.md` |
+| Plan Terraform vigente (I01/EV09) | refresh autenticado termina por SCP Object Lock | resumen parcial 0 altas/1 cambio/0 bajas; **sin plan aplicable** |
+| Actualización versionada de AWS | requiere respaldo y migrar `0003→0005` | plugin ARM64, SSM y Ansible `ping` comprobados; despliegue aún no ejecutado |
 | Identificador `Equipo XX` del modelo oficial | falta confirmación docente; no se inventa | autora: Yesenia; proyecto individual; pendiente no bloqueante |
 | Cámara física para QR | no probada; la alternativa por código sí | — |
 | Captura pública con fecha/hora (tabla 15 del Entregable) | la existente (EV05) muestra solo la página: sin barra de direcciones, candado HTTPS ni fecha/hora | checklist § 2.2 |
@@ -80,8 +80,8 @@ Convención de este documento:
 7. **Rendimiento y recuperación sin medir en cloud.** La restauración local no acredita RTO/RPO cloud.
 8. **Cámara física no probada.**
 9. **Demostración académica, no lista para producción.** MFA, recuperación de cuenta e interfaz de auditoría no están implementados.
-10. **Credenciales Academy no vigentes.** El 7 de octubre el perfil protegido seguía usando el bloque temporal del 2 de octubre y STS devolvió `InvalidClientTokenId`. No había variables AWS sustituyendo el perfil y la hora era correcta. No se reintentó en bucle ni se consultó/modificó AWS.
+10. **Refresh Terraform limitado por SCP.** Las credenciales renovadas funcionan, pero `s3:GetBucketObjectLockConfiguration` tiene un deny explícito. No se retiró S3 del estado ni se usó `-refresh=false` como evidencia.
 
 ## Siguiente paso
 
-Con el laboratorio listo, ejecutar personalmente `./work/enter-aws-academy-credentials.sh` y después una sola comprobación STS. Si funciona: inventario/consumo, plan Terraform nuevo y preflight Ansible. Si vuelve a fallar con un bloque recién emitido, actualizar el reporte a soporte y continuar sin cambios cloud. No aplicar Terraform hasta revisar un plan con refresh. El identificador `Equipo XX` sigue pendiente, sin bloquear el trabajo técnico.
+Revisar y aprobar el alcance/costo de [plan-actualizacion-aws-2026-10-07.md](operacion/plan-actualizacion-aws-2026-10-07.md). Terraform no debe aplicarse sin resolver el refresh. La aplicación puede actualizarse separadamente con respaldo, migraciones `0004`/`0005`, rollback y verificación pública. El identificador `Equipo XX` sigue pendiente.

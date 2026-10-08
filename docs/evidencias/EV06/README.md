@@ -5,3 +5,5 @@ RDS PostgreSQL 18.3 privado quedó accesible desde el SG de la aplicación y no 
 La prueba pública creó datos ficticios únicamente. No se publican endpoint, contraseñas, identificadores de cuenta ni tokens QR.
 
 Después del snapshot y del dump cifrado, AWS confirmó la instancia RDS en estado `stopped`. La advertencia de umbral de almacenamiento (máximo igual a 20 GiB asignados) queda pendiente de un plan revisado.
+
+Lectura API del 7 de octubre: continúa `stopped`, privada, cifrada, Single-AZ, PostgreSQL 18.3 y 20 GiB. El máximo remoto sigue en 20 GiB; el plan parcial propone desactivarlo explícitamente con 0. La base desplegada permanece en `0003`; las migraciones locales `0004` y `0005` requieren respaldo y aplicación controlada antes de publicar el backend nuevo.

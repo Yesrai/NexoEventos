@@ -6,10 +6,10 @@ Base local del proyecto universitario de Cloud Computing para una plataforma fic
 
 - Frontend: React + TypeScript + Vite.
 - Backend: FastAPI con autenticación, autorización por rol, catálogo, reservas simuladas, entradas QR y validación de ingreso.
-- Catálogo demo: 18 eventos ficticios con filtros combinables, fotografías de Wikimedia Commons atribuidas y entradas generales, por zonas o con asiento numerado.
+- Catálogo demo: 27 eventos ficticios con filtros combinables, fotografías de Wikimedia Commons atribuidas y entradas generales, por zonas o con asiento numerado.
 - Persistencia: PostgreSQL 14 local con migraciones Alembic y datos ficticios reproducibles.
 - Infraestructura: Terraform AWS V1 **desplegado y verificado el 3 de octubre de 2026** en `us-east-1` (30 recursos: VPC, subredes, EC2 AL2023, RDS PostgreSQL 18.3 privada, S3 privado, CloudWatch). Azure y GCP permanecen como referencias sin recursos.
-- Cloud: `https://nexoeventos-demo.duckdns.org` probado públicamente por HTTPS; EC2 y RDS quedan **detenidas** entre sesiones para ahorrar crédito, por lo que la URL solo responde en ventanas activas.
+- Cloud: `https://nexoeventos-demo.duckdns.org` probado públicamente por HTTPS; EC2 y RDS se detienen entre sesiones para ahorrar crédito. El estado observado y su fecha se mantienen en [docs/estado-proyecto.md](docs/estado-proyecto.md).
 - Estado consolidado, pendientes y limitaciones: [docs/estado-proyecto.md](docs/estado-proyecto.md). Revisión frente a la rúbrica: [docs/evidencias/revision-rubrica.md](docs/evidencias/revision-rubrica.md).
 
 ## Inicio rápido
@@ -65,7 +65,7 @@ Endpoints principales implementados:
 
 No existe un endpoint público para enumerar reservas o entradas. Consulta [docs/autenticacion-y-entradas.md](docs/autenticacion-y-entradas.md) para el modelo de sesión, expiración, permisos y limitaciones.
 
-La migración `0004` añade metadatos del catálogo, zonas y asientos sin reescribir migraciones aplicadas. `scripts/seed-demo-catalog.py` hace *upsert* de los 18 eventos y completa zonas/asientos faltantes sin borrar reservas ni restablecer cupos usados. Los precios se calculan en el servidor; los asientos se bloquean en PostgreSQL al reservar y una restricción única impide asignarlos dos veces. Las fotografías son ilustrativas y sus fuentes/licencias están en [docs/atribuciones-imagenes.md](docs/atribuciones-imagenes.md).
+La migración `0004` añade metadatos del catálogo, zonas y asientos sin reescribir migraciones aplicadas. `scripts/seed-demo-catalog.py` hace *upsert* de los 27 eventos y completa zonas/asientos faltantes sin borrar reservas ni restablecer cupos usados. Los precios se calculan en el servidor; los asientos se bloquean en PostgreSQL al reservar y una restricción única impide asignarlos dos veces. Las fotografías son ilustrativas y sus fuentes/licencias están en [docs/atribuciones-imagenes.md](docs/atribuciones-imagenes.md).
 
 ## Verificación
 

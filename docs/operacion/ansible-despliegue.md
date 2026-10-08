@@ -1,17 +1,18 @@
 # Actualización versionada de la EC2 con Ansible
 
-Preparado y validado localmente el **7 de octubre de 2026**. No se ha ejecutado contra AWS. La V1 desplegada continúa ejecutando el commit documentado el 3 de octubre; el frontend y los ajustes locales posteriores **no están sincronizados** con la EC2.
+Preparado localmente y con conexión SSM verificada el **7 de octubre de 2026**. No se ha desplegado la aplicación nueva. La V1 continúa con el código del 3 de octubre; el frontend y ajustes locales posteriores **no están sincronizados** con la EC2.
 
 ## Alcance de la ventana de actualización
 
 1. Renovar una sola vez el bloque completo de Academy y ejecutar `scripts/ansible-aws.sh preflight`.
-2. Confirmar cuenta/región ocultas, una sola EC2 `nexoeventos-academy-app`, SSM `Online` y acceso al bucket privado.
+2. Confirmar cuenta/región ocultas, una sola EC2 `nexoeventos-academy-app`, SSM `Online` y acceso al bucket privado; generar inventario estático protegido en `work/ansible/`.
 3. Crear desde un commit limpio un artefacto protegido con `scripts/build-release.sh`.
-4. Desplegar en `/opt/nexoeventos-deploy/releases/<commit>`, conservar `previous`, cambiar `current`, reiniciar FastAPI y recargar Nginx.
-5. Exigir `/ready = 200`; si falla, restaurar el enlace anterior y reiniciar el servicio.
-6. Comprobar por HTTPS registro → acceso → reserva simulada → entrada → validación única, sin capturar QR ni datos privados.
+4. Exigir un recibo `0600` que identifique snapshot/dump preactualización.
+5. Desplegar en `/opt/nexoeventos-deploy/releases/<commit>`, pausar la API, migrar `0003→0005`, sembrar el catálogo ficticio y comprobar Alembic antes de cambiar `current`.
+6. Conservar `previous`, reiniciar FastAPI/recargar Nginx y exigir `/ready = 200`; si falla el código, restaurar el enlace anterior.
+7. Comprobar por HTTPS registro → acceso → reserva simulada → entrada → validación única, sin capturar QR ni datos privados.
 
-No crea infraestructura ni abre SSH. No lee ni reemplaza `/etc/nexoeventos/backend.env`, `/etc/nexoeventos/duckdns.env`, las claves QR, `/etc/letsencrypt` o la base. Solo comprueba que el entorno del backend y el certificado existan. Las migraciones no se ejecutan automáticamente: deben revisarse y ejecutarse con el usuario migrador separado antes de una revisión que las requiera.
+No crea infraestructura ni abre SSH. No lee ni reemplaza `/etc/nexoeventos/backend.env`, `/etc/nexoeventos/duckdns.env`, claves QR o `/etc/letsencrypt`. Las migraciones se ejecutan con `migration.env` y el usuario separado, con `no_log`, únicamente después de comprobar un recibo de respaldo. El rollback de código no revierte el esquema: para eso se conserva snapshot/dump y se restaura de forma aislada.
 
 ## Comandos, después de revisar el alcance
 
@@ -22,9 +23,13 @@ NEXO_ALLOW_CLOUD_CHANGES=YES ./scripts/ansible-aws.sh deploy
 NEXO_ALLOW_CLOUD_CHANGES=YES ./scripts/ansible-aws.sh rollback
 ```
 
-La conexión usa `amazon.aws.aws_ssm`, no SSH. Requisitos del controlador: AWS CLI, Ansible Core, colección `amazon.aws` 10.1.2, `boto3`/`botocore` y el ejecutable Session Manager Plugin. El 7 de octubre se comprobaron Ansible 2.19.3, la colección y sus bibliotecas; **Session Manager Plugin no está instalado**, por lo que la conexión real está bloqueada y no se instaló nada automáticamente. Véanse los requisitos oficiales del [plugin de conexión Ansible](https://docs.ansible.com/projects/ansible/latest/collections/amazon/aws/aws_ssm_connection.html) y la [instalación oficial en macOS](https://docs.aws.amazon.com/systems-manager/latest/userguide/install-plugin-macos-overview.html).
+El despliegue exige además `NEXO_MIGRATION_BACKUP_RECEIPT=/var/lib/nexoeventos/backups/<nombre>.receipt`; el wrapper rechaza otras rutas o la ausencia del archivo remoto `0600`.
 
-La conexión Ansible por SSM requiere S3 incluso para módulos simples y permisos `GetObject`, `PutObject`, `ListBucket`, `DeleteObject` y `GetBucketLocation`. El preflight de solo lectura confirma el bucket, pero no demuestra `PutObject`/`DeleteObject`; la primera ejecución puede quedar bloqueada y deberá registrar el error sin ampliar IAM. Se propone reutilizar el bucket privado existente, pero está versionado: Ansible borra los objetos visibles y las versiones no actuales pueden permanecer. No se transfieren secretos ni archivos `/etc/nexoeventos`; sí pueden quedar versiones del código/los módulos y generar almacenamiento mínimo. Una ejecución real deberá registrar este efecto y decidir entre una regla de lifecycle específica o un bucket temporal no versionado mediante un plan separado. La denegación conocida de Object Lock no demuestra que esos permisos de objetos estén denegados.
+La conexión usa `amazon.aws.aws_ssm`, no SSH. Requisitos del controlador: AWS CLI, Ansible Core, colección `amazon.aws` 10.1.2, `boto3`/`botocore` y Session Manager Plugin. El 7 de octubre se comprobaron Ansible 2.19.3 y el plugin oficial ARM64 1.2.835.0, instalado para la usuaria en `~/.local/` porque la instalación global requería privilegios administrativos. Véanse los requisitos oficiales del [plugin de conexión Ansible](https://docs.ansible.com/projects/ansible/latest/collections/amazon/aws/aws_ssm_connection.html) y la [instalación oficial en macOS](https://docs.aws.amazon.com/systems-manager/latest/userguide/install-plugin-macos-overview.html).
+
+La conexión Ansible por SSM requiere S3 incluso para módulos simples y permisos `GetObject`, `PutObject`, `ListBucket`, `DeleteObject` y `GetBucketLocation`. El 7 de octubre un `ping` y la inspección real por SSM confirmaron esos permisos. Las pruebas acumularon 18 versiones/marcadores bajo el prefijo temporal exclusivo de la EC2; se eliminaron por clave y version ID, se verificó que quedaron **0**, y el respaldo `backups/database/` permaneció intacto. No se transfirieron secretos ni archivos `/etc/nexoeventos`. Cada despliegue debe repetir esa limpieza acotada; una regla lifecycle específica o un bucket temporal no versionado requerirían un plan separado y no se ampliará IAM automáticamente.
+
+El inventario dinámico `amazon.aws.aws_ec2` descubrió la instancia, pero su worker terminó de forma anómala en este Mac. El mismo módulo funcionó con inventario estático. Por ello el wrapper usa AWS CLI para exigir exactamente una instancia por etiqueta y genera `work/ansible/inventory.yml` con modo `0600`; no codifica el ID en Git.
 
 ## Artefacto y reversión
 

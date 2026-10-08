@@ -69,6 +69,12 @@ echo "Identidad AWS verificada para el entorno '$ENVIRONMENT' (ID oculto)."
 case "$ACTION" in
   plan)
     umask 077
+    if [[ -f "$PLAN_FILE" ]]; then
+      ARCHIVE_DIR="$PROJECT_ROOT/work/terraform-plans/archive"
+      mkdir -p "$ARCHIVE_DIR"
+      mv "$PLAN_FILE" "$ARCHIVE_DIR/$ENVIRONMENT-$(date -u +%Y%m%dT%H%M%SZ).tfplan"
+      echo "El plan anterior quedó archivado y ya no puede aplicarse como vigente."
+    fi
     terraform -chdir="$TF_DIR" plan -input=false -var-file="$TFVARS" -out="$PLAN_TMP"
     mv -f "$PLAN_TMP" "$PLAN_FILE"
     echo "Plan protegido guardado fuera de Git: $PLAN_FILE"

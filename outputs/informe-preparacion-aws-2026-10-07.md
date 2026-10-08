@@ -2,7 +2,7 @@
 
 ## Resultado
 
-Se avanzó únicamente en local. No se inició el laboratorio, no se arrancó EC2/RDS, no se creó ni modificó infraestructura y no se ejecutó `terraform plan/apply/destroy`.
+La primera revisión fue local; después se renovaron las credenciales y se completaron lecturas AWS. No se arrancó RDS, no se aplicó Terraform y no se desplegó la aplicación.
 
 ## Credenciales y acceso
 
@@ -10,7 +10,7 @@ Se avanzó únicamente en local. No se inició el laboratorio, no se arrancó EC
 - No había variables `AWS_*` de credenciales o perfil sustituyendo esa fuente.
 - El bloque contiene access key, secret key y session token, pero su archivo no se actualiza desde el 2 de octubre; no se mostraron valores.
 - Hora del sistema coherente. Una sola llamada STS aislada devolvió `InvalidClientTokenId`; no se repitió.
-- Por ello no se verificaron hoy cuenta, inventario, estado EC2/RDS, presupuesto ni consumo. El último estado real sigue siendo el observado el 4 de octubre y no se presume vigente.
+- Tras renovar el bloque, STS validó cuenta/región. EC2 estaba `running` por Academy y RDS `stopped`. Cost Explorer mostró USD 0.8180416576 del 1–7 de octubre; Budgets no expuso el presupuesto Academy por API.
 
 ## Terraform
 
@@ -19,13 +19,13 @@ Se avanzó únicamente en local. No se inició el laboratorio, no se arrancó EC
 - AMI dinámica sustituida por la AMI exacta ya desplegada, leída del estado.
 - `max_allocated_storage = 0` desactiva explícitamente el autoescalado; al habilitarlo se exige al menos 10 % de margen y máximo 100 GiB.
 - ciclo de vida S3 alineado a `backups/database/`; el bucket permanece en el estado.
-- `terraform fmt` y `terraform validate`: aprobados. No existe plan vigente por el bloqueo STS. Object Lock puede volver a impedir un refresh completo y se documentará, no se ocultará retirando S3 del estado.
+- `terraform fmt` y `terraform validate`: aprobados. El refresh autenticado mostró parcialmente 0 altas/1 cambio/0 bajas y luego falló por la SCP Object Lock. No existe plan aplicable; S3 no se retiró del estado.
 
 ## Ansible
 
 Se prepararon inventario dinámico EC2, conexión `amazon.aws.aws_ssm`, artefacto por commit, releases `current`/`previous`, configuración Nginx/systemd, health check y reversión. Los secretos, claves QR y certificados quedan fuera del artefacto. La sintaxis de ambos playbooks fue validada localmente.
 
-Bloqueo real: falta el ejecutable Session Manager Plugin en el Mac. La colección `amazon.aws` y sus bibliotecas sí están disponibles. No se instaló ni se abrió SSH. La ruta se considera preparada, no probada en AWS.
+Session Manager Plugin ARM64 1.2.835.0 quedó instalado por el procedimiento oficial en `~/.local`. Sesión directa y `ansible.builtin.ping` funcionaron sin SSH. Los objetos temporales S3 se limpiaron incluyendo versiones/marcadores; los respaldos no se tocaron.
 
 ## Pruebas locales
 
@@ -38,4 +38,4 @@ Bloqueo real: falta el ejecutable Session Manager Plugin en el Mac. La colecció
 
 ## Próxima acción concreta
 
-Con `Lab environment ready`, ejecutar personalmente `work/enter-aws-academy-credentials.sh`. Después: una comprobación STS, inventario/consumo, `terraform plan` con refresh y preflight Ansible. Antes del despliegue de aplicación se debe instalar/verificar Session Manager Plugin en una tarea autorizada. Si STS rechaza un bloque recién emitido, detenerse y actualizar el reporte a soporte sin regeneraciones repetidas.
+Revisar [el plan previo](../docs/operacion/plan-actualizacion-aws-2026-10-07.md). Terraform queda bloqueado por refresh incompleto. Para la aplicación: respaldo preactualización, RDS activa, migraciones `0004`/`0005`, catálogo ficticio, release versionada, prueba pública y apagado.

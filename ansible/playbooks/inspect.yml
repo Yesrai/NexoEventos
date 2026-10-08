@@ -1,0 +1,40 @@
+---
+- name: Inspeccionar despliegue actual sin leer secretos ni modificar servicios
+  hosts: nexoeventos_app
+  gather_facts: false
+  become: true
+  vars_files:
+    - "{{ runtime_vars_file | default('../../work/ansible/runtime.yml') }}"
+  vars:
+    ansible_aws_ssm_bucket_name: "{{ ssm_bucket_name }}"
+    ansible_aws_ssm_profile: "{{ aws_profile }}"
+  tasks:
+    - name: Revisar rutas y archivos protegidos solo por metadatos
+      ansible.builtin.stat:
+        path: "{{ item }}"
+        follow: false
+      loop:
+        - /opt/nexoeventos-deploy/current
+        - /opt/nexoeventos/backend/alembic/versions/0004_catalog_ticketing_modes.py
+        - /opt/nexoeventos/backend/alembic/versions/0005_demo_catalog_visibility.py
+        - /etc/nexoeventos/backend.env
+        - /etc/nexoeventos/migration.env
+        - /etc/letsencrypt/live/nexoeventos-demo.duckdns.org/fullchain.pem
+      register: deployed_paths
+
+    - name: Consultar estado del servicio
+      ansible.builtin.command: systemctl is-active nexoeventos-api
+      register: api_service
+      changed_when: false
+      failed_when: false
+
+    - name: Resumir metadatos no sensibles
+      ansible.builtin.debug:
+        msg:
+          layout_versioned: "{{ deployed_paths.results[0].stat.islnk | default(false) }}"
+          migration_0004_in_release: "{{ deployed_paths.results[1].stat.exists }}"
+          migration_0005_in_release: "{{ deployed_paths.results[2].stat.exists }}"
+          backend_env_mode: "{{ deployed_paths.results[3].stat.mode | default('absent') }}"
+          migration_env_mode: "{{ deployed_paths.results[4].stat.mode | default('absent') }}"
+          certificate_present: "{{ deployed_paths.results[5].stat.exists }}"
+          api_service: "{{ api_service.stdout | default('unknown') }}"

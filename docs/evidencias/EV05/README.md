@@ -10,3 +10,5 @@ Comprobado en AWS el 3 de octubre de 2026:
 - instalación y operación mediante Session Manager, sin abrir SSH.
 
 La captura `public-home-2026-10-03.png` muestra el sitio real sin sesión, credenciales ni QR. Los recursos se detienen después de obtener respaldo y evidencias.
+
+Lectura del 7 de octubre: Academy inició la EC2 a las 14:41 Lima; estaba `running`, `t3.small`, con IMDSv2 requerido. HTTPS `/` respondió 200 y el certificado vence el 1 de enero de 2027. El código remoto sigue en disposición legacy, anterior al rediseño local.

@@ -14,6 +14,7 @@
     path: "{{ item }}"
   loop:
     - /etc/nexoeventos/backend.env
+    - /etc/nexoeventos/migration.env
     - "/etc/letsencrypt/live/{{ nexoeventos_domain }}/fullchain.pem"
     - "/etc/letsencrypt/live/{{ nexoeventos_domain }}/privkey.pem"
   register: protected_files
@@ -76,6 +77,86 @@
       --requirement {{ nexoeventos_release_root }}/releases/{{ release_id }}/backend/requirements-production.lock
   register: pip_install
   changed_when: "'Successfully installed' in pip_install.stdout"
+
+- name: Exigir la ruta del recibo antes de inspeccionarlo
+  ansible.builtin.assert:
+    that:
+      - migration_backup_receipt is defined
+      - migration_backup_receipt is string
+      - migration_backup_receipt is match('^/var/lib/nexoeventos/backups/[A-Za-z0-9._-]+\\.receipt$')
+    fail_msg: Falta la ruta válida del recibo remoto del respaldo; no se ejecutaron migraciones.
+  when: nexoeventos_run_migrations
+
+- name: Verificar recibo del respaldo previo a migraciones
+  ansible.builtin.stat:
+    path: "{{ migration_backup_receipt }}"
+  register: migration_receipt
+  when: nexoeventos_run_migrations
+
+- name: Exigir respaldo identificado y entorno de migración protegido
+  ansible.builtin.assert:
+    that:
+      - migration_receipt.stat.isreg | default(false)
+      - migration_receipt.stat.mode == '0600'
+      - protected_files.results[1].stat.mode == '0600'
+    fail_msg: No existe un recibo 0600 de respaldo previo; no se ejecutaron migraciones.
+  when: nexoeventos_run_migrations
+
+- name: Migrar de forma controlada antes de publicar la revisión
+  when: nexoeventos_run_migrations
+  block:
+    - name: Pausar API durante la migración y la siembra
+      ansible.builtin.systemd_service:
+        name: nexoeventos-api
+        state: stopped
+
+    - name: Aplicar migraciones hasta head con la identidad separada
+      ansible.builtin.shell:
+        cmd: |
+          set -a
+          . /etc/nexoeventos/migration.env
+          set +a
+          .venv/bin/alembic upgrade head
+        chdir: "{{ nexoeventos_release_root }}/releases/{{ release_id }}/backend"
+        executable: /bin/bash
+      no_log: true
+
+    - name: Sembrar catálogo ficticio sin eliminar reservas existentes
+      ansible.builtin.shell:
+        cmd: |
+          set -a
+          . /etc/nexoeventos/migration.env
+          set +a
+          ../backend/.venv/bin/python seed-demo-catalog.py --database-url "$MIGRATION_DATABASE_URL"
+        chdir: "{{ nexoeventos_release_root }}/releases/{{ release_id }}/scripts"
+        executable: /bin/bash
+      no_log: true
+
+    - name: Confirmar revisión 0005
+      ansible.builtin.shell:
+        cmd: |
+          set -a
+          . /etc/nexoeventos/migration.env
+          set +a
+          .venv/bin/alembic current
+        chdir: "{{ nexoeventos_release_root }}/releases/{{ release_id }}/backend"
+        executable: /bin/bash
+      register: migration_current
+      changed_when: false
+      no_log: true
+
+    - name: Exigir head esperado antes del cambio de versión
+      ansible.builtin.assert:
+        that: "'0005' in migration_current.stdout"
+        fail_msg: La base no llegó a la revisión 0005; no se publicó la aplicación.
+  rescue:
+    - name: Reiniciar la aplicación anterior tras un fallo transaccional
+      ansible.builtin.systemd_service:
+        name: nexoeventos-api
+        state: restarted
+    - name: Cancelar publicación
+      ansible.builtin.fail:
+        msg: Migración o siembra fallida; se mantuvo la versión anterior. Revisar respaldo antes de reintentar.
 
 - name: Inspeccionar enlace current sin seguirlo
   ansible.builtin.stat:
