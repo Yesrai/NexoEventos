@@ -107,6 +107,32 @@ elif [[ "$existing_files" -eq "${#protected_files[@]}" ]]; then
     exit 1
   fi
   echo "Se reutilizarán los secretos protegidos existentes; no se regeneraron."
+elif [[ "${NEXO_GENERATE_DATABASE_PASSWORDS:-NO}" == "YES" ]]; then
+  RECOVERY_KEYS_FILE="${NEXO_RECOVERY_KEYS_FILE:-}"
+  [[ "$RECOVERY_KEYS_FILE" == /run/nexoeventos-recovery-keys.env ]] || {
+    echo "Ruta del respaldo de claves de recuperación fuera del alcance permitido." >&2
+    exit 1
+  }
+  [[ "$(stat -c '%U:%G:%a' "$RECOVERY_KEYS_FILE" 2>/dev/null)" == "root:root:600" ]] || {
+    echo "El respaldo temporal de claves no es root:root 0600." >&2
+    exit 1
+  }
+  set -a
+  source "$RECOVERY_KEYS_FILE"
+  set +a
+  TICKET_KEY="${TICKET_ENCRYPTION_KEY:-}"
+  HASH_KEY="${SECURITY_HASH_KEY:-}"
+  mapfile -t GENERATED_SECRETS < <(
+    "$PROJECT_ROOT/backend/.venv/bin/python" - <<'PY'
+import secrets
+print(secrets.token_urlsafe(32))
+print(secrets.token_urlsafe(32))
+PY
+  )
+  MIGRATION_PASSWORD="${GENERATED_SECRETS[0]}"
+  APP_PASSWORD="${GENERATED_SECRETS[1]}"
+  unset GENERATED_SECRETS TICKET_ENCRYPTION_KEY SECURITY_HASH_KEY
+  echo "Contraseñas DB aisladas generadas; claves QR/hash restauradas desde el archivo temporal."
 elif [[ "${NEXO_GENERATE_APPLICATION_SECRETS:-NO}" == "YES" ]]; then
   mapfile -t GENERATED_SECRETS < <(
     "$PROJECT_ROOT/backend/.venv/bin/python" - <<'PY'

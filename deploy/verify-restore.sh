@@ -4,13 +4,14 @@
 #
 #   verify-restore.sh baseline
 #   verify-restore.sh verify <host-restaurado> <baseline-base64>
+#   verify-restore.sh service <minimo-entradas-esperado>
 #
 # baseline obtiene el punto lógico esperado antes de declarar el incidente.
 # verify exige coincidencia exacta de conteos, revisión Alembic y huella lógica;
 # además descifra todas las entradas y verifica su hash sin mostrar el token.
 set -euo pipefail
 MODE="${1:-}"
-[[ "$MODE" == "baseline" || "$MODE" == "verify" ]] || { echo "Modo inválido." >&2; exit 2; }
+[[ "$MODE" == "baseline" || "$MODE" == "verify" || "$MODE" == "service" ]] || { echo "Modo inválido." >&2; exit 2; }
 [[ "$(id -u)" == "0" ]] || { echo "Ejecutar como root." >&2; exit 2; }
 
 BACKEND_ENV=/etc/nexoeventos/backend.env
@@ -31,6 +32,10 @@ if [[ "$MODE" == "verify" ]]; then
     || { echo "Host restaurado inválido." >&2; exit 2; }
   [[ "$EXPECTED_BASELINE" =~ ^[A-Za-z0-9_-]+$ ]] || { echo "Baseline inválido." >&2; exit 2; }
   export RESTORED_HOST EXPECTED_BASELINE
+elif [[ "$MODE" == "service" ]]; then
+  MINIMUM_TICKETS="${2:-}"
+  [[ "$MINIMUM_TICKETS" =~ ^[1-9][0-9]*$ ]] || { echo "Mínimo de entradas inválido." >&2; exit 2; }
+  export MINIMUM_TICKETS
 fi
 
 "$APP/.venv/bin/python" - "$MODE" <<'PY'
@@ -122,7 +127,7 @@ encoded = base64.urlsafe_b64encode(json.dumps(actual, sort_keys=True).encode()).
 if mode == "baseline":
     print(f"BASELINE_B64={encoded}")
     print(f"BASELINE_OK revision={actual['revision']} tablas={len(TABLES)} entradas_qr={actual['qr_total']}")
-else:
+elif mode == "verify":
     raw = os.environ["EXPECTED_BASELINE"]
     expected = json.loads(base64.urlsafe_b64decode(raw + "=" * (-len(raw) % 4)))
     if actual != expected:
@@ -134,4 +139,10 @@ else:
         raise SystemExit(1)
     print(f"RESTAURACION_COINCIDE revision={actual['revision']} tablas={len(TABLES)} entradas_qr={actual['qr_total']}")
     print("VERIFICACION_RESTAURACION=OK")
+else:
+    minimum = int(os.environ["MINIMUM_TICKETS"])
+    if actual["revision"] != "0005" or actual["qr_total"] < minimum:
+        raise SystemExit("La copia no conserva la revisión o el mínimo histórico esperado.")
+    print(f"DATOS_SERVICIO_OK revision={actual['revision']} tablas={len(TABLES)} entradas_qr={actual['qr_total']}")
+    print("RESERVAS_SIN_HUERFANOS=OK; DESCIFRADO_QR=OK")
 PY

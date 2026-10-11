@@ -51,6 +51,11 @@ def main() -> None:
     parser.add_argument("--organizer-event", type=int, action="append", default=[1, 2])
     parser.add_argument("--operator-event", type=int, action="append", default=[1])
     parser.add_argument(
+        "--operator-only",
+        action="store_true",
+        help="Prepare only the operator without changing event ownership.",
+    )
+    parser.add_argument(
         "--deployed-demo",
         action="store_true",
         help="Use protected environment files on an authorized non-production demo host.",
@@ -68,23 +73,25 @@ def main() -> None:
     sys.path.insert(0, str(BACKEND))
     from app.auth import hash_password, normalize_email
 
-    organizer_password = password_from_prompt("organizador", "NEXO_DEV_ORGANIZER_PASSWORD")
+    organizer_password = None if args.operator_only else password_from_prompt("organizador", "NEXO_DEV_ORGANIZER_PASSWORD")
     operator_password = password_from_prompt("operador", "NEXO_DEV_OPERATOR_PASSWORD")
     engine = create_engine(args.database_url)
     with engine.begin() as connection:
         database = connection.scalar(text("SELECT current_database()"))
         if database != "nexoeventos":
             raise SystemExit(f"Base rechazada: {database}. Este script solo prepara nexoeventos local.")
-        organizer_id = connection.scalar(text("""
-            INSERT INTO users (id, email, display_name, password_hash, role)
-            VALUES (gen_random_uuid(), :email, 'Organizador demo', :password_hash, 'organizer')
-            ON CONFLICT (email) DO UPDATE SET
-              display_name = EXCLUDED.display_name,
-              password_hash = EXCLUDED.password_hash,
-              role = 'organizer',
-              is_active = true
-            RETURNING id
-        """), {"email": normalize_email(args.organizer_email), "password_hash": hash_password(organizer_password)})
+        organizer_id = None
+        if not args.operator_only:
+            organizer_id = connection.scalar(text("""
+                INSERT INTO users (id, email, display_name, password_hash, role)
+                VALUES (gen_random_uuid(), :email, 'Organizador demo', :password_hash, 'organizer')
+                ON CONFLICT (email) DO UPDATE SET
+                  display_name = EXCLUDED.display_name,
+                  password_hash = EXCLUDED.password_hash,
+                  role = 'organizer',
+                  is_active = true
+                RETURNING id
+            """), {"email": normalize_email(args.organizer_email), "password_hash": hash_password(organizer_password)})
         operator_id = connection.scalar(text("""
             INSERT INTO users (id, email, display_name, password_hash, role)
             VALUES (gen_random_uuid(), :email, 'Operador demo', :password_hash, 'operator')
@@ -95,12 +102,13 @@ def main() -> None:
               is_active = true
             RETURNING id
         """), {"email": normalize_email(args.operator_email), "password_hash": hash_password(operator_password)})
-        for event_id in set(args.organizer_event):
-            result = connection.execute(text("UPDATE events SET organizer_user_id = :user_id WHERE id = :event_id"), {
-                "user_id": organizer_id, "event_id": event_id,
-            })
-            if result.rowcount != 1:
-                raise SystemExit(f"No existe el evento {event_id} para asignar al organizador.")
+        if organizer_id is not None:
+            for event_id in set(args.organizer_event):
+                result = connection.execute(text("UPDATE events SET organizer_user_id = :user_id WHERE id = :event_id"), {
+                    "user_id": organizer_id, "event_id": event_id,
+                })
+                if result.rowcount != 1:
+                    raise SystemExit(f"No existe el evento {event_id} para asignar al organizador.")
         for event_id in set(args.operator_event):
             connection.execute(text("""
                 INSERT INTO operator_event_assignments (operator_user_id, event_id)
@@ -108,7 +116,10 @@ def main() -> None:
             """), {"user_id": operator_id, "event_id": event_id})
     engine.dispose()
     print("Cuentas ficticias preparadas. Las contraseñas no se guardaron ni se mostraron.")
-    print(f"Organizador: {args.organizer_email}; operador: {args.operator_email}.")
+    if args.operator_only:
+        print(f"Operador: {args.operator_email}; propietarios de eventos sin cambios.")
+    else:
+        print(f"Organizador: {args.organizer_email}; operador: {args.operator_email}.")
 
 
 if __name__ == "__main__":
