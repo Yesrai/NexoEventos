@@ -1,6 +1,6 @@
 # EV06 — RDS y persistencia
 
-RDS PostgreSQL 18.3 privado quedó accesible desde el SG de la aplicación y no desde Internet. Alembic aplicó `0001`, `0002` y `0003` con `nexoeventos_migrator` y `SET ROLE nexoeventos_owner`; FastAPI usa `nexoeventos_app` sin atributos elevados. Una reserva y su entrada permanecieron después de reiniciar el servicio API.
+RDS PostgreSQL 18.3 privado quedó accesible desde el SG de la aplicación y no desde Internet. El 7-oct Alembic avanzó de `0003` a `0005` con `nexoeventos_migrator` y `SET ROLE nexoeventos_owner`; FastAPI usa `nexoeventos_app` sin atributos elevados. Los conteos históricos de usuarios, reservas, entradas, asignaciones y cupos se conservaron; se añadieron 27 eventos ficticios sin habilitar asientos numerados. Una reserva y su entrada permanecieron después de reiniciar el servicio API.
 
 La prueba pública creó datos ficticios únicamente. No se publican endpoint, contraseñas, identificadores de cuenta ni tokens QR.
 

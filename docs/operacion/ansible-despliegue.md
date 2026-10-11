@@ -1,6 +1,6 @@
 # Actualización versionada de la EC2 con Ansible
 
-Preparado localmente y con conexión SSM verificada el **7 de octubre de 2026**. No se ha desplegado la aplicación nueva. La V1 continúa con el código del 3 de octubre; el frontend y ajustes locales posteriores **no están sincronizados** con la EC2.
+Preparado y ejecutado por SSM el **7 de octubre de 2026**. La V1 quedó sincronizada con el commit `7955e7e`: frontend público, FastAPI y Alembic `0005` fueron comprobados por HTTPS. El 9-oct la usuaria informó apagado de AWS por falta de tokens; los estados finales no pudieron revalidarse por API.
 
 ## Alcance de la ventana de actualización
 

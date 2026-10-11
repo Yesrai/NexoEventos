@@ -11,4 +11,6 @@ Comprobado el 3 de octubre de 2026:
 
 No se capturaron claves, contraseñas, contenidos de la base ni tokens QR. Falta ejecutar una restauración cloud aislada desde este respaldo; la restauración local anterior sigue siendo evidencia separada.
 
-Lectura del 7 de octubre: snapshot manual cifrado continúa `available`; el objeto cifrado en `backups/database/` permanece en S3 privado, versionado, AES-256 y con bloqueo público completo. La restauración sigue sin ejecutarse.
+Lectura del 7 y 9 de octubre: snapshot manual cifrado continúa `available`; el objeto cifrado en `backups/database/` permanece en S3 privado, versionado, AES-256 y con bloqueo público completo. La preparación quedó delimitada en [restauracion-preparada-2026-10-09.md](restauracion-preparada-2026-10-09.md).
+
+**R01 ejecutada el 10 de octubre:** PITR con desfase de 3 min 32 s; copia privada disponible en 20 min 49 s; datos verificados en 21 min 4 s. Coincidieron Alembic `0005`, seis tablas, reservas y 135/135 entradas QR descifrables. La copia temporal exacta fue eliminada y el origen volvió a quedar detenido. Ver [resultado sanitizado](resultado-restauracion-2026-10-10.md). La recuperación completa del servicio sigue pendiente porque no se conmutaron aplicación, DNS ni HTTPS.

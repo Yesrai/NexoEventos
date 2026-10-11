@@ -1,5 +1,7 @@
 # Plan previo a Terraform y actualización de la aplicación
 
+> Ejecutado para la aplicación el 7 de octubre de 2026; resultado en `outputs/informe-actualizacion-aws-2026-10-07.md`. Terraform permaneció sin aplicar. Este documento conserva el plan y costo previos como trazabilidad.
+
 Lecturas realizadas el **7 de octubre de 2026, 14:49–15:00 (America/Lima)** con el perfil temporal protegido, cuenta esperada y `us-east-1`. No contiene IDs, endpoints ni secretos.
 
 ## Estado real

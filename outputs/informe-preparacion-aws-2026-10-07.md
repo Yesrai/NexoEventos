@@ -1,5 +1,7 @@
 # Preparación AWS, Terraform y Ansible — 7 de octubre de 2026
 
+> Informe histórico previo a la ejecución. El resultado posterior está en [informe-actualizacion-aws-2026-10-07.md](informe-actualizacion-aws-2026-10-07.md); no interpretar los pendientes de este archivo como estado actual.
+
 ## Resultado
 
 La primera revisión fue local; después se renovaron las credenciales y se completaron lecturas AWS. No se arrancó RDS, no se aplicó Terraform y no se desplegó la aplicación.

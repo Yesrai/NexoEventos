@@ -68,7 +68,14 @@ TL="$OUT/linea-de-tiempo.tsv"
 PARAMS=""
 SERVICE_PAUSED=0
 mark() { printf '%s\t%s\n' "$1" "$(utc_now)" | tee -a "$TL" >&2; }
-cleanup_local() { [[ -n "$PARAMS" ]] && rm -f "$PARAMS"; }
+cleanup_local() {
+  # Bajo `set -e`, una prueba falsa usada como último comando de un trap puede
+  # convertir una ejecución verificada en código de salida 1. La ausencia de
+  # archivo temporal es un estado correcto, no un fallo de limpieza.
+  if [[ -n "$PARAMS" ]]; then
+    rm -f "$PARAMS"
+  fi
+}
 resume_if_needed() {
   cleanup_local
   if [[ "$SERVICE_PAUSED" == "1" ]]; then

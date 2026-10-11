@@ -6,7 +6,7 @@ React/TypeScript consume FastAPI; FastAPI usa PostgreSQL para catálogo, usuario
 
 ## Despliegue AWS V1 implementado
 
-Desplegado y verificado el 3 de octubre de 2026 en `us-east-1` (ver `outputs/informe-despliegue-aws-2026-10-03.md`). Entre sesiones EC2 y RDS permanecen detenidas. El diagrama corresponde a los recursos reales del estado Terraform; las capturas de consola de red y seguridad (EV02–EV04) siguen pendientes.
+Desplegado inicialmente el 3 de octubre y actualizado mediante Ansible el 7 de octubre de 2026 en `us-east-1` (ver `outputs/informe-despliegue-aws-2026-10-03.md` y `outputs/informe-actualizacion-aws-2026-10-07.md`). La política operativa es detener EC2/RDS entre sesiones; el apagado del 9-oct fue informado por la usuaria pero no revalidado por API debido a falta de tokens. El diagrama corresponde a los recursos reales del estado Terraform; las capturas de consola de red y seguridad (EV02–EV04) siguen pendientes.
 
 ```text
 Internet
