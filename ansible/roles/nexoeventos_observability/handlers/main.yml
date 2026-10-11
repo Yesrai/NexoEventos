@@ -1,0 +1,19 @@
+---
+- name: Recargar Nginx seguro
+  ansible.builtin.systemd_service:
+    name: nginx
+    state: reloaded
+    enabled: true
+
+- name: Aplicar configuración CloudWatch Agent
+  ansible.builtin.command:
+    argv:
+      - /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl
+      - -a
+      - fetch-config
+      - -m
+      - ec2
+      - -s
+      - -c
+      - file:/etc/nexoeventos/cloudwatch-agent.json
+  changed_when: true

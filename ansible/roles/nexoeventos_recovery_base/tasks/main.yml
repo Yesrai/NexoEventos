@@ -1,0 +1,117 @@
+---
+- name: Comprobar Amazon Linux 2023
+  ansible.builtin.shell:
+    cmd: >-
+      grep -Eq '^ID="?amzn"?$' /etc/os-release &&
+      grep -Eq '^VERSION_ID="?2023"?$' /etc/os-release
+    executable: /bin/bash
+  register: recovery_platform
+  changed_when: false
+  failed_when: false
+
+- name: Validar artefacto y destino temporal
+  ansible.builtin.assert:
+    that:
+      - recovery_platform.rc == 0
+      - release_id is match('^[0-9a-f]{7,40}$')
+      - release_artifact is file
+      - recovery_run_id is match('^[0-9]{8}t[0-9]{4}$')
+      - nexoeventos_domain is match('^nexoeventos-recovery-[0-9-]+\\.sslip\\.io$')
+      - nexoeventos_domain != 'nexoeventos-demo.duckdns.org'
+
+- name: Instalar dependencias base desde Amazon Linux 2023
+  ansible.builtin.dnf:
+    name:
+      - nginx
+      - python3.11
+      - python3.11-pip
+      - tar
+      - xz
+      - jq
+      - postgresql18
+      - awscli-2
+    state: present
+
+- name: Crear usuario de aplicación sin privilegios
+  ansible.builtin.user:
+    name: nexoeventos
+    system: true
+    home: /opt/nexoeventos
+    shell: /sbin/nologin
+    create_home: false
+
+- name: Crear directorios base
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: root
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: /opt/nexoeventos, group: nexoeventos, mode: '0750' }
+    - { path: /etc/nexoeventos, group: root, mode: '0700' }
+    - { path: /var/log/nexoeventos, group: nexoeventos, mode: '0750' }
+
+- name: Extraer artefacto identificado para el bootstrap temporal
+  ansible.builtin.unarchive:
+    src: "{{ release_artifact }}"
+    dest: /opt/nexoeventos
+    owner: root
+    group: nexoeventos
+    mode: u=rwX,g=rX,o=
+
+- name: Crear entorno virtual del backend
+  ansible.builtin.command:
+    cmd: python3.11 -m venv /opt/nexoeventos/backend/.venv
+    creates: /opt/nexoeventos/backend/.venv/bin/python
+
+- name: Instalar dependencias Python fijadas del backend
+  ansible.builtin.command:
+    cmd: >-
+      /opt/nexoeventos/backend/.venv/bin/python -m pip install
+      --disable-pip-version-check
+      --requirement /opt/nexoeventos/backend/requirements-production.lock
+  register: recovery_pip
+  changed_when: "'Successfully installed' in recovery_pip.stdout"
+
+- name: Crear entorno virtual fijado de Certbot
+  ansible.builtin.command:
+    cmd: python3.11 -m venv /opt/certbot
+    creates: /opt/certbot/bin/python
+
+- name: Instalar dependencias fijadas de Certbot
+  ansible.builtin.command:
+    cmd: >-
+      /opt/certbot/bin/python -m pip install --disable-pip-version-check
+      --requirement /opt/nexoeventos/deploy/requirements-certbot.lock
+  register: recovery_certbot_pip
+  changed_when: "'Successfully installed' in recovery_certbot_pip.stdout"
+
+- name: Publicar binario de Certbot
+  ansible.builtin.file:
+    src: /opt/certbot/bin/certbot
+    dest: /usr/local/bin/certbot
+    state: link
+    force: true
+
+- name: Instalar unidades temporales de renovación TLS
+  ansible.builtin.copy:
+    src: "/opt/nexoeventos/deploy/systemd/{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    remote_src: true
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - nexoeventos-certbot-renew.service
+    - nexoeventos-certbot-renew.timer
+
+- name: Recargar systemd sin arrancar aplicación, DNS ni HTTPS
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+- name: Confirmar punto de intervención privada
+  ansible.builtin.debug:
+    msg: >-
+      Base temporal instalada. Pendiente por Session Manager interactivo:
+      secretos/roles aislados, claves QR originales y certificado del hostname sslip.io.

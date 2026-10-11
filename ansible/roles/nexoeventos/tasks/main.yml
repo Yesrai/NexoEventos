@@ -15,7 +15,7 @@
       - platform_check.rc == 0
       - release_id is match('^[0-9a-f]{7,40}$')
       - release_artifact is file
-      - nexoeventos_domain == 'nexoeventos-demo.duckdns.org'
+      - nexoeventos_domain is match('^[a-z0-9.-]+\\.(duckdns\\.org|sslip\\.io)$')
     fail_msg: Plataforma, dominio o artefacto no válidos; no se modificó la aplicación.
 
 - name: Comprobar secretos y certificado existentes sin leer su contenido

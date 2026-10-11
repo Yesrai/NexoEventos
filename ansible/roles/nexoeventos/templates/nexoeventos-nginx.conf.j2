@@ -1,7 +1,13 @@
+log_format nexoeventos_safe escape=json
+    '$time_iso8601 method=$request_method path=$uri status=$status '
+    'bytes=$body_bytes_sent request_time=$request_time request_id=$request_id';
+
 server {
     listen 80;
     listen [::]:80;
     server_name {{ nexoeventos_domain }};
+    access_log /var/log/nginx/nexoeventos-access.log nexoeventos_safe;
+    error_log /var/log/nginx/nexoeventos-error.log error;
     location /.well-known/acme-challenge/ {
         root {{ nexoeventos_release_root }}/current/frontend/dist;
         try_files $uri =404;
@@ -14,6 +20,8 @@ server {
     listen [::]:443 ssl;
     http2 on;
     server_name {{ nexoeventos_domain }};
+    access_log /var/log/nginx/nexoeventos-access.log nexoeventos_safe;
+    error_log /var/log/nginx/nexoeventos-error.log error;
     ssl_certificate /etc/letsencrypt/live/{{ nexoeventos_domain }}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/{{ nexoeventos_domain }}/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
@@ -42,6 +50,11 @@ server {
         proxy_pass http://127.0.0.1:8000/ready;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-Proto https;
+    }
+    # Ruta sin datos de usuario para demostrar ingesta en CloudWatch Logs.
+    location ^~ /_observability/ {
+        default_type text/plain;
+        return 204;
     }
     location / { try_files $uri $uri/ /index.html; }
 }

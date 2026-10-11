@@ -63,7 +63,7 @@ fi
 cap ev08-log-groups.json aws logs describe-log-groups --log-group-name-prefix "/nexoeventos/" \
   --query 'logGroups[].{Grupo:logGroupName,RetencionDias:retentionInDays,Bytes:storedBytes}'
 cap ev08-alarm.json aws cloudwatch describe-alarms --alarm-name-prefix "$NEXO_NAME_PREFIX" \
-  --query 'MetricAlarms[].{Alarma:AlarmName,Estado:StateValue,Metrica:MetricName,Umbral:Threshold,Periodo:Period,Evaluaciones:EvaluationPeriods,Actualizado:StateUpdatedTimestamp}'
+  --query 'MetricAlarms[].{Alarma:AlarmName,Estado:StateValue,Metrica:MetricName,Estadistica:Statistic,Umbral:Threshold,Periodo:Period,Evaluaciones:EvaluationPeriods,DatosAusentes:TreatMissingData,AccionesHabilitadas:ActionsEnabled,AlarmActions:length(AlarmActions),OKActions:length(OKActions),InsufficientDataActions:length(InsufficientDataActions),Actualizado:StateUpdatedTimestamp}'
 
 # EV08 — búsqueda de fugas en logs: solo cuenta coincidencias, nunca imprime mensajes.
 START_MS="$(python3 -c "import time; print(int((time.time() - $HOURS*3600) * 1000))")"

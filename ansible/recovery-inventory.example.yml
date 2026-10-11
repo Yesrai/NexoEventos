@@ -1,0 +1,11 @@
+---
+# El inventario real vive en work/recovery/inventory.yml (0600 e ignorado).
+all:
+  children:
+    nexoeventos_recovery:
+      hosts:
+        nexoeventos-academy-recovery-20261020t1400-app:
+          ansible_host: i-REPLACE_WITH_TEMPORARY_INSTANCE_ID
+          ansible_aws_ssm_instance_id: i-REPLACE_WITH_TEMPORARY_INSTANCE_ID
+          ansible_connection: amazon.aws.aws_ssm
+          ansible_aws_ssm_region: us-east-1

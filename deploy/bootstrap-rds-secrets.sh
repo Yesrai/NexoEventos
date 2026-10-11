@@ -15,9 +15,16 @@ AWS_REGION="$2"
 DOMAIN="$3"
 PROJECT_ROOT="/opt/nexoeventos"
 
+if [[ "$DOMAIN" =~ ^[a-z0-9-]+\.duckdns\.org$ ]]; then
+  USES_DUCKDNS=YES
+elif [[ "$DOMAIN" =~ ^nexoeventos-recovery-[0-9-]+\.sslip\.io$ ]]; then
+  USES_DUCKDNS=NO
+else
+  USES_DUCKDNS=INVALID
+fi
 if [[ ! "$DB_IDENTIFIER" =~ ^[a-z][a-z0-9-]{0,62}$ ]] || \
    [[ ! "$AWS_REGION" =~ ^[a-z]{2}(-gov)?-[a-z]+-[0-9]+$ ]] || \
-   [[ ! "$DOMAIN" =~ ^[a-z0-9-]+\.duckdns\.org$ ]]; then
+   [[ "$USES_DUCKDNS" == INVALID ]]; then
   echo "Identificador, región o dominio inválido." >&2
   exit 1
 fi
@@ -59,8 +66,10 @@ fi
 protected_files=(
   /etc/nexoeventos/backend.env
   /etc/nexoeventos/migration.env
-  /etc/nexoeventos/duckdns.env
 )
+if [[ "$USES_DUCKDNS" == YES ]]; then
+  protected_files+=(/etc/nexoeventos/duckdns.env)
+fi
 existing_files=0
 for protected_file in "${protected_files[@]}"; do
   [[ -f "$protected_file" ]] && ((existing_files += 1))
@@ -81,7 +90,9 @@ elif [[ "$existing_files" -eq "${#protected_files[@]}" ]]; then
   # escribibles por otros usuarios.
   source /etc/nexoeventos/backend.env
   source /etc/nexoeventos/migration.env
-  source /etc/nexoeventos/duckdns.env
+  if [[ "$USES_DUCKDNS" == YES ]]; then
+    source /etc/nexoeventos/duckdns.env
+  fi
   set +a
   APP_PASSWORD="$(printf %s "$DATABASE_URL" | python3.11 -c \
     'import sys, urllib.parse; print(urllib.parse.unquote(urllib.parse.urlsplit(sys.stdin.read()).password or ""), end="")')"
@@ -90,8 +101,8 @@ elif [[ "$existing_files" -eq "${#protected_files[@]}" ]]; then
   TICKET_KEY="${TICKET_ENCRYPTION_KEY:-}"
   HASH_KEY="${SECURITY_HASH_KEY:-}"
   DUCKDNS_TOKEN="${DUCKDNS_TOKEN:-}"
-  if [[ "${FRONTEND_ORIGINS:-}" != "https://${DOMAIN}" || \
-        "${DUCKDNS_DOMAIN:-}" != "${DOMAIN%.duckdns.org}" ]]; then
+  if [[ "${FRONTEND_ORIGINS:-}" != "https://${DOMAIN}" ]] || \
+     { [[ "$USES_DUCKDNS" == YES ]] && [[ "${DUCKDNS_DOMAIN:-}" != "${DOMAIN%.duckdns.org}" ]]; }; then
     echo "Los archivos existentes pertenecen a otro dominio; no se reutilizaron." >&2
     exit 1
   fi
@@ -124,14 +135,14 @@ else
   read -rsp "SECURITY_HASH_KEY independiente: " HASH_KEY
   echo
 fi
-if [[ "$existing_files" -eq 0 ]]; then
+if [[ "$existing_files" -eq 0 && "$USES_DUCKDNS" == YES ]]; then
   read -rsp "Token DuckDNS (no se mostrará): " DUCKDNS_TOKEN
   echo
 fi
 
 if [[ ${#MIGRATION_PASSWORD} -lt 20 || ${#APP_PASSWORD} -lt 20 || \
-      "$MIGRATION_PASSWORD" == "$APP_PASSWORD" || ! "$HASH_KEY" =~ ^[A-Za-z0-9_-]{43,}$ || \
-      ${#DUCKDNS_TOKEN} -lt 20 ]]; then
+      "$MIGRATION_PASSWORD" == "$APP_PASSWORD" || ! "$HASH_KEY" =~ ^[A-Za-z0-9_-]{43,}$ ]] || \
+   { [[ "$USES_DUCKDNS" == YES ]] && [[ ${#DUCKDNS_TOKEN} -lt 20 ]]; }; then
   echo "Algún secreto no satisface la longitud/separación requerida." >&2
   exit 1
 fi
@@ -154,7 +165,7 @@ NEXO_APP_DATABASE_PASSWORD="$APP_PASSWORD" \
 
 backend_tmp="$(mktemp /etc/nexoeventos/backend.env.XXXXXX)"
 migration_tmp="$(mktemp /etc/nexoeventos/migration.env.XXXXXX)"
-duckdns_tmp="$(mktemp /etc/nexoeventos/duckdns.env.XXXXXX)"
+duckdns_tmp=""
 cat >"$backend_tmp" <<EOF
 APP_ENV=production
 DATABASE_URL=postgresql+psycopg://nexoeventos_app:${APP_PASSWORD_ESC}@${DB_ENDPOINT}/nexoeventos?sslmode=require
@@ -170,15 +181,22 @@ EOF
 cat >"$migration_tmp" <<EOF
 MIGRATION_DATABASE_URL=postgresql+psycopg://nexoeventos_migrator:${MIGRATION_PASSWORD_ESC}@${DB_ENDPOINT}/nexoeventos?sslmode=require
 EOF
-cat >"$duckdns_tmp" <<EOF
+if [[ "$USES_DUCKDNS" == YES ]]; then
+  duckdns_tmp="$(mktemp /etc/nexoeventos/duckdns.env.XXXXXX)"
+  cat >"$duckdns_tmp" <<EOF
 DUCKDNS_DOMAIN=${DOMAIN%.duckdns.org}
 DUCKDNS_TOKEN=${DUCKDNS_TOKEN}
 EOF
-chown root:root "$backend_tmp" "$migration_tmp" "$duckdns_tmp"
-chmod 0600 "$backend_tmp" "$migration_tmp" "$duckdns_tmp"
+fi
+chown root:root "$backend_tmp" "$migration_tmp"
+chmod 0600 "$backend_tmp" "$migration_tmp"
 mv -f "$backend_tmp" /etc/nexoeventos/backend.env
 mv -f "$migration_tmp" /etc/nexoeventos/migration.env
-mv -f "$duckdns_tmp" /etc/nexoeventos/duckdns.env
+if [[ "$USES_DUCKDNS" == YES ]]; then
+  chown root:root "$duckdns_tmp"
+  chmod 0600 "$duckdns_tmp"
+  mv -f "$duckdns_tmp" /etc/nexoeventos/duckdns.env
+fi
 
 unset MASTER_PASSWORD ADMIN_URL MASTER_USER_ESC MASTER_PASSWORD_ESC APP_PASSWORD MIGRATION_PASSWORD TICKET_KEY HASH_KEY DUCKDNS_TOKEN
 echo "Archivos protegidos instalados. La identidad maestra no se guardó."

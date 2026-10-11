@@ -1,0 +1,8 @@
+---
+# La versión real vive en work/recovery/runtime.yml (0600 e ignorada).
+aws_profile: nexoeventos-lab
+ssm_bucket_name: REPLACE_WITH_EXISTING_PRIVATE_BUCKET
+release_id: 0000000000000000000000000000000000000000
+release_artifact: /absolute/protected/path/to/release.tar.gz
+recovery_run_id: 20261020t1400
+nexoeventos_domain: nexoeventos-recovery-203-0-113-10.sslip.io

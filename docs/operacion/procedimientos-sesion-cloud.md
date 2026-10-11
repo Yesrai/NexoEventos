@@ -16,6 +16,7 @@ Todos los scripts:
 | `scripts/cloud/cloud-session.sh start` | **sí** | inicia RDS → espera `available` → inicia EC2 → espera `status-ok` → `check` |
 | `scripts/cloud/cloud-session.sh stop` | **sí** | revisa respaldos, pide escribir `DETENER`, detiene EC2 y RDS y espera `stopped` |
 | `scripts/cloud/capture-inventory.sh` | no | inventario sanitizado EV02–EV08 y búsqueda de fugas en logs |
+| `scripts/cloud/verify-observability.sh` | una solicitud GET segura | permisos efectivos, streams API/Nginx, recepción y alarma sin descargar mensajes |
 | `scripts/cloud/load-test.py` | escribe datos ficticios | prueba E01 con usuarios virtuales |
 | `scripts/cloud/restore-drill.sh run/cleanup` | **sí** | restauración aislada cronometrada y eliminación de la copia temporal |
 | `deploy/verify-restore.sh` | no (solo lectura en BD) | verificación dentro de la EC2; viaja por SSM, no requiere redeploy |
@@ -143,3 +144,5 @@ Secuencia y marcas de tiempo:
 4. Prueba de carga de 20 usuarios y captura del gráfico CloudWatch durante la carga.
 5. `restore-drill.sh run --pitr`, captura de la copia privada, verificación y `cleanup`.
 6. `check` final, `stop` y anotación del consumo final.
+
+E01 y R01 ya fueron ejecutadas con resultado válido y no se repiten salvo que un cambio concreto invalide sus resultados. EV08 quedó cerrada el 10-oct; procedimiento reproducible: [observabilidad-cloudwatch.md](observabilidad-cloudwatch.md). El alcance adicional de recuperación completa está preparado, pero no ejecutado: [recuperacion-completa.md](recuperacion-completa.md).

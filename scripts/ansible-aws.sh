@@ -13,8 +13,8 @@ export ANSIBLE_CONFIG="$ROOT/ansible/ansible.cfg"
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 export ANSIBLE_FORKS=1
 
-case "$ACTION" in preflight|deploy|rollback) ;; *)
-  echo "Uso: $0 {preflight|deploy|rollback}" >&2; exit 2 ;;
+case "$ACTION" in preflight|deploy|rollback|observability) ;; *)
+  echo "Uso: $0 {preflight|deploy|rollback|observability}" >&2; exit 2 ;;
 esac
 for command_name in aws ansible-playbook session-manager-plugin; do
   command -v "$command_name" >/dev/null 2>&1 || {
@@ -89,6 +89,8 @@ if [[ "$ACTION" == deploy ]]; then
   printf 'migration_backup_receipt: %s\n' "$RECEIPT" >>"$RUNTIME"
   "$ROOT/scripts/build-release.sh"
   ansible-playbook -i "$INVENTORY" "$ROOT/ansible/playbooks/deploy.yml" --limit nexoeventos-academy-app
-else
+elif [[ "$ACTION" == rollback ]]; then
   ansible-playbook -i "$INVENTORY" "$ROOT/ansible/playbooks/rollback.yml" --limit nexoeventos-academy-app
+else
+  ansible-playbook -i "$INVENTORY" "$ROOT/ansible/playbooks/observability.yml" --limit nexoeventos-academy-app
 fi

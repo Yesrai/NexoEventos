@@ -1,0 +1,20 @@
+---
+- name: Preparar base AL2023 del ensayo de recuperación completa
+  hosts: nexoeventos_recovery
+  gather_facts: false
+  become: true
+  vars_files:
+    - "{{ runtime_vars_file | default('../../work/recovery/runtime.yml') }}"
+  vars:
+    ansible_aws_ssm_bucket_name: "{{ ssm_bucket_name }}"
+    ansible_aws_ssm_profile: "{{ aws_profile }}"
+  pre_tasks:
+    - name: Limitar la ejecución al host temporal y dominio dedicado
+      ansible.builtin.assert:
+        that:
+          - inventory_hostname is match('^nexoeventos-academy-recovery-[0-9]{8}t[0-9]{4}-app$')
+          - recovery_run_id is match('^[0-9]{8}t[0-9]{4}$')
+          - nexoeventos_domain is match('^nexoeventos-recovery-[0-9-]+\\.sslip\\.io$')
+          - nexoeventos_domain != 'nexoeventos-demo.duckdns.org'
+  roles:
+    - nexoeventos_recovery_base

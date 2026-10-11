@@ -5,7 +5,7 @@
 | Fecha de corte | 10 de octubre de 2026 (Lima) |
 | Commit desplegado comprobado | `7955e7e` el 7-oct; el HEAD local se indica en `git log` |
 | URL pública | `https://nexoeventos-demo.duckdns.org`, **fuera de servicio mientras EC2 y RDS estén detenidas** |
-| Estado AWS comprobado | 10-oct 19:23 Lima: EC2 `stopped`, RDS original `stopped` y cero RDS temporales, confirmados por API; reinicio automático estimado: 17-oct 19:23 Lima |
+| Estado AWS comprobado | 10-oct 23:41 Lima: EC2 `stopped`, RDS original `stopped` y ningún recurso temporal creado en esta sesión; confirmados por API. Reinicio automático RDS estimado: 17-oct 19:23 Lima. |
 | Entrega final | 26 de noviembre de 2026 |
 
 Convención de este documento:
@@ -28,6 +28,7 @@ Convención de este documento:
 | Captura | portada pública actualizada en escritorio y móvil, sin sesión, secretos ni QR | EV10 |
 | Carga cloud E01 | 20 VU × 300 s, 2 520 solicitudes, p95 421.2 ms, 0 % inesperados; 132 reservas/entradas sin sobreventa ni duplicados | EV11 |
 | Restauración cloud R01 | PITR: RPO 3 min 32 s; RDS disponible 20 min 49 s; datos verificados 21 min 4 s; Alembic, seis tablas y 135 QR coinciden; temporal eliminada | EV07 |
+| Observabilidad EV08 | CloudWatch Agent AL2023 activo; streams reales FastAPI/Nginx; solicitud sanitizada recibida; cero patrones sensibles en la ventana; retención 7 días | EV08 |
 
 ## Diferencia local frente a AWS
 
@@ -43,10 +44,9 @@ Convención de este documento:
 
 | Pendiente | Motivo / bloqueo | Preparado en esta revisión |
 |---|---|---|
-| Capturas de consola sanitizadas EV02, EV03, EV04, EV06, EV07, EV08 | requiere arrancar recursos | script y checklist revisados localmente; ejecución AWS pendiente |
-| Recepción de CloudWatch Logs | grupos/retención existen, pero el 9-oct no había streams; agente no instalado | permisos de escritura del rol comprobados; falta preparar y desplegar configuración del agente |
+| Capturas de consola sanitizadas EV02, EV03, EV04, EV06, EV07, EV08 | requiere consola y ocultar identificadores | inventario textual disponible; EV08 tiene evidencia API/SSM real, pero la captura de consola sigue pendiente si la exige la rúbrica |
 | Configuración operativa protegida | completada localmente | reconstruida desde el estado real `academy-current` (serial 32), ignorada por Git y modo `0600`; valores no impresos |
-| Recuperación completa del servicio | R01 midió datos, pero no conmutó aplicación, DNS ni HTTPS | preparar un entorno aislado de aplicación sobre la copia restaurada |
+| Recuperación completa del servicio | R01 midió datos, pero no conmutó aplicación, DNS ni HTTPS | Terraform/Ansible y procedimiento preparados; falta subdominio temporal, plan/costo aprobado y ejecución |
 | Arranque/apagado verificable | hoy es manual | `scripts/cloud/cloud-session.sh` |
 | Plan Terraform vigente (I01/EV09) | refresh autenticado termina por SCP Object Lock | resumen parcial 0 altas/1 cambio/0 bajas; **sin plan aplicable** |
 | Actualización versionada de AWS | completada el 7-oct | `7955e7e`, Alembic `0005`, frontend/API/flujo HTTPS comprobados |
@@ -86,4 +86,4 @@ Convención de este documento:
 
 ## Siguiente paso
 
-Preparar y revisar la configuración de `amazon-cloudwatch-agent` antes de desplegarla; los grupos existentes aún no reciben eventos. Después, diseñar la prueba de recuperación completa con una aplicación aislada conectada a una copia restaurada, sin cambiar el DNS público del origen. No repetir E01, R01 de datos ni el despliegue `7955e7e` sin un cambio o fallo concreto.
+Revisar el plan autenticado del root separado `infra/aws-recovery/`, confirmar un subdominio DuckDNS temporal y aprobar la estimación de USD 0.25 antes de ejecutar la recuperación completa. No cambiar el DNS principal ni repetir E01, R01 de datos o EV08 sin un cambio/fallo concreto.

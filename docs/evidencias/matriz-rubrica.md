@@ -2,9 +2,9 @@
 
 No se acepta como evidencia una pantalla de configuración sin resultado. Las capturas deben mostrar fecha/contexto, ocultar identificadores innecesarios y nunca incluir contraseñas, cookies, secretos, tokens QR completos ni datos personales. Las cifras del caso y metas se etiquetan como objetivos; solo una ejecución registrada es resultado medido.
 
-Lectura API consolidada y sanitizada de la sesión más reciente: [9 de octubre de 2026](lectura-aws-2026-10-09.md).
+Lectura API consolidada y sanitizada de inventario: [9 de octubre de 2026](lectura-aws-2026-10-09.md). Recepción real de logs: [10 de octubre de 2026](EV08/recepcion-real-2026-10-10.md).
 
-| ID | Criterio oficial Entregable 2 | Recurso | Prueba exigida | Evidencia prevista | Estado al 2026-10-09 |
+| ID | Criterio oficial Entregable 2 | Recurso | Prueba exigida | Evidencia prevista | Estado al 2026-10-10 |
 |---|---|---|---|---|---|
 | EV01 | C5: pruebas/documentación | React, FastAPI, PostgreSQL | Compilación, roles, idempotencia y concurrencia | `EV01/README.md` + resultados sanitizados | **Disponible local y público**; suite cloud aprobada |
 | EV02 | C3: seguridad de red | VPC `10.20.0.0/16` | CIDR, DNS y etiquetas en recurso real | estado Terraform + inventario sanitizado | **Lectura API 7-oct disponible**; falta captura de consola |
@@ -13,7 +13,7 @@ Lectura API consolidada y sanitizada de la sesión más reciente: [9 de octubre 
 | EV05 | Cómputo y aplicación | EC2 AL2023, Nginx, systemd | Instalación reproducible; servicio sin reload; FastAPI solo loopback | versiones, estados, health y captura | **Ansible/SSM y commit `7955e7e` comprobados**; capturas escritorio/móvil disponibles |
 | EV06 | Datos | RDS PostgreSQL privado | Conexión desde app, no desde Internet; persistencia | migraciones y prueba tras reinicio | **RDS 18.3 y Alembic `0005` comprobados**; datos históricos preservados |
 | EV07 | C4/C5: recuperación y pruebas | S3 privado + snapshot RDS + copia externa | línea base, punto recuperable, restauración, reservas y QR | metadatos y verificación sin secretos | **R01 ejecutada 10-oct**: RPO 3 min 32 s; datos verificados 21 min 4 s; 135 QR válidos; temporal eliminada; servicio completo pendiente |
-| EV08 | Observabilidad | CloudWatch Logs y alarma CPU | Logs sanitizados, retención y estado de alarma | inventario y ausencia de QR en log API | **Alarma y métricas comprobadas 9-oct**; grupos sin streams, agente ausente; recepción real pendiente |
+| EV08 | Observabilidad | CloudWatch Logs y alarma CPU | Logs sanitizados, retención y estado de alarma | inventario y ausencia de QR en log API | **CUMPLE 10-oct**: agente AL2023 activo, streams API/Nginx y solicitud sanitizada recibida; retención 7 días; alarma CPU comprobada, sin notificaciones configuradas |
 | EV09 | IaC | Terraform AWS | identidad, estado separado, plan y aplicación controlada | estado protegido + plan autenticado | refresh autenticado: resumen parcial 0/1/0 y SCP Object Lock; **sin plan aplicable** |
 | EV10 | Flujo público seguro | DuckDNS + Let's Encrypt + aplicación | iniciar sesión → reservar → ver QR → validar una vez | URL real, suite y captura sin secretos | **`7955e7e` comprobado públicamente por HTTPS y capturado**; cámara física pendiente |
 | EV11 | C4/C5: escalabilidad y pruebas | EC2 + RDS + CloudWatch | 20 usuarios virtuales × 5 min; p95 y errores inesperados; evento `[CARGA]` si hay reservas | `EV11/README.md` + resultado + métricas CPU/BD | **CUMPLE 9-oct**: 2 520 solicitudes, p95 421.2 ms, 0 % inesperados; 132 reservas/entradas sin sobreventa ni duplicados |
@@ -27,4 +27,4 @@ Lectura API consolidada y sanitizada de la sesión más reciente: [9 de octubre 
 
 Revisión criterio por criterio, sin asignar puntajes: [revision-rubrica.md](revision-rubrica.md). Procedimientos: [sesión cloud](../operacion/procedimientos-sesion-cloud.md) y [despliegue Ansible](../operacion/ansible-despliegue.md).
 
-Consultar cada carpeta EV antes de capturar. Una infraestructura desplegada no completa por sí sola la rúbrica: siguen pendientes capturas de consola sanitizadas, recepción real de logs y recuperación completa del servicio.
+Consultar cada carpeta EV antes de capturar. Una infraestructura desplegada no completa por sí sola la rúbrica: siguen pendientes capturas de consola sanitizadas y recuperación completa del servicio. La recepción real de logs ya quedó medida; no debe repetirse salvo cambio del agente, rutas o permisos.

@@ -1,0 +1,122 @@
+---
+- name: Comprobar Amazon Linux 2023 sin recopilar facts completos
+  ansible.builtin.shell:
+    cmd: >-
+      grep -Eq '^ID="?amzn"?$' /etc/os-release &&
+      grep -Eq '^VERSION_ID="?2023"?$' /etc/os-release
+    executable: /bin/bash
+  register: observability_platform
+  changed_when: false
+  failed_when: false
+
+- name: Validar alcance de observabilidad
+  ansible.builtin.assert:
+    that:
+      - observability_platform.rc == 0
+      - nexoeventos_environment == 'academy'
+      - nexoeventos_cloudwatch_region == 'us-east-1'
+      - nexoeventos_domain == 'nexoeventos-demo.duckdns.org'
+      - nexoeventos_api_log == '/var/log/nexoeventos/api.log'
+      - nexoeventos_nginx_access_log == '/var/log/nginx/nexoeventos-access.log'
+      - nexoeventos_nginx_error_log == '/var/log/nginx/nexoeventos-error.log'
+    fail_msg: Plataforma, entorno, región, dominio o rutas fuera del alcance aprobado.
+
+- name: Instalar CloudWatch Agent y rotación desde Amazon Linux 2023
+  ansible.builtin.dnf:
+    name:
+      - "{{ nexoeventos_cloudwatch_agent_package }}"
+      - logrotate
+    state: present
+
+- name: Instalar formato Nginx sanitizado desde la plantilla versionada
+  ansible.builtin.template:
+    src: "{{ playbook_dir }}/../roles/nexoeventos/templates/nexoeventos-nginx.conf.j2"
+    dest: /etc/nginx/conf.d/nexoeventos.conf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+    validate: /usr/local/sbin/nexoeventos-validate-nginx %s
+  notify: Recargar Nginx seguro
+
+- name: Instalar rotación del log real de FastAPI
+  ansible.builtin.template:
+    src: nexoeventos-api.logrotate.j2
+    dest: /etc/logrotate.d/nexoeventos-api
+    owner: root
+    group: root
+    mode: '0644'
+    validate: /usr/sbin/logrotate -d %s
+
+- name: Instalar configuración del agente sin secretos ni retención
+  ansible.builtin.template:
+    src: amazon-cloudwatch-agent.json.j2
+    # Ruta estable: amazon-cloudwatch-agent-ctl administra su propio directorio
+    # y no debe convertir cada repetición del playbook en un cambio.
+    dest: /etc/nexoeventos/cloudwatch-agent.json
+    owner: root
+    group: root
+    mode: '0644'
+    validate: /usr/bin/python3 -m json.tool %s
+  register: observability_agent_config
+  notify: Aplicar configuración CloudWatch Agent
+
+- name: Preservar el log histórico de FastAPI fuera de la primera ingesta
+  ansible.builtin.command: /usr/sbin/logrotate -f /etc/logrotate.d/nexoeventos-api
+  when: observability_agent_config.changed
+  changed_when: true
+
+- name: Aplicar handlers antes de validar
+  ansible.builtin.meta: flush_handlers
+
+- name: Reiniciar FastAPI para producir eventos reales posteriores al inicio del agente
+  ansible.builtin.systemd_service:
+    name: nexoeventos-api
+    state: restarted
+    enabled: true
+
+- name: Comprobar proceso de FastAPI después del reinicio
+  ansible.builtin.uri:
+    # /health no depende de RDS. La observabilidad puede instalarse mientras
+    # la base original está detenida y evita arrancarla solo para esta tarea.
+    url: http://127.0.0.1:8000/health
+    status_code: 200
+    return_content: false
+  register: observability_health
+  retries: 10
+  delay: 3
+  until: observability_health.status == 200
+
+- name: Consultar estado del agente
+  ansible.builtin.command:
+    argv:
+      - /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl
+      - -m
+      - ec2
+      - -a
+      - status
+  register: cloudwatch_agent_status
+  changed_when: false
+
+- name: Consultar versión efectiva del paquete
+  ansible.builtin.command: rpm -q amazon-cloudwatch-agent
+  register: cloudwatch_agent_version
+  changed_when: false
+
+- name: Exigir agente activo
+  ansible.builtin.assert:
+    that:
+      - "'\"status\": \"running\"' in cloudwatch_agent_status.stdout"
+      - cloudwatch_agent_version.stdout is match('^amazon-cloudwatch-agent-[0-9].*')
+    fail_msg: CloudWatch Agent no quedó activo o no se pudo registrar su versión.
+
+- name: Resumir instalación sin contenido de logs
+  ansible.builtin.debug:
+    msg:
+      agent: running
+      package: "{{ cloudwatch_agent_version.stdout }}"
+      sources:
+        - "{{ nexoeventos_api_log }}"
+        - "{{ nexoeventos_nginx_access_log }}"
+        - "{{ nexoeventos_nginx_error_log }}"
+      retention: administrada por Terraform, no por el agente
