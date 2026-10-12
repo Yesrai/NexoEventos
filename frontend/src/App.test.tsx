@@ -17,6 +17,10 @@ describe('NexoEventos catalog', () => {
     city: 'Lima',
     image_path: null,
     ticket_mode: 'general' as const,
+    venue_id: null,
+    layout_id: null,
+    layout_name: null,
+    layout_kind: 'general' as const,
     is_demo: true,
     has_multiple_prices: false,
   }
@@ -351,7 +355,7 @@ describe('NexoEventos catalog', () => {
   })
 
   it('selects a numbered seat and uses the server-defined price', async () => {
-    const event = { ...baseEvent, id: 3, name: 'Teatro numerado', date: '2026-10-19', venue: 'Sala Central', category: 'Teatro', price: 30, capacity: 2, available_capacity: 2, ticket_mode: 'seats' as const }
+    const event = { ...baseEvent, id: 3, name: 'Teatro numerado', date: '2026-10-19', venue: 'Sala Central', category: 'Teatro', price: 30, capacity: 2, available_capacity: 2, ticket_mode: 'seats' as const, layout_kind: 'theatre' as const }
     vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request) => {
       const url = String(input)
       if (url.endsWith('/api/auth/session')) return { ok: false, status: 401, json: async () => ({}) }
@@ -372,5 +376,43 @@ describe('NexoEventos catalog', () => {
     expect(screen.getByText('S/ 42.00')).toBeInTheDocument()
     expect(screen.getByText('1 asiento seleccionado')).toBeInTheDocument()
     await expectNoAccessibilityViolations()
+  })
+
+  it('renders the configured plan instead of a universal auditorium fallback', async () => {
+    const cases = [
+      { ...baseEvent, id: 21, name: 'Teatro explícito', date: '2026-11-01', venue: 'Auditorio', category: 'Teatro', price: 30, capacity: 2, available_capacity: 2, ticket_mode: 'seats' as const, layout_kind: 'theatre' as const },
+      { ...baseEvent, id: 22, name: 'Estadio explícito', date: '2026-11-02', venue: 'Estadio', category: 'Deportes', price: 40, capacity: 2, available_capacity: 2, ticket_mode: 'seats' as const, layout_kind: 'stadium' as const },
+      { ...baseEvent, id: 23, name: 'Concierto por zonas', date: '2026-11-03', venue: 'Arena', category: 'Conciertos', price: 45, capacity: 20, available_capacity: 20, ticket_mode: 'zones' as const, layout_kind: 'concert_zones' as const },
+      { ...baseEvent, id: 24, name: 'Museo por horario', date: '2026-11-04', venue: 'Museo', category: 'Exposiciones', price: 18, capacity: 20, available_capacity: 20, layout_kind: 'museum' as const },
+      { ...baseEvent, id: 25, name: 'Ingreso general', date: '2026-11-05', venue: 'Parque', category: 'Ferias', price: 0, capacity: 20, available_capacity: 20, layout_kind: 'general' as const },
+    ]
+    const details: Record<number, unknown> = {
+      21: { ...cases[0], description: 'Teatro', zones: [{ id: 1, name: 'Platea', price: 30, capacity: 2, available_capacity: 2 }], seats: [{ id: 1, zone_id: 1, zone_name: 'Platea', row: 'A', number: 1, price: 30, available: true }] },
+      22: { ...cases[1], description: 'Estadio', zones: [{ id: 2, name: 'Tribuna Norte', price: 40, capacity: 2, available_capacity: 2 }], seats: [{ id: 2, zone_id: 2, zone_name: 'Tribuna Norte', row: 'A', number: 1, price: 40, available: true }] },
+      23: { ...cases[2], description: 'Concierto', zones: [{ id: 3, name: 'Campo', price: 45, capacity: 20, available_capacity: 20 }], seats: [] },
+      24: { ...cases[3], description: 'Museo', zones: [], seats: [] },
+      25: { ...cases[4], description: 'General', zones: [], seats: [] },
+    }
+    vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request) => {
+      const url = String(input)
+      if (url.endsWith('/api/auth/session')) return { ok: false, status: 401, json: async () => ({}) }
+      const match = url.match(/\/api\/events\/(\d+)$/)
+      return { ok: true, status: 200, json: async () => match ? details[Number(match[1])] : cases }
+    }))
+    render(<App />)
+    await screen.findByRole('heading', { name: 'Teatro explícito' })
+    fireEvent.click(screen.getByRole('button', { name: 'Ver Teatro explícito' }))
+    expect(await screen.findByText('Plano del auditorio')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Ver Estadio explícito' }))
+    expect(await screen.findByText('Plano del estadio')).toBeInTheDocument()
+    expect(screen.getByText('Cancha')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Ver Concierto por zonas' }))
+    expect(await screen.findByLabelText('Plano del concierto')).toBeInTheDocument()
+    expect(screen.queryByText('Plano del auditorio')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Ver Museo por horario' }))
+    expect(await screen.findByLabelText('Plano orientativo del museo')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Ver Ingreso general' }))
+    expect(await screen.findByText('Acceso sin asiento ni ubicación asignados')).toBeInTheDocument()
+    expect(screen.queryByText('Plano del auditorio')).not.toBeInTheDocument()
   })
 })

@@ -47,6 +47,10 @@ class EventSummary(BaseModel):
     available_capacity: int
     image_path: str | None
     ticket_mode: Literal["general", "zones", "seats"]
+    venue_id: int | None = None
+    layout_id: int | None = None
+    layout_name: str | None = None
+    layout_kind: Literal["theatre", "stadium", "concert_zones", "museum", "zones", "general"] | None = None
     is_demo: bool
 
 
@@ -138,3 +142,4 @@ class ValidationResult(BaseModel):
     ticket_id: UUID
     event_id: int
     used_at: datetime
+    ticket_location: str

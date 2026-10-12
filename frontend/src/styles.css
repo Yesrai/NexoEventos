@@ -233,9 +233,45 @@ h1 { max-width: 760px; margin: 0; font-size: clamp(2.25rem,5vw,4rem); font-weigh
 .ticket-option small, .quantity-row small { color: var(--muted); }
 .zone-options { margin: 0; padding: 0; display: grid; gap: 10px; border: 0; }
 .zone-options legend { margin-bottom: 9px; color: #334b5a; font-size: .86rem; font-weight: 700; }
+.zone-options > div:not(.concert-plan) { display: grid; gap: 10px; }
+.concert-zone-picker { gap: 14px; }
+.concert-plan { min-height: 190px; padding: 16px; display: grid; grid-template-rows: 52px 1fr; gap: 12px; border: 1px solid var(--line); border-radius: 12px; background: #f5f8f9; }
+.concert-stage { display: grid; place-items: center; border-radius: 8px 8px 26px 26px; color: #fff; background: var(--ink); font-size: .78rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.concert-floor { display: grid; place-items: center; border: 2px solid #74cdbc; border-radius: 14px; color: #315766; background: var(--accent-soft); font-size: .8rem; }
+.concert-zone-grid { display: grid; gap: 10px; }
+.museum-guide { padding: 16px; display: grid; gap: 14px; border: 1px solid var(--line); border-radius: 12px; background: #f6f8f9; }
+.museum-guide-heading { display: grid; gap: 3px; }
+.museum-guide-heading span { color: var(--muted); font-size: .76rem; }
+.museum-rooms { display: grid; grid-template-columns: repeat(5,minmax(70px,1fr)); gap: 7px; overflow-x: auto; scrollbar-width: thin; }
+.museum-rooms span { min-height: 68px; padding: 8px; display: grid; place-items: center; border: 1px solid #b9c8cf; border-radius: 9px; color: #38515f; background: #fff; font-size: .72rem; text-align: center; }
+.museum-rooms span + span { position: relative; }
+.museum-rooms span + span::before { position: absolute; left: -8px; width: 8px; height: 2px; content: ''; background: var(--accent-dark); }
 .seat-detail-layout { grid-template-columns: minmax(0,.82fr) minmax(560px,1.18fr); }
 .seat-detail-layout .booking-panel { position: static; }
 .auditorium-selector { display: grid; gap: 14px; }
+.stadium-selector { display: grid; gap: 14px; }
+.stadium-viewport { max-width: 100%; min-height: 500px; padding: 18px; overflow: auto; border: 1px solid var(--line); border-radius: 12px; background: #f4f7f8; scrollbar-width: thin; }
+.stadium-viewport:focus-visible { outline: 3px solid rgba(0,194,165,.35); outline-offset: 2px; }
+.stadium-plan { width: max-content; min-width: 100%; padding: 4px 8px 18px; transform-origin: top center; }
+.stadium-ring { position: relative; width: 520px; height: 300px; margin: 0 auto 24px; border: 22px solid #d9e2e6; border-radius: 48%; background: #fff; }
+.stadium-field { position: absolute; inset: 64px 92px; display: grid; place-items: center; align-content: center; border: 2px solid #4c8b68; border-radius: 8px; color: #234a35; background: #dceee2; }
+.stadium-field::before { position: absolute; inset: 50% 0 auto; height: 1px; content: ''; background: #70a382; }
+.stadium-field span { z-index: 1; font-weight: 650; }
+.stadium-field small { z-index: 1; color: #4f715c; }
+.stadium-sector { position: absolute; min-height: 42px; padding: 8px 12px; border: 1px solid #95a8b2; border-radius: 9px; color: var(--ink); background: #fff; font: inherit; font-size: .72rem; font-weight: 500; }
+.stadium-sector:hover, .stadium-sector.active { border-color: #057c69; background: var(--accent-soft); }
+.stadium-sector.active { box-shadow: 0 0 0 2px #07987f; }
+.stadium-sector.sector-1 { top: -12px; left: 50%; transform: translateX(-50%); }
+.stadium-sector.sector-2 { top: 50%; right: -18px; transform: translateY(-50%); }
+.stadium-sector.sector-3 { bottom: -12px; left: 50%; transform: translateX(-50%); }
+.stadium-seats { display: grid; gap: 10px; }
+.stadium-seat-row { display: grid; grid-template-columns: 62px 1fr; gap: 10px; align-items: center; }
+.stadium-seat-row > strong { color: var(--muted); font-size: .7rem; font-weight: 600; text-align: right; }
+.stadium-seat-row > div { display: flex; gap: 7px; }
+.stadium-seat-row button { width: 31px; height: 34px; border: 1px solid #718996; border-radius: 6px 6px 9px 9px; color: var(--ink); background: #fff; font: inherit; font-size: .68rem; }
+.stadium-seat-row button:hover:not(:disabled) { border-color: #07987f; background: var(--accent-soft); }
+.stadium-seat-row button.selected { border-color: #057c69; background: var(--accent); font-weight: 650; }
+.stadium-seat-row button:disabled { color: #8998a0; border-color: #d5dee2; background: #e5eaed; text-decoration: line-through; }
 .auditorium-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .auditorium-heading > div:first-child { display: grid; gap: 3px; }
 .auditorium-heading strong { font-size: 1rem; font-weight: 650; }
@@ -519,6 +555,9 @@ footer { padding: 34px 24px; border-top: 1px solid var(--line); color: #6f7e88; 
   .zoom-controls { width: 100%; }
   .zoom-controls .zoom-reset { margin-left: auto; }
   .auditorium-viewport { min-height: 365px; margin-inline: -8px; padding: 16px 8px; }
+  .stadium-viewport { min-height: 430px; margin-inline: -8px; padding: 14px 8px; }
+  .stadium-ring { width: 450px; height: 270px; }
+  .stadium-seat-row { grid-template-columns: 54px 1fr; }
   .auditorium-plan { padding-inline: 4px; }
   .seat-map { min-width: 500px; }
   .seat-row button { width: 28px; height: 31px; }

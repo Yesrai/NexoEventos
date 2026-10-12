@@ -18,7 +18,7 @@ Convención de este documento:
 
 | Área | Resultado medido | Fuente |
 |---|---|---|
-| Aplicación local | React/TS + FastAPI + PostgreSQL; autenticación, autorización, reservas transaccionales/idempotentes, QR y auditorio de 96 asientos numerados con selección accesible | historial Git, EV01 |
+| Aplicación local | React/TS + FastAPI + PostgreSQL; autenticación, autorización, reservas transaccionales/idempotentes, QR y planos explícitos de auditorio, estadio, concierto por zonas, museo orientativo y entrada general | historial Git, pruebas locales |
 | Infraestructura AWS V1 | 30 recursos Terraform en `us-east-1`: VPC `10.20.0.0/16`, una subred pública, dos privadas de datos, rutas, IGW, SG web/DB, EC2 `t3.small` AL2023, RDS PostgreSQL 18.3 privada, S3 privado y versionado, 2 log groups y una alarma CPU | `outputs/informe-despliegue-aws-2026-10-03.md`, EV09 |
 | Seguridad operativa | SSH cerrado, administración por Session Manager, FastAPI en `127.0.0.1:8000` con usuario sin privilegios, secretos `root:root 0600`, roles PostgreSQL `owner`/`migrator`/`app` sin atributos elevados, IMDSv2 | informe del 3 de octubre, EV05, EV06 |
 | HTTPS público | DuckDNS + Let's Encrypt, válido del 3 de octubre de 2026 al 1 de enero de 2027, timers de renovación y DNS activos | EV10, `deploy/README.md` |
@@ -34,8 +34,8 @@ Convención de este documento:
 
 | Componente | Local al 7-oct | AWS verificado por última vez | Sincronizado |
 |---|---|---|---|
-| frontend | versión local posterior con plano de auditorio, zoom y lista accesible | `7955e7e`, HTTPS `/ = 200` verificado el 7-oct | **No**; el auditorio no se desplegó |
-| backend/API | migraciones `0004`/`0005`, 28 eventos locales y evento de 96 asientos | `7955e7e`, Alembic `0005`, `/healthz = 200`, 27 eventos sin asiento habilitado | **No**; el dato nuevo permanece local |
+| frontend | versión local posterior con planos diferenciados de auditorio, estadio, concierto, museo y acceso general | `7955e7e`, HTTPS `/ = 200` verificado el 7-oct | **No**; los planos nuevos no se desplegaron |
+| backend/API | migraciones `0004`–`0006`, 31 eventos locales, recintos/planos explícitos e inventario por función | `7955e7e`, Alembic `0005`, `/healthz = 200`, 27 eventos sin asiento habilitado | **No**; el modelo nuevo permanece local |
 | infraestructura | AMI fija, RDS autoscaling explícito y prefijo S3 corregidos localmente | estado protegido serial 32; configuración remota previa | **No**; falta plan autenticado, no se aplicó Terraform |
 | automatización | Ansible con artefacto, migraciones, health check y rollback | probado por SSM; rollback automático también observado durante un fallo controlado | **Sí para actualización V1** |
 | evidencias | matriz y capturas históricas conservadas | inventario sanitizado y EV10 actual obtenidos el 7-oct | faltan capturas de consola EV02–EV04/EV06–EV08 |
@@ -86,4 +86,4 @@ Convención de este documento:
 
 ## Siguiente paso
 
-Completar localmente el recorrido de auditorio y asientos numerados. El ensayo integral de recuperación queda cerrado como incompleto; no repetir E01, R01 ni EV08 sin un cambio concreto que invalide su evidencia.
+Revisar visualmente los nuevos planos locales y, en una futura ventana autorizada, decidir si se despliegan. AWS permanece detenido; no repetir E01, R01 ni EV08 sin un cambio concreto que invalide su evidencia.

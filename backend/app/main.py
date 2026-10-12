@@ -30,7 +30,7 @@ from app.auth import (
 )
 from app.config import ALLOWED_ORIGINS, validate_production_config
 from app.database import build_engine, build_session_factory, get_session
-from app.models import AuthSession, Event, EventSeat, EventZone, OperatorEventAssignment, Reservation, Ticket, User
+from app.models import AuthSession, Event, EventSeat, EventZone, OperatorEventAssignment, Reservation, Ticket, User, VenueLayout
 from app.reservations import (
     CapacityExceededError,
     EventNotFoundError,
@@ -81,7 +81,11 @@ def _zone_pricing(session: Session, event_ids: list[int]) -> dict[int, tuple[flo
     }
 
 
-def _event_summary(event: Event, pricing: tuple[float, bool] | None = None) -> EventSummary:
+def _event_summary(
+    event: Event,
+    pricing: tuple[float, bool] | None = None,
+    layout: VenueLayout | None = None,
+) -> EventSummary:
     display_price, has_multiple_prices = pricing or (float(event.price), False)
     return EventSummary(
         id=event.id,
@@ -97,11 +101,16 @@ def _event_summary(event: Event, pricing: tuple[float, bool] | None = None) -> E
         available_capacity=event.capacity - event.reserved_count,
         image_path=event.image_path,
         ticket_mode=event.ticket_mode,
+        venue_id=event.venue_id,
+        layout_id=event.layout_id,
+        layout_name=layout.name if layout else None,
+        layout_kind=layout.layout_kind if layout else None,
         is_demo=event.is_demo,
     )
 
 
 def _event_detail(event: Event, session: Session) -> EventDetail:
+    layout = session.get(VenueLayout, event.layout_id) if event.layout_id else None
     zones = session.scalars(select(EventZone).where(EventZone.event_id == event.id).order_by(EventZone.price, EventZone.id)).all()
     zone_names = {zone.id: zone.name for zone in zones}
     seats = session.scalars(
@@ -111,7 +120,7 @@ def _event_detail(event: Event, session: Session) -> EventDetail:
     distinct_prices = {float(zone.price) for zone in zones}
     pricing = (min(distinct_prices), len(distinct_prices) > 1) if distinct_prices else None
     return EventDetail(
-        **_event_summary(event, pricing).model_dump(),
+        **_event_summary(event, pricing, layout).model_dump(),
         description=event.description,
         zones=[ZoneView(id=zone.id, name=zone.name, price=float(zone.price), capacity=zone.capacity, available_capacity=zone.capacity - zone.reserved_count) for zone in zones],
         seats=[SeatView(id=seat.id, zone_id=seat.zone_id, zone_name=zone_names[seat.zone_id], row=seat.row_label, number=seat.seat_number, price=zone_prices[seat.zone_id], available=seat.reservation_id is None) for seat in seats],
@@ -226,7 +235,8 @@ def create_app(database_url: str | None = None) -> FastAPI:
     def list_events(session: Session = Depends(get_session)) -> list[EventSummary]:
         events = session.scalars(select(Event).where(Event.is_demo.is_(True)).order_by(Event.event_date, Event.id)).all()
         pricing = _zone_pricing(session, [event.id for event in events])
-        return [_event_summary(event, pricing.get(event.id)) for event in events]
+        layouts = {layout.id: layout for layout in session.scalars(select(VenueLayout).where(VenueLayout.id.in_([event.layout_id for event in events if event.layout_id]))).all()}
+        return [_event_summary(event, pricing.get(event.id), layouts.get(event.layout_id)) for event in events]
 
     @application.get("/api/events/{event_id}", response_model=EventDetail)
     def event_detail(event_id: int, session: Session = Depends(get_session)) -> EventDetail:
@@ -321,7 +331,8 @@ def create_app(database_url: str | None = None) -> FastAPI:
     def organizer_events(context: AuthContext = Depends(require_role("organizer")), session: Session = Depends(get_session)) -> list[EventSummary]:
         events = session.scalars(select(Event).where(Event.organizer_user_id == context.user.id).order_by(Event.event_date)).all()
         pricing = _zone_pricing(session, [event.id for event in events])
-        return [_event_summary(event, pricing.get(event.id)) for event in events]
+        layouts = {layout.id: layout for layout in session.scalars(select(VenueLayout).where(VenueLayout.id.in_([event.layout_id for event in events if event.layout_id]))).all()}
+        return [_event_summary(event, pricing.get(event.id), layouts.get(event.layout_id)) for event in events]
 
     @application.patch("/api/organizer/events/{event_id}", response_model=EventDetail)
     def update_event(
@@ -349,7 +360,8 @@ def create_app(database_url: str | None = None) -> FastAPI:
             select(Event).join(OperatorEventAssignment).where(OperatorEventAssignment.operator_user_id == context.user.id)
         ).all()
         pricing = _zone_pricing(session, [event.id for event in events])
-        return [_event_summary(event, pricing.get(event.id)) for event in events]
+        layouts = {layout.id: layout for layout in session.scalars(select(VenueLayout).where(VenueLayout.id.in_([event.layout_id for event in events if event.layout_id]))).all()}
+        return [_event_summary(event, pricing.get(event.id), layouts.get(event.layout_id)) for event in events]
 
     @application.post("/api/operator/validate", response_model=ValidationResult)
     def validate_entry(
@@ -367,7 +379,14 @@ def create_app(database_url: str | None = None) -> FastAPI:
             raise HTTPException(status_code=409, detail="La entrada corresponde a otro evento") from None
         except TicketAlreadyUsedError:
             raise HTTPException(status_code=409, detail="Entrada ya utilizada") from None
-        return ValidationResult(result="accepted", ticket_id=result.ticket_id, event_id=result.event_id, used_at=result.used_at)
+        ticket = session.get(Ticket, result.ticket_id)
+        zone = session.get(EventZone, ticket.zone_id) if ticket and ticket.zone_id else None
+        seat = session.get(EventSeat, ticket.seat_id) if ticket and ticket.seat_id else None
+        location = (
+            f"{zone.name} · fila {seat.row_label}, asiento {seat.seat_number}"
+            if zone and seat else zone.name if zone else "Entrada general"
+        )
+        return ValidationResult(result="accepted", ticket_id=result.ticket_id, event_id=result.event_id, used_at=result.used_at, ticket_location=location)
 
     return application
 

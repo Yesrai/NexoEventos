@@ -36,7 +36,37 @@ EVENTS = [
     (1026, "Foro Futuro Digital", "Tecnología", 10, time(9, 30), "Hub Tecnológico", "Lima", "Foro demo sobre productos digitales, infraestructura y experiencias tecnológicas.", 65, 220, "zones", "technology-exhibition"),
     (1027, "Rutas del Arte", "Arte y cultura", 22, time(11, 30), "Museo de la Ciudad", "Callao", "Recorrido cultural ficticio por piezas, relatos y expresiones artísticas contemporáneas.", 22, 100, "general", "culture-museum"),
     (1028, "Voces en el Auditorio", "Teatro y stand-up", 26, time(20, 0), "Auditorio Nexo", "Lima", "Función ficticia con escenario frontal y asientos numerados para probar el recorrido completo de reserva.", 35, 96, "seats", "theater-performance"),
+    (1029, "Clásico Metropolitano", "Deportes", 27, time(16, 0), "Estadio Nexo", "Lima", "Partido ficticio con tribunas y localidades numeradas alrededor de la cancha.", 40, 72, "seats", "running-field"),
+    (1030, "Copa Ciudad", "Deportes", 29, time(18, 0), "Estadio Nexo", "Lima", "Segunda función deportiva ficticia que reutiliza el recinto sin compartir disponibilidad.", 38, 72, "seats", "running-race"),
+    (1031, "Noche del Parque", "Conciertos", 28, time(20, 30), "Arena Parque Sur", "Lima", "Concierto ficticio de pie con Campo y Preferencial; no utiliza asientos numerados.", 45, 180, "zones", "concert-live"),
 ]
+
+# La asignación es deliberadamente por función, no se infiere por categoría.
+# El plano describe el recinto; cada Event conserva su propio inventario.
+LAYOUT_KIND_BY_EVENT = {
+    1001: "general", 1002: "concert_zones", 1003: "concert_zones", 1004: "zones",
+    1005: "zones", 1006: "general", 1007: "zones", 1008: "general", 1009: "zones",
+    1010: "general", 1011: "zones", 1012: "zones", 1013: "general", 1014: "zones",
+    1015: "general", 1016: "general", 1017: "zones", 1018: "stadium", 1019: "general",
+    1020: "concert_zones", 1021: "museum", 1022: "general", 1023: "zones", 1024: "general",
+    1025: "general", 1026: "zones", 1027: "museum", 1028: "theatre", 1029: "stadium",
+    1030: "stadium", 1031: "concert_zones",
+}
+
+LAYOUT_NAMES = {
+    "theatre": "Sala frontal con pasillo central",
+    "stadium": "Cancha central y tribunas",
+    "concert_zones": "Escenario y zonas de pie",
+    "museum": "Recorrido orientativo de salas",
+    "zones": "Sectores con aforo",
+    "general": "Acceso general sin ubicación asignada",
+}
+
+CUSTOM_ZONES = {
+    1029: [("Tribuna Norte", 40, 24), ("Tribuna Oriente", 55, 24), ("Tribuna Occidente", 65, 24)],
+    1030: [("Tribuna Norte", 38, 24), ("Tribuna Oriente", 50, 24), ("Tribuna Occidente", 60, 24)],
+    1031: [("Campo", 45, 120), ("Preferencial", 75, 60)],
+}
 
 
 def main() -> None:
@@ -62,7 +92,7 @@ def main() -> None:
             if inserted_event_id is None:
                 continue
             if mode in {"zones", "seats"}:
-                definitions = [("Preferencial", price + 20, capacity // 2), ("General", price, capacity - capacity // 2)]
+                definitions = CUSTOM_ZONES.get(event_id, [("Preferencial", price + 20, capacity // 2), ("General", price, capacity - capacity // 2)])
                 zone_ids: list[int] = []
                 for zone_name, zone_price, zone_capacity in definitions:
                     zone_id = connection.scalar(text("""
@@ -72,14 +102,44 @@ def main() -> None:
                     """), {"event_id": event_id, "name": zone_name, "price": zone_price, "capacity": zone_capacity})
                     zone_ids.append(zone_id)
                 if mode == "seats":
-                    for row_index, row_label in enumerate(("A", "B", "C", "D", "E", "F", "G", "H")):
-                        zone_id = zone_ids[0] if row_index < 4 else zone_ids[1]
+                    rows = ("A", "B", "C", "D", "E", "F", "G", "H") if event_id == 1028 else ("A", "B", "C", "D", "E", "F")
+                    for row_index, row_label in enumerate(rows):
+                        zone_id = zone_ids[0] if event_id == 1028 and row_index < 4 else zone_ids[1] if event_id == 1028 else zone_ids[row_index // 2]
                         for seat_number in range(1, 13):
                             connection.execute(text("""
                                 INSERT INTO event_seats (event_id, zone_id, row_label, seat_number)
                                 VALUES (:event_id, :zone_id, :row_label, :seat_number)
                                 ON CONFLICT (event_id, zone_id, row_label, seat_number) DO NOTHING
                             """), {"event_id": event_id, "zone_id": zone_id, "row_label": row_label, "seat_number": seat_number})
+
+        # Vincula cada función a un recinto y a una distribución explícitos.
+        # Solo se completan estos metadatos; cupos, reservas, zonas y asientos
+        # de funciones existentes no se actualizan ni se regeneran.
+        for event in EVENTS:
+            event_id, _, _, _, _, venue_name, city, *_ = event
+            kind = LAYOUT_KIND_BY_EVENT[event_id]
+            shared_stadium = event_id in {1029, 1030}
+            venue_code = "estadio-nexo" if shared_stadium else f"recinto-{event_id}"
+            layout_code = "cancha-y-tribunas" if shared_stadium else f"plano-{event_id}"
+            venue_id = connection.scalar(text("""
+                INSERT INTO venues (code, name, city)
+                VALUES (:code, :name, :city)
+                ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name, city = EXCLUDED.city
+                RETURNING id
+            """), {"code": venue_code, "name": venue_name, "city": city})
+            layout_id = connection.scalar(text("""
+                INSERT INTO venue_layouts (venue_id, code, name, layout_kind)
+                VALUES (:venue_id, :code, :name, :kind)
+                ON CONFLICT (venue_id, code) DO UPDATE SET name = EXCLUDED.name, layout_kind = EXCLUDED.layout_kind
+                RETURNING id
+            """), {"venue_id": venue_id, "code": layout_code, "name": LAYOUT_NAMES[kind], "kind": kind})
+            connection.execute(text("""
+                UPDATE events
+                SET venue_id = :venue_id, layout_id = :layout_id
+                WHERE id = :event_id AND is_demo = true AND venue = :venue_name
+                  AND (venue_id IS NULL OR venue_id = :venue_id)
+                  AND (layout_id IS NULL OR layout_id = :layout_id)
+            """), {"event_id": event_id, "venue_name": venue_name, "venue_id": venue_id, "layout_id": layout_id})
     engine.dispose()
     print(f"Catálogo demo actualizado: {len(EVENTS)} eventos; no se eliminaron reservas.")
 

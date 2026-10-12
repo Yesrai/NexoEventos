@@ -43,23 +43,42 @@ def reset_isolated_test_database() -> Iterator[None]:
             connection.execute(text("UPDATE events SET organizer_user_id = NULL, reserved_count = 0"))
             connection.execute(text("DELETE FROM users"))
             connection.execute(text("DELETE FROM events WHERE id >= 9000"))
+            connection.execute(text("DELETE FROM venue_layouts WHERE id >= 9000"))
+            connection.execute(text("DELETE FROM venues WHERE id >= 9000"))
 
     reset()
     with admin_engine.begin() as connection:
         connection.execute(text("""
-            INSERT INTO events (id, name, event_date, venue, category, description, price, capacity, reserved_count)
+            INSERT INTO venues (id, code, name, city) VALUES
+              (9000, 'test-auditorio', 'Auditorio de prueba', 'Lima'),
+              (9001, 'test-estadio', 'Estadio de prueba', 'Lima')
+            ON CONFLICT (id) DO NOTHING
+        """))
+        connection.execute(text("""
+            INSERT INTO venue_layouts (id, venue_id, code, name, layout_kind) VALUES
+              (9000, 9000, 'sala-frontal', 'Sala frontal', 'theatre'),
+              (9001, 9001, 'cancha-tribunas', 'Cancha y tribunas', 'stadium')
+            ON CONFLICT (id) DO NOTHING
+        """))
+        connection.execute(text("""
+            INSERT INTO events (id, name, event_date, venue, category, description, price, capacity, reserved_count, venue_id, layout_id)
             VALUES
               (9001, 'Último cupo de prueba', DATE '2026-11-20', 'Laboratorio local', 'Prueba',
-               'Evento ficticio aislado para probar concurrencia.', 10.00, 1, 0),
+               'Evento ficticio aislado para probar concurrencia.', 10.00, 1, 0, NULL, NULL),
               (9002, 'Evento ajeno de prueba', DATE '2026-11-21', 'Laboratorio local', 'Prueba',
-               'Evento ficticio para probar separación entre organizadores y operadores.', 10.00, 20, 0),
+               'Evento ficticio para probar separación entre organizadores y operadores.', 10.00, 20, 0, NULL, NULL),
               (9003, 'Zonas de prueba', DATE '2026-11-22', 'Laboratorio local', 'Prueba',
-               'Evento aislado para probar precios por zona.', 10.00, 4, 0),
-              (9004, 'Asientos de prueba', DATE '2026-11-23', 'Laboratorio local', 'Prueba',
-               'Evento aislado para probar asignación atómica de asientos.', 10.00, 2, 0)
+               'Evento aislado para probar precios por zona.', 10.00, 4, 0, NULL, NULL),
+              (9004, 'Asientos de prueba', DATE '2026-11-23', 'Auditorio de prueba', 'Prueba',
+               'Evento aislado para probar asignación atómica de asientos.', 10.00, 2, 0, 9000, 9000),
+              (9005, 'Función estadio uno', DATE '2026-11-24', 'Estadio de prueba', 'Prueba',
+               'Primera función con el mismo plano reutilizable.', 10.00, 2, 0, 9001, 9001),
+              (9006, 'Función estadio dos', DATE '2026-11-25', 'Estadio de prueba', 'Prueba',
+               'Segunda función con inventario independiente.', 10.00, 2, 0, 9001, 9001)
         """))
         connection.execute(text("UPDATE events SET ticket_mode='zones' WHERE id=9003"))
         connection.execute(text("UPDATE events SET ticket_mode='seats' WHERE id=9004"))
+        connection.execute(text("UPDATE events SET ticket_mode='seats' WHERE id IN (9005, 9006)"))
         connection.execute(text("""
             INSERT INTO event_zones (event_id, name, price, capacity, reserved_count)
             VALUES
@@ -74,6 +93,16 @@ def reset_isolated_test_database() -> Iterator[None]:
             INSERT INTO event_seats (event_id, zone_id, row_label, seat_number)
             VALUES (9004, :zone, 'A', 1), (9004, :zone, 'A', 2)
         """), {"zone": seat_zone})
+        stadium_zones = connection.execute(text("""
+            INSERT INTO event_zones (event_id, name, price, capacity, reserved_count)
+            VALUES (9005, 'Tribuna Norte', 40.00, 2, 0), (9006, 'Tribuna Norte', 40.00, 2, 0)
+            RETURNING id, event_id
+        """)).mappings().all()
+        for zone in stadium_zones:
+            connection.execute(text("""
+                INSERT INTO event_seats (event_id, zone_id, row_label, seat_number)
+                VALUES (:event_id, :zone_id, 'A', 1), (:event_id, :zone_id, 'A', 2)
+            """), {"event_id": zone["event_id"], "zone_id": zone["id"]})
     yield
     reset()
 
@@ -112,7 +141,7 @@ def privileged_accounts() -> dict[str, str]:
         })
         connection.execute(text("""
             INSERT INTO operator_event_assignments (operator_user_id, event_id)
-            VALUES (:operator_id, 1), (:operator_id, 9001), (:other_operator_id, 9002)
+            VALUES (:operator_id, 1), (:operator_id, 9001), (:operator_id, 9004), (:other_operator_id, 9002)
         """), {
             "operator_id": ids["operador@example.com"],
             "other_operator_id": ids["otro-operador@example.com"],

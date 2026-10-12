@@ -65,6 +65,33 @@ class Event(Base):
     ticket_mode: Mapped[str] = mapped_column(String(20), default="general", server_default="general")
     is_demo: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
     organizer_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    venue_id: Mapped[int | None] = mapped_column(ForeignKey("venues.id", ondelete="RESTRICT"), nullable=True)
+    layout_id: Mapped[int | None] = mapped_column(ForeignKey("venue_layouts.id", ondelete="RESTRICT"), nullable=True)
+
+
+class Venue(Base):
+    __tablename__ = "venues"
+    __table_args__ = (UniqueConstraint("code", name="uq_venues_code"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    code: Mapped[str] = mapped_column(String(80))
+    name: Mapped[str] = mapped_column(String(180))
+    city: Mapped[str] = mapped_column(String(80))
+
+
+class VenueLayout(Base):
+    __tablename__ = "venue_layouts"
+    __table_args__ = (
+        UniqueConstraint("venue_id", "code", name="uq_venue_layouts_venue_code"),
+        CheckConstraint(
+            "layout_kind IN ('theatre', 'stadium', 'concert_zones', 'museum', 'zones', 'general')",
+            name="ck_venue_layouts_kind",
+        ),
+    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    venue_id: Mapped[int] = mapped_column(ForeignKey("venues.id", ondelete="RESTRICT"), index=True)
+    code: Mapped[str] = mapped_column(String(80))
+    name: Mapped[str] = mapped_column(String(120))
+    layout_kind: Mapped[str] = mapped_column(String(24))
 
 
 class Reservation(Base):

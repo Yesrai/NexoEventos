@@ -229,6 +229,30 @@ def test_numbered_seat_is_visible_on_the_owners_ticket() -> None:
     app.state.engine.dispose()
 
 
+def test_shared_stadium_layout_keeps_inventory_independent_per_function() -> None:
+    with create_engine(TEST_ADMIN_URL).connect() as connection:
+        first_seat = connection.scalar(text("SELECT id FROM event_seats WHERE event_id=9005 AND seat_number=1"))
+        second_seat = connection.scalar(text("SELECT id FROM event_seats WHERE event_id=9006 AND seat_number=1"))
+    app = create_app(TEST_APP_URL)
+    with TestClient(app) as client:
+        register_client(client)
+        first_detail = client.get("/api/events/9005").json()
+        second_detail = client.get("/api/events/9006").json()
+        assert first_detail["layout_id"] == second_detail["layout_id"] == 9001
+        assert first_detail["layout_kind"] == second_detail["layout_kind"] == "stadium"
+        reserved = client.post(
+            "/api/events/9005/reservations",
+            headers={**csrf_headers(client), "Idempotency-Key": "stadium-function-one"},
+            json={"quantity": 1, "seat_ids": [first_seat]},
+        )
+        assert reserved.status_code == 201, reserved.text
+        assert client.get("/api/events/9005").json()["available_capacity"] == 1
+        untouched = client.get("/api/events/9006").json()
+        assert untouched["available_capacity"] == 2
+        assert next(seat for seat in untouched["seats"] if seat["id"] == second_seat)["available"] is True
+    app.state.engine.dispose()
+
+
 def test_idempotency_replay_conflicts_and_is_scoped_to_owner() -> None:
     app = create_app(TEST_APP_URL)
     with TestClient(app) as owner:
@@ -277,6 +301,31 @@ def test_operator_cannot_validate_unassigned_event(privileged_accounts: dict[str
             json={"event_id": 9002, "qr_token": token},
         )
         assert response.status_code == 403
+    app.state.engine.dispose()
+
+
+def test_operator_confirmation_includes_the_reserved_location(privileged_accounts: dict[str, str]) -> None:
+    with create_engine(TEST_ADMIN_URL).connect() as connection:
+        seat_id = connection.scalar(text("SELECT id FROM event_seats WHERE event_id=9004 AND seat_number=1"))
+    app = create_app(TEST_APP_URL)
+    with TestClient(app) as client:
+        register_client(client)
+        created = client.post(
+            "/api/events/9004/reservations",
+            headers={**csrf_headers(client), "Idempotency-Key": "operator-location"},
+            json={"quantity": 1, "seat_ids": [seat_id]},
+        )
+        assert created.status_code == 201
+        token = client.get("/api/me/tickets").json()[0]["qr_token"]
+        client.cookies.clear()
+        login(client, "operador@example.com", privileged_accounts["operator"])
+        validated = client.post(
+            "/api/operator/validate",
+            headers=csrf_headers(client),
+            json={"event_id": 9004, "qr_token": token},
+        )
+        assert validated.status_code == 200
+        assert validated.json()["ticket_location"] == "Platea · fila A, asiento 1"
     app.state.engine.dispose()
 
 

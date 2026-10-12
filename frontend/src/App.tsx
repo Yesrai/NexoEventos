@@ -25,6 +25,8 @@ type EventItem = {
   id: number; name: string; date: string; time: string | null; venue: string; city: string; category: string
   price: number; has_multiple_prices: boolean; capacity: number; available_capacity: number
   image_path: string | null; ticket_mode: 'general' | 'zones' | 'seats'; is_demo: boolean
+  venue_id: number | null; layout_id: number | null; layout_name: string | null
+  layout_kind: 'theatre' | 'stadium' | 'concert_zones' | 'museum' | 'zones' | 'general' | null
 }
 type Zone = { id: number; name: string; price: number; capacity: number; available_capacity: number }
 type Seat = { id: number; zone_id: number; zone_name: string; row: string; number: number; price: number; available: boolean }
@@ -543,6 +545,45 @@ function AuditoriumSeatPicker({ seats, selectedSeatIds, onToggle }: {
   </div>
 }
 
+function StadiumSeatPicker({ seats, selectedSeatIds, onToggle }: {
+  seats: Seat[]
+  selectedSeatIds: number[]
+  onToggle: (seat: Seat) => void
+}) {
+  const sectors = [...new Map(seats.map((seat) => [seat.zone_id, { id: seat.zone_id, name: seat.zone_name }])).values()]
+  const [sectorId, setSectorId] = useState(sectors[0]?.id ?? 0)
+  const [zoom, setZoom] = useState(1)
+  const visible = seats.filter((seat) => seat.zone_id === sectorId)
+  const rows = [...new Set(visible.map((seat) => seat.row))]
+  const selected = seats.filter((seat) => selectedSeatIds.includes(seat.id))
+  const changeZoom = (next: number) => setZoom(Math.max(.8, Math.min(1.4, Number(next.toFixed(1)))))
+  return <div className="stadium-selector">
+    <div className="auditorium-heading"><div><strong>Plano del estadio</strong><span>Selecciona primero una tribuna y después tu localidad</span></div><div className="zoom-controls" role="group" aria-label="Zoom del plano del estadio"><button type="button" onClick={() => changeZoom(zoom - .1)} disabled={zoom <= .8} aria-label="Alejar plano"><Icon name="minus" size={16} /></button><output aria-live="polite" aria-label="Nivel de zoom">{Math.round(zoom * 100)}%</output><button type="button" onClick={() => changeZoom(zoom + .1)} disabled={zoom >= 1.4} aria-label="Acercar plano"><Icon name="plus" size={16} /></button></div></div>
+    <div className="seat-legend" aria-label="Leyenda del plano"><span><i className="seat-sample" />Disponible</span><span><i className="seat-sample selected">✓</i>Seleccionado</span><span><i className="seat-sample occupied">×</i>Ocupado</span></div>
+    <div className="stadium-viewport" tabIndex={0} aria-label="Plano desplazable del estadio">
+      <div className="stadium-plan" style={{ zoom }}>
+        <div className="stadium-ring" aria-label="Sectores alrededor de la cancha">
+          <div className="stadium-field"><span>Cancha</span><small>Área deportiva</small></div>
+          {sectors.map((sector, index) => <button type="button" key={sector.id} className={`stadium-sector sector-${index + 1} ${sectorId === sector.id ? 'active' : ''}`} aria-pressed={sectorId === sector.id} onClick={() => setSectorId(sector.id)}>{sector.name}</button>)}
+        </div>
+        <div className="stadium-seats" role="group" aria-label={`Localidades de ${sectors.find((sector) => sector.id === sectorId)?.name ?? 'tribuna'}`}>
+          {rows.map((row) => <div className="stadium-seat-row" key={row}><strong>Fila {row}</strong><div>{visible.filter((seat) => seat.row === row).map((seat) => <button type="button" key={seat.id} className={selectedSeatIds.includes(seat.id) ? 'selected' : ''} disabled={!seat.available} aria-pressed={selectedSeatIds.includes(seat.id)} aria-label={`${seat.zone_name}, fila ${seat.row}, asiento ${seat.number}, ${seat.available ? selectedSeatIds.includes(seat.id) ? 'seleccionado' : 'disponible' : 'ocupado'}`} onClick={() => onToggle(seat)}>{seat.number}</button>)}</div></div>)}
+        </div>
+      </div>
+    </div>
+    <div className="seat-selection-status" role="status" aria-live="polite"><strong>{selected.length ? `${selected.length} localidad${selected.length === 1 ? '' : 'es'} seleccionada${selected.length === 1 ? '' : 's'}` : 'Ninguna localidad seleccionada'}</strong><span>{selected.length ? selected.map((seat) => `${seat.zone_name} ${seat.row}-${seat.number}`).join(', ') : 'Elige hasta 10 localidades disponibles.'}</span></div>
+    <details className="seat-list"><summary>Alternativa accesible por lista</summary><div>{sectors.map((sector) => <fieldset key={sector.id}><legend>{sector.name}</legend>{seats.filter((seat) => seat.zone_id === sector.id).map((seat) => <label key={seat.id}><input type="checkbox" checked={selectedSeatIds.includes(seat.id)} disabled={!seat.available} onChange={() => onToggle(seat)} /> Fila {seat.row}, asiento {seat.number} · S/ {seat.price.toFixed(2)} {seat.available ? '' : '(ocupado)'}</label>)}</fieldset>)}</div></details>
+  </div>
+}
+
+function ZoneLayoutPicker({ zones, selectedZoneId, onSelect, concert }: { zones: Zone[]; selectedZoneId: number | null; onSelect: (id: number) => void; concert: boolean }) {
+  return <fieldset className={`zone-options ${concert ? 'concert-zone-picker' : ''}`}><legend>{concert ? 'Elige una zona de pie' : 'Elige una zona'}</legend>{concert && <div className="concert-plan" aria-label="Plano del concierto"><div className="concert-stage">Escenario</div><div className="concert-floor">Zonas sin asientos numerados</div></div>}<div className={concert ? 'concert-zone-grid' : ''}>{zones.map((zone) => <button type="button" key={zone.id} className={`ticket-option ${selectedZoneId === zone.id ? 'selected-option' : ''}`} disabled={zone.available_capacity === 0} aria-pressed={selectedZoneId === zone.id} onClick={() => onSelect(zone.id)}><span className="selection-check">{selectedZoneId === zone.id && <Icon name="check" size={16} />}</span><div><strong>{zone.name}</strong><small>{zone.available_capacity} de {zone.capacity} disponibles{concert ? ' · de pie' : ''}</small></div><b>S/ {zone.price.toFixed(2)}</b></button>)}</div></fieldset>
+}
+
+function MuseumVisitGuide() {
+  return <aside className="museum-guide" aria-label="Plano orientativo del museo"><div className="museum-guide-heading"><strong>Recorrido orientativo</strong><span>La reserva es por horario y cantidad, no por sala.</span></div><div className="museum-rooms" aria-hidden="true"><span>Ingreso</span><span>Sala 1</span><span>Sala 2</span><span>Sala 3</span><span>Salida</span></div></aside>
+}
+
 export default function App() {
   const [view, setView] = useState<View>('catalog')
   const [user, setUser] = useState<User | null>(null)
@@ -835,9 +876,9 @@ export default function App() {
             <article className="event-story"><div className="detail-photo">{selected.image_path ? <img src={selected.image_path} alt={`Fotografía ilustrativa para ${selected.name}`} /> : <span>{selected.category}</span>}</div><div className="event-copy"><p className="eyebrow">Evento ficticio de demostración</p><h2>{selected.name}</h2><div className="event-meta"><span><Icon name="calendar" />{formatDate(selected.date)}</span><span><Icon name="clock" />{formatTime(selected.time)}</span><span><Icon name="location" />{selected.venue}, {selected.city}</span></div><p>{selected.description}</p><span className="availability">{selected.available_capacity} cupos disponibles de {selected.capacity}</span></div></article>
             <form className="booking-panel" onSubmit={(event) => void submitReservation(event)}>
               <div className="booking-heading"><div><p className="eyebrow">Tu reserva</p><h3>Selecciona tus entradas</h3></div><Icon name="ticket" size={26} /></div>
-              {selected.ticket_mode === 'general' && <div className="ticket-option selected-option"><span className="selection-check"><Icon name="check" size={16} /></span><div><strong>Entrada general</strong><small>Acceso sin asiento asignado</small></div><b>{selected.price === 0 ? 'Gratis' : `S/ ${selected.price.toFixed(2)}`}</b></div>}
-              {selected.ticket_mode === 'zones' && <fieldset className="zone-options"><legend>Elige una zona</legend>{selected.zones.map((zone) => <button type="button" key={zone.id} className={`ticket-option ${zoneId === zone.id ? 'selected-option' : ''}`} disabled={zone.available_capacity === 0} onClick={() => { setZoneId(zone.id); setQuantity(1); setReservationMessage(null); setReservationError(null); idempotencyKey.current = null }}><span className="selection-check">{zoneId === zone.id && <Icon name="check" size={16} />}</span><div><strong>{zone.name}</strong><small>{zone.available_capacity} disponibles</small></div><b>S/ {zone.price.toFixed(2)}</b></button>)}</fieldset>}
-              {selected.ticket_mode === 'seats' && <AuditoriumSeatPicker seats={selected.seats} selectedSeatIds={selectedSeatIds} onToggle={toggleSeat} />}
+              {selected.ticket_mode === 'general' && <><div className="ticket-option selected-option"><span className="selection-check"><Icon name="check" size={16} /></span><div><strong>{selected.layout_kind === 'museum' ? 'Ingreso por horario' : 'Entrada general'}</strong><small>{selected.layout_kind === 'museum' ? 'Elige cantidad de visitantes; las salas no se reservan' : 'Acceso sin asiento ni ubicación asignados'}</small></div><b>{selected.price === 0 ? 'Gratis' : `S/ ${selected.price.toFixed(2)}`}</b></div>{selected.layout_kind === 'museum' && <MuseumVisitGuide />}</>}
+              {selected.ticket_mode === 'zones' && <ZoneLayoutPicker zones={selected.zones} selectedZoneId={zoneId} concert={selected.layout_kind === 'concert_zones'} onSelect={(id) => { setZoneId(id); setQuantity(1); setReservationMessage(null); setReservationError(null); idempotencyKey.current = null }} />}
+              {selected.ticket_mode === 'seats' && (selected.layout_kind === 'stadium' ? <StadiumSeatPicker seats={selected.seats} selectedSeatIds={selectedSeatIds} onToggle={toggleSeat} /> : selected.layout_kind === 'theatre' ? <AuditoriumSeatPicker seats={selected.seats} selectedSeatIds={selectedSeatIds} onToggle={toggleSeat} /> : <div className="form-error" role="alert">Este evento usa localidades numeradas, pero todavía no tiene un plano configurado. No se habilita una geometría genérica.</div>)}
               <dl className="booking-facts"><div><dt>Evento</dt><dd>{selected.name}</dd></div><div><dt>Fecha</dt><dd>{formatDate(selected.date)} · {formatTime(selected.time)}</dd></div><div><dt>Lugar</dt><dd>{selected.venue}, {selected.city}</dd></div>{activeZone && <div><dt>Zona</dt><dd>{activeZone.name}</dd></div>}{selected.ticket_mode === 'seats' && selectedSeatIds.length > 0 && <div><dt>Asientos</dt><dd>{selected.seats.filter((seat) => selectedSeatIds.includes(seat.id)).map((seat) => `${seat.zone_name} ${seat.row}-${seat.number}`).join(', ')}</dd></div>}</dl>
               {selected.ticket_mode !== 'seats' && (selected.ticket_mode === 'general' || activeZone) && <div className="quantity-row"><div><strong>Cantidad</strong><small>Máximo {quantityLimit} por reserva</small></div><div className="stepper" aria-label="Cantidad de entradas"><button type="button" onClick={() => changeQuantity(quantity - 1)} disabled={quantity <= 1} aria-label="Restar una entrada"><Icon name="minus" /></button><output aria-live="polite">{quantity}</output><button type="button" onClick={() => changeQuantity(quantity + 1)} disabled={quantity >= quantityLimit} aria-label="Agregar una entrada"><Icon name="plus" /></button></div></div>}
               <div className="booking-summary"><span>Total simulado</span><strong>{selected.ticket_mode === 'seats' && selectedSeatIds.length === 0 ? 'Selecciona asientos' : currentTotal === 0 ? 'Gratis' : `S/ ${currentTotal.toFixed(2)}`}</strong></div>
@@ -1016,7 +1057,8 @@ function OperatorPanel({ onExpired }: { onExpired: () => void }) {
       const response = await api('/api/operator/validate', { method: 'POST', body: JSON.stringify({ event_id: eventId, qr_token: token.trim() }) })
       const body = await response.json() as unknown
       if (response.status === 401) { onExpired(); return }
-      setStatus(response.ok ? { kind: 'success', text: 'Ingreso aceptado. La entrada quedó consumida.' } : { kind: 'error', text: messageFrom(body, 'No se pudo validar la entrada.') })
+      const accepted = body as { ticket_location?: string }
+      setStatus(response.ok ? { kind: 'success', text: `Ingreso aceptado. ${accepted.ticket_location ?? 'Entrada general'}. La entrada quedó consumida.` } : { kind: 'error', text: messageFrom(body, 'No se pudo validar la entrada.') })
     } catch {
       setStatus({ kind: 'error', text: 'No pudimos conectar con el servicio de validación. Intenta nuevamente.' })
     } finally { setBusy(false) }
