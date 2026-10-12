@@ -113,8 +113,15 @@ elif [[ "$existing_files" -eq "${#protected_files[@]}" ]]; then
   TICKET_KEY="${TICKET_ENCRYPTION_KEY:-}"
   HASH_KEY="${SECURITY_HASH_KEY:-}"
   DUCKDNS_TOKEN="${DUCKDNS_TOKEN:-}"
-  if [[ "${FRONTEND_ORIGINS:-}" != "https://${DOMAIN}" ]] || \
-     { [[ "$USES_DUCKDNS" == YES ]] && [[ "${DUCKDNS_DOMAIN:-}" != "${DOMAIN%.duckdns.org}" ]]; }; then
+  if [[ "${FRONTEND_ORIGINS:-}" != "https://${DOMAIN}" ]]; then
+    if [[ "$USES_DUCKDNS" == NO && "${FRONTEND_ORIGINS:-}" =~ ^https://nexoeventos-recovery-[0-9-]+\.sslip\.io$ ]]; then
+      echo "Se actualizará únicamente el hostname temporal tras cambiar la IPv4 pública."
+    else
+      echo "Los archivos existentes pertenecen a otro dominio; no se reutilizaron." >&2
+      exit 1
+    fi
+  fi
+  if [[ "$USES_DUCKDNS" == YES && "${DUCKDNS_DOMAIN:-}" != "${DOMAIN%.duckdns.org}" ]]; then
     echo "Los archivos existentes pertenecen a otro dominio; no se reutilizaron." >&2
     exit 1
   fi

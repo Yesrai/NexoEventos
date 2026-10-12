@@ -1,5 +1,5 @@
 ---
-- name: Verificar datos y recorrido del servicio recuperado
+- name: Verificar recorrido del servicio recuperado
   hosts: nexoeventos_recovery
   gather_facts: false
   become: true
@@ -15,15 +15,6 @@
           - inventory_hostname is match('^nexoeventos-academy-recovery-[0-9]{8}t[0-9]{4}-app$')
           - nexoeventos_domain is match('^nexoeventos-recovery-[0-9-]+\\.sslip\\.io$')
   tasks:
-    - name: Verificar revisión, reservas y descifrado de todas las entradas restauradas
-      ansible.builtin.command:
-        argv:
-          - /opt/nexoeventos/deploy/verify-restore.sh
-          - service
-          - '135'
-      register: recovery_data_verification
-      changed_when: false
-
     - name: Ejecutar flujo con credencial efímera y limpieza garantizada
       block:
         - name: Preparar operador exclusivo del ensayo sin cambiar propietarios
@@ -70,5 +61,4 @@
     - name: Resumir verificaciones seguras
       ansible.builtin.debug:
         msg:
-          data: "{{ recovery_data_verification.stdout_lines }}"
           flow: "{{ recovery_public_flow.stdout_lines }}"

@@ -61,7 +61,11 @@ def main() -> int:
     app = resource(state, "aws_instance", "app")
     database = resource(state, "aws_db_instance", "recovery")
     instance_id = app.get("id", "")
-    public_ip = app.get("public_ip", "")
+    public_ip = aws_value(
+        "ec2", "describe-instances", "--region", tfvar(tfvars_path, "aws_region"),
+        "--instance-ids", instance_id,
+        "--query", "Reservations[0].Instances[0].PublicIpAddress",
+    )
     db_identifier = database.get("identifier", "")
     if not re.fullmatch(r"i-[0-9a-f]+", instance_id) or not re.fullmatch(r"\d{1,3}(\.\d{1,3}){3}", public_ip):
         raise SystemExit("ID o IPv4 temporal no verificable en el estado.")
