@@ -36,15 +36,27 @@ cleanup() {
   unset MASTER_PASSWORD APP_PASSWORD MIGRATION_PASSWORD TICKET_KEY HASH_KEY DUCKDNS_TOKEN
   unset DATABASE_URL MIGRATION_DATABASE_URL FRONTEND_ORIGINS DUCKDNS_DOMAIN
   unset TICKET_ENCRYPTION_KEY SECURITY_HASH_KEY
+  unset NEXO_DB_ENDPOINT NEXO_MASTER_SECRET_ARN
   rm -f -- "$secret_json"
 }
 trap cleanup EXIT
 
-DB_INFO="$(aws rds describe-db-instances --region "$AWS_REGION" \
-  --db-instance-identifier "$DB_IDENTIFIER" \
-  --query 'DBInstances[0].[Endpoint.Address,MasterUsername,MasterUserSecret.SecretArn]' \
-  --output text)"
-read -r DB_ENDPOINT MASTER_USER MASTER_SECRET_ARN <<<"$DB_INFO"
+DB_ENDPOINT="${NEXO_DB_ENDPOINT:-}"
+MASTER_SECRET_ARN="${NEXO_MASTER_SECRET_ARN:-}"
+MASTER_USER=""
+if [[ -n "$DB_ENDPOINT" || -n "$MASTER_SECRET_ARN" ]]; then
+  if [[ ! "$DB_ENDPOINT" =~ ^[a-z0-9.-]+\.rds\.amazonaws\.com$ ]] || \
+     [[ ! "$MASTER_SECRET_ARN" =~ ^arn:aws:secretsmanager:[a-z0-9-]+:[0-9]{12}:secret: ]]; then
+    echo "Endpoint o referencia de secreto proporcionados no son válidos." >&2
+    exit 1
+  fi
+else
+  DB_INFO="$(aws rds describe-db-instances --region "$AWS_REGION" \
+    --db-instance-identifier "$DB_IDENTIFIER" \
+    --query 'DBInstances[0].[Endpoint.Address,MasterUsername,MasterUserSecret.SecretArn]' \
+    --output text)"
+  read -r DB_ENDPOINT MASTER_USER MASTER_SECRET_ARN <<<"$DB_INFO"
+fi
 if [[ -z "$DB_ENDPOINT" || "$DB_ENDPOINT" == "None" ]]; then
   echo "No se pudo obtener el endpoint de RDS." >&2
   exit 1
