@@ -1,4 +1,4 @@
-# Ensayo de recuperación completa del servicio (preparado, no ejecutado)
+# Ensayo de recuperación completa del servicio (ejecución incompleta cerrada)
 
 Este ensayo amplía R01. R01 ya demostró recuperación de datos (RPO 3 min 32 s y datos verificados en 21 min 4 s) y **no se repite**. El nuevo objetivo es medir el servicio completo aislado: infraestructura, aplicación, datos, claves, DNS, HTTPS y recorrido funcional.
 
@@ -70,4 +70,4 @@ Antes de borrar, guardar solo evidencia sanitizada. No hay registro DNS que reti
 
 Fallo antes de T4: no cambiar DNS principal ni el origen; conservar evidencias, diagnosticar y limpiar el mismo RunId. El origen es el rollback porque nunca recibe tráfico ni cambios del ensayo.
 
-Estado previo a la ejecución: Terraform y Ansible preparados y validados localmente; faltaba generar/revisar el plan autenticado. **No declarar el RTO completo hasta obtener T4.**
+Estado al 12 de octubre: la ejecución `20261011t1613` alcanzó T2 con datos y claves verificados, pero no T3/T4. Se cerró por cambio de prioridad y se eliminaron los 11 recursos temporales. El resultado sanitizado está en `docs/evidencias/EV07/resultado-recuperacion-completa-incompleta-2026-10-12.md`. **No declarar el RTO completo.**

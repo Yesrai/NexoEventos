@@ -477,6 +477,72 @@ function DateRangePicker({ from, to, onApply, onClear }: {
   </div>
 }
 
+function AuditoriumSeatPicker({ seats, selectedSeatIds, onToggle }: {
+  seats: Seat[]
+  selectedSeatIds: number[]
+  onToggle: (seat: Seat) => void
+}) {
+  const [zoom, setZoom] = useState(1)
+  const rows = [...new Set(seats.map((seat) => seat.row))]
+  const maximumNumber = Math.max(0, ...seats.map((seat) => seat.number))
+  const aisleStart = Math.floor(maximumNumber / 2) + 1
+  const selectedSeats = seats.filter((seat) => selectedSeatIds.includes(seat.id))
+  const changeZoom = (next: number) => setZoom(Math.max(.8, Math.min(1.4, Number(next.toFixed(1)))))
+
+  return <div className="auditorium-selector">
+    <div className="auditorium-heading">
+      <div><strong>Plano del auditorio</strong><span>Escenario al frente · pasillo central</span></div>
+      <div className="zoom-controls" role="group" aria-label="Zoom del plano">
+        <button type="button" onClick={() => changeZoom(zoom - .1)} disabled={zoom <= .8} aria-label="Alejar plano"><Icon name="minus" size={16} /></button>
+        <output aria-live="polite" aria-label="Nivel de zoom">{Math.round(zoom * 100)}%</output>
+        <button type="button" onClick={() => changeZoom(zoom + .1)} disabled={zoom >= 1.4} aria-label="Acercar plano"><Icon name="plus" size={16} /></button>
+        <button type="button" className="zoom-reset" onClick={() => setZoom(1)} disabled={zoom === 1}>Restablecer</button>
+      </div>
+    </div>
+    <div className="seat-legend" aria-label="Leyenda del plano">
+      <span><i className="seat-sample" />Disponible</span>
+      <span><i className="seat-sample selected">✓</i>Seleccionado</span>
+      <span><i className="seat-sample occupied">×</i>Ocupado</span>
+    </div>
+    <div className="auditorium-viewport" tabIndex={0} aria-label="Plano desplazable del auditorio. Usa los controles de zoom o desplázate horizontalmente.">
+      <div className="auditorium-plan" style={{ zoom }}>
+        <div className="auditorium-stage"><span>Escenario</span></div>
+        <div className="stage-direction" aria-hidden="true">Vista hacia el escenario</div>
+        <div className="seat-map" role="group" aria-label="Asientos numerados">
+          {rows.map((row) => {
+            const rowSeats = seats.filter((seat) => seat.row === row)
+            return <div className="seat-row" key={row}>
+              <strong aria-hidden="true">{row}</strong>
+              <div className="seat-bank">
+                {rowSeats.map((seat) => <button
+                  type="button"
+                  key={seat.id}
+                  className={`${selectedSeatIds.includes(seat.id) ? 'selected' : ''} ${seat.number === aisleStart ? 'aisle-before' : ''}`}
+                  disabled={!seat.available}
+                  aria-label={`Zona ${seat.zone_name}, fila ${seat.row}, asiento ${seat.number}, ${seat.available ? selectedSeatIds.includes(seat.id) ? 'seleccionado' : 'disponible' : 'ocupado'}`}
+                  aria-pressed={selectedSeatIds.includes(seat.id)}
+                  onClick={() => onToggle(seat)}
+                >{seat.number}</button>)}
+              </div>
+              <strong aria-hidden="true">{row}</strong>
+              <span className="row-zone">{rowSeats[0]?.zone_name}</span>
+            </div>
+          })}
+        </div>
+      </div>
+    </div>
+    <div className="seat-selection-status" role="status" aria-live="polite">
+      <strong>{selectedSeats.length ? `${selectedSeats.length} asiento${selectedSeats.length === 1 ? '' : 's'} seleccionado${selectedSeats.length === 1 ? '' : 's'}` : 'Ningún asiento seleccionado'}</strong>
+      <span>{selectedSeats.length ? selectedSeats.map((seat) => `${seat.row}-${seat.number}`).join(', ') : 'Elige hasta 10 asientos disponibles.'}</span>
+    </div>
+    <details className="seat-list">
+      <summary>Alternativa accesible por lista</summary>
+      <div>{rows.map((row) => <fieldset key={row}><legend>Fila {row}</legend>{seats.filter((seat) => seat.row === row).map((seat) => <label key={seat.id}><input type="checkbox" checked={selectedSeatIds.includes(seat.id)} disabled={!seat.available} onChange={() => onToggle(seat)} /> {seat.zone_name}, asiento {seat.number} · S/ {seat.price.toFixed(2)} {seat.available ? '' : '(ocupado)'}</label>)}</fieldset>)}</div>
+    </details>
+    <small>La selección se confirma en el servidor. Si otra persona reserva primero, actualizaremos el plano sin duplicar el asiento.</small>
+  </div>
+}
+
 export default function App() {
   const [view, setView] = useState<View>('catalog')
   const [user, setUser] = useState<User | null>(null)
@@ -765,13 +831,13 @@ export default function App() {
         </section>
         {(detailLoading || selected || reservationError) && <section className="event-detail" aria-live="polite">
           {detailLoading && <div className="status" role="status"><span className="spinner" />Cargando detalle…</div>}
-          {selected && !detailLoading && <div className="detail-layout">
+          {selected && !detailLoading && <div className={`detail-layout ${selected.ticket_mode === 'seats' ? 'seat-detail-layout' : ''}`}>
             <article className="event-story"><div className="detail-photo">{selected.image_path ? <img src={selected.image_path} alt={`Fotografía ilustrativa para ${selected.name}`} /> : <span>{selected.category}</span>}</div><div className="event-copy"><p className="eyebrow">Evento ficticio de demostración</p><h2>{selected.name}</h2><div className="event-meta"><span><Icon name="calendar" />{formatDate(selected.date)}</span><span><Icon name="clock" />{formatTime(selected.time)}</span><span><Icon name="location" />{selected.venue}, {selected.city}</span></div><p>{selected.description}</p><span className="availability">{selected.available_capacity} cupos disponibles de {selected.capacity}</span></div></article>
             <form className="booking-panel" onSubmit={(event) => void submitReservation(event)}>
               <div className="booking-heading"><div><p className="eyebrow">Tu reserva</p><h3>Selecciona tus entradas</h3></div><Icon name="ticket" size={26} /></div>
               {selected.ticket_mode === 'general' && <div className="ticket-option selected-option"><span className="selection-check"><Icon name="check" size={16} /></span><div><strong>Entrada general</strong><small>Acceso sin asiento asignado</small></div><b>{selected.price === 0 ? 'Gratis' : `S/ ${selected.price.toFixed(2)}`}</b></div>}
               {selected.ticket_mode === 'zones' && <fieldset className="zone-options"><legend>Elige una zona</legend>{selected.zones.map((zone) => <button type="button" key={zone.id} className={`ticket-option ${zoneId === zone.id ? 'selected-option' : ''}`} disabled={zone.available_capacity === 0} onClick={() => { setZoneId(zone.id); setQuantity(1); setReservationMessage(null); setReservationError(null); idempotencyKey.current = null }}><span className="selection-check">{zoneId === zone.id && <Icon name="check" size={16} />}</span><div><strong>{zone.name}</strong><small>{zone.available_capacity} disponibles</small></div><b>S/ {zone.price.toFixed(2)}</b></button>)}</fieldset>}
-              {selected.ticket_mode === 'seats' && <div className="seat-selector"><div className="stage">Escenario</div><div className="seat-legend"><span><i className="seat-sample" />Disponible</span><span><i className="seat-sample selected" />Seleccionado</span><span><i className="seat-sample occupied">×</i>Ocupado</span></div><div className="seat-map" aria-label="Plano de asientos">{[...new Set(selected.seats.map((seat) => seat.row))].map((row) => <div className="seat-row" key={row}><strong>Fila {row}</strong><div>{selected.seats.filter((seat) => seat.row === row).map((seat) => <button type="button" key={seat.id} className={selectedSeatIds.includes(seat.id) ? 'selected' : ''} disabled={!seat.available} aria-label={`Fila ${seat.row}, asiento ${seat.number}, ${seat.available ? selectedSeatIds.includes(seat.id) ? 'seleccionado' : 'disponible' : 'ocupado'}`} aria-pressed={selectedSeatIds.includes(seat.id)} onClick={() => toggleSeat(seat)}>{seat.available ? seat.number : '×'}</button>)}</div></div>)}</div><details className="seat-list"><summary>Alternativa accesible por lista</summary>{selected.seats.map((seat) => <label key={seat.id}><input type="checkbox" checked={selectedSeatIds.includes(seat.id)} disabled={!seat.available} onChange={() => toggleSeat(seat)} /> Zona {seat.zone_name}, fila {seat.row}, asiento {seat.number} · S/ {seat.price.toFixed(2)} {seat.available ? '' : '(ocupado)'}</label>)}</details><small>La selección no retiene los asientos. El servidor los asigna al confirmar.</small></div>}
+              {selected.ticket_mode === 'seats' && <AuditoriumSeatPicker seats={selected.seats} selectedSeatIds={selectedSeatIds} onToggle={toggleSeat} />}
               <dl className="booking-facts"><div><dt>Evento</dt><dd>{selected.name}</dd></div><div><dt>Fecha</dt><dd>{formatDate(selected.date)} · {formatTime(selected.time)}</dd></div><div><dt>Lugar</dt><dd>{selected.venue}, {selected.city}</dd></div>{activeZone && <div><dt>Zona</dt><dd>{activeZone.name}</dd></div>}{selected.ticket_mode === 'seats' && selectedSeatIds.length > 0 && <div><dt>Asientos</dt><dd>{selected.seats.filter((seat) => selectedSeatIds.includes(seat.id)).map((seat) => `${seat.zone_name} ${seat.row}-${seat.number}`).join(', ')}</dd></div>}</dl>
               {selected.ticket_mode !== 'seats' && (selected.ticket_mode === 'general' || activeZone) && <div className="quantity-row"><div><strong>Cantidad</strong><small>Máximo {quantityLimit} por reserva</small></div><div className="stepper" aria-label="Cantidad de entradas"><button type="button" onClick={() => changeQuantity(quantity - 1)} disabled={quantity <= 1} aria-label="Restar una entrada"><Icon name="minus" /></button><output aria-live="polite">{quantity}</output><button type="button" onClick={() => changeQuantity(quantity + 1)} disabled={quantity >= quantityLimit} aria-label="Agregar una entrada"><Icon name="plus" /></button></div></div>}
               <div className="booking-summary"><span>Total simulado</span><strong>{selected.ticket_mode === 'seats' && selectedSeatIds.length === 0 ? 'Selecciona asientos' : currentTotal === 0 ? 'Gratis' : `S/ ${currentTotal.toFixed(2)}`}</strong></div>

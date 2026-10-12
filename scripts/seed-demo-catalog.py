@@ -35,6 +35,7 @@ EVENTS = [
     (1025, "Cine Bajo las Estrellas", "Cine", 20, time(19, 30), "Patio Audiovisual", "Lima", "Proyección académica de cortometrajes ficticios con conversación posterior.", 20, 150, "general", "cinema-room"),
     (1026, "Foro Futuro Digital", "Tecnología", 10, time(9, 30), "Hub Tecnológico", "Lima", "Foro demo sobre productos digitales, infraestructura y experiencias tecnológicas.", 65, 220, "zones", "technology-exhibition"),
     (1027, "Rutas del Arte", "Arte y cultura", 22, time(11, 30), "Museo de la Ciudad", "Callao", "Recorrido cultural ficticio por piezas, relatos y expresiones artísticas contemporáneas.", 22, 100, "general", "culture-museum"),
+    (1028, "Voces en el Auditorio", "Teatro y stand-up", 26, time(20, 0), "Auditorio Nexo", "Lima", "Función ficticia con escenario frontal y asientos numerados para probar el recorrido completo de reserva.", 35, 96, "seats", "theater-performance"),
 ]
 
 
@@ -71,8 +72,8 @@ def main() -> None:
                     """), {"event_id": event_id, "name": zone_name, "price": zone_price, "capacity": zone_capacity})
                     zone_ids.append(zone_id)
                 if mode == "seats":
-                    for row_index, row_label in enumerate(("A", "B", "C", "D")):
-                        zone_id = zone_ids[0] if row_index < 2 else zone_ids[1]
+                    for row_index, row_label in enumerate(("A", "B", "C", "D", "E", "F", "G", "H")):
+                        zone_id = zone_ids[0] if row_index < 4 else zone_ids[1]
                         for seat_number in range(1, 13):
                             connection.execute(text("""
                                 INSERT INTO event_seats (event_id, zone_id, row_label, seat_number)

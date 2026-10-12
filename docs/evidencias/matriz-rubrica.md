@@ -12,7 +12,7 @@ Lectura API consolidada y sanitizada de inventario: [9 de octubre de 2026](lectu
 | EV04 | C3: controles de seguridad | SG web y DB | 80/443 público, SSH cerrado, 5432 solo SG web | reglas reales + HTTPS/RDS desde aplicación | **Reglas API comprobadas 7-oct**; falta captura de consola |
 | EV05 | Cómputo y aplicación | EC2 AL2023, Nginx, systemd | Instalación reproducible; servicio sin reload; FastAPI solo loopback | versiones, estados, health y captura | **Ansible/SSM y commit `7955e7e` comprobados**; capturas escritorio/móvil disponibles |
 | EV06 | Datos | RDS PostgreSQL privado | Conexión desde app, no desde Internet; persistencia | migraciones y prueba tras reinicio | **RDS 18.3 y Alembic `0005` comprobados**; datos históricos preservados |
-| EV07 | C4/C5: recuperación y pruebas | S3 privado + snapshot RDS + copia externa | línea base, punto recuperable, restauración, reservas y QR | metadatos y verificación sin secretos | **R01 ejecutada 10-oct**: RPO 3 min 32 s; datos verificados 21 min 4 s; 135 QR válidos; temporal eliminada; servicio completo pendiente |
+| EV07 | C4/C5: recuperación y pruebas | S3 privado + snapshot RDS + copia externa | línea base, punto recuperable, restauración, reservas y QR | metadatos y verificación sin secretos | **R01 ejecutada 10-oct**: RPO 3 min 32 s; datos verificados 21 min 4 s; 135 QR válidos. Ensayo integral 11–12 oct llegó a T2, no a HTTPS/T4; RTO completo no acreditado; 11 temporales eliminados y origen detenido |
 | EV08 | Observabilidad | CloudWatch Logs y alarma CPU | Logs sanitizados, retención y estado de alarma | inventario y ausencia de QR en log API | **CUMPLE 10-oct**: agente AL2023 activo, streams API/Nginx y solicitud sanitizada recibida; retención 7 días; alarma CPU comprobada, sin notificaciones configuradas |
 | EV09 | IaC | Terraform AWS | identidad, estado separado, plan y aplicación controlada | estado protegido + plan autenticado | refresh autenticado: resumen parcial 0/1/0 y SCP Object Lock; **sin plan aplicable** |
 | EV10 | Flujo público seguro | DuckDNS + Let's Encrypt + aplicación | iniciar sesión → reservar → ver QR → validar una vez | URL real, suite y captura sin secretos | **`7955e7e` comprobado públicamente por HTTPS y capturado**; cámara física pendiente |
@@ -23,7 +23,7 @@ Lectura API consolidada y sanitizada de inventario: [9 de octubre de 2026](lectu
 
 - Caso empresarial: aforo, demanda o volúmenes descritos en la documentación son supuestos del caso.
 - Objetivos: 20 usuarios virtuales durante 5 minutos, p95 menor de 2 s, errores menores de 1 %, RTO máximo 60 min y RPO máximo 24 h.
-- Resultados medidos actuales: pruebas funcionales/concurrentes locales y públicas, persistencia RDS, respaldo cifrado, E01 cloud y R01 de datos. El RPO medido fue 3 min 32 s y la recuperación/verificación de datos 21 min 4 s; el RTO del servicio completo sigue pendiente.
+- Resultados medidos actuales: pruebas funcionales/concurrentes locales y públicas, persistencia RDS, respaldo cifrado, E01 cloud y R01 de datos. El ensayo integral posterior verificó datos/claves en T2, pero no llegó a T4 y no acredita el RTO completo.
 
 Revisión criterio por criterio, sin asignar puntajes: [revision-rubrica.md](revision-rubrica.md). Procedimientos: [sesión cloud](../operacion/procedimientos-sesion-cloud.md) y [despliegue Ansible](../operacion/ansible-despliegue.md).
 

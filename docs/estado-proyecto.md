@@ -2,10 +2,10 @@
 
 | Dato | Valor |
 |---|---|
-| Fecha de corte | 10 de octubre de 2026 (Lima) |
+| Fecha de corte | 12 de octubre de 2026 (Lima) |
 | Commit desplegado comprobado | `7955e7e` el 7-oct; el HEAD local se indica en `git log` |
 | URL pública | `https://nexoeventos-demo.duckdns.org`, **fuera de servicio mientras EC2 y RDS estén detenidas** |
-| Estado AWS comprobado | 10-oct 23:41 Lima: EC2 `stopped`, RDS original `stopped` y ningún recurso temporal creado en esta sesión; confirmados por API. Reinicio automático RDS estimado: 17-oct 19:23 Lima. |
+| Estado AWS comprobado | 12-oct 08:38 Lima: ensayo temporal eliminado (11 recursos; estado separado vacío), EC2 original `stopped` y RDS original `stopped`; confirmados por API. |
 | Entrega final | 26 de noviembre de 2026 |
 
 Convención de este documento:
@@ -18,7 +18,7 @@ Convención de este documento:
 
 | Área | Resultado medido | Fuente |
 |---|---|---|
-| Aplicación local | React/TS + FastAPI + PostgreSQL; autenticación, autorización, reservas transaccionales/idempotentes y QR; automatización Ansible corregida y versionada | historial Git, EV01 |
+| Aplicación local | React/TS + FastAPI + PostgreSQL; autenticación, autorización, reservas transaccionales/idempotentes, QR y auditorio de 96 asientos numerados con selección accesible | historial Git, EV01 |
 | Infraestructura AWS V1 | 30 recursos Terraform en `us-east-1`: VPC `10.20.0.0/16`, una subred pública, dos privadas de datos, rutas, IGW, SG web/DB, EC2 `t3.small` AL2023, RDS PostgreSQL 18.3 privada, S3 privado y versionado, 2 log groups y una alarma CPU | `outputs/informe-despliegue-aws-2026-10-03.md`, EV09 |
 | Seguridad operativa | SSH cerrado, administración por Session Manager, FastAPI en `127.0.0.1:8000` con usuario sin privilegios, secretos `root:root 0600`, roles PostgreSQL `owner`/`migrator`/`app` sin atributos elevados, IMDSv2 | informe del 3 de octubre, EV05, EV06 |
 | HTTPS público | DuckDNS + Let's Encrypt, válido del 3 de octubre de 2026 al 1 de enero de 2027, timers de renovación y DNS activos | EV10, `deploy/README.md` |
@@ -34,8 +34,8 @@ Convención de este documento:
 
 | Componente | Local al 7-oct | AWS verificado por última vez | Sincronizado |
 |---|---|---|---|
-| frontend | versión visual actual hasta `7955e7e` | `7955e7e`, HTTPS `/ = 200` verificado el 7-oct | **Sí al cierre de la prueba** |
-| backend/API | migraciones `0004`/`0005`, catálogo seguro y recorrido público | `7955e7e`, Alembic `0005`, `/healthz = 200`, 27 eventos | **Sí al cierre de la prueba** |
+| frontend | versión local posterior con plano de auditorio, zoom y lista accesible | `7955e7e`, HTTPS `/ = 200` verificado el 7-oct | **No**; el auditorio no se desplegó |
+| backend/API | migraciones `0004`/`0005`, 28 eventos locales y evento de 96 asientos | `7955e7e`, Alembic `0005`, `/healthz = 200`, 27 eventos sin asiento habilitado | **No**; el dato nuevo permanece local |
 | infraestructura | AMI fija, RDS autoscaling explícito y prefijo S3 corregidos localmente | estado protegido serial 32; configuración remota previa | **No**; falta plan autenticado, no se aplicó Terraform |
 | automatización | Ansible con artefacto, migraciones, health check y rollback | probado por SSM; rollback automático también observado durante un fallo controlado | **Sí para actualización V1** |
 | evidencias | matriz y capturas históricas conservadas | inventario sanitizado y EV10 actual obtenidos el 7-oct | faltan capturas de consola EV02–EV04/EV06–EV08 |
@@ -46,7 +46,7 @@ Convención de este documento:
 |---|---|---|
 | Capturas de consola sanitizadas EV02, EV03, EV04, EV06, EV07, EV08 | requiere consola y ocultar identificadores | inventario textual disponible; EV08 tiene evidencia API/SSM real, pero la captura de consola sigue pendiente si la exige la rúbrica |
 | Configuración operativa protegida | completada localmente | reconstruida desde el estado real `academy-current` (serial 32), ignorada por Git y modo `0600`; valores no impresos |
-| Recuperación completa del servicio | R01 midió datos, pero no conmutó aplicación, DNS ni HTTPS | Terraform/Ansible y procedimiento preparados; falta subdominio temporal, plan/costo aprobado y ejecución |
+| Recuperación completa del servicio | ensayo integral 11–12 oct llegó a T2: `0005`, reservas válidas y 135 QR; no llegó a HTTPS/T4 | marcado incompleto; temporales eliminados; conservar resultado y no presentarlo como RTO completo |
 | Arranque/apagado verificable | hoy es manual | `scripts/cloud/cloud-session.sh` |
 | Plan Terraform vigente (I01/EV09) | refresh autenticado termina por SCP Object Lock | resumen parcial 0 altas/1 cambio/0 bajas; **sin plan aplicable** |
 | Actualización versionada de AWS | completada el 7-oct | `7955e7e`, Alembic `0005`, frontend/API/flujo HTTPS comprobados |
@@ -78,7 +78,7 @@ Convención de este documento:
 4. **Cambios Terraform sin plan cloud.** AMI fija, autoescalado RDS desactivado y prefijo S3 se corrigieron localmente, pero no se conoce su plan real. El bucket se conserva en estado y Object Lock puede bloquear refresh.
 5. **RDS detenida se reinicia sola a los 7 días.** EBS, almacenamiento/backups RDS, S3, logs, alarma, secreto y snapshot cobran aunque todo esté detenido.
 6. **Cuentas demo.** Las cuentas de organizador y operador son para la demostración, no un mecanismo de administración.
-7. **Recuperación completa sin medir.** R01 acredita RPO y recuperación de datos; no acredita aplicación, DNS ni HTTPS sobre la copia.
+7. **Recuperación completa incompleta.** El ensayo integral verificó datos y claves, pero no alcanzó HTTPS ni el flujo funcional; no acredita aplicación recuperada ni RTO completo.
 8. **Cámara física no probada.**
 9. **Demostración académica, no lista para producción.** MFA, recuperación de cuenta e interfaz de auditoría no están implementados.
 10. **Refresh Terraform limitado por SCP.** `s3:GetBucketObjectLockConfiguration` tiene un deny explícito. No se retiró S3 del estado ni se usó `-refresh=false` como evidencia.
@@ -86,4 +86,4 @@ Convención de este documento:
 
 ## Siguiente paso
 
-Revisar el plan autenticado del root separado `infra/aws-recovery/`, confirmar un subdominio DuckDNS temporal y aprobar la estimación de USD 0.25 antes de ejecutar la recuperación completa. No cambiar el DNS principal ni repetir E01, R01 de datos o EV08 sin un cambio/fallo concreto.
+Completar localmente el recorrido de auditorio y asientos numerados. El ensayo integral de recuperación queda cerrado como incompleto; no repetir E01, R01 ni EV08 sin un cambio concreto que invalide su evidencia.

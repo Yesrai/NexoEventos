@@ -205,6 +205,30 @@ def test_two_clients_cannot_reserve_the_same_numbered_seat() -> None:
         assert connection.scalar(text("SELECT count(*) FROM reservations WHERE event_id=9004")) == 1
 
 
+def test_numbered_seat_is_visible_on_the_owners_ticket() -> None:
+    with create_engine(TEST_ADMIN_URL).connect() as connection:
+        seat_id = connection.scalar(text("SELECT id FROM event_seats WHERE event_id=9004 AND seat_number=1"))
+    app = create_app(TEST_APP_URL)
+    with TestClient(app) as client:
+        register_client(client)
+        response = client.post(
+            "/api/events/9004/reservations",
+            headers={**csrf_headers(client), "Idempotency-Key": "ticket-seat-label"},
+            json={"quantity": 1, "seat_ids": [seat_id]},
+        )
+        assert response.status_code == 201, response.text
+        tickets = client.get("/api/me/tickets")
+        assert tickets.status_code == 200
+        assert len(tickets.json()) == 1
+        ticket = tickets.json()[0]
+        assert ticket["ticket_type"] == "seats"
+        assert ticket["zone"] == "Platea"
+        assert ticket["row"] == "A"
+        assert ticket["seat"] == 1
+        assert ticket["qr_token"].startswith("nexo_")
+    app.state.engine.dispose()
+
+
 def test_idempotency_replay_conflicts_and_is_scoped_to_owner() -> None:
     app = create_app(TEST_APP_URL)
     with TestClient(app) as owner:
