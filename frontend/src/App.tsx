@@ -551,27 +551,44 @@ function StadiumSeatPicker({ seats, selectedSeatIds, onToggle }: {
   onToggle: (seat: Seat) => void
 }) {
   const sectors = [...new Map(seats.map((seat) => [seat.zone_id, { id: seat.zone_id, name: seat.zone_name }])).values()]
-  const [sectorId, setSectorId] = useState(sectors[0]?.id ?? 0)
+  const [sectorId, setSectorId] = useState<number | null>(null)
   const [zoom, setZoom] = useState(1)
-  const visible = seats.filter((seat) => seat.zone_id === sectorId)
+  const sector = sectors.find((item) => item.id === sectorId) ?? null
+  const visible = sector ? seats.filter((seat) => seat.zone_id === sector.id) : []
   const rows = [...new Set(visible.map((seat) => seat.row))]
   const selected = seats.filter((seat) => selectedSeatIds.includes(seat.id))
+  const sectorSeats = sector ? seats.filter((seat) => seat.zone_id === sector.id) : []
+  const sectorPrice = sectorSeats[0]?.price ?? 0
+  const sectorAvailable = sectorSeats.filter((seat) => seat.available).length
+  const maximumNumber = Math.max(0, ...visible.map((seat) => seat.number))
+  const aisleStart = Math.floor(maximumNumber / 2) + 1
+  const total = selected.reduce((sum, seat) => sum + seat.price, 0)
   const changeZoom = (next: number) => setZoom(Math.max(.8, Math.min(1.4, Number(next.toFixed(1)))))
+  const geometry: Record<string, { path: string; x: number; y: number; orientation: string }> = {
+    'Tribuna Norte': { path: 'M165 38 H555 L525 125 H195 Z', x: 360, y: 82, orientation: 'Norte' },
+    'Tribuna Occidente': { path: 'M92 100 L180 135 V325 L92 360 L50 310 V150 Z', x: 116, y: 232, orientation: 'Occidente' },
+    'Tribuna Oriente': { path: 'M628 100 L540 135 V325 L628 360 L670 310 V150 Z', x: 604, y: 232, orientation: 'Oriente' },
+    'Tribuna Sur': { path: 'M165 422 H555 L525 335 H195 Z', x: 360, y: 382, orientation: 'Sur' },
+  }
+  const configuredSectors = sectors.flatMap((item) => geometry[item.name] ? [{ ...item, ...geometry[item.name] }] : [])
+  const chooseSector = (id: number) => { setSectorId(id); setZoom(1) }
+  const returnToStadium = () => { setSectorId(null); setZoom(1) }
   return <div className="stadium-selector">
-    <div className="auditorium-heading"><div><strong>Plano del estadio</strong><span>Selecciona primero una tribuna y después tu localidad</span></div><div className="zoom-controls" role="group" aria-label="Zoom del plano del estadio"><button type="button" onClick={() => changeZoom(zoom - .1)} disabled={zoom <= .8} aria-label="Alejar plano"><Icon name="minus" size={16} /></button><output aria-live="polite" aria-label="Nivel de zoom">{Math.round(zoom * 100)}%</output><button type="button" onClick={() => changeZoom(zoom + .1)} disabled={zoom >= 1.4} aria-label="Acercar plano"><Icon name="plus" size={16} /></button></div></div>
-    <div className="seat-legend" aria-label="Leyenda del plano"><span><i className="seat-sample" />Disponible</span><span><i className="seat-sample selected">✓</i>Seleccionado</span><span><i className="seat-sample occupied">×</i>Ocupado</span></div>
-    <div className="stadium-viewport" tabIndex={0} aria-label="Plano desplazable del estadio">
-      <div className="stadium-plan" style={{ zoom }}>
-        <div className="stadium-ring" aria-label="Sectores alrededor de la cancha">
-          <div className="stadium-field"><span>Cancha</span><small>Área deportiva</small></div>
-          {sectors.map((sector, index) => <button type="button" key={sector.id} className={`stadium-sector sector-${index + 1} ${sectorId === sector.id ? 'active' : ''}`} aria-pressed={sectorId === sector.id} onClick={() => setSectorId(sector.id)}>{sector.name}</button>)}
-        </div>
-        <div className="stadium-seats" role="group" aria-label={`Localidades de ${sectors.find((sector) => sector.id === sectorId)?.name ?? 'tribuna'}`}>
-          {rows.map((row) => <div className="stadium-seat-row" key={row}><strong>Fila {row}</strong><div>{visible.filter((seat) => seat.row === row).map((seat) => <button type="button" key={seat.id} className={selectedSeatIds.includes(seat.id) ? 'selected' : ''} disabled={!seat.available} aria-pressed={selectedSeatIds.includes(seat.id)} aria-label={`${seat.zone_name}, fila ${seat.row}, asiento ${seat.number}, ${seat.available ? selectedSeatIds.includes(seat.id) ? 'seleccionado' : 'disponible' : 'ocupado'}`} onClick={() => onToggle(seat)}>{seat.number}</button>)}</div></div>)}
-        </div>
+    <div className="stadium-heading"><div><p className="eyebrow">Plano del estadio</p>{sector && <button type="button" className="stadium-back" onClick={returnToStadium}><Icon name="arrow" size={16} /> Volver al estadio</button>}<strong>{sector ? `${sector.name} · Sector ${sector.name.replace('Tribuna ', '')}` : 'Selecciona una tribuna'}</strong><span>{sector ? 'Elige una fila y un asiento orientados hacia la cancha' : 'Norte arriba · Oriente derecha · Occidente izquierda'}</span></div><div className="zoom-controls" role="group" aria-label="Zoom del plano del estadio"><button type="button" onClick={() => changeZoom(zoom - .1)} disabled={zoom <= .8} aria-label="Alejar plano"><Icon name="minus" size={16} /></button><output aria-live="polite" aria-label="Nivel de zoom">{Math.round(zoom * 100)}%</output><button type="button" onClick={() => changeZoom(zoom + .1)} disabled={zoom >= 1.4} aria-label="Acercar plano"><Icon name="plus" size={16} /></button><button type="button" className="zoom-reset" onClick={() => setZoom(1)} disabled={zoom === 1}>Ajustar</button></div></div>
+    <div className="stadium-workspace">
+      <div className="stadium-map-area">
+        {!sector ? <div className="stadium-viewport" tabIndex={0} aria-label="Mapa desplazable del estadio"><svg className="stadium-svg" style={{ transform: `scale(${zoom})` }} viewBox="0 0 720 460" role="group" aria-label="Tribunas alrededor de la cancha">
+          <rect className="stadium-outline" x="28" y="20" width="664" height="420" rx="62" />
+          <rect className="football-field" x="205" y="132" width="310" height="196" rx="5" />
+          <line className="field-line" x1="360" y1="132" x2="360" y2="328" /><circle className="field-line" cx="360" cy="230" r="33" /><circle className="field-dot" cx="360" cy="230" r="3" />
+          <rect className="field-line" x="205" y="174" width="48" height="112" /><rect className="field-line" x="467" y="174" width="48" height="112" /><rect className="field-goal" x="195" y="204" width="10" height="52" /><rect className="field-goal" x="515" y="204" width="10" height="52" />
+          {configuredSectors.map((item) => <g key={item.id} className={`stadium-map-sector ${selected.some((seat) => seat.zone_id === item.id) ? 'has-selection' : ''}`} role="button" tabIndex={0} aria-label={`${item.name}, ${seats.filter((seat) => seat.zone_id === item.id && seat.available).length} disponibles, S/ ${(seats.find((seat) => seat.zone_id === item.id)?.price ?? 0).toFixed(2)}`} onClick={() => chooseSector(item.id)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); chooseSector(item.id) } }}><path className="stadium-sector-shape" d={item.path} /><text className="stadium-sector-label" x={item.x} y={item.y} textAnchor="middle">{item.name.replace('Tribuna ', '')}</text><text className="stadium-sector-count" x={item.x} y={item.y + 18} textAnchor="middle">{seats.filter((seat) => seat.zone_id === item.id && seat.available).length} disp.</text></g>)}
+          <text className="stadium-compass" x="360" y="18" textAnchor="middle">N</text>
+        </svg></div> : <div className="sector-viewport" tabIndex={0} aria-label={`Plano ampliado de ${sector.name}`}><div className="sector-plan" style={{ transform: `scale(${zoom})` }}><div className="field-orientation"><span>Hacia la cancha</span><i aria-hidden="true">↓</i></div><div className="stadium-seats" role="group" aria-label={`Localidades de ${sector.name}`}>{rows.map((row) => <div className="stadium-seat-row" key={row}><strong aria-hidden="true">{row}</strong><div>{visible.filter((seat) => seat.row === row).map((seat) => <button type="button" key={seat.id} className={`${selectedSeatIds.includes(seat.id) ? 'selected' : ''} ${seat.number === aisleStart ? 'aisle-before' : ''}`} disabled={!seat.available} aria-pressed={selectedSeatIds.includes(seat.id)} aria-label={`${seat.zone_name}, fila ${seat.row}, asiento ${seat.number}, ${seat.available ? selectedSeatIds.includes(seat.id) ? 'seleccionado' : 'disponible' : 'ocupado'}, S/ ${seat.price.toFixed(2)}`} onClick={() => onToggle(seat)}>{!seat.available ? '×' : seat.number}</button>)}</div><strong aria-hidden="true">{row}</strong></div>)}</div></div></div>}
       </div>
+      <aside className="stadium-summary" aria-live="polite"><p className="eyebrow">Selección actual</p>{sector ? <><h4>{sector.name}</h4><dl><div><dt>Sector</dt><dd>{sector.name.replace('Tribuna ', '')}</dd></div><div><dt>Precio</dt><dd>S/ {sectorPrice.toFixed(2)}</dd></div><div><dt>Disponibles</dt><dd>{sectorAvailable} de {sectorSeats.length}</dd></div></dl></> : <><h4>Elige en el mapa</h4><p>Selecciona una superficie de tribuna para ver sus filas y localidades reales.</p></>}<div className="seat-selection-status" role="status"><strong>{selected.length ? `${selected.length} localidad${selected.length === 1 ? '' : 'es'} seleccionada${selected.length === 1 ? '' : 's'}` : 'Ninguna localidad seleccionada'}</strong><span>{selected.length ? selected.map((seat) => `${seat.zone_name} ${seat.row}-${seat.number}`).join(', ') : 'Puedes conservar asientos al volver al estadio.'}</span>{selected.length > 0 && <b>Total: S/ {total.toFixed(2)}</b>}</div></aside>
     </div>
-    <div className="seat-selection-status" role="status" aria-live="polite"><strong>{selected.length ? `${selected.length} localidad${selected.length === 1 ? '' : 'es'} seleccionada${selected.length === 1 ? '' : 's'}` : 'Ninguna localidad seleccionada'}</strong><span>{selected.length ? selected.map((seat) => `${seat.zone_name} ${seat.row}-${seat.number}`).join(', ') : 'Elige hasta 10 localidades disponibles.'}</span></div>
+    <div className="seat-legend" aria-label="Leyenda del plano"><span><i className="seat-sample" />Disponible</span><span><i className="seat-sample selected">✓</i>Seleccionado</span><span><i className="seat-sample occupied">×</i>Ocupado</span></div>
     <details className="seat-list"><summary>Alternativa accesible por lista</summary><div>{sectors.map((sector) => <fieldset key={sector.id}><legend>{sector.name}</legend>{seats.filter((seat) => seat.zone_id === sector.id).map((seat) => <label key={seat.id}><input type="checkbox" checked={selectedSeatIds.includes(seat.id)} disabled={!seat.available} onChange={() => onToggle(seat)} /> Fila {seat.row}, asiento {seat.number} · S/ {seat.price.toFixed(2)} {seat.available ? '' : '(ocupado)'}</label>)}</fieldset>)}</div></details>
   </div>
 }
@@ -872,7 +889,7 @@ export default function App() {
         </section>
         {(detailLoading || selected || reservationError) && <section className="event-detail" aria-live="polite">
           {detailLoading && <div className="status" role="status"><span className="spinner" />Cargando detalle…</div>}
-          {selected && !detailLoading && <div className={`detail-layout ${selected.ticket_mode === 'seats' ? 'seat-detail-layout' : ''}`}>
+          {selected && !detailLoading && <div className={`detail-layout ${selected.ticket_mode === 'seats' ? 'seat-detail-layout' : ''} ${selected.layout_kind === 'stadium' ? 'stadium-detail-layout' : ''}`}>
             <article className="event-story"><div className="detail-photo">{selected.image_path ? <img src={selected.image_path} alt={`Fotografía ilustrativa para ${selected.name}`} /> : <span>{selected.category}</span>}</div><div className="event-copy"><p className="eyebrow">Evento ficticio de demostración</p><h2>{selected.name}</h2><div className="event-meta"><span><Icon name="calendar" />{formatDate(selected.date)}</span><span><Icon name="clock" />{formatTime(selected.time)}</span><span><Icon name="location" />{selected.venue}, {selected.city}</span></div><p>{selected.description}</p><span className="availability">{selected.available_capacity} cupos disponibles de {selected.capacity}</span></div></article>
             <form className="booking-panel" onSubmit={(event) => void submitReservation(event)}>
               <div className="booking-heading"><div><p className="eyebrow">Tu reserva</p><h3>Selecciona tus entradas</h3></div><Icon name="ticket" size={26} /></div>
