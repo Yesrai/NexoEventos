@@ -148,6 +148,29 @@ describe('NexoEventos catalog', () => {
     expect(password).toHaveAttribute('type', 'text')
   })
 
+  it('explains an already-registered email and offers a way to sign in', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request) => {
+      const url = String(input)
+      if (url.endsWith('/api/auth/session')) return { ok: false, status: 401, json: async () => ({}) }
+      if (url.endsWith('/api/auth/register')) return { ok: false, status: 409, json: async () => ({ detail: 'No se pudo completar el registro. Revisa los datos o intenta iniciar sesión.' }) }
+      if (url.endsWith('/api/auth/login')) return { ok: false, status: 401, json: async () => ({ detail: 'Credenciales inválidas' }) }
+      return { ok: true, status: 200, json: async () => [] }
+    }))
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Ingresar' }))
+    fireEvent.click(screen.getByRole('tab', { name: 'Registrarme' }))
+    fireEvent.change(screen.getByLabelText('Nombre'), { target: { value: 'Persona Prueba' } })
+    fireEvent.change(screen.getByLabelText('Correo'), { target: { value: 'ya-existe@example.com' } })
+    fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: 'Contraseña-de-prueba-1' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Crear cuenta de cliente' }))
+    expect(await screen.findByText(/Si ya te registraste antes, inicia sesión/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Ya tengo cuenta/ }))
+    expect(screen.getByLabelText('Correo')).toHaveValue('ya-existe@example.com')
+    fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: 'otra-contraseña' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Iniciar sesión' }))
+    expect(await screen.findByText(/Correo o contraseña incorrectos/)).toBeInTheDocument()
+  })
+
   it('prevents a duplicate login submission while the request is pending', async () => {
     const fetchMock = vi.fn(async (input: string | URL | Request) => {
       const url = String(input)

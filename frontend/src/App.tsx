@@ -648,6 +648,17 @@ export default function App() {
   )
 }
 
+function authErrorMessage(mode: 'login' | 'register', status: number, body: unknown) {
+  const server = messageFrom(body, '')
+  if (status === 409 && mode === 'register') return 'No se pudo crear la cuenta con este correo. Si ya te registraste antes, inicia sesión; si no recuerdas la contraseña, regístrate con otro correo (esta demo aún no tiene recuperación de contraseña).'
+  if (status === 401 && mode === 'login') return 'Correo o contraseña incorrectos. Si nunca te registraste con este correo, crea una cuenta.'
+  if (status === 429) return `${server || 'Demasiados intentos.'} Espera unos minutos antes de volver a intentarlo.`
+  if (status === 403) return 'El servidor rechazó la solicitud por seguridad (origen o sesión no válidos). Abre la aplicación desde http://127.0.0.1:5173 o http://localhost:5173 y vuelve a intentarlo.'
+  if (status === 422) return 'Algún dato no es válido: revisa el correo, el nombre y que la contraseña tenga entre 12 y 128 caracteres.'
+  if (status >= 500) return `El servidor tuvo un problema (código ${status}). Inténtalo de nuevo; si continúa, revisa que el backend y la base de datos estén en marcha.`
+  return server || (mode === 'login' ? `No pudimos iniciar sesión (código ${status}).` : `No pudimos completar el registro (código ${status}).`)
+}
+
 function AuthPanel({ pendingReservation, onBack, onAuthenticated }: {
   pendingReservation: { event: EventDetail; quantity: number; total: number } | null
   onBack: () => void
@@ -662,6 +673,7 @@ function AuthPanel({ pendingReservation, onBack, onAuthenticated }: {
   const [error, setError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [registeredUser, setRegisteredUser] = useState<User | null>(null)
+  const [conflict, setConflict] = useState(false)
 
   function validate() {
     const errors: Record<string, string> = {}
@@ -681,18 +693,14 @@ function AuthPanel({ pendingReservation, onBack, onAuthenticated }: {
     setBusy(true); setError(null)
     try {
       const response = await api(`/api/auth/${mode}`, { method: 'POST', body: JSON.stringify(mode === 'register' ? { email, display_name: displayName, password } : { email, password }) })
-      const body = await response.json() as unknown
-      if (!response.ok) {
-        const fallback = mode === 'login'
-          ? 'No pudimos iniciar sesión. Revisa tus datos e intenta de nuevo.'
-          : 'No pudimos completar el registro. Revisa los datos o intenta iniciar sesión.'
-        throw new Error(messageFrom(body, fallback))
-      }
+      const body = await response.json().catch(() => null) as unknown
+      if (!response.ok) { setError(authErrorMessage(mode, response.status, body)); setConflict(mode === 'register' && response.status === 409); return }
+      setConflict(false)
       setPassword('')
       if (mode === 'register') setRegisteredUser(body as User)
       else onAuthenticated(body as User)
     } catch (caught) {
-      setError(requestError(caught, 'No pudimos conectar con el servicio. Intenta nuevamente.'))
+      setError(caught instanceof TypeError ? 'No se pudo conectar con el servidor. Comprueba que el backend esté en marcha y que tengas conexión.' : requestError(caught, 'No pudimos completar la solicitud. Intenta nuevamente.'))
     }
     finally { setBusy(false) }
   }
@@ -711,6 +719,7 @@ function AuthPanel({ pendingReservation, onBack, onAuthenticated }: {
       <div className="field-group"><label htmlFor="auth-password">Contraseña</label><div className="password-field"><input id="auth-password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => { setPassword(event.target.value); setFieldErrors((value) => ({ ...value, password: '' })) }} autoComplete={mode === 'register' ? 'new-password' : 'current-password'} aria-invalid={Boolean(fieldErrors.password)} aria-describedby={[mode === 'register' ? 'password-help' : '', fieldErrors.password ? 'password-error' : ''].filter(Boolean).join(' ') || undefined} /><button type="button" aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'} aria-pressed={showPassword} onClick={() => setShowPassword((value) => !value)}><Icon name={showPassword ? 'eyeOff' : 'eye'} /></button></div>{mode === 'register' && <small className="field-help" id="password-help">Entre 12 y 128 caracteres. Puedes usar una frase larga y única.</small>}{fieldErrors.password && <small className="field-error" id="password-error">{fieldErrors.password}</small>}</div>
       <button className="button primary" disabled={busy} aria-busy={busy}>{busy && <span className="spinner" />}{busy ? 'Enviando…' : mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta de cliente'}</button>
       {error && <p className="form-error" role="alert">{error}</p>}
+      {conflict && <button type="button" className="button outline" onClick={() => { setMode('login'); setError(null); setConflict(false); setPassword('') }}>Ya tengo cuenta: iniciar sesión con este correo</button>}
     </form>
   </section>
 }
