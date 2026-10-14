@@ -381,6 +381,36 @@ describe('NexoEventos catalog', () => {
     await expectNoAccessibilityViolations()
   })
 
+  it('keeps the accessible 2D plan and selection when WebGL is unavailable for a 3D venue', async () => {
+    const theatre = { ...baseEvent, id: 31, name: 'Sala sin WebGL', date: '2026-11-10', venue: 'Auditorio', category: 'Teatro', price: 30, capacity: 2, available_capacity: 2, ticket_mode: 'seats' as const, layout_kind: 'theatre' as const }
+    const concert = { ...baseEvent, id: 32, name: 'Arena sin WebGL', date: '2026-11-11', venue: 'Arena', category: 'Conciertos', price: 45, capacity: 20, available_capacity: 20, ticket_mode: 'zones' as const, layout_kind: 'concert_zones' as const }
+    const details: Record<number, unknown> = {
+      31: { ...theatre, description: 'Teatro', zones: [{ id: 1, name: 'Platea', price: 30, capacity: 2, available_capacity: 2 }], seats: [{ id: 1, zone_id: 1, zone_name: 'Platea', row: 'A', number: 1, price: 30, available: true }] },
+      32: { ...concert, description: 'Concierto', zones: [{ id: 3, name: 'Campo', price: 45, capacity: 20, available_capacity: 20 }], seats: [] },
+    }
+    vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request) => {
+      const url = String(input)
+      if (url.endsWith('/api/auth/session')) return { ok: false, status: 401, json: async () => ({}) }
+      const match = url.match(/\/api\/events\/(\d+)$/)
+      return { ok: true, status: 200, json: async () => match ? details[Number(match[1])] : [theatre, concert] }
+    }))
+    render(<App />)
+    await screen.findByRole('heading', { name: 'Sala sin WebGL' })
+    fireEvent.click(screen.getByRole('button', { name: 'Ver Sala sin WebGL' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Zona Platea, fila A, asiento 1, disponible' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Sala 3D' }))
+    expect(await screen.findByText(/La sala 3D no está disponible en este dispositivo/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Sala 3D' })).toBeDisabled()
+    expect(screen.getByText('1 asiento seleccionado')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Zona Platea, fila A, asiento 1, seleccionado' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Ver Arena sin WebGL' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Recinto 3D' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Recinto 3D' })).toBeDisabled())
+    expect(screen.getByLabelText('Plano del concierto')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Campo/ }))
+    expect(screen.getByRole('button', { name: /Campo/ })).toHaveAttribute('aria-pressed', 'true')
+  })
+
   it('renders the configured plan instead of a universal auditorium fallback', async () => {
     const cases = [
       { ...baseEvent, id: 21, name: 'Teatro explícito', date: '2026-11-01', venue: 'Auditorio', category: 'Teatro', price: 30, capacity: 2, available_capacity: 2, ticket_mode: 'seats' as const, layout_kind: 'theatre' as const },

@@ -81,6 +81,27 @@ async function shot(name) {
   console.log(name)
 }
 
+// Clic real sobre el canvas: se exploran puntos hasta que la selección cambia en el estado de React.
+async function clickUntil(predicateExpression, candidates) {
+  const rect = await evaluate(`(() => { const r = document.querySelector('.venue-3d-canvas').getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height } })()`)
+  for (const [fx, fy] of candidates) {
+    const x = rect.x + rect.width * fx
+    const y = rect.y + rect.height * fy
+    await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y })
+    await send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 })
+    await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 })
+    await pause(250)
+    if (await evaluate(predicateExpression)) return [fx, fy]
+  }
+  return null
+}
+const grid = (xs, ys) => ys.flatMap((fy) => xs.map((fx) => [fx, fy]))
+const interactions = {
+  auditorio: { view: 'Vista general', predicate: `/\\b1 asiento seleccionado/.test(document.querySelector('.seat-selection-status')?.textContent ?? '')`, points: grid([.4, .5, .6, .7, .3], [.62, .7, .78, .56, .86]) },
+  concierto: { view: 'Zonas', predicate: `[...document.querySelectorAll('.concert-zone-grid [aria-pressed]')].some((button) => button.getAttribute('aria-pressed') === 'true')`, points: grid([.5, .4, .6], [.55, .4, .7, .3, .8]) },
+}
+const results = []
+
 for (const venue of venues) for (const viewport of viewports) {
   await open(venue, viewport)
   await shot(`${venue.slug}-${viewport.name}-${stamp}.png`)
@@ -91,6 +112,18 @@ for (const venue of venues) for (const viewport of viewports) {
     await shot(`${venue.slug}-${viewport.name}-${label.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-')}-${stamp}.png`)
   }
 }
+for (const venue of venues.filter((item) => interactions[item.slug])) {
+  const { view, predicate, points } = interactions[venue.slug]
+  await open(venue, viewports[0])
+  await evaluate(`[...document.querySelectorAll('.venue-3d-views button')].find((button) => button.textContent.trim() === ${JSON.stringify(view)})?.click()`)
+  await pause(1200)
+  const hit = await clickUntil(predicate, points)
+  const status = await evaluate(`document.querySelector('.seat-selection-status, .concert-zone-grid [aria-pressed="true"]')?.textContent ?? ''`)
+  results.push({ venue: venue.slug, selectedByCanvasClick: Boolean(hit), at: hit, status })
+  if (hit) await shot(`${venue.slug}-seleccion-escritorio-${stamp}.png`)
+}
+console.log(JSON.stringify(results, null, 2))
+if (results.some((result) => !result.selectedByCanvasClick)) process.exitCode = 1
 if (consoleErrors.length) console.error('Excepciones de página:', consoleErrors)
 socket.close()
 browser.kill('SIGTERM')

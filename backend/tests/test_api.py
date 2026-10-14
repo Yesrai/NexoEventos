@@ -476,3 +476,81 @@ def test_application_database_role_cannot_create_objects() -> None:
     with create_engine(TEST_APP_URL).connect() as connection:
         assert connection.scalar(text("SELECT has_schema_privilege(current_user, 'public', 'CREATE')")) is False
         assert connection.scalar(text("SELECT has_database_privilege(current_user, current_database(), 'CREATE')")) is False
+
+
+def test_twelve_concurrent_clients_never_oversell_a_four_seat_zone() -> None:
+    clients = 12
+    barrier = Barrier(clients)
+
+    def attempt(index: int) -> int:
+        local_app = create_app(TEST_APP_URL)
+        with TestClient(local_app) as client:
+            register_client(client, f"masivo-{index}@example.com")
+            zone_id = client.get("/api/events/9003").json()["zones"][0]["id"]
+            barrier.wait()
+            response = client.post(
+                "/api/events/9003/reservations",
+                headers={**csrf_headers(client), "Idempotency-Key": f"mass-key-{index}"},
+                json={"quantity": 1, "zone_id": zone_id},
+            )
+        local_app.state.engine.dispose()
+        return response.status_code
+
+    with ThreadPoolExecutor(max_workers=clients) as pool:
+        statuses = list(pool.map(attempt, range(clients)))
+
+    assert sorted(statuses) == [201] * 4 + [409] * 8
+    with create_engine(TEST_ADMIN_URL).connect() as connection:
+        assert connection.scalar(text("SELECT count(*) FROM tickets WHERE event_id = 9003")) == 4
+        assert connection.scalar(text("SELECT reserved_count FROM events WHERE id = 9003")) == 4
+        assert connection.scalar(text("SELECT sum(reserved_count) FROM event_zones WHERE event_id = 9003")) == 4
+
+
+def test_seat_from_another_function_is_rejected_without_side_effects() -> None:
+    with create_engine(TEST_ADMIN_URL).connect() as connection:
+        foreign_seat = connection.scalar(text("SELECT id FROM event_seats WHERE event_id=9006 AND seat_number=1"))
+    app = create_app(TEST_APP_URL)
+    with TestClient(app) as client:
+        register_client(client)
+        response = client.post(
+            "/api/events/9005/reservations",
+            headers={**csrf_headers(client), "Idempotency-Key": "foreign-seat-key"},
+            json={"quantity": 1, "seat_ids": [foreign_seat]},
+        )
+        assert 400 <= response.status_code < 500, response.text
+        assert client.get("/api/me/tickets").json() == []
+    app.state.engine.dispose()
+    with create_engine(TEST_ADMIN_URL).connect() as connection:
+        assert connection.scalar(text("SELECT count(*) FROM reservations WHERE event_id IN (9005, 9006)")) == 0
+        assert connection.scalar(text("SELECT count(*) FROM tickets WHERE event_id IN (9005, 9006)")) == 0
+
+
+def test_inconsistent_quantity_and_sold_out_zone_do_not_create_partial_reservations() -> None:
+    app = create_app(TEST_APP_URL)
+    with TestClient(app) as client:
+        register_client(client)
+        zones = {zone["name"]: zone["id"] for zone in client.get("/api/events/9003").json()["zones"]}
+        too_many = client.post(
+            "/api/events/9003/reservations",
+            headers={**csrf_headers(client), "Idempotency-Key": "over-quantity-key"},
+            json={"quantity": 5, "zone_id": zones["Preferencial"]},
+        )
+        sold_out = client.post(
+            "/api/events/9003/reservations",
+            headers={**csrf_headers(client), "Idempotency-Key": "sold-out-key"},
+            json={"quantity": 1, "zone_id": zones["VIP agotada"]},
+        )
+        assert too_many.status_code == 409, too_many.text
+        assert sold_out.status_code == 409, sold_out.text
+        with create_engine(TEST_ADMIN_URL).connect() as connection:
+            seat_id = connection.scalar(text("SELECT id FROM event_seats WHERE event_id=9004 AND seat_number=1"))
+        mismatch = client.post(
+            "/api/events/9004/reservations",
+            headers={**csrf_headers(client), "Idempotency-Key": "mismatch-key"},
+            json={"quantity": 2, "seat_ids": [seat_id]},
+        )
+        assert 400 <= mismatch.status_code < 500, mismatch.text
+        assert client.get("/api/me/tickets").json() == []
+    app.state.engine.dispose()
+    with create_engine(TEST_ADMIN_URL).connect() as connection:
+        assert connection.scalar(text("SELECT reserved_count FROM events WHERE id IN (9003, 9004) AND reserved_count > 0")) is None
