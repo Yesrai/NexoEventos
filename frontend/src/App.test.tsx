@@ -5,6 +5,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 
 vi.mock('qrcode', () => ({ default: { toDataURL: vi.fn().mockResolvedValue('data:image/png;base64,dGVzdA==') } }))
+vi.mock('./Stadium3D', () => ({
+  default: ({ selectedSeatIds }: { selectedSeatIds: number[] }) => <div data-testid="stadium-3d-test">Visor 3D · {selectedSeatIds.length} selección</div>,
+}))
 
 afterEach(() => {
   cleanup()
@@ -414,6 +417,10 @@ describe('NexoEventos catalog', () => {
     expect(screen.getByText('1 localidad seleccionada')).toBeInTheDocument()
     expect(screen.getByText('Total: S/ 40.00')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Volver al estadio' }))
+    expect(screen.getByText('1 localidad seleccionada')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Vista 3D' }))
+    expect(await screen.findByText('Visor 3D · 1 selección')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Plano 2D' }))
     expect(screen.getByText('1 localidad seleccionada')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Ver Concierto por zonas' }))
     expect(await screen.findByLabelText('Plano del concierto')).toBeInTheDocument()
