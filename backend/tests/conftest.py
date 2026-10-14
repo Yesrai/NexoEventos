@@ -51,13 +51,19 @@ def reset_isolated_test_database() -> Iterator[None]:
         connection.execute(text("""
             INSERT INTO venues (id, code, name, city) VALUES
               (9000, 'test-auditorio', 'Auditorio de prueba', 'Lima'),
-              (9001, 'test-estadio', 'Estadio de prueba', 'Lima')
+              (9001, 'test-estadio', 'Estadio de prueba', 'Lima'),
+              (9002, 'test-arena', 'Arena de prueba', 'Lima'),
+              (9003, 'test-museo', 'Museo de prueba', 'Callao'),
+              (9004, 'test-patio', 'Patio de prueba', 'Lima')
             ON CONFLICT (id) DO NOTHING
         """))
         connection.execute(text("""
             INSERT INTO venue_layouts (id, venue_id, code, name, layout_kind) VALUES
               (9000, 9000, 'sala-frontal', 'Sala frontal', 'theatre'),
-              (9001, 9001, 'cancha-tribunas', 'Cancha y tribunas', 'stadium')
+              (9001, 9001, 'cancha-tribunas', 'Cancha y tribunas', 'stadium'),
+              (9002, 9002, 'escenario-zonas', 'Escenario y zonas', 'concert_zones'),
+              (9003, 9003, 'salas', 'Recorrido de salas', 'museum'),
+              (9004, 9004, 'acceso-general', 'Acceso general', 'general')
             ON CONFLICT (id) DO NOTHING
         """))
         connection.execute(text("""

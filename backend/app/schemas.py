@@ -52,6 +52,7 @@ class EventSummary(BaseModel):
     layout_name: str | None = None
     layout_kind: Literal["theatre", "stadium", "concert_zones", "museum", "zones", "general"] | None = None
     is_demo: bool
+    status: Literal["draft", "published"] = "published"
 
 
 class ZoneView(BaseModel):
@@ -86,6 +87,7 @@ class EventUpdate(StrictModel):
     description: str | None = Field(default=None, min_length=10)
     price: float | None = Field(default=None, ge=0)
     capacity: int | None = Field(default=None, ge=0)
+    time: TimeValue | None = None
 
 
 class ReservationCreate(StrictModel):
@@ -167,3 +169,75 @@ class OrganizerEventStats(BaseModel):
     checked_in: int
     pending_entry: int
     zones: list[ZoneStats]
+
+
+class ZoneInput(StrictModel):
+    name: str = Field(min_length=2, max_length=80)
+    price: float = Field(ge=0, le=100000)
+    capacity: int = Field(ge=1, le=5000)
+
+
+class SectionInput(StrictModel):
+    name: str = Field(min_length=2, max_length=80)
+    price: float = Field(ge=0, le=100000)
+    rows: int = Field(ge=1, le=8)
+    seats_per_row: int = Field(ge=1, le=12)
+
+
+class InventoryInput(StrictModel):
+    """Configuración de entradas; qué campos aplican depende del tipo del plano elegido."""
+
+    layout_id: int
+    price: float | None = Field(default=None, ge=0, le=100000)
+    capacity: int | None = Field(default=None, ge=1, le=5000)
+    zones: list[ZoneInput] = Field(default_factory=list, max_length=6)
+    sections: list[SectionInput] = Field(default_factory=list, max_length=4)
+
+
+class EventCreate(InventoryInput):
+    name: str = Field(min_length=2, max_length=160)
+    date: DateValue
+    time: TimeValue | None = None
+    category: str = Field(min_length=2, max_length=80)
+    description: str = Field(min_length=10, max_length=4000)
+    image_path: str | None = Field(default=None, pattern=r"^/events/[a-z0-9-]{1,60}\.jpg$")
+
+
+class FunctionCreate(StrictModel):
+    date: DateValue
+    time: TimeValue | None = None
+
+
+class LayoutOption(BaseModel):
+    layout_id: int
+    name: str
+    layout_kind: Literal["theatre", "stadium", "concert_zones", "museum", "zones", "general"]
+    ticket_mode: Literal["general", "zones", "seats"]
+
+
+class VenueOption(BaseModel):
+    venue_id: int
+    name: str
+    city: str
+    layouts: list[LayoutOption]
+
+
+class OperatorAssign(StrictModel):
+    email: EmailStr
+
+
+class OperatorView(BaseModel):
+    user_id: UUID
+    email: str
+    display_name: str
+
+
+class EventState(BaseModel):
+    """Qué puede cambiarse todavía; la interfaz lo usa para bloquear controles."""
+
+    has_sales: bool
+    can_edit_inventory: bool
+    can_publish: bool
+    can_unpublish: bool
+    can_delete: bool
+    publish_problems: list[str]

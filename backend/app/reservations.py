@@ -92,7 +92,7 @@ def create_reservation(session: Session, event_id: int, user: User, payload: Res
             session.commit()
             return existing
         event = session.scalar(select(Event).where(Event.id == event_id).with_for_update())
-        if event is None:
+        if event is None or event.status != "published":
             session.rollback()
             raise EventNotFoundError
         _validate_mode(event, payload)

@@ -64,6 +64,7 @@ class Event(Base):
     image_path: Mapped[str | None] = mapped_column(String(240), nullable=True)
     ticket_mode: Mapped[str] = mapped_column(String(20), default="general", server_default="general")
     is_demo: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    status: Mapped[str] = mapped_column(String(12), default="published", server_default="published")
     organizer_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     venue_id: Mapped[int | None] = mapped_column(ForeignKey("venues.id", ondelete="RESTRICT"), nullable=True)
     layout_id: Mapped[int | None] = mapped_column(ForeignKey("venue_layouts.id", ondelete="RESTRICT"), nullable=True)
