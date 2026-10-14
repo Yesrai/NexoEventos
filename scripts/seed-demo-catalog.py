@@ -36,7 +36,7 @@ EVENTS = [
     (1026, "Foro Futuro Digital", "Tecnología", 10, time(9, 30), "Hub Tecnológico", "Lima", "Foro demo sobre productos digitales, infraestructura y experiencias tecnológicas.", 65, 220, "zones", "technology-exhibition"),
     (1027, "Rutas del Arte", "Arte y cultura", 22, time(11, 30), "Museo de la Ciudad", "Callao", "Recorrido cultural ficticio por piezas, relatos y expresiones artísticas contemporáneas.", 22, 100, "general", "culture-museum"),
     (1028, "Voces en el Auditorio", "Teatro y stand-up", 26, time(20, 0), "Auditorio Nexo", "Lima", "Función ficticia con escenario frontal y asientos numerados para probar el recorrido completo de reserva.", 35, 96, "seats", "theater-performance"),
-    (1029, "Clásico Metropolitano", "Deportes", 27, time(16, 0), "Estadio Nexo", "Lima", "Partido ficticio con tribunas y localidades numeradas alrededor de la cancha.", 40, 72, "seats", "running-field"),
+    (1029, "Clásico Metropolitano", "Deportes", 27, time(16, 0), "Estadio Nexo", "Lima", "Partido ficticio con tribunas y localidades numeradas alrededor de la cancha.", 40, 72, "seats", "football-stadium"),
     (1030, "Copa Ciudad", "Deportes", 29, time(18, 0), "Estadio Nexo", "Lima", "Segunda función deportiva ficticia que reutiliza el recinto sin compartir disponibilidad.", 38, 72, "seats", "running-race"),
     (1031, "Noche del Parque", "Conciertos", 28, time(20, 30), "Arena Parque Sur", "Lima", "Concierto ficticio de pie con Campo y Preferencial; no utiliza asientos numerados.", 45, 180, "zones", "concert-live"),
 ]
@@ -140,6 +140,13 @@ def main() -> None:
                   AND (venue_id IS NULL OR venue_id = :venue_id)
                   AND (layout_id IS NULL OR layout_id = :layout_id)
             """), {"event_id": event_id, "venue_name": venue_name, "venue_id": venue_id, "layout_id": layout_id})
+
+        # Corrección visual acotada: no altera cupos, reservas, propietarios,
+        # zonas ni asientos de la función existente.
+        connection.execute(text("""
+            UPDATE events SET image_path = '/events/football-stadium.jpg'
+            WHERE id = 1029 AND is_demo = true AND venue = 'Estadio Nexo'
+        """))
     engine.dispose()
     print(f"Catálogo demo actualizado: {len(EVENTS)} eventos; no se eliminaron reservas.")
 

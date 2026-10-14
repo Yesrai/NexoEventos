@@ -34,8 +34,8 @@ const COLORS = {
   selected: new THREE.Color('#00c2a5'),
 }
 
-const GENERAL_CAMERA = new THREE.Vector3(31, 27, 35)
-const GENERAL_TARGET = new THREE.Vector3(0, 1.4, 0)
+const GENERAL_CAMERA = new THREE.Vector3(27, 20, 31)
+const GENERAL_TARGET = new THREE.Vector3(0, 1.1, 0)
 
 function normalizedSector(name: string) {
   if (name.includes('Norte')) return 'north'
@@ -142,7 +142,7 @@ export default function Stadium3D({ seats, selectedSeatIds, onToggle, onSectorCh
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, mobile ? 1.25 : 1.75))
     renderer.setSize(host.clientWidth, host.clientHeight, false)
-    renderer.setClearColor('#eef3f5')
+    renderer.setClearColor('#dce8ec')
     renderer.outputColorSpace = THREE.SRGBColorSpace
     renderer.shadowMap.enabled = !mobile
     renderer.shadowMap.type = THREE.PCFShadowMap
@@ -152,8 +152,9 @@ export default function Stadium3D({ seats, selectedSeatIds, onToggle, onSectorCh
     host.appendChild(renderer.domElement)
 
     const scene = new THREE.Scene()
-    scene.fog = new THREE.Fog('#eef3f5', 43, 78)
-    const camera = new THREE.PerspectiveCamera(42, host.clientWidth / host.clientHeight, .1, 120)
+    scene.background = new THREE.Color('#dce8ec')
+    scene.fog = new THREE.Fog('#dce8ec', 58, 105)
+    const camera = new THREE.PerspectiveCamera(39, host.clientWidth / host.clientHeight, .1, 140)
     camera.position.copy(GENERAL_CAMERA)
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.target.copy(GENERAL_TARGET)
@@ -166,7 +167,7 @@ export default function Stadium3D({ seats, selectedSeatIds, onToggle, onSectorCh
     controls.minAzimuthAngle = -Math.PI * .82
     controls.maxAzimuthAngle = Math.PI * .82
 
-    scene.add(new THREE.HemisphereLight('#f8fbfc', '#738187', 2.1))
+    scene.add(new THREE.HemisphereLight('#f8fbfc', '#65776d', 2.25))
     const sun = new THREE.DirectionalLight('#ffffff', 2.8)
     sun.position.set(15, 28, 18)
     sun.castShadow = !mobile
@@ -177,10 +178,35 @@ export default function Stadium3D({ seats, selectedSeatIds, onToggle, onSectorCh
     sun.shadow.camera.bottom = -28
     scene.add(sun)
 
+    const terrainTexture = createGrassTexture()
+    if (terrainTexture) terrainTexture.repeat.set(10, 8)
+    const terrain = new THREE.Mesh(new THREE.PlaneGeometry(96, 78), new THREE.MeshStandardMaterial({ color: '#71886f', map: terrainTexture, roughness: 1 }))
+    terrain.rotation.x = -Math.PI / 2
+    terrain.position.y = -1.22
+    terrain.receiveShadow = true
+    scene.add(terrain)
+
     const base = new THREE.Mesh(new THREE.CylinderGeometry(28, 29, 1.15, 64), new THREE.MeshStandardMaterial({ color: '#d6dfe3', roughness: .92 }))
     base.position.y = -.62
     base.receiveShadow = true
     scene.add(base)
+
+    const concourse = new THREE.Mesh(new THREE.RingGeometry(22, 31, 72), new THREE.MeshStandardMaterial({ color: '#aeb9bc', roughness: .98, side: THREE.DoubleSide }))
+    concourse.rotation.x = -Math.PI / 2
+    concourse.position.y = -.03
+    concourse.receiveShadow = true
+    scene.add(concourse)
+    const perimeter = new THREE.Mesh(new THREE.TorusGeometry(29, .13, 8, 96), new THREE.MeshStandardMaterial({ color: '#67777e', roughness: .55, metalness: .35 }))
+    perimeter.rotation.x = Math.PI / 2
+    perimeter.position.y = .18
+    scene.add(perimeter)
+    const pathMaterial = new THREE.MeshStandardMaterial({ color: '#c9d0d1', roughness: 1 })
+    for (const [x, z, width, depth] of [[0, -35, 8, 14], [0, 35, 8, 14], [-39, 0, 18, 8], [39, 0, 18, 8]] as const) {
+      const path = new THREE.Mesh(new THREE.BoxGeometry(width, .08, depth), pathMaterial)
+      path.position.set(x, -1.12, z)
+      path.receiveShadow = true
+      scene.add(path)
+    }
 
     const grassTexture = createGrassTexture()
     const field = new THREE.Mesh(new THREE.PlaneGeometry(28, 17), new THREE.MeshStandardMaterial({ color: '#568765', map: grassTexture, roughness: .96 }))
@@ -213,8 +239,11 @@ export default function Stadium3D({ seats, selectedSeatIds, onToggle, onSectorCh
 
     const rowNamesByZone = new Map<number, string[]>()
     for (const sector of sectors) rowNamesByZone.set(sector.id, [...new Set(seats.filter((seat) => seat.zone_id === sector.id).map((seat) => seat.row))])
-    const platformMaterial = new THREE.MeshStandardMaterial({ color: '#c7d1d6', roughness: .84, metalness: .02 })
+    const platformMaterial = new THREE.MeshStandardMaterial({ color: '#b9c5ca', roughness: .88, metalness: .02 })
     const aisleMaterial = new THREE.MeshStandardMaterial({ color: '#e8edef', roughness: .9 })
+    const structureMaterial = new THREE.MeshStandardMaterial({ color: '#718087', roughness: .78, metalness: .12 })
+    const railMaterial = new THREE.MeshStandardMaterial({ color: '#415661', roughness: .45, metalness: .55 })
+    const roofMaterial = new THREE.MeshStandardMaterial({ color: '#64747c', roughness: .6, metalness: .35, side: THREE.DoubleSide })
     const sectorObjects = new Map<string, number>()
 
     for (const sector of sectors) {
@@ -241,6 +270,65 @@ export default function Stadium3D({ seats, selectedSeatIds, onToggle, onSectorCh
         aisle.position.y = height + .03
         scene.add(aisle)
       })
+
+      const horizontal = side === 'north' || side === 'south'
+      const lastDistance = 11.2 + Math.max(0, rows.length - 1) * 1.48
+      const outerDistance = lastDistance + 1.1
+      const support = new THREE.Mesh(new THREE.BoxGeometry(horizontal ? 19 : 1.1, 3.35, horizontal ? 1.1 : 19), structureMaterial)
+      if (side === 'north') support.position.set(0, 1.05, -outerDistance)
+      if (side === 'south') support.position.set(0, 1.05, outerDistance)
+      if (side === 'east') support.position.set(outerDistance + 4.7, 1.05, 0)
+      if (side === 'west') support.position.set(-outerDistance - 4.7, 1.05, 0)
+      support.castShadow = !mobile
+      support.receiveShadow = true
+      support.userData.zoneId = sector.id
+      scene.add(support)
+      sectorObjects.set(support.uuid, sector.id)
+
+      const portal = new THREE.Mesh(new THREE.BoxGeometry(horizontal ? 2.3 : 1.14, 2.05, horizontal ? 1.14 : 2.3), new THREE.MeshStandardMaterial({ color: '#263840', roughness: .94 }))
+      portal.position.copy(support.position)
+      portal.position.y = .63
+      scene.add(portal)
+
+      const frontDistance = 10.35
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(horizontal ? 18.4 : .09, .09, horizontal ? .09 : 18.4), railMaterial)
+      if (side === 'north') rail.position.set(0, 1.18, -frontDistance)
+      if (side === 'south') rail.position.set(0, 1.18, frontDistance)
+      if (side === 'east') rail.position.set(frontDistance + 4.7, 1.18, 0)
+      if (side === 'west') rail.position.set(-frontDistance - 4.7, 1.18, 0)
+      scene.add(rail)
+      for (let postIndex = -4; postIndex <= 4; postIndex += 1) {
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(.035, .035, 1.05, 6), railMaterial)
+        if (horizontal) post.position.set(postIndex * 2.1, .68, side === 'north' ? -frontDistance : frontDistance)
+        else post.position.set(side === 'east' ? frontDistance + 4.7 : -frontDistance - 4.7, .68, postIndex * 2.1)
+        scene.add(post)
+      }
+
+      if (side === 'east' || side === 'west') {
+        const roof = new THREE.Mesh(new THREE.BoxGeometry(5.4, .22, 20.5), roofMaterial)
+        roof.position.set(side === 'east' ? 19.5 : -19.5, 6.1, 0)
+        roof.rotation.z = side === 'east' ? -.11 : .11
+        roof.castShadow = !mobile
+        scene.add(roof)
+        for (const z of [-8.8, 8.8]) {
+          const column = new THREE.Mesh(new THREE.CylinderGeometry(.1, .13, 5.9, 8), railMaterial)
+          column.position.set(side === 'east' ? 21.2 : -21.2, 2.85, z)
+          scene.add(column)
+        }
+      }
+    }
+
+    const towerMaterial = new THREE.MeshStandardMaterial({ color: '#45565e', roughness: .48, metalness: .62 })
+    const lampMaterial = new THREE.MeshStandardMaterial({ color: '#f3f6e5', emissive: '#eef6cb', emissiveIntensity: 1.25, roughness: .35 })
+    for (const [x, z] of [[-25, -22], [25, -22], [-25, 22], [25, 22]] as const) {
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(.13, .2, 13, 10), towerMaterial)
+      pole.position.set(x, 5.3, z)
+      pole.castShadow = !mobile
+      scene.add(pole)
+      const lamps = new THREE.Mesh(new THREE.BoxGeometry(2.5, 1.15, .28), lampMaterial)
+      lamps.position.set(x, 11.7, z)
+      lamps.lookAt(0, 0, 0)
+      scene.add(lamps)
     }
 
     const seatBaseGeometry = new THREE.BoxGeometry(.68, .18, .62)
@@ -391,6 +479,7 @@ export default function Stadium3D({ seats, selectedSeatIds, onToggle, onSectorCh
         }
       })
       grassTexture?.dispose()
+      terrainTexture?.dispose()
       renderer.dispose()
       renderer.domElement.remove()
       seatMeshesRef.current = []
@@ -412,13 +501,13 @@ export default function Stadium3D({ seats, selectedSeatIds, onToggle, onSectorCh
   }, [seats, selectedSeatIds])
 
   return <div className="stadium-3d-shell">
-    <div className="stadium-3d-toolbar" role="group" aria-label="Controles de cámara 3D">
-      {activeSector && <button type="button" onClick={() => apiRef.current?.reset()}>Volver al estadio</button>}
-      <button type="button" aria-label="Acercar cámara" onClick={() => apiRef.current?.zoom(.82)}>+</button>
-      <button type="button" aria-label="Alejar cámara" onClick={() => apiRef.current?.zoom(1.2)}>−</button>
-      <button type="button" onClick={() => apiRef.current?.reset()}>Restablecer cámara</button>
-    </div>
     <div className="stadium-3d-stage">
+      <div className="stadium-3d-toolbar" role="group" aria-label="Controles de cámara 3D">
+        {activeSector && <button type="button" onClick={() => apiRef.current?.reset()}>Volver al estadio</button>}
+        <button type="button" aria-label="Acercar cámara" onClick={() => apiRef.current?.zoom(.82)}>+</button>
+        <button type="button" aria-label="Alejar cámara" onClick={() => apiRef.current?.zoom(1.2)}>−</button>
+        <button type="button" onClick={() => apiRef.current?.reset()}>Restablecer</button>
+      </div>
       <div ref={hostRef} className="stadium-3d-host" aria-busy={!ready} />
       {!ready && <div className="stadium-3d-loading" role="status"><span className="spinner" />Preparando estadio 3D…</div>}
       <div className="stadium-3d-hint">Arrastra para rotar · Pellizca o desplaza para acercar</div>
