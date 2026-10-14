@@ -18,7 +18,7 @@ Convención: **Verificado hoy** = comando o prueba ejecutada con el resultado in
 
 | Funcionalidad | Estado | Problema identificado | Corrección | Prueba de aceptación | Resultado verificado |
 |---|---|---|---|---|---|
-| Autenticación, sesiones, cierre de sesión, límite de intentos | Funciona | Ninguno | — | `test_logout_invalidates_server_session`, `test_login_attempts_are_limited…`, `test_duplicate_registration…` | Aprobadas (28/28 backend) |
+| Autenticación, sesiones, cierre de sesión, límite de intentos | Funciona | Ninguno | — | `test_logout_invalidates_server_session`, `test_login_attempts_are_limited…`, `test_duplicate_registration…` | Aprobadas |
 | Permisos por rol (cliente/organizador/operador) | Funciona | Ninguno | — | `test_private_routes_reject_unauthenticated_access`, `test_public_registration_cannot_assign_privileged_role`, `test_client_cannot_read_another_clients_ticket` | Aprobadas |
 | Catálogo y detalle de eventos | Funciona | Ninguno | — | `test_health_and_catalog_come_from_postgresql`; pruebas de filtros en `App.test.tsx` | Aprobadas |
 | Reservas transaccionales y control de aforo | Funciona | La concurrencia solo se probaba con 2 clientes | Prueba nueva con **12 clientes simultáneos sobre 4 cupos** | `test_twelve_concurrent_clients_never_oversell_a_four_seat_zone` | 4 × 201, 8 × 409; 4 entradas y `reserved_count = 4` en BD |
@@ -29,7 +29,7 @@ Convención: **Verificado hoy** = comando o prueba ejecutada con el resultado in
 | Cámara física para leer QR | Implementado, **no probado** | Sin dispositivo de cámara en esta sesión | — | Lectura por código manual sí probada | No verificado (cámara) |
 | **Panel del organizador** | **Incompleto** | Solo mostraba una lista de lectura: sin estadísticas ni edición, aunque existía `PATCH` | Nuevo `GET /api/organizer/events/{id}/stats` y panel con indicadores, tabla por zona y formulario de edición | `test_organizer_stats_reflect_sales_entries_and_are_scoped_to_owner`; prueba de UI del organizador con axe | Aprobadas |
 | **Edición de eventos por el organizador** | **Defecto de integridad** | `PATCH` permitía cambiar aforo/precio de eventos con zonas o asientos (desincroniza el inventario) y renombrar el recinto de un plano vinculado | Rechazo `409` en esos casos; la UI deshabilita los campos con explicación | `test_organizer_cannot_desync_zone_pricing_or_linked_venue`, `test_organizer_cannot_lower_capacity_below_reservations` | Aprobadas |
-| Gestión de funciones/recintos/planos por el organizador | **No implementado** | La asignación evento→recinto→plano se hace por *seed* (`scripts/seed-demo-catalog.py`), no por interfaz | Fuera del alcance de esta sesión; ver §6 | — | Pendiente |
+| **Gestión de eventos, funciones, recintos y planos por el organizador** | **Implementado (14-oct, 2.ª fase)** | Antes solo por *seed* | `app/organizer.py`, `app/inventory.py`, migración `0007`, `Organizer.tsx` (ver §7) | `tests/test_organizer_management.py` (5) + E2E en navegador (16 verificaciones) | Aprobadas |
 | Selección de localidades 2D | Funciona | Ninguno | — | `App.test.tsx` (asiento numerado, estadio, auditorio, accesibilidad axe) | Aprobadas (18/18) |
 | **Reconstrucción de recintos 3D** | Mejorado | Maquetas (ver §1). Además, `seats=[]`/`zones=[]` por defecto reconstruían toda la escena en cada render | Nuevos ambientes procedurales; valores por defecto estables | Capturas reales y clics reales (ver §3) | Verificado hoy |
 | Selección 3D ↔ estado de reserva | Funciona | — | — | Clic real sobre el canvas con Chrome headless | Auditorio → asiento **B-4**; Concierto → zona **Preferencial**; Estadio → **Tribuna Occidente F-5**, total S/ 65.00 |
@@ -66,8 +66,8 @@ Limitaciones: el tiempo de construcción (≈2.1–3.1 s) se midió con **render
 
 | Suite | Resultado |
 |---|---|
-| Backend (`pytest`, PostgreSQL 14 local, base `nexoeventos_test`) | **28 aprobadas** (ejecutada dos veces seguidas para confirmar idempotencia de los datos de prueba) |
-| Frontend (`vitest`, incluye axe) | **18 aprobadas** |
+| Backend (`pytest`, PostgreSQL 14 local, base `nexoeventos_test`) | **33 aprobadas** (corridas repetidas sin interferencia entre ellas) |
+| Frontend (`vitest`, incluye axe) | **20 aprobadas** |
 | `tsc -b` + `vite build` | Correcto |
 | `terraform fmt -check` y `terraform validate` (4 módulos) | Correcto |
 | Clics reales en 3D (auditorio, concierto, estadio) | 3 de 3 selecciones correctas |
@@ -97,11 +97,38 @@ Puntos únicos de falla declarados en la documentación: una EC2 y una RDS Singl
 
 ## 6. Pendientes reales
 
-1. **Gestión de funciones, recintos y planos desde la interfaz del organizador** (hoy solo por *seed*). Es el principal hueco funcional frente al brief.
+1. ~~Gestión desde la interfaz del organizador~~ — **resuelto**, ver §7. Quedan fuera de alcance (justificado) la creación de recintos nuevos y la subida de imágenes.
 2. Despliegue de esta versión y verificación pública (requiere aprobación y credenciales).
 3. Capturas de consola EV02–EV04/EV06–EV08 y de la barra de direcciones con HTTPS/fecha (ver `docs/estado-proyecto.md`).
 4. Recuperación completa del servicio hasta HTTPS (RTO completo sin medir).
 5. Medición de FPS en GPU real y en un teléfono físico.
 6. Contraste de color verificado con herramienta de navegador real; `pip-audit`.
 7. Repositorio remoto (`git remote` vacío) y confirmación del identificador de equipo.
-8. Verificación visual en vivo del panel del organizador: las cuentas demo las crea `scripts/dev-bootstrap.py` con contraseñas que define la persona usuaria, por lo que solo se verificó mediante pruebas de API y de interfaz.
+8. ~~Verificación visual del panel del organizador~~ — **resuelta** con el E2E sobre base aislada (§7).
+
+## 7. Gestión del organizador y flujo completo (2.ª fase)
+
+**Modelo (sin tablas nuevas).** Una *función* es una fila de `events` con inventario propio; el recinto y el plano son `venues`/`venue_layouts` existentes. Migración aditiva `0007`: columna `events.status` (`draft`/`published`; todo lo existente queda `published`, así que catálogo y reservas no cambian) y permisos de escritura acotados para el rol de aplicación (las FK `RESTRICT` impiden borrar eventos con reservas o entradas). **Requiere aplicar la migración en cualquier entorno antes de desplegar esta versión**; en desarrollo ya se aplicó tras un respaldo (34 eventos, 16 reservas y 17 entradas intactos).
+
+| Capacidad | Cómo funciona |
+|---|---|
+| Crear evento | `POST /api/organizer/events`: nombre, fecha, hora, categoría, imagen, descripción, recinto/plano e inventario. Nace como **borrador** (no público, no reservable). |
+| Recintos y planos | `GET /api/organizer/venues` (catálogo compartido, solo lectura). El tipo del plano determina la modalidad: teatro/estadio → asientos numerados por secciones; zonas/concierto → zonas con aforo y precio; museo/general → cupo único (el museo exige hora = cupo por horario). Reglas en `app/inventory.py`; combinaciones inválidas devuelven 422. |
+| Funciones | `POST /events/{id}/functions` copia plano e inventario con fecha nueva; reservas y asientos independientes. |
+| Vista previa | La pestaña reutiliza los mismos selectores 2D/3D que el cliente (`shared.tsx`) con el detalle del borrador; no reserva. |
+| Publicar / despublicar | Publicar valida aforo, fecha futura, zonas/asientos coherentes y hora en museos. Despublicar solo sin ventas. |
+| Inmutabilidad | Con reservas o entradas: no cambian recinto, plano, inventario, fecha ni hora; no se despublica ni se elimina (409, y la interfaz bloquea los controles). Siguen editables nombre, descripción y categoría. Los borradores sin ventas se pueden reconfigurar y eliminar. |
+| Operadores | El organizador asigna/retira operadores por correo; sin esto un evento nuevo no podría validarse. |
+| Aislamiento | Todas las rutas filtran por organizador; ajeno → 404, cliente → 403, anónimo → 401, sin CSRF → rechazo (`test_organizers_cannot_see_or_change_each_others_events…`). |
+
+**Flujo completo en navegador real** ([`scripts/e2e-organizer.sh`](scripts/e2e-organizer.sh), base aislada `nexoeventos_e2e`, API y frontend en puertos propios, cuentas con contraseñas aleatorias; resultado en [`docs/evidencias/ui/organizador/resultado-e2e-2026-10-14.json`](docs/evidencias/ui/organizador/resultado-e2e-2026-10-14.json), 10 capturas): organizador crea el evento y elige recinto/plano → configura 96 asientos → vista previa 2D (96 asientos) y 3D → asigna operador → publica (aparece en el catálogo) → cliente se registra, elige el asiento 1 y reserva → entrada emitida (Platea A-1) → operador valida el QR → segunda validación rechazada → estadísticas (1 de 96, S/ 35.00, 1 ingresado) → inventario y fecha bloqueados, no se puede despublicar → nueva función con 96 asientos libres → móvil sin desborde. **16 verificaciones aprobadas, 0 fallidas, sin excepciones de página.**
+
+## 8. Auditoría final
+
+| Área | Hallazgos |
+|---|---|
+| **Seguridad** | Verificado: permisos por rol y aislamiento entre organizadores en las 12 rutas nuevas; CSRF y origen en mutaciones; modelos estrictos (`extra=forbid`) y límites de tamaño; `image_path` restringido por patrón; precios y disponibilidad siempre desde el servidor; permisos de BD acotados (sin `SELECT` nuevo sobre `access_logs`); sin secretos versionados; `npm audit` 0. **Residual:** no hay límite de tasa en la creación de eventos; al asignar un operador un organizador puede saber si un correo es de operador (mensaje 404 distinto); `pip-audit` sigue sin ejecutarse; la cookie `Secure` depende de la configuración de producción. |
+| **Accesibilidad** | axe sin violaciones en catálogo, selección, panel del organizador (resumen, creación) y diálogos; pestañas con teclado (flechas), `fieldset`/`legend`, mensajes `role=status/alert`, tabla con `caption` y `scope`; el 3D tiene alternativa 2D/lista. **No verificado:** contraste automático, lector de pantalla real. |
+| **Rendimiento** | Panel del organizador carga diferido (7.3 kB gzip); índice principal 107.6 kB gzip; Three.js diferido; contadores 3D en §3. FPS en GPU real sin medir. |
+| **Funcionalidad** | Flujo completo verificado. Límites conocidos: el 3D del auditorio admite hasta 12 filas × 12 asientos y el estadio nombres «Tribuna Norte/Sur/Oriente/Occidente»; no se crean recintos nuevos (catálogo compartido sin propietario) ni se suben imágenes (se elige una de la galería); `scripts/seed-demo-catalog.py` conserva su propia generación de inventario (no se reescribió para no tocar el catálogo existente); cámara física de QR sin probar. |
+| **Bloqueos restantes para cerrar la fase cloud** | Aplicar `0007` en RDS durante el despliegue, aprobación de costo y credenciales, capturas de consola, recuperación completa hasta HTTPS. Ninguno afecta a la aplicación local. |

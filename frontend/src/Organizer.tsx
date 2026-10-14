@@ -128,7 +128,7 @@ function StatsView({ stats }: { stats: Stats }) {
       <div><dt>Ya ingresaron</dt><dd>{stats.checked_in}</dd></div>
       <div><dt>Pendientes de ingreso</dt><dd>{stats.pending_entry}</dd></div>
     </dl>
-    {stats.zones.length > 0 && <table className="organizer-zones"><caption>Ventas por zona</caption><thead><tr><th scope="col">Zona</th><th scope="col">Precio</th><th scope="col">Vendidas</th><th scope="col">Disponibles</th><th scope="col">Ingresos</th></tr></thead><tbody>{stats.zones.map((zone) => <tr key={zone.zone_id}><th scope="row">{zone.name}</th><td>S/ {zone.price.toFixed(2)}</td><td>{zone.sold} de {zone.capacity}</td><td>{zone.available}</td><td>S/ {zone.revenue.toFixed(2)}</td></tr>)}</tbody></table>}
+    {stats.zones.length > 0 && <div className="organizer-table-scroll"><table className="organizer-zones"><caption>Ventas por zona</caption><thead><tr><th scope="col">Zona</th><th scope="col">Precio</th><th scope="col">Vendidas</th><th scope="col">Disponibles</th><th scope="col">Ingresos</th></tr></thead><tbody>{stats.zones.map((zone) => <tr key={zone.zone_id}><th scope="row">{zone.name}</th><td>S/ {zone.price.toFixed(2)}</td><td>{zone.sold} de {zone.capacity}</td><td>{zone.available}</td><td>S/ {zone.revenue.toFixed(2)}</td></tr>)}</tbody></table></div>}
   </>
 }
 
@@ -151,7 +151,7 @@ function DataFields({ value, onChange, locked }: { value: DataForm; onChange: (v
   </fieldset>
 }
 
-function EventWorkspace({ eventId, venues, onChanged, onGone, onSelect }: { eventId: number; venues: VenueOption[]; onChanged: (detail: EventDetail) => void; onGone: (id: number) => void; onSelect: (id: number) => void }) {
+function EventWorkspace({ eventId, venues, notice, onChanged, onGone, onSelect }: { eventId: number; venues: VenueOption[]; notice: string | null; onChanged: (detail: EventDetail) => void; onGone: (id: number) => void; onSelect: (id: number, notice: string) => void }) {
   const [tab, setTab] = useState<TabId>('summary')
   const [detail, setDetail] = useState<EventDetail | null>(null)
   const [state, setState] = useState<EventState | null>(null)
@@ -159,7 +159,7 @@ function EventWorkspace({ eventId, venues, onChanged, onGone, onSelect }: { even
   const [operators, setOperators] = useState<Operator[]>([])
   const [data, setData] = useState<DataForm>(emptyData)
   const [inventory, setInventory] = useState<Inventory>(emptyInventory)
-  const [feedback, setFeedback] = useState<Feedback>(null)
+  const [feedback, setFeedback] = useState<Feedback>(notice ? { kind: 'success', text: notice } : null)
   const [busy, setBusy] = useState(false)
   const [operatorEmail, setOperatorEmail] = useState('')
   const [functionForm, setFunctionForm] = useState<{ date: string; time: string } | null>(null)
@@ -177,7 +177,7 @@ function EventWorkspace({ eventId, venues, onChanged, onGone, onSelect }: { even
     if (operatorsResponse.ok) setOperators(await operatorsResponse.json() as Operator[])
   }, [eventId])
 
-  useEffect(() => { setDetail(null); setState(null); setStats(null); setFeedback(null); setTab('summary'); setFunctionForm(null); setConfirmDelete(false); void loadAll() }, [loadAll])
+  useEffect(() => { setDetail(null); setState(null); setStats(null); setTab('summary'); setFunctionForm(null); setConfirmDelete(false); void loadAll() }, [loadAll])
 
   const kind = venues.flatMap((venue) => venue.layouts).find((layout) => layout.layout_id === inventory.layoutId)?.layout_kind ?? null
 
@@ -212,7 +212,7 @@ function EventWorkspace({ eventId, venues, onChanged, onGone, onSelect }: { even
   async function createFunction(event: FormEvent) {
     event.preventDefault()
     if (!functionForm) return
-    await mutate(() => api(`/api/organizer/events/${eventId}/functions`, { method: 'POST', body: JSON.stringify({ date: functionForm.date, time: functionForm.time ? `${functionForm.time}:00` : null }) }), 'Nueva función creada como borrador.', async (response) => { const created = await response.json() as EventDetail; onChanged(created); onSelect(created.id) })
+    await mutate(() => api(`/api/organizer/events/${eventId}/functions`, { method: 'POST', body: JSON.stringify({ date: functionForm.date, time: functionForm.time ? `${functionForm.time}:00` : null }) }), 'Nueva función creada como borrador.', async (response) => { const created = await response.json() as EventDetail; onSelect(created.id, 'Nueva función creada como borrador. Revisa la vista previa y publícala cuando esté lista.') })
   }
   async function deleteDraft() {
     const ok = await mutate(() => api(`/api/organizer/events/${eventId}`, { method: 'DELETE' }), 'Borrador eliminado.', async () => undefined)
@@ -288,6 +288,7 @@ export default function OrganizerPanel() {
   const [venues, setVenues] = useState<VenueOption[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState<number | 'new' | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
 
   const reload = useCallback(async () => {
     const [eventsResponse, venuesResponse] = await Promise.all([api('/api/organizer/events'), api('/api/organizer/venues')])
@@ -302,13 +303,13 @@ export default function OrganizerPanel() {
     {loading && <div className="status dark" role="status">Cargando eventos…</div>}
     {!loading && <div className="organizer-layout">
       <div className="organizer-sidebar">
-        <button type="button" className="primary organizer-new" onClick={() => setSelectedId('new')}>Nuevo evento</button>
+        <button type="button" className="primary organizer-new" onClick={() => { setNotice(null); setSelectedId('new') }}>Nuevo evento</button>
         {events.length === 0 && <div className="status dark">Aún no tienes eventos. Crea el primero.</div>}
-        <div className="organizer-list" role="group" aria-label="Eventos del organizador">{events.map((item) => <button type="button" key={item.id} className={`row-card organizer-item ${item.id === selectedId ? 'active' : ''}`} aria-pressed={item.id === selectedId} onClick={() => setSelectedId(item.id)}><strong>{item.name}</strong><span>{formatDate(item.date)} · {formatTime(item.time)}</span><small><span className={`organizer-badge ${item.status === 'published' ? 'published' : 'draft'}`}>{item.status === 'published' ? 'Publicado' : 'Borrador'}</span> {item.available_capacity} de {item.capacity} cupos · {item.layout_name ?? 'Sin plano'}</small></button>)}</div>
+        <div className="organizer-list" role="group" aria-label="Eventos del organizador">{events.map((item) => <button type="button" key={item.id} className={`row-card organizer-item ${item.id === selectedId ? 'active' : ''}`} aria-pressed={item.id === selectedId} onClick={() => { setNotice(null); setSelectedId(item.id) }}><strong>{item.name}</strong><span>{formatDate(item.date)} · {formatTime(item.time)}</span><small><span className={`organizer-badge ${item.status === 'published' ? 'published' : 'draft'}`}>{item.status === 'published' ? 'Publicado' : 'Borrador'}</span> {item.available_capacity} de {item.capacity} cupos · {item.layout_name ?? 'Sin plano'}</small></button>)}</div>
       </div>
       <div className="organizer-detail">
-        {selectedId === 'new' && <NewEvent venues={venues} onCreated={(detail) => { void reload().then(() => setSelectedId(detail.id)) }} />}
-        {typeof selectedId === 'number' && <EventWorkspace key={selectedId} eventId={selectedId} venues={venues} onChanged={(detail) => void afterChange(detail)} onGone={(id) => { setEvents((current) => current.filter((item) => item.id !== id)); setSelectedId(null); void reload() }} onSelect={(id) => { void reload().then(() => setSelectedId(id)) }} />}
+        {selectedId === 'new' && <NewEvent venues={venues} onCreated={(detail) => { void reload().then(() => { setNotice('Borrador creado. Revisa la vista previa y publícalo cuando esté listo.'); setSelectedId(detail.id) }) }} />}
+        {typeof selectedId === 'number' && <EventWorkspace key={selectedId} eventId={selectedId} venues={venues} notice={notice} onChanged={(detail) => void afterChange(detail)} onGone={(id) => { setEvents((current) => current.filter((item) => item.id !== id)); setSelectedId(null); void reload() }} onSelect={(id, message) => { void reload().then(() => { setNotice(message); setSelectedId(id) }) }} />}
       </div>
     </div>}
   </section>

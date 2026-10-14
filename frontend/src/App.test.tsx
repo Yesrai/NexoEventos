@@ -297,6 +297,7 @@ describe('NexoEventos catalog', () => {
       fireEvent.change(screen.getByLabelText('Recinto'), { target: { value: '1' } })
       expect(screen.getByLabelText('Plano del recinto')).toHaveValue('11')
       expect(screen.getByText(/Total: 96 asientos en 8 filas/)).toBeInTheDocument()
+      await expectNoAccessibilityViolations()
       fireEvent.click(screen.getByRole('button', { name: 'Quitar sección 2' }))
       fireEvent.change(screen.getByLabelText('Filas'), { target: { value: '1' } })
       fireEvent.change(screen.getByLabelText('Asientos por fila'), { target: { value: '4' } })

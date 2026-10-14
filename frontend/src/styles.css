@@ -764,3 +764,7 @@ footer { padding: 34px 24px; border-top: 1px solid var(--line); color: #6f7e88; 
   .organizer-line > label:first-child { grid-column: 1 / -1; }
   .organizer-head { flex-direction: column; }
 }
+
+.organizer-table-scroll { overflow-x: auto; max-width: 100%; }
+.organizer-panel > *, .organizer-workspace > *, .organizer-detail > * { min-width: 0; }
+.organizer-zones { min-width: 460px; }

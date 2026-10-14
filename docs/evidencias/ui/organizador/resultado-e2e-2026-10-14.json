@@ -1,0 +1,87 @@
+{
+  "fecha": "2026-10-14",
+  "flujo": "crear → recinto/plano → función → publicar → reservar → QR → validar",
+  "verificaciones": [
+    {
+      "name": "El plano del recinto se rellena según el recinto elegido",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Se crea como borrador",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "El borrador no es público",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "La vista previa 2D muestra todos los asientos configurados",
+      "passed": true,
+      "detail": "96 asientos"
+    },
+    {
+      "name": "El organizador asigna un operador por correo",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "El evento publicado aparece en el catálogo público",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "El cliente reserva un asiento numerado",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Se emite una entrada con asiento",
+      "passed": true,
+      "detail": "Platea A-1"
+    },
+    {
+      "name": "El operador valida el QR y registra el ingreso",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Una segunda validación del mismo QR se rechaza",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Las estadísticas reflejan venta e ingreso",
+      "passed": true,
+      "detail": "{\"Entradas vendidas\":\"1 de 96\",\"Ocupación\":\"1.0 %\",\"Disponibles\":\"95\",\"Ingresos simulados\":\"S/ 35.00\",\"Ya ingresaron\":\"1\",\"Pendientes de ingreso\":\"0\"}"
+    },
+    {
+      "name": "El recinto y el inventario quedan bloqueados tras la venta",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "La fecha queda bloqueada tras la venta",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "No se puede despublicar con ventas",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Una nueva función copia el plano con inventario independiente (96 disponibles)",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "El panel del organizador no desborda horizontalmente en móvil",
+      "passed": true,
+      "detail": "0px"
+    }
+  ],
+  "excepcionesDePagina": []
+}
