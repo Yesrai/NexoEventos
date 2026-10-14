@@ -1094,9 +1094,85 @@ function OperatorPanel({ onExpired }: { onExpired: () => void }) {
   return <section className="workspace"><p className="eyebrow">Operación</p><h1 className="page-title">Control de acceso</h1><p className="muted">Solo aparecen eventos asignados a esta cuenta. Cada validación queda auditada sin guardar el token completo.</p>{events.length === 0 ? <div className="status dark">No tienes eventos asignados.</div> : <div className="operator-grid"><form className="panel-form" onSubmit={(event) => void validate(event)}><label>Evento asignado<select value={eventId} onChange={(event) => setEventId(Number(event.target.value))}>{events.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><label>Código QR o token manual<textarea value={token} onChange={(event) => setToken(event.target.value)} minLength={20} required placeholder="nexo_…" /></label><button className="primary" disabled={busy}>{busy ? 'Validando…' : 'Validar ingreso'}</button>{status && <p className={status.kind === 'success' ? 'success' : 'form-error'} role="status">{status.text}</p>}</form><div className="camera-panel"><h2 className="subheading">Lector QR</h2>{stream ? <><video ref={videoRef} autoPlay playsInline muted /><div className="button-row"><button className="primary" onClick={() => void readFrame()}>Leer QR</button><button className="outline" onClick={stopCamera}>Cerrar cámara</button></div></> : <button className="outline" onClick={() => void startCamera()}>Permitir cámara</button>}{cameraError && <p className="form-error">{cameraError}</p>}<small>La cámara solo se solicita al pulsar el botón. La entrada se consume únicamente al confirmar “Validar ingreso”.</small></div></div>}</section>
 }
 
+type OrganizerStats = {
+  event_id: number; name: string; ticket_mode: 'general' | 'zones' | 'seats'; capacity: number; sold: number; available: number
+  occupancy_percent: number; revenue: number; checked_in: number; pending_entry: number
+  zones: Array<{ zone_id: number; name: string; price: number; capacity: number; sold: number; available: number; revenue: number }>
+}
+
 function OrganizerPanel() {
   const [events, setEvents] = useState<EventItem[]>([])
   const [loading, setLoading] = useState(true)
-  useEffect(() => { void api('/api/organizer/events').then(async (response) => { if (response.ok) setEvents(await response.json() as EventItem[]) }).finally(() => setLoading(false)) }, [])
-  return <section className="workspace"><p className="eyebrow">Organización</p><h1 className="page-title">Mis eventos</h1><p className="muted">El backend limita esta lista y las actualizaciones a los eventos propiedad del organizador.</p>{loading && <div className="status dark">Cargando eventos…</div>}{!loading && events.length === 0 && <div className="status dark">No tienes eventos asignados.</div>}<div className="grid compact">{events.map((item) => <article className="row-card" key={item.id}><strong>{item.name}</strong><span>{item.available_capacity} cupos disponibles · {formatDate(item.date)}</span></article>)}</div></section>
+  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [stats, setStats] = useState<OrganizerStats | null>(null)
+  const [form, setForm] = useState({ name: '', date: '', description: '', price: '', capacity: '', venue: '' })
+  const [feedback, setFeedback] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
+  const [saving, setSaving] = useState(false)
+  const selected = events.find((item) => item.id === selectedId) ?? null
+
+  useEffect(() => { void api('/api/organizer/events').then(async (response) => { if (response.ok) { const values = await response.json() as EventItem[]; setEvents(values); setSelectedId(values[0]?.id ?? null) } }).finally(() => setLoading(false)) }, [])
+
+  async function loadSelected(item: EventItem) {
+    setStats(null)
+    const [statsResponse, detailResponse] = await Promise.all([api(`/api/organizer/events/${item.id}/stats`), api(`/api/events/${item.id}`)])
+    if (statsResponse.ok) setStats(await statsResponse.json() as OrganizerStats)
+    const detail = detailResponse.ok ? await detailResponse.json() as EventDetail : null
+    setForm({ name: item.name, date: item.date, description: detail?.description ?? '', price: String(item.price), capacity: String(item.capacity), venue: item.venue })
+  }
+  useEffect(() => { setFeedback(null); if (selected) void loadSelected(selected) }, [selectedId])
+
+  async function save(event: React.FormEvent) {
+    event.preventDefault()
+    if (!selected) return
+    setSaving(true)
+    setFeedback(null)
+    const general = selected.ticket_mode === 'general'
+    const body: Record<string, unknown> = { name: form.name.trim(), date: form.date, description: form.description.trim() }
+    if (general) { body.price = Number(form.price); body.capacity = Number(form.capacity) }
+    if (selected.venue_id === null) body.venue = form.venue.trim()
+    const response = await api(`/api/organizer/events/${selected.id}`, { method: 'PATCH', body: JSON.stringify(body) })
+    if (response.ok) {
+      const updated = await response.json() as EventDetail
+      setEvents((current) => current.map((item) => item.id === updated.id ? { ...item, name: updated.name, date: updated.date, venue: updated.venue, price: updated.price, capacity: updated.capacity, available_capacity: updated.available_capacity } : item))
+      setFeedback({ kind: 'success', text: 'Cambios guardados. El catálogo público ya muestra la nueva información.' })
+      const statsResponse = await api(`/api/organizer/events/${selected.id}/stats`)
+      if (statsResponse.ok) setStats(await statsResponse.json() as OrganizerStats)
+    } else {
+      const payload = await response.json().catch(() => ({})) as { detail?: unknown }
+      setFeedback({ kind: 'error', text: typeof payload.detail === 'string' ? payload.detail : 'No se pudieron guardar los cambios. Revisa los datos e inténtalo de nuevo.' })
+    }
+    setSaving(false)
+  }
+
+  const general = selected?.ticket_mode === 'general'
+  return <section className="workspace"><p className="eyebrow">Organización</p><h1 className="page-title">Mis eventos</h1><p className="muted">El backend limita esta lista, las estadísticas y las ediciones a los eventos propiedad del organizador.</p>{loading && <div className="status dark">Cargando eventos…</div>}{!loading && events.length === 0 && <div className="status dark">No tienes eventos asignados.</div>}
+    {events.length > 0 && <div className="organizer-layout">
+      <div className="organizer-list" role="group" aria-label="Eventos del organizador">{events.map((item) => <button type="button" key={item.id} className={`row-card organizer-item ${item.id === selectedId ? 'active' : ''}`} aria-pressed={item.id === selectedId} onClick={() => setSelectedId(item.id)}><strong>{item.name}</strong><span>{formatDate(item.date)} · {item.available_capacity} cupos disponibles</span><small>{item.layout_name ?? 'Entrada general'}</small></button>)}</div>
+      {selected && <div className="organizer-detail">
+        <h2 className="subheading">Estadísticas de {selected.name}</h2>
+        {!stats ? <div className="status dark" role="status">Cargando estadísticas…</div> : <>
+          <dl className="organizer-kpis" aria-label="Indicadores del evento">
+            <div><dt>Entradas vendidas</dt><dd>{stats.sold} de {stats.capacity}</dd></div>
+            <div><dt>Ocupación</dt><dd>{stats.occupancy_percent.toFixed(1)} %</dd></div>
+            <div><dt>Disponibles</dt><dd>{stats.available}</dd></div>
+            <div><dt>Ingresos simulados</dt><dd>S/ {stats.revenue.toFixed(2)}</dd></div>
+            <div><dt>Ya ingresaron</dt><dd>{stats.checked_in}</dd></div>
+            <div><dt>Pendientes de ingreso</dt><dd>{stats.pending_entry}</dd></div>
+          </dl>
+          {stats.zones.length > 0 && <table className="organizer-zones"><caption>Ventas por zona</caption><thead><tr><th scope="col">Zona</th><th scope="col">Precio</th><th scope="col">Vendidas</th><th scope="col">Disponibles</th><th scope="col">Ingresos</th></tr></thead><tbody>{stats.zones.map((zone) => <tr key={zone.zone_id}><th scope="row">{zone.name}</th><td>S/ {zone.price.toFixed(2)}</td><td>{zone.sold} de {zone.capacity}</td><td>{zone.available}</td><td>S/ {zone.revenue.toFixed(2)}</td></tr>)}</tbody></table>}
+        </>}
+        <form className="panel-form organizer-form" onSubmit={(event) => void save(event)}>
+          <h2 className="subheading">Datos del evento</h2>
+          <label>Nombre<input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} minLength={2} maxLength={160} required /></label>
+          <label>Fecha<input type="date" value={form.date} onChange={(event) => setForm({ ...form, date: event.target.value })} required /></label>
+          <label>Descripción<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} minLength={10} required /></label>
+          <label>Recinto<input value={form.venue} onChange={(event) => setForm({ ...form, venue: event.target.value })} disabled={selected.venue_id !== null} aria-describedby="organizer-venue-help" required /></label>
+          <small id="organizer-venue-help">{selected.venue_id !== null ? `Vinculado al plano «${selected.layout_name ?? 'configurado'}». No se renombra desde aquí para no desalinear el inventario.` : 'Este evento no tiene un plano vinculado.'}</small>
+          <div className="organizer-form-row"><label>Precio (S/)<input type="number" min="0" step="0.01" value={form.price} onChange={(event) => setForm({ ...form, price: event.target.value })} disabled={!general} required /></label><label>Aforo<input type="number" min="0" step="1" value={form.capacity} onChange={(event) => setForm({ ...form, capacity: event.target.value })} disabled={!general} required /></label></div>
+          {!general && <small>El aforo y los precios de este evento se definen por {selected.ticket_mode === 'seats' ? 'zona y asiento' : 'zona'} en el inventario de la función; por eso no se editan en conjunto.</small>}
+          {feedback && <p className={feedback.kind === 'success' ? 'success' : 'form-error'} role={feedback.kind === 'error' ? 'alert' : 'status'}>{feedback.text}</p>}
+          <button className="primary" disabled={saving}>{saving ? 'Guardando…' : 'Guardar cambios'}</button>
+        </form>
+      </div>}
+    </div>}</section>
 }

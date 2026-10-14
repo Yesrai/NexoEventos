@@ -143,3 +143,27 @@ class ValidationResult(BaseModel):
     event_id: int
     used_at: datetime
     ticket_location: str
+
+
+class ZoneStats(BaseModel):
+    zone_id: int
+    name: str
+    price: float
+    capacity: int
+    sold: int
+    available: int
+    revenue: float
+
+
+class OrganizerEventStats(BaseModel):
+    event_id: int
+    name: str
+    ticket_mode: Literal["general", "zones", "seats"]
+    capacity: int
+    sold: int
+    available: int
+    occupancy_percent: float
+    revenue: float
+    checked_in: int
+    pending_entry: int
+    zones: list[ZoneStats]

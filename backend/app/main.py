@@ -1,4 +1,5 @@
 import hashlib
+from decimal import Decimal
 from uuid import UUID
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response, status
@@ -53,11 +54,13 @@ from app.schemas import (
     HealthResponse,
     LoginRequest,
     MyReservation,
+    OrganizerEventStats,
     RegisterRequest,
     ReservationCreate,
     ReservationCreated,
     TicketView,
     SeatView,
+    ZoneStats,
     ZoneView,
     UserView,
     ValidationRequest,
@@ -345,6 +348,10 @@ def create_app(database_url: str | None = None) -> FastAPI:
         if event is None:
             raise HTTPException(status_code=404, detail="Evento no encontrado")
         changes = payload.model_dump(exclude_none=True)
+        if event.ticket_mode != "general" and ("capacity" in changes or "price" in changes):
+            raise HTTPException(status_code=409, detail="El aforo y los precios de este evento se administran por zona; no se pueden editar en conjunto")
+        if event.venue_id is not None and "venue" in changes and changes["venue"] != event.venue:
+            raise HTTPException(status_code=409, detail="El recinto está vinculado a un plano configurado y no puede renombrarse desde aquí")
         if "capacity" in changes and changes["capacity"] < event.reserved_count:
             raise HTTPException(status_code=409, detail="La capacidad no puede ser menor que las reservas")
         if "date" in changes:
@@ -353,6 +360,42 @@ def create_app(database_url: str | None = None) -> FastAPI:
             setattr(event, field, value)
         session.commit()
         return _event_detail(event, session)
+
+    @application.get("/api/organizer/events/{event_id}/stats", response_model=OrganizerEventStats)
+    def organizer_event_stats(
+        event_id: int,
+        context: AuthContext = Depends(require_role("organizer")),
+        session: Session = Depends(get_session),
+    ) -> OrganizerEventStats:
+        event = session.scalar(select(Event).where(Event.id == event_id, Event.organizer_user_id == context.user.id))
+        if event is None:
+            raise HTTPException(status_code=404, detail="Evento no encontrado")
+        tickets = session.execute(select(Ticket.zone_id, Ticket.unit_price, Ticket.used_at).where(Ticket.event_id == event.id)).all()
+        zones = session.scalars(select(EventZone).where(EventZone.event_id == event.id).order_by(EventZone.price, EventZone.id)).all()
+        sold_by_zone: dict[int, int] = {}
+        revenue_by_zone: dict[int, Decimal] = {}
+        revenue = Decimal("0")
+        for zone_id, unit_price, _used in tickets:
+            amount = unit_price if unit_price is not None else event.price
+            revenue += amount
+            if zone_id is not None:
+                sold_by_zone[zone_id] = sold_by_zone.get(zone_id, 0) + 1
+                revenue_by_zone[zone_id] = revenue_by_zone.get(zone_id, Decimal("0")) + amount
+        sold = len(tickets)
+        checked_in = sum(1 for _zone, _price, used_at in tickets if used_at is not None)
+        return OrganizerEventStats(
+            event_id=event.id,
+            name=event.name,
+            ticket_mode=event.ticket_mode,
+            capacity=event.capacity,
+            sold=sold,
+            available=event.capacity - event.reserved_count,
+            occupancy_percent=round(sold / event.capacity * 100, 1) if event.capacity else 0.0,
+            revenue=float(revenue),
+            checked_in=checked_in,
+            pending_entry=sold - checked_in,
+            zones=[ZoneStats(zone_id=zone.id, name=zone.name, price=float(zone.price), capacity=zone.capacity, sold=sold_by_zone.get(zone.id, 0), available=zone.capacity - zone.reserved_count, revenue=float(revenue_by_zone.get(zone.id, Decimal("0")))) for zone in zones],
+        )
 
     @application.get("/api/operator/events", response_model=list[EventSummary])
     def operator_events(context: AuthContext = Depends(require_role("operator")), session: Session = Depends(get_session)) -> list[EventSummary]:

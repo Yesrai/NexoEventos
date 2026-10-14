@@ -222,6 +222,37 @@ describe('NexoEventos catalog', () => {
     expect(screen.getByText('Sesión cerrada correctamente.')).toBeInTheDocument()
   })
 
+  it('lets an organizer review statistics and edit only what the server allows', async () => {
+    const zoned = { ...baseEvent, id: 51, name: 'Concierto con zonas', date: '2026-12-01', venue: 'Arena', category: 'Conciertos', price: 45, capacity: 180, available_capacity: 170, ticket_mode: 'zones' as const, venue_id: 7, layout_id: 7, layout_name: 'Escenario y zonas', layout_kind: 'concert_zones' as const }
+    const stats = { event_id: 51, name: 'Concierto con zonas', ticket_mode: 'zones', capacity: 180, sold: 10, available: 170, occupancy_percent: 5.6, revenue: 520, checked_in: 3, pending_entry: 7, zones: [{ zone_id: 1, name: 'Campo', price: 45, capacity: 120, sold: 8, available: 112, revenue: 360 }, { zone_id: 2, name: 'Preferencial', price: 75, capacity: 60, sold: 2, available: 58, revenue: 160 }] }
+    const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input)
+      if (url.endsWith('/api/auth/session')) return { ok: true, status: 200, json: async () => ({ id: 'o1', email: 'org@example.com', display_name: 'Organizadora', role: 'organizer', session_expires_at: '2026-12-05T00:00:00Z' }) }
+      if (url.endsWith('/api/organizer/events/51/stats')) return { ok: true, status: 200, json: async () => stats }
+      if (url.endsWith('/api/organizer/events/51') && init?.method === 'PATCH') return { ok: true, status: 200, json: async () => ({ ...zoned, name: 'Concierto renombrado', description: 'Descripción completa del concierto', zones: [], seats: [] }) }
+      if (url.endsWith('/api/events/51')) return { ok: true, status: 200, json: async () => ({ ...zoned, description: 'Descripción completa del concierto', zones: [], seats: [] }) }
+      if (url.endsWith('/api/organizer/events')) return { ok: true, status: 200, json: async () => [zoned] }
+      return { ok: true, status: 200, json: async () => [] }
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Mis eventos' }))
+    expect(await screen.findByText('Estadísticas de Concierto con zonas')).toBeInTheDocument()
+    const indicators = await screen.findByLabelText('Indicadores del evento')
+    expect(within(indicators).getByText('10 de 180')).toBeInTheDocument()
+    expect(within(indicators).getByText('S/ 520.00')).toBeInTheDocument()
+    expect(screen.getByRole('row', { name: /Campo S\/ 45.00 8 de 120 112 S\/ 360.00/ })).toBeInTheDocument()
+    expect(screen.getByLabelText('Aforo')).toBeDisabled()
+    expect(screen.getByLabelText('Precio (S/)')).toBeDisabled()
+    expect(screen.getByLabelText('Recinto')).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('Nombre'), { target: { value: 'Concierto renombrado' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    expect(await screen.findByText(/Cambios guardados/)).toBeInTheDocument()
+    const patch = fetchMock.mock.calls.find(([, init]) => init?.method === 'PATCH')
+    expect(JSON.parse(String(patch?.[1]?.body))).toEqual({ name: 'Concierto renombrado', date: '2026-12-01', description: 'Descripción completa del concierto' })
+    await expectNoAccessibilityViolations()
+  })
+
   it('moves focus into the private ticket dialog and restores it on Escape', async () => {
     const reservation = { id: 'reservation-1', event_id: 1, event_name: 'Evento QR', quantity: 1, created_at: '2026-10-06T10:00:00Z' }
     const ticket = { id: 'ticket-1', reservation_id: 'reservation-1', event_id: 1, event_name: 'Evento QR', event_date: '2026-10-20', event_time: '19:30:00', event_venue: 'Sala Uno', event_city: 'Lima', image_path: null, ticket_type: 'general', zone: null, row: null, seat: null, unit_price: 20, qr_token: 'nexo_token_ficticio_para_prueba', used_at: null }

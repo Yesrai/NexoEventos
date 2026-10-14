@@ -554,3 +554,60 @@ def test_inconsistent_quantity_and_sold_out_zone_do_not_create_partial_reservati
     app.state.engine.dispose()
     with create_engine(TEST_ADMIN_URL).connect() as connection:
         assert connection.scalar(text("SELECT reserved_count FROM events WHERE id IN (9003, 9004) AND reserved_count > 0")) is None
+
+
+def test_organizer_stats_reflect_sales_entries_and_are_scoped_to_owner(privileged_accounts: dict[str, str]) -> None:
+    app = create_app(TEST_APP_URL)
+    with TestClient(app) as buyer:
+        register_client(buyer)
+        assert post_reservation(buyer, 9001, "stats-sale-key").status_code == 201
+        ticket_id = buyer.get("/api/me/tickets").json()[0]["id"]
+        token = buyer.get(f"/api/me/tickets/{ticket_id}").json()["qr_token"]
+    with TestClient(app) as operator:
+        login(operator, "operador@example.com", privileged_accounts["operator"])
+        accepted = operator.post("/api/operator/validate", headers=csrf_headers(operator), json={"event_id": 9001, "qr_token": token})
+        reused = operator.post("/api/operator/validate", headers=csrf_headers(operator), json={"event_id": 9001, "qr_token": token})
+        assert (accepted.status_code, reused.status_code) == (200, 409)
+    with TestClient(app) as organizer:
+        login(organizer, "organizador@example.com", privileged_accounts["organizer"])
+        stats = organizer.get("/api/organizer/events/9001/stats")
+        assert stats.status_code == 200, stats.text
+        body = stats.json()
+        assert (body["capacity"], body["sold"], body["available"]) == (1, 1, 0)
+        assert body["occupancy_percent"] == 100.0
+        assert body["revenue"] == 10.0
+        assert (body["checked_in"], body["pending_entry"]) == (1, 0)
+        assert organizer.get("/api/organizer/events/9002/stats").status_code == 404
+    with TestClient(app) as stranger:
+        register_client(stranger, "curioso@example.com")
+        assert stranger.get("/api/organizer/events/9001/stats").status_code == 403
+    app.state.engine.dispose()
+
+
+def test_organizer_cannot_lower_capacity_below_reservations(privileged_accounts: dict[str, str]) -> None:
+    app = create_app(TEST_APP_URL)
+    with TestClient(app) as buyer:
+        register_client(buyer)
+        assert post_reservation(buyer, 9001, "below-reserved-key").status_code == 201
+    with TestClient(app) as organizer:
+        login(organizer, "organizador@example.com", privileged_accounts["organizer"])
+        response = organizer.patch("/api/organizer/events/9001", headers=csrf_headers(organizer), json={"capacity": 0})
+        assert response.status_code == 409, response.text
+    app.state.engine.dispose()
+
+
+def test_organizer_cannot_desync_zone_pricing_or_linked_venue(privileged_accounts: dict[str, str]) -> None:
+    with create_engine(TEST_ADMIN_URL).begin() as connection:
+        connection.execute(text("UPDATE events SET organizer_user_id=(SELECT id FROM users WHERE email='organizador@example.com') WHERE id IN (9003, 9004)"))
+    app = create_app(TEST_APP_URL)
+    with TestClient(app) as client:
+        login(client, "organizador@example.com", privileged_accounts["organizer"])
+        zoned_capacity = client.patch("/api/organizer/events/9003", headers=csrf_headers(client), json={"capacity": 99})
+        zoned_price = client.patch("/api/organizer/events/9003", headers=csrf_headers(client), json={"price": 1})
+        renamed_venue = client.patch("/api/organizer/events/9004", headers=csrf_headers(client), json={"venue": "Otro lugar"})
+        allowed = client.patch("/api/organizer/events/9004", headers=csrf_headers(client), json={"name": "Asientos de prueba renombrado"})
+        assert (zoned_capacity.status_code, zoned_price.status_code, renamed_venue.status_code) == (409, 409, 409)
+        assert allowed.status_code == 200
+    app.state.engine.dispose()
+    with create_engine(TEST_ADMIN_URL).connect() as connection:
+        assert connection.scalar(text("SELECT capacity FROM events WHERE id=9003")) == 4
