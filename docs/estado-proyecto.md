@@ -8,6 +8,8 @@
 | Estado AWS comprobado | 12-oct 08:38 Lima: ensayo temporal eliminado (11 recursos; estado separado vacío), EC2 original `stopped` y RDS original `stopped`; confirmados por API. |
 | Entrega final | 26 de noviembre de 2026 |
 
+> Actualización del 14-oct-2026: la auditoría local, los nuevos recintos 3D, el panel del organizador y las pruebas se resumen en [`PROJECT_STATUS.md`](../PROJECT_STATUS.md). Ese trabajo es local y **no está desplegado en AWS**.
+
 Convención de este documento:
 
 - **Medido:** ejecutado y observado, con la fuente indicada.

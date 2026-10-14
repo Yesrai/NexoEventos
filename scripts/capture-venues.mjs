@@ -83,7 +83,7 @@ async function shot(name) {
 
 // Clic real sobre el canvas: se exploran puntos hasta que la selección cambia en el estado de React.
 async function clickUntil(predicateExpression, candidates) {
-  const rect = await evaluate(`(() => { const r = document.querySelector('.venue-3d-canvas').getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height } })()`)
+  const rect = await evaluate(`(() => { const r = document.querySelector('.venue-3d-canvas,.stadium-3d-canvas').getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height } })()`)
   for (const [fx, fy] of candidates) {
     const x = rect.x + rect.width * fx
     const y = rect.y + rect.height * fy
@@ -95,9 +95,11 @@ async function clickUntil(predicateExpression, candidates) {
   }
   return null
 }
+const fine = (x0, x1, y0, y1, step) => { const points = []; for (let y = y0; y <= y1; y += step) for (let x = x0; x <= x1; x += step) points.push([Number(x.toFixed(3)), Number(y.toFixed(3))]); return points }
 const grid = (xs, ys) => ys.flatMap((fy) => xs.map((fx) => [fx, fy]))
 const interactions = {
   auditorio: { view: 'Vista general', predicate: `/\\b1 asiento seleccionado/.test(document.querySelector('.seat-selection-status')?.textContent ?? '')`, points: grid([.4, .5, .6, .7, .3], [.62, .7, .78, .56, .86]) },
+  estadio: { view: null, focus: `!!document.querySelector('.stadium-3d-sector-list button.active')`, focusPoints: fine(.3, .7, .35, .6, .05), predicate: `/\\b1 localidad seleccionada/.test(document.querySelector('.seat-selection-status')?.textContent ?? '')`, points: fine(.3, .7, .3, .8, .025) },
   concierto: { view: 'Zonas', predicate: `[...document.querySelectorAll('.concert-zone-grid [aria-pressed]')].some((button) => button.getAttribute('aria-pressed') === 'true')`, points: grid([.5, .4, .6], [.55, .4, .7, .3, .8]) },
 }
 const results = []
@@ -115,10 +117,11 @@ for (const venue of venues) for (const viewport of viewports) {
   }
 }
 for (const venue of venues.filter((item) => interactions[item.slug])) {
-  const { view, predicate, points } = interactions[venue.slug]
+  const { view, predicate, points, focus, focusPoints } = interactions[venue.slug]
   await open(venue, viewports[0])
-  await evaluate(`[...document.querySelectorAll('.venue-3d-views button')].find((button) => button.textContent.trim() === ${JSON.stringify(view)})?.click()`)
+  if (view) await evaluate(`[...document.querySelectorAll('.venue-3d-views button')].find((button) => button.textContent.trim() === ${JSON.stringify(view)})?.click()`)
   await pause(1200)
+  if (focus) { await clickUntil(focus, focusPoints); await pause(1000) }
   const hit = await clickUntil(predicate, points)
   const status = await evaluate(`document.querySelector('.seat-selection-status, .concert-zone-grid [aria-pressed="true"]')?.textContent ?? ''`)
   results.push({ venue: venue.slug, selectedByCanvasClick: Boolean(hit), at: hit, status })
