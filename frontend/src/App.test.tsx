@@ -222,35 +222,106 @@ describe('NexoEventos catalog', () => {
     expect(screen.getByText('Sesión cerrada correctamente.')).toBeInTheDocument()
   })
 
-  it('lets an organizer review statistics and edit only what the server allows', async () => {
-    const zoned = { ...baseEvent, id: 51, name: 'Concierto con zonas', date: '2026-12-01', venue: 'Arena', category: 'Conciertos', price: 45, capacity: 180, available_capacity: 170, ticket_mode: 'zones' as const, venue_id: 7, layout_id: 7, layout_name: 'Escenario y zonas', layout_kind: 'concert_zones' as const }
-    const stats = { event_id: 51, name: 'Concierto con zonas', ticket_mode: 'zones', capacity: 180, sold: 10, available: 170, occupancy_percent: 5.6, revenue: 520, checked_in: 3, pending_entry: 7, zones: [{ zone_id: 1, name: 'Campo', price: 45, capacity: 120, sold: 8, available: 112, revenue: 360 }, { zone_id: 2, name: 'Preferencial', price: 75, capacity: 60, sold: 2, available: 58, revenue: 160 }] }
-    const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
-      const url = String(input)
-      if (url.endsWith('/api/auth/session')) return { ok: true, status: 200, json: async () => ({ id: 'o1', email: 'org@example.com', display_name: 'Organizadora', role: 'organizer', session_expires_at: '2026-12-05T00:00:00Z' }) }
-      if (url.endsWith('/api/organizer/events/51/stats')) return { ok: true, status: 200, json: async () => stats }
-      if (url.endsWith('/api/organizer/events/51') && init?.method === 'PATCH') return { ok: true, status: 200, json: async () => ({ ...zoned, name: 'Concierto renombrado', description: 'Descripción completa del concierto', zones: [], seats: [] }) }
-      if (url.endsWith('/api/events/51')) return { ok: true, status: 200, json: async () => ({ ...zoned, description: 'Descripción completa del concierto', zones: [], seats: [] }) }
-      if (url.endsWith('/api/organizer/events')) return { ok: true, status: 200, json: async () => [zoned] }
-      return { ok: true, status: 200, json: async () => [] }
+  describe('organizer management', () => {
+    const venues = [
+      { venue_id: 1, name: 'Auditorio Nexo', city: 'Lima', layouts: [{ layout_id: 11, name: 'Sala frontal', layout_kind: 'theatre', ticket_mode: 'seats' }] },
+      { venue_id: 2, name: 'Arena Parque Sur', city: 'Lima', layouts: [{ layout_id: 12, name: 'Escenario y zonas', layout_kind: 'concert_zones', ticket_mode: 'zones' }] },
+    ]
+    const session = { id: 'o1', email: 'org@example.com', display_name: 'Organizadora', role: 'organizer', session_expires_at: '2026-12-05T00:00:00Z' }
+    const concert = { ...baseEvent, id: 51, name: 'Concierto con zonas', date: '2026-12-01', venue: 'Arena Parque Sur', category: 'Conciertos', price: 45, capacity: 180, available_capacity: 170, ticket_mode: 'zones' as const, venue_id: 2, layout_id: 12, layout_name: 'Escenario y zonas', layout_kind: 'concert_zones' as const, status: 'published' as const }
+    const detail = { ...concert, description: 'Descripción completa del concierto', zones: [{ id: 1, name: 'Campo', price: 45, capacity: 120, available_capacity: 112 }, { id: 2, name: 'Preferencial', price: 75, capacity: 60, available_capacity: 58 }], seats: [] }
+    const stats = { event_id: 51, name: 'Concierto con zonas', ticket_mode: 'zones', capacity: 180, sold: 10, available: 170, occupancy_percent: 5.6, revenue: 520, checked_in: 3, pending_entry: 7, zones: [{ zone_id: 1, name: 'Campo', price: 45, capacity: 120, sold: 8, available: 112, revenue: 360 }] }
+
+    function stubApi(extra: (url: string, init?: RequestInit) => unknown, state = { has_sales: true, can_edit_inventory: false, can_publish: false, can_unpublish: false, can_delete: false, publish_problems: [] as string[] }) {
+      const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+        const url = String(input)
+        const custom = extra(url, init)
+        if (custom) return custom
+        if (url.endsWith('/api/auth/session')) return { ok: true, status: 200, json: async () => session }
+        if (url.endsWith('/api/organizer/venues')) return { ok: true, status: 200, json: async () => venues }
+        if (url.endsWith('/api/organizer/events/51/stats')) return { ok: true, status: 200, json: async () => stats }
+        if (url.endsWith('/api/organizer/events/51/state')) return { ok: true, status: 200, json: async () => state }
+        if (url.endsWith('/api/organizer/events/51/operators')) return { ok: true, status: 200, json: async () => [{ user_id: 'u1', email: 'operador@example.com', display_name: 'Operador Demo' }] }
+        if (url.endsWith('/api/organizer/events/51')) return { ok: true, status: 200, json: async () => detail }
+        if (url.endsWith('/api/organizer/events')) return { ok: true, status: 200, json: async () => [concert] }
+        return { ok: true, status: 200, json: async () => [] }
+      })
+      vi.stubGlobal('fetch', fetchMock)
+      return fetchMock
+    }
+
+    it('shows statistics and locks structure, date and inventory once there are sales', async () => {
+      const fetchMock = stubApi((url, init) => url.endsWith('/api/organizer/events/51') && init?.method === 'PATCH' ? { ok: true, status: 200, json: async () => ({ ...detail, name: 'Concierto renombrado' }) } : null)
+      render(<App />)
+      fireEvent.click(await screen.findByRole('button', { name: 'Mis eventos' }))
+      const indicators = await screen.findByLabelText('Indicadores del evento')
+      expect(within(indicators).getByText('10 de 180')).toBeInTheDocument()
+      expect(within(indicators).getByText('S/ 520.00')).toBeInTheDocument()
+      expect(screen.getByText(/ya tiene reservas, no se puede despublicar/)).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Despublicar' })).toBeDisabled()
+      fireEvent.click(screen.getByRole('tab', { name: 'Datos' }))
+      expect(screen.getByLabelText('Fecha')).toBeDisabled()
+      expect(screen.getByText(/ya hay reservas o entradas emitidas/)).toBeInTheDocument()
+      fireEvent.change(screen.getByLabelText('Nombre'), { target: { value: 'Concierto renombrado' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar datos' }))
+      expect(await screen.findByText('Datos guardados.')).toBeInTheDocument()
+      const patch = fetchMock.mock.calls.find(([, init]) => init?.method === 'PATCH')
+      expect(JSON.parse(String(patch?.[1]?.body))).toEqual({ name: 'Concierto renombrado', category: 'Conciertos', description: 'Descripción completa del concierto' })
+      fireEvent.click(screen.getByRole('tab', { name: 'Recinto y entradas' }))
+      expect(screen.getByRole('group', { name: 'Recinto y entradas' })).toBeDisabled()
+      expect(screen.queryByRole('button', { name: 'Guardar recinto e inventario' })).not.toBeInTheDocument()
+      fireEvent.click(screen.getByRole('tab', { name: 'Operadores' }))
+      expect(await screen.findByText('Operador Demo')).toBeInTheDocument()
+      await expectNoAccessibilityViolations()
     })
-    vi.stubGlobal('fetch', fetchMock)
-    render(<App />)
-    fireEvent.click(await screen.findByRole('button', { name: 'Mis eventos' }))
-    expect(await screen.findByText('Estadísticas de Concierto con zonas')).toBeInTheDocument()
-    const indicators = await screen.findByLabelText('Indicadores del evento')
-    expect(within(indicators).getByText('10 de 180')).toBeInTheDocument()
-    expect(within(indicators).getByText('S/ 520.00')).toBeInTheDocument()
-    expect(screen.getByRole('row', { name: /Campo S\/ 45.00 8 de 120 112 S\/ 360.00/ })).toBeInTheDocument()
-    expect(screen.getByLabelText('Aforo')).toBeDisabled()
-    expect(screen.getByLabelText('Precio (S/)')).toBeDisabled()
-    expect(screen.getByLabelText('Recinto')).toBeDisabled()
-    fireEvent.change(screen.getByLabelText('Nombre'), { target: { value: 'Concierto renombrado' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
-    expect(await screen.findByText(/Cambios guardados/)).toBeInTheDocument()
-    const patch = fetchMock.mock.calls.find(([, init]) => init?.method === 'PATCH')
-    expect(JSON.parse(String(patch?.[1]?.body))).toEqual({ name: 'Concierto renombrado', date: '2026-12-01', description: 'Descripción completa del concierto' })
-    await expectNoAccessibilityViolations()
+
+    it('creates a draft with a theatre plan, then previews and publishes it', async () => {
+      let created = false
+      const draft = { ...detail, id: 60, name: 'Obra nueva', status: 'draft' as const, ticket_mode: 'seats' as const, layout_kind: 'theatre' as const, layout_id: 11, venue_id: 1, venue: 'Auditorio Nexo', capacity: 4, available_capacity: 4, zones: [{ id: 5, name: 'General', price: 35, capacity: 4, available_capacity: 4 }], seats: [1, 2, 3, 4].map((number) => ({ id: number, zone_id: 5, zone_name: 'General', row: 'A', number, price: 35, available: true })) }
+      const fetchMock = stubApi((url, init) => {
+        if (url.endsWith('/api/organizer/events') && init?.method === 'POST') { created = true; return { ok: true, status: 201, json: async () => draft } }
+        if (url.endsWith('/api/organizer/events') && created) return { ok: true, status: 200, json: async () => [concert, { ...draft, price: 35, has_multiple_prices: false, layout_name: 'Sala frontal' }] }
+        if (url.endsWith('/api/organizer/events/60/state')) return { ok: true, status: 200, json: async () => ({ has_sales: false, can_edit_inventory: true, can_publish: true, can_unpublish: false, can_delete: true, publish_problems: [] }) }
+        if (url.endsWith('/api/organizer/events/60/stats')) return { ok: true, status: 200, json: async () => ({ ...stats, event_id: 60, sold: 0, capacity: 4, available: 4, revenue: 0, checked_in: 0, pending_entry: 0, zones: [] }) }
+        if (url.endsWith('/api/organizer/events/60/operators')) return { ok: true, status: 200, json: async () => [] }
+        if (url.endsWith('/api/organizer/events/60/publish')) return { ok: true, status: 200, json: async () => ({ ...draft, status: 'published' }) }
+        if (url.endsWith('/api/organizer/events/60')) return { ok: true, status: 200, json: async () => draft }
+        return null
+      })
+      render(<App />)
+      fireEvent.click(await screen.findByRole('button', { name: 'Mis eventos' }))
+      fireEvent.click(await screen.findByRole('button', { name: 'Nuevo evento' }))
+      fireEvent.change(screen.getByLabelText('Nombre'), { target: { value: 'Obra nueva' } })
+      fireEvent.change(screen.getByLabelText('Fecha'), { target: { value: '2030-01-10' } })
+      fireEvent.change(screen.getByLabelText('Descripción'), { target: { value: 'Obra ficticia con asientos numerados.' } })
+      fireEvent.change(screen.getByLabelText('Recinto'), { target: { value: '1' } })
+      expect(screen.getByLabelText('Plano del recinto')).toHaveValue('11')
+      expect(screen.getByText(/Total: 96 asientos en 8 filas/)).toBeInTheDocument()
+      fireEvent.click(screen.getByRole('button', { name: 'Quitar sección 2' }))
+      fireEvent.change(screen.getByLabelText('Filas'), { target: { value: '1' } })
+      fireEvent.change(screen.getByLabelText('Asientos por fila'), { target: { value: '4' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Crear borrador' }))
+      expect(await screen.findByRole('tab', { name: 'Vista previa' })).toBeInTheDocument()
+      const post = fetchMock.mock.calls.find(([, init]) => init?.method === 'POST')
+      expect(JSON.parse(String(post?.[1]?.body))).toMatchObject({ name: 'Obra nueva', date: '2030-01-10', layout_id: 11, sections: [{ name: 'General', price: 35, rows: 1, seats_per_row: 4 }] })
+      expect(await screen.findByText('Borrador', { selector: '.organizer-head .organizer-badge' })).toBeInTheDocument()
+      fireEvent.click(screen.getByRole('tab', { name: 'Vista previa' }))
+      expect(screen.getByText(/Vista previa: así verán este evento los clientes/)).toHaveTextContent('no aparece en el catálogo')
+      expect(await screen.findByRole('button', { name: 'Zona General, fila A, asiento 1, disponible' })).toBeInTheDocument()
+      fireEvent.click(screen.getByRole('tab', { name: 'Resumen' }))
+      fireEvent.click(await screen.findByRole('button', { name: 'Publicar evento' }))
+      expect(await screen.findByText('Evento publicado: ya aparece en el catálogo.')).toBeInTheDocument()
+    })
+
+    it('explains why a draft cannot be published yet', async () => {
+      const draft = { ...detail, status: 'draft' as const }
+      stubApi((url) => url.endsWith('/api/organizer/events') ? { ok: true, status: 200, json: async () => [{ ...concert, status: 'draft' }] } : url.endsWith('/api/organizer/events/51') ? { ok: true, status: 200, json: async () => draft } : null, { has_sales: false, can_edit_inventory: true, can_publish: false, can_unpublish: false, can_delete: true, publish_problems: ['La fecha de la función ya pasó'] })
+      render(<App />)
+      fireEvent.click(await screen.findByRole('button', { name: 'Mis eventos' }))
+      expect(await screen.findByText('La fecha de la función ya pasó')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Publicar evento' })).toBeDisabled()
+      expect(screen.getByRole('button', { name: 'Eliminar borrador' })).toBeEnabled()
+    })
   })
 
   it('moves focus into the private ticket dialog and restores it on Escape', async () => {
