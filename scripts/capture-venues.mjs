@@ -101,9 +101,11 @@ const interactions = {
   concierto: { view: 'Zonas', predicate: `[...document.querySelectorAll('.concert-zone-grid [aria-pressed]')].some((button) => button.getAttribute('aria-pressed') === 'true')`, points: grid([.5, .4, .6], [.55, .4, .7, .3, .8]) },
 }
 const results = []
+const performanceStats = []
 
 for (const venue of venues) for (const viewport of viewports) {
   await open(venue, viewport)
+  if (venue.slug !== 'estadio') performanceStats.push({ venue: venue.slug, viewport: viewport.name, ...(await evaluate('window.__venue3dStats ?? null')) })
   await shot(`${venue.slug}-${viewport.name}-${stamp}.png`)
   for (const [index, label] of venue.views.entries()) {
     if (index === 0) continue
@@ -123,6 +125,10 @@ for (const venue of venues.filter((item) => interactions[item.slug])) {
   if (hit) await shot(`${venue.slug}-seleccion-escritorio-${stamp}.png`)
 }
 console.log(JSON.stringify(results, null, 2))
+if (performanceStats.length) {
+  await writeFile(resolve(output, `rendimiento-${stamp}.json`), JSON.stringify({ nota: 'Medido en Chrome headless con WebGL por software (SwiftShader); no representa FPS en GPU real.', fecha: stamp, mediciones: performanceStats }, null, 2))
+  console.log(JSON.stringify(performanceStats))
+}
 if (results.some((result) => !result.selectedByCanvasClick)) process.exitCode = 1
 if (consoleErrors.length) console.error('Excepciones de página:', consoleErrors)
 socket.close()

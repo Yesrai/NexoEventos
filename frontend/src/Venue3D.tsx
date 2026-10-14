@@ -72,6 +72,7 @@ export default function Venue3D({ kind, seats = NO_SEATS, selectedSeatIds = NO_S
     renderer.domElement.tabIndex = 0
     host.appendChild(renderer.domElement)
 
+    const buildStart = performance.now()
     const scene = new THREE.Scene()
     const environment = applyEnvironment(renderer, scene, environmentIntensity[kind])
     const build = kind === 'theatre' ? buildTheatre({ scene, renderer, mobile }, seats) : kind === 'concert' ? buildConcert({ scene, renderer, mobile }, zones) : buildMuseum({ scene, renderer, mobile })
@@ -110,6 +111,11 @@ export default function Venue3D({ kind, seats = NO_SEATS, selectedSeatIds = NO_S
     controls.addEventListener('change', render)
     build.refresh(stateRef.current)
     render()
+    if (import.meta.env.DEV) {
+      // Solo en desarrollo: contadores reales para la evidencia de rendimiento (scripts/capture-venues.mjs).
+      const { render: info, memory } = renderer.info
+      ;(window as unknown as { __venue3dStats?: unknown }).__venue3dStats = { kind, buildMs: Math.round(performance.now() - buildStart), drawCalls: info.calls, triangles: info.triangles, geometries: memory.geometries, textures: memory.textures }
+    }
     setViews(build.views.map(({ id, label }) => ({ id, label })))
     setActiveView(firstView.id)
     setLegend(build.legend)
