@@ -21,3 +21,27 @@ La asignación se define por ID de función en `scripts/seed-demo-catalog.py`; n
 | Ritmos del Malecón | Anfiteatro del Parque | Entrada general | Sin mapa de asientos |
 
 Los eventos sin localidades numeradas nunca reciben un auditorio de respaldo. Si una función declara asientos pero carece de plano explícito, la interfaz bloquea el mapa genérico y muestra un error de configuración.
+
+## Ambientes 3D locales
+
+Las vistas 3D son aproximaciones propias de recintos ficticios; no representan
+réplicas exactas de lugares reales. Se cargan solo al activar la vista y no
+añaden inventario vendible:
+
+- **Estadio Nexo**: terreno exterior, cancha, perímetro, graderías escalonadas,
+  accesos, barandas, cubiertas parciales y torres. Solo son interactivos los
+  asientos recibidos desde la función activa.
+- **Auditorio Nexo**: sala de corte abierto con escenario, telón, luces,
+  pendiente, pasillo y butacas del inventario real.
+- **Arena Parque Sur**: escenario, pantalla de contenido propio, estructura,
+  accesos, barreras y superficies de Campo/Preferencial. Son zonas de pie, sin
+  sillas decorativas.
+- **Galería Central / Museo de la Ciudad**: salas conectadas, piezas geométricas
+  propias e iluminación de galería. Es una guía espacial; la reserva continúa
+  siendo por fecha, horario y cantidad.
+- La **entrada general** sin distribución útil conserva el selector de cantidad
+  y no carga Three.js.
+
+Cada vista conserva el plano 2D o la lista como alternativa accesible, respeta
+`prefers-reduced-motion` y usa la misma selección, precios e identificadores que
+el backend. Los estados ocupado/disponible nunca se inventan en el cliente.

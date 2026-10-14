@@ -240,7 +240,8 @@ h1 { max-width: 760px; margin: 0; font-size: clamp(2.25rem,5vw,4rem); font-weigh
 .concert-floor { display: grid; place-items: center; border: 2px solid #74cdbc; border-radius: 14px; color: #315766; background: var(--accent-soft); font-size: .8rem; }
 .concert-zone-grid { display: grid; gap: 10px; }
 .museum-guide { padding: 16px; display: grid; gap: 14px; border: 1px solid var(--line); border-radius: 12px; background: #f6f8f9; }
-.museum-guide-heading { display: grid; gap: 3px; }
+.museum-guide-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.museum-guide-heading > div:first-child { display: grid; gap: 3px; }
 .museum-guide-heading span { color: var(--muted); font-size: .76rem; }
 .museum-rooms { display: grid; grid-template-columns: repeat(5,minmax(70px,1fr)); gap: 7px; overflow-x: auto; scrollbar-width: thin; }
 .museum-rooms span { min-height: 68px; padding: 8px; display: grid; place-items: center; border: 1px solid #b9c8cf; border-radius: 9px; color: #38515f; background: #fff; font-size: .72rem; text-align: center; }
@@ -315,6 +316,21 @@ h1 { max-width: 760px; margin: 0; font-size: clamp(2.25rem,5vw,4rem); font-weigh
 .stadium-3d-sector-list strong { overflow: hidden; font-size: .72rem; font-weight: 650; text-overflow: ellipsis; }
 .stadium-3d-sector-list span { color: var(--muted); font-size: .65rem; }
 .stadium-3d-note { margin: 0; color: var(--muted); font-size: .68rem; line-height: 1.45; }
+.venue-view-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #334b5a; font-size: .8rem; font-weight: 600; }
+.venue-3d-shell { display: grid; gap: 8px; }
+.venue-3d-stage { position: relative; min-height: 520px; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: #e4eaec; }
+.venue-3d-host { width: 100%; height: 520px; touch-action: none; }
+.venue-3d-canvas { width: 100%; height: 100%; display: block; outline: none; }
+.venue-3d-canvas:focus-visible { outline: 3px solid rgba(0,194,165,.52); outline-offset: -4px; }
+.venue-3d-toolbar { position: absolute; z-index: 3; top: 10px; right: 10px; display: flex; gap: 6px; }
+.venue-3d-toolbar button { min-height: 34px; padding: 7px 10px; border: 1px solid #aebdc5; border-radius: 8px; color: var(--ink); background: rgba(255,255,255,.95); font: inherit; font-size: .72rem; font-weight: 600; }
+.venue-3d-toolbar button[aria-label] { width: 36px; padding: 0; font-size: 1rem; }
+.venue-3d-toolbar button:hover { border-color: #07987f; background: var(--accent-soft); }
+.venue-3d-loading { min-height: 420px; display: flex; align-items: center; justify-content: center; gap: 9px; color: var(--muted); background: #e9eef0; }
+.venue-3d-stage > .venue-3d-loading { position: absolute; inset: 0; min-height: 0; }
+.venue-3d-hint { position: absolute; top: 10px; left: 10px; max-width: calc(100% - 220px); padding: 6px 9px; border: 1px solid rgba(126,147,157,.5); border-radius: 8px; color: #294451; background: rgba(255,255,255,.9); font-size: .68rem; pointer-events: none; }
+.venue-3d-tooltip { position: absolute; left: 10px; bottom: 10px; max-width: calc(100% - 20px); padding: 9px 11px; border: 1px solid #79cdbd; border-radius: 9px; color: var(--ink); background: rgba(255,255,255,.96); box-shadow: 0 7px 20px rgba(12,38,51,.12); font-size: .74rem; pointer-events: none; }
+.venue-3d-note { margin: 0; color: var(--muted); font-size: .68rem; line-height: 1.45; }
 .stadium-3d-fallback { margin: 0; padding: 10px 12px; border: 1px solid #d5e0e4; border-radius: 9px; color: #425965; background: #f4f7f8; font-size: .78rem; }
 .stadium-summary { min-width: 0; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
 .stadium-summary > summary { display: none; cursor: pointer; font-weight: 600; }
@@ -614,6 +630,7 @@ footer { padding: 34px 24px; border-top: 1px solid var(--line); color: #6f7e88; 
   .stadium-summary > summary::marker { color: var(--accent-dark); }
   .stadium-summary-content { padding-top: 14px; }
   .stadium-summary .seat-selection-status { margin-top: 4px; }
+  .museum-guide-heading, .venue-view-heading { align-items: stretch; flex-direction: column; }
 }
 @media (max-width: 600px) {
   .category-carousel { display: block; }
@@ -649,6 +666,9 @@ footer { padding: 34px 24px; border-top: 1px solid var(--line); color: #6f7e88; 
   .stadium-3d-hint { font-size: .62rem; }
   .stadium-3d-toolbar { top: 8px; right: 8px; left: 8px; }
   .stadium-3d-toolbar button { background: rgba(255,255,255,.94); }
+  .venue-3d-stage, .venue-3d-host { min-height: 460px; height: 460px; }
+  .venue-3d-hint { top: 52px; max-width: calc(100% - 16px); }
+  .venue-3d-toolbar { top: 8px; right: 8px; }
   .stadium-3d-sector-list { grid-template-columns: repeat(3,minmax(92px,1fr)); overflow-x: auto; scrollbar-width: none; }
   .stadium-3d-sector-list::-webkit-scrollbar { display: none; }
   .stadium-svg { min-width: 520px; }

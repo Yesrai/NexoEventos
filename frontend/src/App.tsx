@@ -45,6 +45,7 @@ type BarcodeDetectorConstructor = new (options: { formats: string[] }) => Barcod
 type IconName = 'arrow' | 'art' | 'calendar' | 'check' | 'cinema' | 'clock' | 'close' | 'conference' | 'dance' | 'exhibition' | 'eye' | 'eyeOff' | 'fair' | 'festival' | 'food' | 'kids' | 'location' | 'minus' | 'music' | 'networking' | 'plus' | 'qr' | 'search' | 'sliders' | 'sport' | 'technology' | 'theater' | 'ticket' | 'user' | 'workshop'
 
 const Stadium3D = lazy(() => import('./Stadium3D'))
+const Venue3D = lazy(() => import('./Venue3D'))
 
 const configuredApiUrl = import.meta.env.VITE_API_URL
 const apiUrl = configuredApiUrl ?? ''
@@ -483,6 +484,8 @@ function AuditoriumSeatPicker({ seats, selectedSeatIds, onToggle }: {
   onToggle: (seat: Seat) => void
 }) {
   const [zoom, setZoom] = useState(1)
+  const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d')
+  const [threeUnavailable, setThreeUnavailable] = useState(false)
   const rows = [...new Set(seats.map((seat) => seat.row))]
   const maximumNumber = Math.max(0, ...seats.map((seat) => seat.number))
   const aisleStart = Math.floor(maximumNumber / 2) + 1
@@ -492,19 +495,20 @@ function AuditoriumSeatPicker({ seats, selectedSeatIds, onToggle }: {
   return <div className="auditorium-selector">
     <div className="auditorium-heading">
       <div><strong>Plano del auditorio</strong><span>Escenario al frente · pasillo central</span></div>
-      <div className="zoom-controls" role="group" aria-label="Zoom del plano">
+      <div className="stadium-heading-actions"><div className="stadium-view-toggle" role="group" aria-label="Vista del auditorio"><button type="button" className={viewMode === '2d' ? 'active' : ''} aria-pressed={viewMode === '2d'} onClick={() => setViewMode('2d')}>Plano 2D</button><button type="button" className={viewMode === '3d' ? 'active' : ''} aria-pressed={viewMode === '3d'} disabled={threeUnavailable} onClick={() => setViewMode('3d')}>Sala 3D</button></div>{viewMode === '2d' && <div className="zoom-controls" role="group" aria-label="Zoom del plano">
         <button type="button" onClick={() => changeZoom(zoom - .1)} disabled={zoom <= .8} aria-label="Alejar plano"><Icon name="minus" size={16} /></button>
         <output aria-live="polite" aria-label="Nivel de zoom">{Math.round(zoom * 100)}%</output>
         <button type="button" onClick={() => changeZoom(zoom + .1)} disabled={zoom >= 1.4} aria-label="Acercar plano"><Icon name="plus" size={16} /></button>
         <button type="button" className="zoom-reset" onClick={() => setZoom(1)} disabled={zoom === 1}>Restablecer</button>
-      </div>
+      </div>}</div>
     </div>
+    {threeUnavailable && <p className="stadium-3d-fallback" role="status">La sala 3D no está disponible en este dispositivo. El plano 2D y la lista siguen activos.</p>}
     <div className="seat-legend" aria-label="Leyenda del plano">
       <span><i className="seat-sample" />Disponible</span>
       <span><i className="seat-sample selected">✓</i>Seleccionado</span>
       <span><i className="seat-sample occupied">×</i>Ocupado</span>
     </div>
-    <div className="auditorium-viewport" tabIndex={0} aria-label="Plano desplazable del auditorio. Usa los controles de zoom o desplázate horizontalmente.">
+    {viewMode === '3d' ? <Suspense fallback={<div className="venue-3d-loading" role="status"><span className="spinner" />Cargando sala 3D…</div>}><Venue3D kind="theatre" seats={seats} selectedSeatIds={selectedSeatIds} onToggleSeat={onToggle} onUnavailable={() => { setThreeUnavailable(true); setViewMode('2d') }} /></Suspense> : <div className="auditorium-viewport" tabIndex={0} aria-label="Plano desplazable del auditorio. Usa los controles de zoom o desplázate horizontalmente.">
       <div className="auditorium-plan" style={{ zoom }}>
         <div className="auditorium-stage"><span>Escenario</span></div>
         <div className="stage-direction" aria-hidden="true">Vista hacia el escenario</div>
@@ -530,7 +534,7 @@ function AuditoriumSeatPicker({ seats, selectedSeatIds, onToggle }: {
           })}
         </div>
       </div>
-    </div>
+    </div>}
     <div className="seat-selection-status" role="status" aria-live="polite">
       <strong>{selectedSeats.length ? `${selectedSeats.length} asiento${selectedSeats.length === 1 ? '' : 's'} seleccionado${selectedSeats.length === 1 ? '' : 's'}` : 'Ningún asiento seleccionado'}</strong>
       <span>{selectedSeats.length ? selectedSeats.map((seat) => `${seat.row}-${seat.number}`).join(', ') : 'Elige hasta 10 asientos disponibles.'}</span>
@@ -597,11 +601,15 @@ function StadiumSeatPicker({ seats, selectedSeatIds, onToggle }: {
 }
 
 function ZoneLayoutPicker({ zones, selectedZoneId, onSelect, concert }: { zones: Zone[]; selectedZoneId: number | null; onSelect: (id: number) => void; concert: boolean }) {
-  return <fieldset className={`zone-options ${concert ? 'concert-zone-picker' : ''}`}><legend>{concert ? 'Elige una zona de pie' : 'Elige una zona'}</legend>{concert && <div className="concert-plan" aria-label="Plano del concierto"><div className="concert-stage">Escenario</div><div className="concert-floor">Zonas sin asientos numerados</div></div>}<div className={concert ? 'concert-zone-grid' : ''}>{zones.map((zone) => <button type="button" key={zone.id} className={`ticket-option ${selectedZoneId === zone.id ? 'selected-option' : ''}`} disabled={zone.available_capacity === 0} aria-pressed={selectedZoneId === zone.id} onClick={() => onSelect(zone.id)}><span className="selection-check">{selectedZoneId === zone.id && <Icon name="check" size={16} />}</span><div><strong>{zone.name}</strong><small>{zone.available_capacity} de {zone.capacity} disponibles{concert ? ' · de pie' : ''}</small></div><b>S/ {zone.price.toFixed(2)}</b></button>)}</div></fieldset>
+  const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d')
+  const [threeUnavailable, setThreeUnavailable] = useState(false)
+  return <fieldset className={`zone-options ${concert ? 'concert-zone-picker' : ''}`}><legend>{concert ? 'Elige una zona de pie' : 'Elige una zona'}</legend>{concert && <><div className="venue-view-heading"><span>Plano de Arena Parque Sur</span><div className="stadium-view-toggle" role="group" aria-label="Vista del concierto"><button type="button" className={viewMode === '2d' ? 'active' : ''} aria-pressed={viewMode === '2d'} onClick={() => setViewMode('2d')}>Plano 2D</button><button type="button" className={viewMode === '3d' ? 'active' : ''} aria-pressed={viewMode === '3d'} disabled={threeUnavailable} onClick={() => setViewMode('3d')}>Recinto 3D</button></div></div>{viewMode === '3d' ? <Suspense fallback={<div className="venue-3d-loading" role="status"><span className="spinner" />Cargando recinto 3D…</div>}><Venue3D kind="concert" zones={zones} selectedZoneId={selectedZoneId} onSelectZone={onSelect} onUnavailable={() => { setThreeUnavailable(true); setViewMode('2d') }} /></Suspense> : <div className="concert-plan" aria-label="Plano del concierto"><div className="concert-stage">Escenario</div><div className="concert-floor">Zonas sin asientos numerados</div></div>}</>}<div className={concert ? 'concert-zone-grid' : ''}>{zones.map((zone) => <button type="button" key={zone.id} className={`ticket-option ${selectedZoneId === zone.id ? 'selected-option' : ''}`} disabled={zone.available_capacity === 0} aria-pressed={selectedZoneId === zone.id} onClick={() => onSelect(zone.id)}><span className="selection-check">{selectedZoneId === zone.id && <Icon name="check" size={16} />}</span><div><strong>{zone.name}</strong><small>{zone.available_capacity} de {zone.capacity} disponibles{concert ? ' · de pie' : ''}</small></div><b>S/ {zone.price.toFixed(2)}</b></button>)}</div></fieldset>
 }
 
 function MuseumVisitGuide() {
-  return <aside className="museum-guide" aria-label="Plano orientativo del museo"><div className="museum-guide-heading"><strong>Recorrido orientativo</strong><span>La reserva es por horario y cantidad, no por sala.</span></div><div className="museum-rooms" aria-hidden="true"><span>Ingreso</span><span>Sala 1</span><span>Sala 2</span><span>Sala 3</span><span>Salida</span></div></aside>
+  const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d')
+  const [threeUnavailable, setThreeUnavailable] = useState(false)
+  return <aside className="museum-guide" aria-label="Plano orientativo del museo"><div className="museum-guide-heading"><div><strong>Recorrido orientativo</strong><span>La reserva es por horario y cantidad, no por sala.</span></div><div className="stadium-view-toggle" role="group" aria-label="Vista del museo"><button type="button" className={viewMode === '2d' ? 'active' : ''} aria-pressed={viewMode === '2d'} onClick={() => setViewMode('2d')}>Plano</button><button type="button" className={viewMode === '3d' ? 'active' : ''} aria-pressed={viewMode === '3d'} disabled={threeUnavailable} onClick={() => setViewMode('3d')}>Recorrido 3D</button></div></div>{viewMode === '3d' ? <Suspense fallback={<div className="venue-3d-loading" role="status"><span className="spinner" />Cargando recorrido 3D…</div>}><Venue3D kind="museum" onUnavailable={() => { setThreeUnavailable(true); setViewMode('2d') }} /></Suspense> : <div className="museum-rooms" aria-hidden="true"><span>Ingreso</span><span>Sala 1</span><span>Sala 2</span><span>Sala 3</span><span>Salida</span></div>}</aside>
 }
 
 export default function App() {
