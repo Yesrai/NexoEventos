@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { addStadiumEnvironment } from './venue3d-stadium-env'
 
 export type StadiumSeat = {
   id: number
@@ -153,8 +154,8 @@ export default function Stadium3D({ seats, selectedSeatIds, onToggle, onSectorCh
 
     const scene = new THREE.Scene()
     scene.background = new THREE.Color('#dce8ec')
-    scene.fog = new THREE.Fog('#dce8ec', 58, 105)
-    const camera = new THREE.PerspectiveCamera(39, host.clientWidth / host.clientHeight, .1, 140)
+    scene.fog = new THREE.Fog('#dbe8ee', 95, 230)
+    const camera = new THREE.PerspectiveCamera(39, host.clientWidth / host.clientHeight, .1, 500)
     camera.position.copy(GENERAL_CAMERA)
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.target.copy(GENERAL_TARGET)
@@ -167,7 +168,7 @@ export default function Stadium3D({ seats, selectedSeatIds, onToggle, onSectorCh
     controls.minAzimuthAngle = -Math.PI * .82
     controls.maxAzimuthAngle = Math.PI * .82
 
-    scene.add(new THREE.HemisphereLight('#f8fbfc', '#65776d', 2.25))
+    scene.add(new THREE.HemisphereLight('#f8fbfc', '#65776d', 1.7))
     const sun = new THREE.DirectionalLight('#ffffff', 2.8)
     sun.position.set(15, 28, 18)
     sun.castShadow = !mobile
@@ -178,20 +179,14 @@ export default function Stadium3D({ seats, selectedSeatIds, onToggle, onSectorCh
     sun.shadow.camera.bottom = -28
     scene.add(sun)
 
-    const terrainTexture = createGrassTexture()
-    if (terrainTexture) terrainTexture.repeat.set(10, 8)
-    const terrain = new THREE.Mesh(new THREE.PlaneGeometry(96, 78), new THREE.MeshStandardMaterial({ color: '#71886f', map: terrainTexture, roughness: 1 }))
-    terrain.rotation.x = -Math.PI / 2
-    terrain.position.y = -1.22
-    terrain.receiveShadow = true
-    scene.add(terrain)
+    addStadiumEnvironment(scene, mobile)
 
-    const base = new THREE.Mesh(new THREE.CylinderGeometry(28, 29, 1.15, 64), new THREE.MeshStandardMaterial({ color: '#d6dfe3', roughness: .92 }))
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(28, 29, 1.15, 64), new THREE.MeshStandardMaterial({ color: '#7f8a8f', roughness: .92 }))
     base.position.y = -.62
     base.receiveShadow = true
     scene.add(base)
 
-    const concourse = new THREE.Mesh(new THREE.RingGeometry(22, 31, 72), new THREE.MeshStandardMaterial({ color: '#aeb9bc', roughness: .98, side: THREE.DoubleSide }))
+    const concourse = new THREE.Mesh(new THREE.RingGeometry(22, 31, 72), new THREE.MeshStandardMaterial({ color: '#889398', roughness: .98, side: THREE.DoubleSide }))
     concourse.rotation.x = -Math.PI / 2
     concourse.position.y = -.03
     concourse.receiveShadow = true
@@ -200,7 +195,7 @@ export default function Stadium3D({ seats, selectedSeatIds, onToggle, onSectorCh
     perimeter.rotation.x = Math.PI / 2
     perimeter.position.y = .18
     scene.add(perimeter)
-    const pathMaterial = new THREE.MeshStandardMaterial({ color: '#c9d0d1', roughness: 1 })
+    const pathMaterial = new THREE.MeshStandardMaterial({ color: '#7f8a8f', roughness: 1 })
     for (const [x, z, width, depth] of [[0, -35, 8, 14], [0, 35, 8, 14], [-39, 0, 18, 8], [39, 0, 18, 8]] as const) {
       const path = new THREE.Mesh(new THREE.BoxGeometry(width, .08, depth), pathMaterial)
       path.position.set(x, -1.12, z)
@@ -475,11 +470,10 @@ export default function Stadium3D({ seats, selectedSeatIds, onToggle, onSectorCh
         if (object instanceof THREE.Mesh || object instanceof THREE.Line) {
           object.geometry.dispose()
           const materials = Array.isArray(object.material) ? object.material : [object.material]
-          materials.forEach((material) => material.dispose())
+          materials.forEach((material) => { (material as THREE.MeshStandardMaterial).map?.dispose(); material.dispose() })
         }
       })
       grassTexture?.dispose()
-      terrainTexture?.dispose()
       renderer.dispose()
       renderer.domElement.remove()
       seatMeshesRef.current = []

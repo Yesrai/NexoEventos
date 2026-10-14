@@ -318,8 +318,8 @@ h1 { max-width: 760px; margin: 0; font-size: clamp(2.25rem,5vw,4rem); font-weigh
 .stadium-3d-note { margin: 0; color: var(--muted); font-size: .68rem; line-height: 1.45; }
 .venue-view-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #334b5a; font-size: .8rem; font-weight: 600; }
 .venue-3d-shell { display: grid; gap: 8px; }
-.venue-3d-stage { position: relative; min-height: 520px; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: #e4eaec; }
-.venue-3d-host { width: 100%; height: 520px; touch-action: none; }
+.venue-3d-stage { position: relative; min-height: 600px; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: #e4eaec; }
+.venue-3d-host { width: 100%; height: 600px; touch-action: none; }
 .venue-3d-canvas { width: 100%; height: 100%; display: block; outline: none; }
 .venue-3d-canvas:focus-visible { outline: 3px solid rgba(0,194,165,.52); outline-offset: -4px; }
 .venue-3d-toolbar { position: absolute; z-index: 3; top: 10px; right: 10px; display: flex; gap: 6px; }
@@ -330,6 +330,14 @@ h1 { max-width: 760px; margin: 0; font-size: clamp(2.25rem,5vw,4rem); font-weigh
 .venue-3d-stage > .venue-3d-loading { position: absolute; inset: 0; min-height: 0; }
 .venue-3d-hint { position: absolute; top: 10px; left: 10px; max-width: calc(100% - 220px); padding: 6px 9px; border: 1px solid rgba(126,147,157,.5); border-radius: 8px; color: #294451; background: rgba(255,255,255,.9); font-size: .68rem; pointer-events: none; }
 .venue-3d-tooltip { position: absolute; left: 10px; bottom: 10px; max-width: calc(100% - 20px); padding: 9px 11px; border: 1px solid #79cdbd; border-radius: 9px; color: var(--ink); background: rgba(255,255,255,.96); box-shadow: 0 7px 20px rgba(12,38,51,.12); font-size: .74rem; pointer-events: none; }
+.venue-3d-views { position: absolute; z-index: 3; left: 10px; bottom: 10px; display: flex; gap: 6px; flex-wrap: wrap; max-width: calc(100% - 20px); }
+.venue-3d-views button { min-height: 34px; padding: 6px 11px; border: 1px solid rgba(255,255,255,.55); border-radius: 999px; color: #fff; background: rgba(14,32,42,.72); backdrop-filter: blur(6px); font: inherit; font-size: .72rem; font-weight: 600; cursor: pointer; transition: background-color var(--transition), border-color var(--transition); }
+.venue-3d-views button:hover { border-color: #00e0bd; }
+.venue-3d-views button.active { color: #052b26; border-color: #00e0bd; background: #00e0bd; }
+.venue-3d-tooltip { bottom: 54px; }
+.venue-3d-legend { margin: 0; padding: 0; display: flex; gap: 8px 16px; flex-wrap: wrap; list-style: none; color: var(--muted); font-size: .74rem; }
+.venue-3d-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.venue-3d-legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
 .venue-3d-note { margin: 0; color: var(--muted); font-size: .68rem; line-height: 1.45; }
 .stadium-3d-fallback { margin: 0; padding: 10px 12px; border: 1px solid #d5e0e4; border-radius: 9px; color: #425965; background: #f4f7f8; font-size: .78rem; }
 .stadium-summary { min-width: 0; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
@@ -633,6 +641,10 @@ footer { padding: 34px 24px; border-top: 1px solid var(--line); color: #6f7e88; 
   .museum-guide-heading, .venue-view-heading { align-items: stretch; flex-direction: column; }
 }
 @media (max-width: 600px) {
+  .venue-3d-hint { display: none; }
+  .venue-3d-views { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .venue-3d-views button { flex: 0 0 auto; }
+  .venue-3d-stage, .venue-3d-host { min-height: 520px; height: 520px; }
   .category-carousel { display: block; }
   .category-arrow { display: none; }
   .category-links { width: min(100%,294px); margin-inline: auto; grid-auto-columns: 142px; padding-inline: 0; }
