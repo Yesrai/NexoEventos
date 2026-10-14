@@ -53,6 +53,10 @@ class EventSummary(BaseModel):
     layout_kind: Literal["theatre", "stadium", "concert_zones", "museum", "zones", "general"] | None = None
     is_demo: bool
     status: Literal["draft", "published"] = "published"
+    sales_start_at: datetime | None = None
+    queue_enabled: bool = False
+    queue_max_active: int = 50
+    queue_pass_minutes: int = 10
 
 
 class ZoneView(BaseModel):
@@ -241,3 +245,28 @@ class EventState(BaseModel):
     can_unpublish: bool
     can_delete: bool
     publish_problems: list[str]
+
+
+class QueueView(BaseModel):
+    status: Literal["waiting", "admitted"]
+    position: int | None
+    waiting_total: int
+    expires_at: datetime | None
+    seconds_left: int | None
+
+
+class SalesStatus(BaseModel):
+    server_time: datetime
+    sales_start_at: datetime | None
+    sales_open: bool
+    queue_enabled: bool
+    queue_max_active: int
+    queue_pass_minutes: int
+    queue: QueueView | None
+
+
+class SalesConfig(StrictModel):
+    sales_start_at: datetime | None = None
+    queue_enabled: bool = False
+    queue_max_active: int = Field(default=50, ge=1, le=1000)
+    queue_pass_minutes: int = Field(default=10, ge=1, le=60)

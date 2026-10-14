@@ -46,6 +46,10 @@ def event_summary(
         layout_kind=layout.layout_kind if layout else None,
         is_demo=event.is_demo,
         status=event.status,
+        sales_start_at=event.sales_start_at,
+        queue_enabled=event.queue_enabled,
+        queue_max_active=event.queue_max_active,
+        queue_pass_minutes=event.queue_pass_minutes,
     )
 
 

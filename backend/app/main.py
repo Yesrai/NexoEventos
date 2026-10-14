@@ -29,6 +29,8 @@ from app.auth import (
     verify_login,
     verify_public_origin,
 )
+from app.queue import QueueRequiredError, SalesNotOpenError
+from app.sales import router as sales_router
 from app.catalog import event_detail, event_summary, zone_pricing
 from app.organizer import router as organizer_router
 from app.config import ALLOWED_ORIGINS, validate_production_config
@@ -202,6 +204,12 @@ def create_app(database_url: str | None = None) -> FastAPI:
             result = create_reservation(session, event_id, context.user, payload, idempotency_key)
         except EventNotFoundError:
             raise HTTPException(status_code=404, detail="Evento no encontrado") from None
+        except SalesNotOpenError:
+            session.rollback()
+            raise HTTPException(status_code=403, detail={"code": "sales_not_open", "message": "Las ventas de este evento todavía no han comenzado."}) from None
+        except QueueRequiredError:
+            session.rollback()
+            raise HTTPException(status_code=403, detail={"code": "queue_required", "message": "Este evento tiene fila virtual: entra a la fila y espera tu turno para comprar."}) from None
         except CapacityExceededError:
             raise HTTPException(status_code=409, detail="No hay cupos suficientes") from None
         except SelectionConflictError:
@@ -306,6 +314,7 @@ def create_app(database_url: str | None = None) -> FastAPI:
         return ValidationResult(result="accepted", ticket_id=result.ticket_id, event_id=result.event_id, used_at=result.used_at, ticket_location=location)
 
     application.include_router(organizer_router)
+    application.include_router(sales_router)
     return application
 
 

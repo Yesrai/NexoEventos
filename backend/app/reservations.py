@@ -9,6 +9,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app import queue as sales_queue
 from app.models import Event, EventSeat, EventZone, Reservation, Ticket, User
 from app.schemas import ReservationCreate
 from app.ticket_tokens import create_ticket_secret
@@ -95,6 +96,7 @@ def create_reservation(session: Session, event_id: int, user: User, payload: Res
         if event is None or event.status != "published":
             session.rollback()
             raise EventNotFoundError
+        pass_entry = sales_queue.require_pass(session, event, user)
         _validate_mode(event, payload)
         if payload.quantity > event.capacity - event.reserved_count:
             session.rollback()
@@ -167,6 +169,8 @@ def create_reservation(session: Session, event_id: int, user: User, payload: Res
                 unit_price=unit_prices[index],
             ))
         session.flush()
+        if pass_entry is not None:
+            pass_entry.status = "completed"
         total = sum(unit_prices, Decimal("0"))
         result = ReservationResult(reservation, event.capacity - event.reserved_count, payload.quantity, False, total, event.ticket_mode)
         session.commit()

@@ -18,6 +18,7 @@ from app.database import get_session
 from app.inventory import MODE_BY_KIND, InventoryError, apply_inventory, has_sales, publish_problems
 from app.models import Event, EventSeat, EventZone, OperatorEventAssignment, Ticket, User, Venue, VenueLayout
 from app.schemas import (
+    SalesConfig,
     EventCreate,
     EventDetail,
     EventState,
@@ -268,3 +269,17 @@ def organizer_event_stats(event_id: int, context: AuthContext = Depends(require_
         revenue=float(revenue), checked_in=checked_in, pending_entry=sold - checked_in,
         zones=[ZoneStats(zone_id=zone.id, name=zone.name, price=float(zone.price), capacity=zone.capacity, sold=sold_by_zone.get(zone.id, 0), available=zone.capacity - zone.reserved_count, revenue=float(revenue_by_zone.get(zone.id, Decimal("0")))) for zone in zones],
     )
+
+
+@router.put("/events/{event_id}/sales", response_model=EventDetail)
+def configure_sales(event_id: int, payload: SalesConfig, context: AuthContext = Depends(require_csrf_role("organizer")), session: Session = Depends(get_session)) -> EventDetail:
+    """Inicio de ventas y fila virtual. El inicio no cambia una vez que hay reservas; la fila sí se puede ajustar."""
+    event = _owned_event(session, event_id, context.user.id, lock=True)
+    if payload.sales_start_at != event.sales_start_at and has_sales(session, event):
+        raise HTTPException(status_code=409, detail="El inicio de ventas no puede cambiar porque ya hay reservas o entradas emitidas")
+    event.sales_start_at = payload.sales_start_at
+    event.queue_enabled = payload.queue_enabled
+    event.queue_max_active = payload.queue_max_active
+    event.queue_pass_minutes = payload.queue_pass_minutes
+    session.commit()
+    return event_detail(event, session)

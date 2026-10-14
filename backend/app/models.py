@@ -65,6 +65,10 @@ class Event(Base):
     ticket_mode: Mapped[str] = mapped_column(String(20), default="general", server_default="general")
     is_demo: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
     status: Mapped[str] = mapped_column(String(12), default="published", server_default="published")
+    sales_start_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    queue_enabled: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    queue_max_active: Mapped[int] = mapped_column(Integer, default=50, server_default="50")
+    queue_pass_minutes: Mapped[int] = mapped_column(Integer, default=10, server_default="10")
     organizer_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     venue_id: Mapped[int | None] = mapped_column(ForeignKey("venues.id", ondelete="RESTRICT"), nullable=True)
     layout_id: Mapped[int | None] = mapped_column(ForeignKey("venue_layouts.id", ondelete="RESTRICT"), nullable=True)
@@ -182,3 +186,14 @@ class AccessLog(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), server_default=func.now()
     )
+
+
+class QueueEntry(Base):
+    __tablename__ = "queue_entries"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.id", ondelete="CASCADE"))
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    status: Mapped[str] = mapped_column(String(12))
+    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    admitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
