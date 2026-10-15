@@ -11,6 +11,7 @@ const filter = process.argv[4] ?? ''
 const base = process.env.E2E_BASE ?? 'http://127.0.0.1:5173'
 await mkdir(output, { recursive: true })
 const pages = [
+  { slug: 'inicio', event: null },
   { slug: 'concierto', event: 'Noche del Parque' },
   { slug: 'estadio', event: 'Clásico Metropolitano' },
   { slug: 'auditorio', event: 'Voces en el Auditorio' },
@@ -32,15 +33,23 @@ await send('Page.enable'); await send('Runtime.enable')
 for (const item of pages) for (const viewport of viewports) {
   await send('Emulation.setDeviceMetricsOverride', { width: viewport.width, height: viewport.height, deviceScaleFactor: viewport.scale, mobile: viewport.mobile })
   await send('Page.navigate', { url: base }); await pause(1800)
-  await evaluate(`(() => { const input = document.querySelector('#main-search'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(item.event)}); input.dispatchEvent(new Event('input', { bubbles: true })) })()`)
+  if (item.event) await evaluate(`(() => { const input = document.querySelector('#main-search'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(item.event)}); input.dispatchEvent(new Event('input', { bubbles: true })) })()`)
   await pause(300)
-  for (let attempt = 0; attempt < 12 && !(await evaluate(`!!document.querySelector('.ep')`)); attempt += 1) {
+  if (item.event) for (let attempt = 0; attempt < 12 && !(await evaluate(`!!document.querySelector('.ep')`)); attempt += 1) {
     await evaluate(`[...document.querySelectorAll('button')].find((b) => b.getAttribute('aria-label') === ${JSON.stringify(`Ver ${item.event}`)})?.click()`)
     await pause(700)
   }
   await pause(3500)
+  await evaluate(`(async () => { for (let y = 0; y < document.documentElement.scrollHeight; y += 500) { window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 90)) } window.scrollTo(0, 0) })()`)
+  await pause(1200)
   const height = await evaluate('Math.ceil(document.documentElement.scrollHeight)')
-  const shot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true, clip: { x: 0, y: 0, width: viewport.width, height: Math.min(height, 6000), scale: 1 } })
+  const shot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true, clip: { x: 0, y: 0, width: viewport.width, height: Math.min(height, item.event ? 6000 : 3400), scale: 1 } })
+  for (const [label, top] of [['pantalla', 0], ['pantalla-2', item.event ? 700 : 1300]]) {
+    await evaluate(`window.scrollTo(0, ${top})`)
+    await pause(900)
+    const view = await send('Page.captureScreenshot', { format: 'png' })
+    await writeFile(resolve(output, `${prefix}${item.slug}-${viewport.name}-${label}.png`), Buffer.from(view.data, 'base64'))
+  }
   const name = `${prefix}${item.slug}-${viewport.name}.png`
   await writeFile(resolve(output, name), Buffer.from(shot.data, 'base64')); console.log(name, height)
 }

@@ -553,22 +553,28 @@ export default function App() {
       </div>}
       {view === 'catalog' && !(detailLoading || selected || reservationError) && <>
         <section className="home-intro" id="inicio" aria-labelledby="featured-title">
-          <div className="home-section-title"><h1 id="featured-title">Destacados</h1></div>
+          <h1 id="featured-title" className="sr-only">Destacados</h1>
           {loading && <div className="status" role="status">Cargando destacados…</div>}
-          {!loading && featured && <div className="featured-layout">
-            <article className="featured-main">
-              <button className="featured-poster" onClick={() => void openDetail(featured.id)} aria-label={`Abrir evento destacado ${featured.name}`}>
-                {featured.image_path ? <img src={featured.image_path} alt="" /> : <span className="image-fallback">{featured.category}</span>}
-                <span className="poster-copy"><small>{featured.category}</small><strong>{featured.name}</strong><span>{formatDate(featured.date)} · {formatTime(featured.time)} · {featured.city}</span></span>
-              </button>
-              <button className="carousel-arrow previous" aria-label="Evento destacado anterior" onClick={() => moveFeatured(-1)}><Icon name="arrow" /></button>
-              <button className="carousel-arrow next" aria-label="Siguiente evento destacado" onClick={() => moveFeatured(1)}><Icon name="arrow" /></button>
-              <div className="carousel-dots" aria-label="Seleccionar evento destacado">{featuredEvents.map((item, index) => <button key={item.id} className={index === featuredIndex ? 'active' : ''} aria-label={`Mostrar ${item.name}`} aria-current={index === featuredIndex ? 'true' : undefined} onClick={() => setFeaturedIndex(index)} />)}</div>
+          {!loading && featured && <div className="nx-hero">
+            <article className="nx-hero-stage" key={featured.id}>
+              {featured.image_path ? <img className="nx-hero-photo" src={featured.image_path} alt="" fetchPriority="high" /> : <div className="nx-hero-photo fallback" aria-hidden="true" />}
+              <div className="nx-hero-scrim" aria-hidden="true" />
+              <div className="nx-hero-copy">
+                <span className="nx-chip">{featured.category}</span>
+                <p className="nx-hero-title">{featured.name}</p>
+                <p className="nx-hero-meta"><span>{formatDate(featured.date)} · {formatTime(featured.time)}</span><span>{featured.venue}, {featured.city}</span></p>
+                <div className="nx-hero-actions"><button className="nx-cta" onClick={() => void openDetail(featured.id)} aria-label={`Abrir evento destacado ${featured.name}`}>Ver entradas <Icon name="arrow" size={20} /></button><span className="nx-hero-price">{formatEventPrice(featured)}</span></div>
+              </div>
+              <div className="nx-hero-controls">
+                <button className="carousel-arrow previous" aria-label="Evento destacado anterior" onClick={() => moveFeatured(-1)}><Icon name="arrow" /></button>
+                <div className="carousel-dots" aria-label="Seleccionar evento destacado">{featuredEvents.map((item, index) => <button key={item.id} className={index === featuredIndex ? 'active' : ''} aria-label={`Mostrar ${item.name}`} aria-current={index === featuredIndex ? 'true' : undefined} onClick={() => setFeaturedIndex(index)} />)}</div>
+                <button className="carousel-arrow next" aria-label="Siguiente evento destacado" onClick={() => moveFeatured(1)}><Icon name="arrow" /></button>
+              </div>
             </article>
-            <aside className="featured-side" aria-label="Más eventos destacados">{sideFeatured.map((item) => <button key={item.id} onClick={() => void openDetail(item.id)} aria-label={`Abrir ${item.name}`}>{item.image_path ? <img src={item.image_path} alt="" /> : <span className="image-fallback">{item.category}</span>}<span><small>{formatDate(item.date)} · {item.category}</small><strong>{item.name}</strong><em>{formatEventPrice(item)}</em></span></button>)}</aside>
+            <aside className="nx-rail" aria-label="Más eventos destacados">{sideFeatured.map((item) => <button key={item.id} onClick={() => void openDetail(item.id)} aria-label={`Abrir ${item.name}`}>{item.image_path ? <img src={item.image_path} alt="" loading="lazy" /> : <span className="image-fallback">{item.category}</span>}<span className="nx-rail-copy"><small>{formatDate(item.date)} · {item.category}</small><strong>{item.name}</strong><em>{formatEventPrice(item)}</em></span></button>)}</aside>
           </div>}
           <section className="category-section" aria-labelledby="categories-title">
-            <div className="home-section-title compact"><h2 id="categories-title">Categorías</h2><p>Explora por tipo de evento</p></div>
+            <div className="home-section-title compact"><h2 id="categories-title">Explora por categoría</h2></div>
             <div className="category-carousel">
               <button type="button" className="category-arrow previous" aria-label="Ver categorías anteriores" onClick={() => moveCategories(-1)}><Icon name="arrow" size={19} /></button>
               <div className="category-links" aria-label="Categorías" ref={categoryListRef}>{categories.map((value) => {
@@ -593,23 +599,33 @@ export default function App() {
           {filtersOpen && <div className="more-filters-panel" id="more-filters-panel"><DateRangePicker from={dateFrom} to={dateTo} onApply={(from, to) => { setDateFrom(from); setDateTo(to); setDateFilter('range') }} onClear={() => { setDateFrom(''); setDateTo(''); if (dateFilter === 'range') setDateFilter('all') }} /></div>}
           {(query || category || city || dateFilter !== 'all' || priceFilter !== 'all') && <div className="active-filters" aria-label="Filtros activos">{query && <button onClick={() => setQuery('')}>Búsqueda: {query}<Icon name="close" size={15} /></button>}{category && <button onClick={() => setCategory('')}>{categoryPresentation[category]?.label ?? category}<Icon name="close" size={15} /></button>}{city && <button onClick={() => setCity('')}>Ciudad: {city}<Icon name="close" size={15} /></button>}{dateFilter !== 'all' && <button onClick={() => { setDateFilter('all'); setDateFrom(''); setDateTo('') }}>Fecha: {dateFilter === 'today' ? 'Hoy' : dateFilter === 'weekend' ? 'Este fin de semana' : dateFrom && dateTo ? `${shortDate(dateFrom)} – ${shortDate(dateTo)}` : 'Rango'}<Icon name="close" size={15} /></button>}{priceFilter !== 'all' && <button onClick={() => setPriceFilter('all')}>{priceFilter === 'free' ? 'Gratuitos' : 'De pago'}<Icon name="close" size={15} /></button>}<button className="clear-active" onClick={clearFilters}>Limpiar todos</button></div>}
           {loading && <div className="status" role="status">Cargando experiencias…</div>}
+          {loading && <div className="nx-skeletons" aria-hidden="true">{[0, 1, 2, 3, 4, 5, 6, 7].map((n) => <div key={n} className="nx-skeleton"><i /><b /><b /></div>)}</div>}
           {error && <div className="status error" role="alert"><p>{error}</p><button onClick={() => void loadEvents()}>Reintentar</button></div>}
           {!loading && !error && filtered.length === 0 && <div className="empty-state"><span className="empty-icon"><Icon name="search" /></span><h3>No encontramos eventos</h3><p>Prueba otra fecha, categoría o rango de precio.</p><button className="button secondary" onClick={clearFilters}>Limpiar filtros</button></div>}
           {!loading && !error && filtered.length > 0 && <div className="grid">{filtered.map((item, index) => (
-            <article className="card" key={item.id}>
-              <button className={`card-art art-${index % 3}`} onClick={() => void openDetail(item.id)} aria-label={`Ver ${item.name}`}>{item.image_path ? <img src={item.image_path} alt="" loading="lazy" /> : <span className="image-fallback">{item.category}</span>}<span className="category-pill">{item.category}</span></button>
-              <div className="card-body"><p className="date"><Icon name="calendar" size={16} />{formatDate(item.date)} · {formatTime(item.time)}</p><h3>{item.name}</h3><p className="venue"><Icon name="location" size={17} />{item.venue}, {item.city}</p>
-                <div className="card-footer"><strong>{formatEventPrice(item)}</strong><span>{item.available_capacity} disponibles</span></div>
+            <article className="card nx-card" key={item.id}>
+              <button className="card-art" onClick={() => void openDetail(item.id)} aria-label={`Ver ${item.name}`}>{item.image_path ? <img src={item.image_path} alt="" loading="lazy" /> : <span className="image-fallback">{item.category}</span>}<span className="nx-stamp" aria-hidden="true"><b>{dayOf(item.date)}</b><i>{monthOf(item.date)}</i></span><span className="category-pill">{item.category}</span></button>
+              <div className="card-body"><h3>{item.name}</h3><p className="venue"><Icon name="location" size={18} />{item.venue}, {item.city}</p><p className="date"><Icon name="clock" size={18} />{formatTime(item.time)}</p>
+                <div className="card-footer"><strong>{formatEventPrice(item)}</strong>{item.available_capacity === 0 ? <em className="nx-few sold">Agotado</em> : item.available_capacity <= Math.max(10, Math.ceil(item.capacity * .1)) ? <em className="nx-few">Últimas entradas · {item.available_capacity}</em> : <span>{item.available_capacity} disponibles</span>}</div>
                 <button className="button secondary detail-button" onClick={() => void openDetail(item.id)}>Ver detalle <Icon name="arrow" size={18} /></button>
               </div>
             </article>
           ))}</div>}
         </section>
       </>}
+      {!(detailLoading || selected) && <nav className="nx-tabbar" aria-label="Navegación móvil">
+        <button type="button" onClick={() => { setSelected(null); setView('catalog'); window.scrollTo?.({ top: 0 }) }} aria-current={view === 'catalog' ? 'page' : undefined}><Icon name="ticket" size={22} /><span>Inicio</span></button>
+        <button type="button" onClick={() => { setSelected(null); setView('catalog'); window.setTimeout(() => document.getElementById('main-search')?.focus(), 60) }}><Icon name="search" size={22} /><span>Buscar</span></button>
+        <button type="button" onClick={() => setView(!user ? 'auth' : user.role === 'client' ? 'account' : user.role === 'operator' ? 'operator' : 'organizer')} aria-current={view === 'account' || view === 'operator' || view === 'organizer' ? 'page' : undefined}><Icon name={user?.role === 'organizer' ? 'calendar' : user?.role === 'operator' ? 'qr' : 'ticket'} size={22} /><span>{user?.role === 'organizer' ? 'Eventos' : user?.role === 'operator' ? 'Acceso' : 'Entradas'}</span></button>
+        <button type="button" onClick={() => { if (user) document.querySelector<HTMLButtonElement>('.account-trigger')?.click(); else setView('auth') }}><Icon name="user" size={22} /><span>Cuenta</span></button>
+      </nav>}
       <footer>Proyecto académico · Datos y pagos simulados</footer>
     </main>
   )
 }
+
+const dayOf = (value: string) => String(new Date(`${value}T12:00:00`).getDate())
+const monthOf = (value: string) => new Intl.DateTimeFormat('es-PE', { month: 'short' }).format(new Date(`${value}T12:00:00`)).replace('.', '').toUpperCase()
 
 function authErrorMessage(mode: 'login' | 'register', status: number, body: unknown) {
   const server = messageFrom(body, '')

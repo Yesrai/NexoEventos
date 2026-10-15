@@ -1,4 +1,4 @@
-import { FormEvent, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { FormEvent, lazy, RefObject, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { api, EventDetail, formatDate, formatTime, Icon, messageFrom, Seat, SalesStatus, User, Zone, zoneColorMap } from './shared'
 
 const Venue3D = lazy(() => import('./Venue3D'))
@@ -100,19 +100,35 @@ function SalesGate({ event, user, state, onLogin }: { event: EventDetail; user: 
   </section>
 }
 
-function Hero({ event, canBuy, onBuy }: { event: EventDetail; canBuy: boolean; onBuy: () => void }) {
+function Hero({ event, canBuy, onBuy, onBack, heroRef }: { event: EventDetail; canBuy: boolean; onBuy: () => void; onBack?: () => void; heroRef: RefObject<HTMLElement | null> }) {
   const soldOut = event.available_capacity === 0
-  return <header className="ep-hero">
-    {event.image_path ? <img className="ep-hero-image" src={event.image_path} alt={`Fotografía ilustrativa para ${event.name}`} /> : <div className="ep-hero-image fallback" aria-hidden="true" />}
+  return <header className="ep-hero" ref={heroRef}>
+    {event.image_path ? <img className="ep-hero-image" src={event.image_path} alt={`Fotografía ilustrativa para ${event.name}`} fetchPriority="high" /> : <div className="ep-hero-image fallback" aria-hidden="true" />}
     <div className="ep-hero-shade" aria-hidden="true" />
-    <div className="ep-hero-body">
-      <span className="ep-chip">{event.category}</span>
-      <h1>{event.name}</h1>
-      <ul className="ep-meta"><li><Icon name="calendar" size={20} />{formatDate(event.date)}</li><li><Icon name="clock" size={20} />{formatTime(event.time)}</li><li><Icon name="location" size={20} />{event.venue}, {event.city}</li></ul>
-      <p className="ep-lead">{event.description}</p>
-      <div className="ep-hero-actions"><button type="button" className="ep-button primary large" disabled={!canBuy || soldOut} onClick={onBuy}>{soldOut ? 'Agotado' : 'Comprar entradas'}</button><span className="ep-availability" role="status">{soldOut ? 'Sin entradas disponibles' : `${event.available_capacity} entradas disponibles`}</span></div>
+    <div className="ep-hero-inner">
+      {onBack && <button type="button" className="ep-back" onClick={onBack}><Icon name="arrow" size={18} />Volver a eventos</button>}
+      <div className="ep-hero-body">
+        <span className="ep-chip">{event.category}</span>
+        <h1>{event.name}</h1>
+        <ul className="ep-meta"><li><Icon name="calendar" size={20} />{formatDate(event.date)}</li><li><Icon name="clock" size={20} />{formatTime(event.time)}</li><li><Icon name="location" size={20} />{event.venue}, {event.city}</li></ul>
+        <p className="ep-lead">{event.description}</p>
+        <div className="ep-hero-actions"><button type="button" className="ep-button primary large" disabled={!canBuy || soldOut} onClick={onBuy}>{soldOut ? 'Agotado' : 'Comprar entradas'}</button><span className="ep-availability" role="status">{soldOut ? 'Sin entradas disponibles' : `${event.available_capacity} entradas disponibles`}</span></div>
+      </div>
     </div>
   </header>
+}
+
+function StickyBar({ event, heroRef, onBuy }: { event: EventDetail; heroRef: RefObject<HTMLElement | null>; onBuy: () => void }) {
+  const [past, setPast] = useState(false)
+  useEffect(() => {
+    const element = heroRef.current
+    if (!element || typeof IntersectionObserver === 'undefined') return
+    const observer = new IntersectionObserver(([entry]) => setPast(!entry.isIntersecting), { rootMargin: '-90px 0px 0px 0px' })
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [heroRef])
+  const soldOut = event.available_capacity === 0
+  return <div className={`ep-sticky ${past ? 'show' : ''}`} aria-hidden={!past}><div><strong>{event.name}</strong><span>{formatDate(event.date)} · {formatTime(event.time)}</span></div><button type="button" className="ep-button primary" tabIndex={past ? 0 : -1} disabled={soldOut} onClick={onBuy}>{soldOut ? 'Agotado' : 'Comprar entradas'}</button></div>
 }
 
 function Tiers({ event, selection, colors, interactive }: { event: EventDetail; selection: Selection; colors: Map<number, string>; interactive: boolean }) {
@@ -261,6 +277,7 @@ export function EventPage({ event, selection, user, preview = false, reserving =
   const colors = useMemo(() => zoneColorMap(event.zones, event.layout_kind === 'concert_zones'), [event.zones, event.layout_kind])
   const state = useSales(event.id, !preview && event.status === 'published')
   const buyRef = useRef<HTMLDivElement | null>(null)
+  const heroRef = useRef<HTMLElement | null>(null)
   const [sheet, setSheet] = useState(false)
   const sales = state.sales
   const queue = sales?.queue ?? null
@@ -274,9 +291,10 @@ export function EventPage({ event, selection, user, preview = false, reserving =
   const summary = selection.selectedSeats.length ? `${selection.selectedSeats.length} asiento${selection.selectedSeats.length === 1 ? '' : 's'}` : selection.activeZone ? `${selection.quantity} × ${selection.activeZone.name}` : event.ticket_mode === 'general' ? `${selection.quantity} entrada${selection.quantity === 1 ? '' : 's'}` : 'Sin selección'
   useEffect(() => { if (message) setSheet(true) }, [message])
   return <article className="ep" aria-label={`Evento ${event.name}`}>
-    {onBack && <button type="button" className="ep-back" onClick={onBack}><Icon name="arrow" size={18} />Volver a eventos</button>}
+    <Hero event={event} canBuy onBuy={goBuy} onBack={onBack} heroRef={heroRef} />
+    {!preview && <StickyBar event={event} heroRef={heroRef} onBuy={goBuy} />}
+    <div className="ep-container">
     {preview && <p className="ep-preview-banner" role="note">Vista previa del organizador: así lo verán los clientes. Puedes probar la selección, pero no se compra nada.{event.status === 'draft' ? ' Está en borrador y no aparece en el catálogo.' : ''}</p>}
-    <Hero event={event} canBuy onBuy={goBuy} />
     <div className="ep-layout" id="comprar" ref={buyRef}>
       <div className="ep-main">
         {!preview && <SalesGate event={event} user={user} state={state} onLogin={() => onRequireLogin?.()} />}
@@ -287,6 +305,7 @@ export function EventPage({ event, selection, user, preview = false, reserving =
         <button type="button" className="ep-sheet-close" aria-label="Cerrar resumen" onClick={() => setSheet(false)}><Icon name="close" size={20} /></button>
         <PurchasePanel event={event} selection={selection} user={user} preview={preview} gateBlocked={blocked} reserving={reserving} message={message} confirmedTotal={confirmedTotal} error={error} onSubmit={() => void submit()} onGoTickets={() => onGoTickets?.()} />
       </aside>
+    </div>
     </div>
     <div className="ep-bar" role="region" aria-label="Resumen rápido de compra"><div><strong>{event.ticket_mode === 'seats' && selection.selectedSeats.length === 0 ? 'Elige tus asientos' : event.ticket_mode === 'zones' && !selection.activeZone ? 'Elige una zona' : money(selection.total)}</strong><small>{summary}</small></div><button type="button" className="ep-button primary" onClick={() => setSheet(true)}>Ver compra</button></div>
     {sheet && <button type="button" className="ep-backdrop" aria-label="Cerrar resumen" onClick={() => setSheet(false)} />}

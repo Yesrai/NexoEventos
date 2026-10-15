@@ -156,3 +156,16 @@ Puntos únicos de falla declarados en la documentación: una EC2 y una RDS Singl
 **Defectos hallados y corregidos durante la verificación:** título de portada y de sala de espera con texto oscuro sobre fondo oscuro; reflector del estadio gigante e inmaculadamente blanco cerca de la cámara; botones de perspectiva cortados en móvil; quien tenía turno no podía renunciar; servidores de prueba huérfanos que servían código antiguo al E2E (el script ahora libera los puertos).
 
 **Limitaciones reales.** Sondeo cada 5 s (no WebSockets); sin estimación de espera; sin sorteo ni protección contra bots; una compra por turno; carga de la fila no medida en la nube (≈ 40 transacciones/s con 200 esperando es una estimación, ver el documento de diseño); contraste de color y lector de pantalla reales sin verificar; FPS en GPU real sin medir; el estadio sigue siendo el 3D menos detallado. **La migración `0008` debe aplicarse en cualquier entorno antes de desplegar** (ya aplicada en tu base local, con respaldo previo y datos intactos).
+
+## 10. Rediseño visual «Noche Nexo» — fase 1 (pendiente de aprobación visual)
+
+Alcance de esta fase: **inicio, catálogo y página de evento**. Registro, compra (ya integrada en la página de evento), sala de espera, mis entradas y panel del organizador conservan su diseño anterior hasta que se apruebe esta fase. Backend, reservas, inventario, QR, cola virtual y los recintos 3D (geometría, cámaras e interacciones) **no se modificaron**; solo cambió el marco visual que los rodea.
+
+- **Sistema visual** (`frontend/src/noche.css`): cabecera, portadas y recinto en tono noche; catálogo e información sobre papel claro; turquesa `#10D7B0` como acción; magenta solo en puntos (fecha de las tarjetas, color de zona). Bricolage Grotesque (títulos) e Inter (interfaz), **instaladas como paquetes** (`@fontsource-variable/*`, licencia OFL, sin peticiones externas).
+- **Inicio:** portada con fotografía grande, título destacado y CTA; carrusel con rail de destacados; categorías en píldoras desplazables.
+- **Catálogo:** filtros en píldoras; tarjetas tipo póster 4:5 con sello de fecha, categoría, lugar, hora, precio y disponibilidad (etiqueta «Últimas entradas» solo cuando la disponibilidad real es baja); esqueletos de carga.
+- **Evento:** portada a ancho completo, barra pegajosa con CTA al hacer scroll, recinto 3D en marco oscuro, panel de compra como entrada con muesca, información sobre papel.
+- **Móvil:** navegación inferior (Inicio, Buscar, Entradas, Cuenta) que se oculta en la página de evento para no interferir con la selección; en el evento, barra de compra y hoja desplegable.
+- **Movimiento:** solo entrada suave de la portada, elevación leve de tarjetas y barra pegajosa; se desactiva con «reducir movimiento».
+- **Verificación:** frontend 26/26, build de producción correcto, `npm audit` 0. Capturas reales de escritorio y móvil (página completa y pantalla real) en `docs/evidencias/ui/noche-nexo-fase1/`.
+- **Limitaciones:** las fotografías (Wikimedia Commons) tienen 1000–1600 px de ancho en su origen; no hay mayor resolución disponible, por lo que algunas se ven suaves en portadas a pantalla completa. Pendiente: extender el sistema a las demás pantallas tras la aprobación.
