@@ -298,6 +298,7 @@ describe('NexoEventos catalog', () => {
       expect(await screen.findByText('Es tu turno')).toBeInTheDocument()
       expect(screen.getByText(/02:0\d|02:1\d|02:05/)).toBeInTheDocument()
       expect(screen.getByRole('button', { name: 'Confirmar compra' })).toBeEnabled()
+      expect(screen.getByRole('button', { name: 'Renunciar a mi turno' })).toBeEnabled()
     })
 
     it('joins the queue only through the server', async () => {

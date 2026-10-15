@@ -205,7 +205,7 @@ export function buildConcert({ scene, mobile }: VenueContext, zones: VenueZone[]
   })
   const slabs: Array<{ mesh: THREE.Mesh; zone: VenueZone; hue: string; outline: THREE.LineSegments; label: THREE.Sprite | null }> = []
   for (const item of placed) {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(FLOOR_HALF_WIDTH * 2 - .6, .12, item.depth), new THREE.MeshBasicMaterial({ color: item.hue, transparent: true, opacity: .32, depthWrite: false }))
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(FLOOR_HALF_WIDTH * 2 - .6, .12, item.depth), new THREE.MeshBasicMaterial({ color: item.hue, transparent: true, opacity: .5, depthWrite: false }))
     mesh.position.set(0, .12, item.z)
     mesh.userData.zoneId = item.zone.id
     scene.add(mesh)
@@ -233,7 +233,7 @@ export function buildConcert({ scene, mobile }: VenueContext, zones: VenueZone[]
     const selected = selectedZoneId === slab.zone.id
     const sold = slab.zone.available_capacity === 0
     material.color.set(sold ? '#7c8a91' : slab.hue)
-    material.opacity = sold ? .22 : selected ? .72 : .32
+    material.opacity = sold ? .3 : selected ? .85 : .5
     slab.mesh.position.y = selected ? .2 : .12
     slab.outline.position.y = slab.mesh.position.y
     ;(slab.outline.material as THREE.LineBasicMaterial).opacity = selected ? 1 : .55

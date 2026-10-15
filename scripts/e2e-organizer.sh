@@ -8,7 +8,9 @@ DB=nexoeventos_e2e
 API_PORT=8011
 WEB_PORT=5183
 WORK="$(mktemp -d)"
-trap 'kill ${API_PID:-} ${WEB_PID:-} 2>/dev/null || true; rm -rf "$WORK"' EXIT
+free_ports() { for port in $API_PORT $WEB_PORT; do lsof -ti tcp:$port -sTCP:LISTEN 2>/dev/null | xargs kill 2>/dev/null || true; done; }
+trap 'free_ports; rm -rf "$WORK"' EXIT
+free_ports; sleep 1
 PY="$ROOT/backend/.venv/bin/python"
 
 psql postgres -q -c "DROP DATABASE IF EXISTS $DB WITH (FORCE)" -c "CREATE DATABASE $DB OWNER nexoeventos_owner" -c "GRANT CONNECT ON DATABASE $DB TO nexoeventos_app"

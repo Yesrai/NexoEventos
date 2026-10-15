@@ -197,14 +197,6 @@ export default function Stadium3D({ seats, selectedSeatIds, onToggle, onSectorCh
     perimeter.rotation.x = Math.PI / 2
     perimeter.position.y = .18
     scene.add(perimeter)
-    const pathMaterial = new THREE.MeshStandardMaterial({ color: '#7f8a8f', roughness: 1 })
-    for (const [x, z, width, depth] of [[0, -35, 8, 14], [0, 35, 8, 14], [-39, 0, 18, 8], [39, 0, 18, 8]] as const) {
-      const path = new THREE.Mesh(new THREE.BoxGeometry(width, .08, depth), pathMaterial)
-      path.position.set(x, -1.12, z)
-      path.receiveShadow = true
-      scene.add(path)
-    }
-
     const grassTexture = createGrassTexture()
     const field = new THREE.Mesh(new THREE.PlaneGeometry(28, 17), new THREE.MeshStandardMaterial({ color: '#568765', map: grassTexture, roughness: .96 }))
     field.rotation.x = -Math.PI / 2
@@ -316,13 +308,13 @@ export default function Stadium3D({ seats, selectedSeatIds, onToggle, onSectorCh
     }
 
     const towerMaterial = new THREE.MeshStandardMaterial({ color: '#45565e', roughness: .48, metalness: .62 })
-    const lampMaterial = new THREE.MeshStandardMaterial({ color: '#f3f6e5', emissive: '#eef6cb', emissiveIntensity: 1.25, roughness: .35 })
+    const lampMaterial = new THREE.MeshStandardMaterial({ color: '#f3f6e5', emissive: '#eef6cb', emissiveIntensity: .7, roughness: .35 })
     for (const [x, z] of [[-25, -22], [25, -22], [-25, 22], [25, 22]] as const) {
       const pole = new THREE.Mesh(new THREE.CylinderGeometry(.13, .2, 13, 10), towerMaterial)
       pole.position.set(x, 5.3, z)
       pole.castShadow = !mobile
       scene.add(pole)
-      const lamps = new THREE.Mesh(new THREE.BoxGeometry(2.5, 1.15, .28), lampMaterial)
+      const lamps = new THREE.Mesh(new THREE.BoxGeometry(1.5, .6, .2), lampMaterial)
       lamps.position.set(x, 11.7, z)
       lamps.lookAt(0, 0, 0)
       scene.add(lamps)

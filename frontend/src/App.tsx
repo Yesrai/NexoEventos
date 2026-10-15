@@ -463,6 +463,7 @@ export default function App() {
       setSelected((current) => current && { ...current, available_capacity: Number(body.available_capacity) })
       idempotencyKey.current = null
       await loadEvents()
+      await refreshSelected()
     } catch (caught) {
       setReservationError(requestError(caught, 'No pudimos conectar con el servicio. Puedes reintentar sin duplicar la reserva.'))
     } finally { setReserving(false) }

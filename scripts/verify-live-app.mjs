@@ -128,7 +128,6 @@ try {
     await go()
     await setFieldById('main-search', name)
     await clickText(`Ver ${name}`)
-    await clickText(toggle)
     await waitFor(`!!document.querySelector('.venue-3d-canvas, .stadium-3d-canvas')`, `3D de ${name}`, 20000)
     await pause(1500)
     const alive = await evaluate(`(() => { const c = document.querySelector('.venue-3d-canvas, .stadium-3d-canvas'); const r = c.getBoundingClientRect(); return r.width > 300 && r.height > 300 })()`)

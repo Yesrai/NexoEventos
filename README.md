@@ -10,6 +10,7 @@ Base local del proyecto universitario de Cloud Computing para una plataforma fic
 - Persistencia: PostgreSQL 14 local con migraciones Alembic y datos ficticios reproducibles.
 - Infraestructura: Terraform AWS V1 **desplegado y verificado el 3 de octubre de 2026** en `us-east-1` (30 recursos: VPC, subredes, EC2 AL2023, RDS PostgreSQL 18.3 privada, S3 privado, CloudWatch). Azure y GCP permanecen como referencias sin recursos.
 - Cloud: `https://nexoeventos-demo.duckdns.org` probado públicamente por HTTPS; EC2 y RDS se detienen entre sesiones para ahorrar crédito. El estado observado y su fecha se mantienen en [docs/estado-proyecto.md](docs/estado-proyecto.md).
+- Sala de espera y fila virtual: [docs/sala-de-espera-y-cola.md](docs/sala-de-espera-y-cola.md).
 - Estado de la auditoría del 14-oct, matriz de funcionalidades y bloqueos: [PROJECT_STATUS.md](PROJECT_STATUS.md).
 - Estado consolidado, pendientes y limitaciones: [docs/estado-proyecto.md](docs/estado-proyecto.md). Revisión frente a la rúbrica: [docs/evidencias/revision-rubrica.md](docs/evidencias/revision-rubrica.md).
 

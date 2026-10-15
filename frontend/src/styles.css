@@ -642,8 +642,6 @@ footer { padding: 34px 24px; border-top: 1px solid var(--line); color: #6f7e88; 
 }
 @media (max-width: 600px) {
   .venue-3d-hint { display: none; }
-  .venue-3d-views { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
-  .venue-3d-views button { flex: 0 0 auto; }
   .venue-3d-stage, .venue-3d-host { min-height: 520px; height: 520px; }
   .category-carousel { display: block; }
   .category-arrow { display: none; }
@@ -894,7 +892,7 @@ button.ep-tier:hover:not(:disabled) { border-color: #07987f; box-shadow: 0 6px 1
 .ep-gate-date { margin: 0; font-size: 1.3rem; font-weight: 650; text-transform: capitalize; }
 .ep-clock { font-size: clamp(2.2rem, 6vw, 3.6rem); font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: .02em; color: var(--accent); }
 .ep-gate-help { margin: 0; color: #c8d7df; font-size: 1rem; }
-.ep-queue-card h3 { margin: 0; font-size: 1.5rem; }
+.ep-queue-card h2 { margin: 0; color: #fff; font-size: 1.5rem; }
 .ep-queue-card p { margin: 0; font-size: 1.05rem; line-height: 1.5; color: #dbe7ee; }
 .ep-queue-card.admitted { background: linear-gradient(135deg, #064c3f, #0a7a64); }
 .ep-position { display: flex; gap: 16px; align-items: center; }
@@ -926,3 +924,8 @@ button.ep-tier:hover:not(:disabled) { border-color: #07987f; box-shadow: 0 6px 1
 
 .organizer-check { display: flex !important; grid-template-columns: none; gap: 10px; align-items: center; font-size: 1rem !important; }
 .organizer-check input { width: 22px !important; min-height: 22px !important; }
+
+.stadium-3d-sector-list button { min-height: 56px; padding: 10px 14px; }
+.stadium-3d-sector-list strong { font-size: 1.05rem; }
+.stadium-3d-sector-list span { font-size: .95rem; }
+.stadium-3d-toolbar button { font-size: .9rem; }

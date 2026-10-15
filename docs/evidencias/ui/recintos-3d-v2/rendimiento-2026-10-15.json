@@ -1,0 +1,66 @@
+{
+  "nota": "Medido en Chrome headless con WebGL por software (SwiftShader); no representa FPS en GPU real.",
+  "fecha": "2026-10-15",
+  "mediciones": [
+    {
+      "venue": "auditorio",
+      "viewport": "escritorio",
+      "kind": "theatre",
+      "buildMs": 2864,
+      "drawCalls": 122,
+      "triangles": 7168,
+      "geometries": 101,
+      "textures": 19
+    },
+    {
+      "venue": "auditorio",
+      "viewport": "movil",
+      "kind": "theatre",
+      "buildMs": 2493,
+      "drawCalls": 106,
+      "triangles": 6824,
+      "geometries": 93,
+      "textures": 15
+    },
+    {
+      "venue": "concierto",
+      "viewport": "escritorio",
+      "kind": "concert",
+      "buildMs": 2413,
+      "drawCalls": 241,
+      "triangles": 7568,
+      "geometries": 222,
+      "textures": 10
+    },
+    {
+      "venue": "concierto",
+      "viewport": "movil",
+      "kind": "concert",
+      "buildMs": 2487,
+      "drawCalls": 229,
+      "triangles": 5804,
+      "geometries": 220,
+      "textures": 10
+    },
+    {
+      "venue": "museo",
+      "viewport": "escritorio",
+      "kind": "museum",
+      "buildMs": 2787,
+      "drawCalls": 226,
+      "triangles": 17780,
+      "geometries": 189,
+      "textures": 24
+    },
+    {
+      "venue": "museo",
+      "viewport": "movil",
+      "kind": "museum",
+      "buildMs": 2182,
+      "drawCalls": 184,
+      "triangles": 12352,
+      "geometries": 180,
+      "textures": 22
+    }
+  ]
+}

@@ -29,6 +29,7 @@ const browser = spawn(chrome, [
   `--user-data-dir=/tmp/nexoeventos-capture-${Date.now()}`, 'http://127.0.0.1:5173/',
 ], { stdio: 'ignore' })
 const pause = (milliseconds) => new Promise((done) => setTimeout(done, milliseconds))
+const waitFor = async (expression, timeout = 20000) => { const start = Date.now(); while (Date.now() - start < timeout) { try { if (await evaluate(expression)) return } catch {} await pause(200) } throw new Error(`Tiempo agotado: ${expression}`) }
 let page
 for (let attempt = 0; attempt < 100 && !page; attempt += 1) {
   try { page = (await fetch(`http://127.0.0.1:${port}/json`).then((response) => response.json())).find((candidate) => candidate.type === 'page') } catch { /* Chrome inicia */ }
@@ -68,7 +69,7 @@ async function open(venue, viewport) {
   await pause(300)
   await evaluate(`[...document.querySelectorAll('button')].find((button) => button.getAttribute('aria-label') === ${JSON.stringify(`Ver ${venue.event}`)})?.click()`)
   await pause(800)
-  await evaluate(`[...document.querySelectorAll('button')].find((button) => button.textContent.trim() === ${JSON.stringify(venue.toggle)})?.click()`)
+  await waitFor(`!!document.querySelector('.venue-3d-canvas,.stadium-3d-canvas')`)
   await pause(2200)
   await evaluate(`document.querySelector('.venue-3d-stage,.stadium-3d-stage')?.scrollIntoView({ block: 'center' })`)
   await pause(500)
@@ -98,9 +99,9 @@ async function clickUntil(predicateExpression, candidates) {
 const fine = (x0, x1, y0, y1, step) => { const points = []; for (let y = y0; y <= y1; y += step) for (let x = x0; x <= x1; x += step) points.push([Number(x.toFixed(3)), Number(y.toFixed(3))]); return points }
 const grid = (xs, ys) => ys.flatMap((fy) => xs.map((fx) => [fx, fy]))
 const interactions = {
-  auditorio: { view: 'Vista general', predicate: `/\\b1 asiento seleccionado/.test(document.querySelector('.seat-selection-status')?.textContent ?? '')`, points: grid([.4, .5, .6, .7, .3], [.62, .7, .78, .56, .86]) },
-  estadio: { view: null, focus: `!!document.querySelector('.stadium-3d-sector-list button.active')`, focusPoints: fine(.3, .7, .35, .6, .05), predicate: `/\\b1 localidad seleccionada/.test(document.querySelector('.seat-selection-status')?.textContent ?? '')`, points: fine(.3, .7, .3, .8, .025) },
-  concierto: { view: 'Zonas', predicate: `[...document.querySelectorAll('.concert-zone-grid [aria-pressed]')].some((button) => button.getAttribute('aria-pressed') === 'true')`, points: grid([.5, .4, .6], [.55, .4, .7, .3, .8]) },
+  auditorio: { view: 'Vista general', predicate: `document.querySelectorAll('.ep-seat-list li').length === 1`, points: grid([.4, .5, .6, .7, .3], [.62, .7, .78, .56, .86]) },
+  estadio: { view: null, focus: `!!document.querySelector('.stadium-3d-sector-list button.active')`, focusPoints: fine(.3, .7, .35, .6, .05), predicate: `document.querySelectorAll('.ep-seat-list li').length === 1`, points: fine(.3, .7, .3, .8, .025) },
+  concierto: { view: 'Zonas', predicate: `!!document.querySelector('.ep-tier[aria-pressed="true"]')`, points: grid([.5, .4, .6], [.55, .4, .7, .3, .8]) },
 }
 const results = []
 const performanceStats = []
@@ -123,7 +124,7 @@ for (const venue of venues.filter((item) => interactions[item.slug])) {
   await pause(1200)
   if (focus) { await clickUntil(focus, focusPoints); await pause(1000) }
   const hit = await clickUntil(predicate, points)
-  const status = await evaluate(`document.querySelector('.seat-selection-status, .concert-zone-grid [aria-pressed="true"]')?.textContent ?? ''`)
+  const status = await evaluate(`document.querySelector('.ep-seat-list, .ep-tier[aria-pressed="true"]')?.textContent ?? ''`)
   results.push({ venue: venue.slug, selectedByCanvasClick: Boolean(hit), at: hit, status })
   if (hit) await shot(`${venue.slug}-seleccion-escritorio-${stamp}.png`)
 }

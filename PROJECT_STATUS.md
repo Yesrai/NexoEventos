@@ -66,8 +66,8 @@ Limitaciones: el tiempo de construcción (≈2.1–3.1 s) se midió con **render
 
 | Suite | Resultado |
 |---|---|
-| Backend (`pytest`, PostgreSQL 14 local, base `nexoeventos_test`) | **33 aprobadas** (corridas repetidas sin interferencia entre ellas) |
-| Frontend (`vitest`, incluye axe) | **20 aprobadas** |
+| Backend (`pytest`, PostgreSQL 14 local, base `nexoeventos_test`) | **38 aprobadas** (corridas repetidas sin interferencia entre ellas) |
+| Frontend (`vitest`, incluye axe) | **26 aprobadas** |
 | `tsc -b` + `vite build` | Correcto |
 | `terraform fmt -check` y `terraform validate` (4 módulos) | Correcto |
 | Clics reales en 3D (auditorio, concierto, estadio) | 3 de 3 selecciones correctas |
@@ -132,3 +132,27 @@ Puntos únicos de falla declarados en la documentación: una EC2 y una RDS Singl
 | **Rendimiento** | Panel del organizador carga diferido (7.3 kB gzip); índice principal 107.6 kB gzip; Three.js diferido; contadores 3D en §3. FPS en GPU real sin medir. |
 | **Funcionalidad** | Flujo completo verificado. Límites conocidos: el 3D del auditorio admite hasta 12 filas × 12 asientos y el estadio nombres «Tribuna Norte/Sur/Oriente/Occidente»; no se crean recintos nuevos (catálogo compartido sin propietario) ni se suben imágenes (se elige una de la galería); `scripts/seed-demo-catalog.py` conserva su propia generación de inventario (no se reescribió para no tocar el catálogo existente); cámara física de QR sin probar. |
 | **Bloqueos restantes para cerrar la fase cloud** | Aplicar `0007` en RDS durante el despliegue, aprobación de costo y credenciales, capturas de consola, recuperación completa hasta HTTPS. Ninguno afecta a la aplicación local. |
+
+## 9. Rediseño de la compra, sala de espera y fila virtual (3.ª fase)
+
+**Auditoría previa (capturas reales).** El detalle se mostraba debajo del catálogo, sin portada; el plano 2D del concierto era un rectángulo verde sin zonas; el 3D quedaba tras un botón; textos de 11–13 px; el total y el botón estaban al final de un formulario; había pistas y botones flotantes sobre el 3D y una nota técnica («Representación 3D propia…») dentro del flujo.
+
+| Cambio | Resultado verificado |
+|---|---|
+| Página de evento propia (`EventPage.tsx`) | Portada con título, fecha, hora, lugar y CTA; el catálogo se oculta mientras se compra; «Volver a eventos». |
+| Recinto como vista principal | Mapa 3D por defecto en teatro, estadio, concierto y museo; pestañas **Plano** y **Lista** accesibles; si WebGL falla se pasa al plano con aviso. |
+| Vista inicial por recinto | Concierto: frente al escenario con las zonas a la vista; auditorio: desde el fondo de la sala; estadio: vista general con enfoque por tribuna; museo: recorrido general y por sala, sin asientos. |
+| Plano 2D real | Concierto: SVG con escenario y zonas proporcionales al aforo; auditorio: filas de asientos por zona; estadio: tribunas clicables + asientos; colores iguales en tarjetas, plano y 3D. |
+| Panel de compra | Fijo en escritorio (precio, cantidad, asientos elegidos con quitar, total, CTA). En móvil: barra inferior y hoja desplegable que no tapa el contenido. |
+| Limpieza visual | Sin pista flotante, sin nota técnica, sin leyenda dentro del lienzo; botones de perspectiva fuera de la escena; textos ≥ 15–16 px. |
+| Inventario sincronizado | Tras reservar se vuelve a leer el detalle: el asiento reservado queda ocupado en 2D y 3D. Precios y disponibilidad siguen viniendo del servidor. |
+
+**Sala de espera y fila virtual** (diseño y costos: [`docs/sala-de-espera-y-cola.md`](docs/sala-de-espera-y-cola.md)). Migración `0008`; reloj de PostgreSQL; fila opcional por evento con tope de personas activas y minutos por turno; admisión por orden de llegada bajo el bloqueo del evento; un turno por compra; renunciar a un turno; recargar no salta la fila; sin tiempos estimados inventados. El organizador lo configura en la pestaña **Ventas y fila**. Eventos existentes no cambian (inicio nulo, fila apagada).
+
+**Pruebas.** Backend 38/38 (incluye 5 de cola: ventana de ventas, orden y tope, expiración, 12 uniones simultáneas, permisos). Frontend 26/26 (cuenta regresiva, posición real, turno, salida de fila, pestaña de ventas, axe en la página con fila). E2E en navegador real: **24 verificaciones aprobadas, 0 fallidas, sin excepciones** ([`resultado-e2e`](docs/evidencias/ui/flujo-completo/)), incluyendo: el servidor rechaza comprar sin turno aunque se salte la interfaz (403 `queue_required`), la segunda persona queda con su posición real, recargar no cambia el lugar y al renunciar la primera se admite a la segunda. Clics reales en 3D: asiento B-6 (auditorio), zona Preferencial (concierto), asiento F-5 de Tribuna Occidente (estadio).
+
+**Evidencias nuevas:** [`compra-v2/`](docs/evidencias/ui/compra-v2/) (4 recintos, escritorio y móvil), [`flujo-completo/`](docs/evidencias/ui/flujo-completo/) (compra, fila, estadísticas, móvil) y [`recintos-3d-v2/`](docs/evidencias/ui/recintos-3d-v2/) (+ contadores de render). Las carpetas anteriores (`recintos-3d/`, `organizador/`) quedan como historial superado. En las capturas móviles de página completa la barra de compra inferior aparece a media página: es un efecto de la captura (elemento fijo), no del diseño.
+
+**Defectos hallados y corregidos durante la verificación:** título de portada y de sala de espera con texto oscuro sobre fondo oscuro; reflector del estadio gigante e inmaculadamente blanco cerca de la cámara; botones de perspectiva cortados en móvil; quien tenía turno no podía renunciar; servidores de prueba huérfanos que servían código antiguo al E2E (el script ahora libera los puertos).
+
+**Limitaciones reales.** Sondeo cada 5 s (no WebSockets); sin estimación de espera; sin sorteo ni protección contra bots; una compra por turno; carga de la fila no medida en la nube (≈ 40 transacciones/s con 200 esperando es una estimación, ver el documento de diseño); contraste de color y lector de pantalla reales sin verificar; FPS en GPU real sin medir; el estadio sigue siendo el 3D menos detallado. **La migración `0008` debe aplicarse en cualquier entorno antes de desplegar** (ya aplicada en tu base local, con respaldo previo y datos intactos).
