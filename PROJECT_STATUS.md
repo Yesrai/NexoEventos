@@ -193,3 +193,9 @@ Alcance de esta fase: **inicio, catálogo y página de evento**. Registro, compr
 - También se corrigieron restos del tema anterior: texto oscuro sobre el avatar azul, verdes azulados residuales.
 - Verificación en Chrome (`scripts/audit-typography.mjs`, estilos calculados): una sola familia, 0 textos < 14 px, 0 mayúsculas forzadas, sin desbordes; inicio, detalles, ingreso y registro en escritorio y móvil. Organizador, cliente, operador y fila virtual con `scripts/e2e-organizer.sh` (24 comprobaciones, base aislada). 27 pruebas, build OK.
 - Evidencias: `docs/evidencias/ui/tipografia-inter-v2/`, `tipografia-flujo-completo/`. Propuesta visual actualizada con la sección 7 en `docs/propuesta-visual/paletas.html`.
+
+## 14. Auditoría visual crítica (pendiente de aprobación; sin implementación)
+
+- Informe: `docs/auditoria-visual/auditoria-visual.html` (veredicto por pantalla, 20 hallazgos con capturas, prioridades P0–P2 y decisiones pendientes). Capturas completas: `docs/evidencias/ui/auditoria-visual-v2/` (escritorio y móvil). Scripts: `scripts/audit-visual.sh` + `audit-visual.mjs` (base aislada `nexoeventos_audit`; no toca la base de desarrollo).
+- Conclusión: base visual correcta, pero seis problemas de composición/copy hacen que parezca demo: avisos «académica/ficticios», catálogo largo con botón repetido, compra bajo el pliegue y texto repetido, falta de selección de función, confirmación y «Mis entradas» sin diseño de producto, cabecera desalineada fuera del inicio.
+- Nada de lo anterior se ha implementado; no se modificaron datos, backend, reservas, QR, fila virtual ni Cloud.
