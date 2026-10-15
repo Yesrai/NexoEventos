@@ -5,9 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
     <title>NexoEventos</title>
+    <style>
+      /* Marco de carga inicial: se muestra al instante y React lo reemplaza al montar. */
+      body { margin: 0; background: #f5f6f9; }
+      .boot-bar { height: 72px; display: flex; align-items: center; gap: 12px; padding: 0 max(16px, calc((100vw - 1224px) / 2)); background: #fff; border-bottom: 1px solid #d5dae3; }
+      .boot-bar i { width: 36px; height: 36px; border-radius: 9px; background: #2446c6; }
+      .boot-bar b { width: 150px; height: 14px; border-radius: 7px; background: #e3e6ec; }
+      .boot-grid { max-width: 1224px; margin: 28px auto; padding: 0 16px; display: grid; grid-template-columns: repeat(auto-fill, minmax(256px, 1fr)); gap: 20px; }
+      .boot-grid div { aspect-ratio: 4 / 3.2; border: 1px solid #d5dae3; border-radius: 12px; background: linear-gradient(90deg, #e9ecf0 25%, #f3f4f7 50%, #e9ecf0 75%) 0 0 / 200% 100%; animation: boot 1.4s linear infinite; }
+      @keyframes boot { to { background-position: -200% 0; } }
+      @media (prefers-reduced-motion: reduce) { .boot-grid div { animation: none; } }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div aria-hidden="true"><div class="boot-bar"><i></i><b></b></div><div class="boot-grid"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div></div></div>
+    <noscript>NexoEventos necesita JavaScript para mostrar los eventos.</noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

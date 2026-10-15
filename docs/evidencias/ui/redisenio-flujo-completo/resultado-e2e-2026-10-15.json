@@ -1,0 +1,27 @@
+{
+  "fecha": "2026-10-15",
+  "verificaciones": [
+    {
+      "name": "El plano del recinto se rellena según el recinto elegido",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Se crea como borrador",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "El borrador no es público",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "La vista previa 2D muestra todos los asientos configurados",
+      "passed": true,
+      "detail": "96 asientos"
+    }
+  ],
+  "error": "Tiempo agotado esperando: botón «Mapa 3D»",
+  "excepcionesDePagina": []
+}

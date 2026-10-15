@@ -116,7 +116,7 @@ function EventHeader({ event, onBack }: { event: EventDetail; onBack?: () => voi
   const long = event.description.length > 200
   return <header className="ep-head">
     {onBack && <button type="button" className="ep-back" onClick={onBack}><Icon name="arrow" size={18} />Volver a eventos</button>}
-    <div className="ep-cover">{event.image_path ? <img className="ep-hero-image" src={event.image_path} alt={`Fotografía ilustrativa para ${event.name}`} fetchPriority="high" /> : <div className="ep-hero-image fallback" aria-hidden="true" />}</div>
+    {event.image_path && <div className="ep-cover"><img className="ep-hero-image" src={event.image_path} alt={`Fotografía ilustrativa para ${event.name}`} fetchPriority="high" /></div>}
     <div className="ep-title">
       <span className="ep-chip">{event.category}</span>
       <h1>{event.name}</h1>

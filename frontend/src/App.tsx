@@ -621,7 +621,7 @@ export default function App() {
           {!loading && !error && groups.length > 0 && <>
             <div className="grid">{groups.slice(0, visibleCount).map(({ item, count }) => (
               <article className="card nx-card" key={item.id}>
-                <div className="card-art">{item.image_path ? <img src={item.image_path} alt="" loading="lazy" /> : <span className="image-fallback">{item.category}</span>}<span className="category-pill">{item.category}</span></div>
+                <div className="card-art">{item.image_path ? <img src={item.image_path} alt="" loading="lazy" /> : <span className="image-fallback" aria-hidden="true">{(() => { const Glyph = (categoryPresentation[item.category] ?? { Icon: LuClapperboard }).Icon; return <Glyph size={40} /> })()}</span>}<span className="category-pill">{item.category}</span></div>
                 <div className="card-body">
                   <p className="nx-when">{shortWhen(item.date, item.time)}{count > 1 && <b> · {count} funciones</b>}</p>
                   <h3><button type="button" className="card-link" aria-label={`Ver ${item.name}`} onClick={() => void openDetail(item.id)}>{item.name}</button></h3>
