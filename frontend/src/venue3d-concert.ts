@@ -7,7 +7,7 @@ const STAGE_Z = -13
 const FIRST_ZONE_Z = -2.5
 const FLOOR_DEPTH = 27
 
-const zoneHues = ['#ff4fa3', '#18d6b8', '#ffb43a', '#7c8cff']
+const zoneHues = ['#c9892b', '#7a5aa6', '#4f8a6a', '#b5523f']
 
 function windowsTexture() {
   const canvas = document.createElement('canvas')
@@ -99,7 +99,7 @@ export function buildConcert({ scene, mobile }: VenueContext, zones: VenueZone[]
   const stageHeight = 1.7
   const stageDepth = 11
   box(scene, [26, stageHeight, stageDepth], [0, stageHeight / 2, STAGE_Z], stageFloor, { cast: true })
-  box(scene, [26.2, .12, .12], [0, stageHeight + .02, STAGE_Z + stageDepth / 2 + .02], std({ color: '#00c2a5', emissive: '#00e0bd', emissiveIntensity: 2 }))
+  box(scene, [26.2, .12, .12], [0, stageHeight + .02, STAGE_Z + stageDepth / 2 + .02], std({ color: '#2f6bff', emissive: '#4d7dff', emissiveIntensity: 2 }))
   const mainScreenTexture = screenTexture('NEXO', 'ESCENA DEMO')
   const ledMaterial = new THREE.MeshStandardMaterial({ map: mainScreenTexture, emissive: '#ffffff', emissiveMap: mainScreenTexture, emissiveIntensity: 1.05, roughness: .4 })
   box(scene, [27, 13, .8], [0, stageHeight + 6.5, STAGE_Z - stageDepth / 2 - .3], black)
@@ -118,7 +118,7 @@ export function buildConcert({ scene, mobile }: VenueContext, zones: VenueZone[]
   truss(scene, 26, [0, stageHeight + 10.1, STAGE_Z + 5], [0, 0, 0], metal)
 
   // Cabezales móviles con haces de color.
-  const hues = ['#ff4fa3', '#18d6b8', '#ffb43a', '#7c8cff', '#18d6b8', '#ff4fa3']
+  const hues = ['#c9892b', '#7a5aa6', '#4f8a6a', '#b5523f', '#7a5aa6', '#c9892b']
   const rigZ = [STAGE_Z + 5, STAGE_Z - 1]
   rigZ.forEach((z, rigIndex) => {
     for (let index = 0; index < 7; index += 1) {
@@ -176,7 +176,7 @@ export function buildConcert({ scene, mobile }: VenueContext, zones: VenueZone[]
   const fohZ = FIRST_ZONE_Z + FLOOR_DEPTH + .4
   box(scene, [5.2, .5, 3.4], [0, .25, fohZ], black)
   box(scene, [4.6, 1.1, 3], [0, 1.05, fohZ], std({ color: '#222a31', roughness: .8 }))
-  box(scene, [4.2, .12, 1], [0, 1.7, fohZ - .6], std({ color: '#00c2a5', emissive: '#00e0bd', emissiveIntensity: 1.2 }))
+  box(scene, [4.2, .12, 1], [0, 1.7, fohZ - .6], std({ color: '#2f6bff', emissive: '#4d7dff', emissiveIntensity: 1.2 }))
   for (const side of [-1, 1]) {
     const x = side * 24
     box(scene, [7, .2, 6], [x, 3.1, 10], std({ color: side > 0 ? '#c9473b' : '#e6e1d6', roughness: .9 }))

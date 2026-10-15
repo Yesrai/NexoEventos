@@ -175,3 +175,13 @@ Alcance de esta fase: **inicio, catálogo y página de evento**. Registro, compr
 - **Causa:** tres eventos con asientos numerados (1003, 1004, 1012) tienen un plano de tipo `zones`/`concert_zones`; la página solo reconocía `theatre`/`stadium` para el modo asientos, por lo que no ofrecía 3D ni plano y caía a la lista de casillas (una por asiento). No era un error de WebGL ni se mostraban 3D y lista a la vez (los modos son excluyentes).
 - **Corrección (solo integración, sin tocar geometría ni cámaras):** `venueKind()` en `EventPage.tsx` decide el recinto: modo asientos → estadio o sala de butacas; así esos eventos abren en el 3D. La lista pasó a secciones por zona con filas plegables y búsqueda («B5», «fila C»); sin casillas. Se quitó la fila de tarifas duplicada.
 - **Verificación:** 27 pruebas, build OK; `scripts/verify-seat-selection.mjs` en Chrome (escritorio y móvil, 4 eventos): abre en Mapa 3D, clic sobre butaca la selecciona y aparece en el panel, Lista/Plano sin casillas. Capturas en `docs/evidencias/ui/seleccion-asientos-v2/`. (WebGL por software; no mide FPS en GPU real.)
+
+## 12. Dirección visual: paleta A · Cobalto (fase 1, pendiente de aprobación)
+
+- Se descarta «Noche Nexo» (turquesa/magenta/oscuro). Nueva capa `frontend/src/theme.css` (sustituye a `noche.css`) y tokens de `styles.css` en cobalto `#2446C6`; Inter como única tipografía (se quitó Bricolage Grotesque).
+- Contrastes calculados (WCAG): blanco sobre cobalto 7.6:1, texto 18.1:1, secundario 6.3:1, borde de control 3.1:1.
+- Aplicado a: cabecera, inicio (destacado + 3 laterales), categorías, catálogo (tarjetas 16:10 con fecha, título, lugar, precio), detalle del evento (portada contenida, panel de compra) y selección 3D/plano/lista.
+- Cambio de **colores** (no de geometría ni lógica) en el 3D: el asiento seleccionado pasa de turquesa a azul vivo `#2F6BFF`; las zonas dejan de ser azul/rosa/turquesa y usan ámbar, verde, violeta y ladrillo (`venue3d-types.ts`, `shared.tsx`, `venue3d-concert.ts`); los acentos decorativos turquesa del escenario/museo pasan a azul. Así «seleccionado» no se confunde con ninguna zona ni con ocupado (gris).
+- Pendiente (no tocado): registro/inicio de sesión, compra confirmada, sala de espera, Mis entradas, organizador.
+- Evidencias: `docs/evidencias/ui/cobalto-fase1c/` (inicio, concierto, estadio, auditorio, museo; escritorio y móvil), `cobalto-seleccion-3d/` (3D inicial, selección por clic, lista, plano; 4 eventos × 2 pantallas, 8/8 verificados), `cobalto-fase1d/` (inicio tras ajuste final).
+- Verificación: 27 pruebas, build OK, `npm audit` 0. WebGL por software; sin medición de FPS en GPU real.

@@ -1,0 +1,510 @@
+{
+  "nota": "Chrome headless con WebGL por software (SwiftShader)",
+  "results": [
+    {
+      "evento": "Voces en el Auditorio",
+      "pantalla": "escritorio",
+      "inicial": {
+        "canvas": 1,
+        "checkboxes": 0,
+        "seatButtons": 0,
+        "listVisible": false,
+        "planVisible": false,
+        "pressed": [
+          "Mapa 3D"
+        ],
+        "modes": [
+          "Mapa 3D",
+          "Plano",
+          "Lista"
+        ],
+        "panelSeats": [],
+        "overflowX": false
+      },
+      "seleccionPorClicEn3D": true,
+      "tras_clic": [
+        "Preferencial · Fila A · Asiento 2"
+      ],
+      "lista": {
+        "canvas": 0,
+        "checkboxes": 0,
+        "seatButtons": 12,
+        "listVisible": true,
+        "planVisible": false,
+        "pressed": [
+          "Lista"
+        ],
+        "modes": [
+          "Mapa 3D",
+          "Plano",
+          "Lista"
+        ],
+        "panelSeats": [
+          "Preferencial · Fila A · Asiento 2"
+        ],
+        "overflowX": false
+      },
+      "plano": {
+        "canvas": 0,
+        "checkboxes": 0,
+        "seatButtons": 96,
+        "listVisible": false,
+        "planVisible": true,
+        "pressed": [
+          "Plano"
+        ],
+        "modes": [
+          "Mapa 3D",
+          "Plano",
+          "Lista"
+        ],
+        "panelSeats": [
+          "Preferencial · Fila A · Asiento 2"
+        ],
+        "overflowX": false
+      }
+    },
+    {
+      "evento": "Voces en el Auditorio",
+      "pantalla": "movil",
+      "inicial": {
+        "canvas": 1,
+        "checkboxes": 0,
+        "seatButtons": 0,
+        "listVisible": false,
+        "planVisible": false,
+        "pressed": [
+          "Mapa 3D"
+        ],
+        "modes": [
+          "Mapa 3D",
+          "Plano",
+          "Lista"
+        ],
+        "panelSeats": [],
+        "overflowX": false
+      },
+      "seleccionPorClicEn3D": true,
+      "tras_clic": [
+        "Preferencial · Fila A · Asiento 2"
+      ],
+      "lista": {
+        "canvas": 0,
+        "checkboxes": 0,
+        "seatButtons": 12,
+        "listVisible": true,
+        "planVisible": false,
+        "pressed": [
+          "Lista"
+        ],
+        "modes": [
+          "Mapa 3D",
+          "Plano",
+          "Lista"
+        ],
+        "panelSeats": [
+          "Preferencial · Fila A · Asiento 2"
+        ],
+        "overflowX": false
+      },
+      "plano": {
+        "canvas": 0,
+        "checkboxes": 0,
+        "seatButtons": 96,
+        "listVisible": false,
+        "planVisible": true,
+        "pressed": [
+          "Plano"
+        ],
+        "modes": [
+          "Mapa 3D",
+          "Plano",
+          "Lista"
+        ],
+        "panelSeats": [
+          "Preferencial · Fila A · Asiento 2"
+        ],
+        "overflowX": false
+      }
+    },
+    {
+      "evento": "Clásico Metropolitano",
+      "pantalla": "escritorio",
+      "inicial": {
+        "canvas": 1,
+        "checkboxes": 0,
+        "seatButtons": 0,
+        "listVisible": false,
+        "planVisible": false,
+        "pressed": [
+          "Mapa 3D"
+        ],
+        "modes": [
+          "Mapa 3D",
+          "Plano",
+          "Lista"
+        ],
+        "panelSeats": [],
+        "overflowX": false
+      },
+      "seleccionPorClicEn3D": true,
+      "tras_clic": [
+        "Tribuna Occidente · Fila F · Asiento 5"
+      ],
+      "lista": {
+        "canvas": 0,
+        "checkboxes": 0,
+        "seatButtons": 12,
+        "listVisible": true,
+        "planVisible": false,
+        "pressed": [
+          "Lista"
+        ],
+        "modes": [
+          "Mapa 3D",
+          "Plano",
+          "Lista"
+        ],
+        "panelSeats": [
+          "Tribuna Occidente · Fila F · Asiento 5"
+        ],
+        "overflowX": false
+      },
+      "plano": {
+        "canvas": 0,
+        "checkboxes": 0,
+        "seatButtons": 24,
+        "listVisible": false,
+        "planVisible": true,
+        "pressed": [
+          "Plano"
+        ],
+        "modes": [
+          "Mapa 3D",
+          "Plano",
+          "Lista"
+        ],
+        "panelSeats": [
+          "Tribuna Occidente · Fila F · Asiento 5"
+        ],
+        "overflowX": false
+      }
+    },
+    {
+      "evento": "Clásico Metropolitano",
+      "pantalla": "movil",
+      "inicial": {
+        "canvas": 1,
+        "checkboxes": 0,
+        "seatButtons": 0,
+        "listVisible": false,
+        "planVisible": false,
+        "pressed": [
+          "Mapa 3D"
+        ],
+        "modes": [
+          "Mapa 3D",
+          "Plano",
+          "Lista"
+        ],
+        "panelSeats": [],
+        "overflowX": false
+      },
+      "seleccionPorClicEn3D": true,
+      "tras_clic": [
+        "Tribuna Norte · Fila B · Asiento 6"
+      ],
+      "lista": {
+        "canvas": 0,
+        "checkboxes": 0,
+        "seatButtons": 12,
+        "listVisible": true,
+        "planVisible": false,
+        "pressed": [
+          "Lista"
+        ],
+        "modes": [
+          "Mapa 3D",
+          "Plano",
+          "Lista"
+        ],
+        "panelSeats": [
+          "Tribuna Norte · Fila B · Asiento 6"
+        ],
+        "overflowX": false
+      },
+      "plano": {
+        "canvas": 0,
+        "checkboxes": 0,
+        "seatButtons": 24,
+        "listVisible": false,
+        "planVisible": true,
+        "pressed": [
+          "Plano"
+        ],
+        "modes": [
+          "Mapa 3D",
+          "Plano",
+          "Lista"
+        ],
+        "panelSeats": [
+          "Tribuna Norte · Fila B · Asiento 6"
+        ],
+        "overflowX": false
+      }
+    },
+    {
+      "evento": "Movimiento en Escena",
+      "pantalla": "escritorio",
+      "inicial": {
+        "canvas": 1,
+        "checkboxes": 0,
+        "seatButtons": 0,
+        "listVisible": false,
+        "planVisible": false,
+        "pressed": [
+          "Mapa 3D"
+        ],
+        "modes": [
+          "Mapa 3D",
+          "Plano",
+          "Lista"
+        ],
+        "panelSeats": [],
+        "overflowX": false
+      },
+      "seleccionPorClicEn3D": true,
+      "tras_clic": [
+        "Preferencial · Fila A · Asiento 3"
+      ],
+      "lista": {
+        "canvas": 0,
+        "checkboxes": 0,
+        "seatButtons": 12,
+        "listVisible": true,
+        "planVisible": false,
+        "pressed": [
+          "Lista"
+        ],
+        "modes": [
+          "Mapa 3D",
+          "Plano",
+          "Lista"
+        ],
+        "panelSeats": [
+          "Preferencial · Fila A · Asiento 3"
+        ],
+        "overflowX": false
+      },
+      "plano": {
+        "canvas": 0,
+        "checkboxes": 0,
+        "seatButtons": 48,
+        "listVisible": false,
+        "planVisible": true,
+        "pressed": [
+          "Plano"
+        ],
+        "modes": [
+          "Mapa 3D",
+          "Plano",
+          "Lista"
+        ],
+        "panelSeats": [
+          "Preferencial · Fila A · Asiento 3"
+        ],
+        "overflowX": false
+      }
+    },
+    {
+      "evento": "Movimiento en Escena",
+      "pantalla": "movil",
+      "inicial": {
+        "canvas": 1,
+        "checkboxes": 0,
+        "seatButtons": 0,
+        "listVisible": false,
+        "planVisible": false,
+        "pressed": [
+          "Mapa 3D"
+        ],
+        "modes": [
+          "Mapa 3D",
+          "Plano",
+          "Lista"
+        ],
+        "panelSeats": [],
+        "overflowX": false
+      },
+      "seleccionPorClicEn3D": true,
+      "tras_clic": [
+        "Preferencial · Fila A · Asiento 4"
+      ],
+      "lista": {
+        "canvas": 0,
+        "checkboxes": 0,
+        "seatButtons": 12,
+        "listVisible": true,
+        "planVisible": false,
+        "pressed": [
+          "Lista"
+        ],
+        "modes": [
+          "Mapa 3D",
+          "Plano",
+          "Lista"
+        ],
+        "panelSeats": [
+          "Preferencial · Fila A · Asiento 4"
+        ],
+        "overflowX": false
+      },
+      "plano": {
+        "canvas": 0,
+        "checkboxes": 0,
+        "seatButtons": 48,
+        "listVisible": false,
+        "planVisible": true,
+        "pressed": [
+          "Plano"
+        ],
+        "modes": [
+          "Mapa 3D",
+          "Plano",
+          "Lista"
+        ],
+        "panelSeats": [
+          "Preferencial · Fila A · Asiento 4"
+        ],
+        "overflowX": false
+      }
+    },
+    {
+      "evento": "Pulso Eléctrico",
+      "pantalla": "escritorio",
+      "inicial": {
+        "canvas": 1,
+        "checkboxes": 0,
+        "seatButtons": 0,
+        "listVisible": false,
+        "planVisible": false,
+        "pressed": [
+          "Mapa 3D"
+        ],
+        "modes": [
+          "Mapa 3D",
+          "Plano",
+          "Lista"
+        ],
+        "panelSeats": [],
+        "overflowX": false
+      },
+      "seleccionPorClicEn3D": true,
+      "tras_clic": [
+        "Preferencial · Fila A · Asiento 3"
+      ],
+      "lista": {
+        "canvas": 0,
+        "checkboxes": 0,
+        "seatButtons": 12,
+        "listVisible": true,
+        "planVisible": false,
+        "pressed": [
+          "Lista"
+        ],
+        "modes": [
+          "Mapa 3D",
+          "Plano",
+          "Lista"
+        ],
+        "panelSeats": [
+          "Preferencial · Fila A · Asiento 3"
+        ],
+        "overflowX": false
+      },
+      "plano": {
+        "canvas": 0,
+        "checkboxes": 0,
+        "seatButtons": 48,
+        "listVisible": false,
+        "planVisible": true,
+        "pressed": [
+          "Plano"
+        ],
+        "modes": [
+          "Mapa 3D",
+          "Plano",
+          "Lista"
+        ],
+        "panelSeats": [
+          "Preferencial · Fila A · Asiento 3"
+        ],
+        "overflowX": false
+      }
+    },
+    {
+      "evento": "Pulso Eléctrico",
+      "pantalla": "movil",
+      "inicial": {
+        "canvas": 1,
+        "checkboxes": 0,
+        "seatButtons": 0,
+        "listVisible": false,
+        "planVisible": false,
+        "pressed": [
+          "Mapa 3D"
+        ],
+        "modes": [
+          "Mapa 3D",
+          "Plano",
+          "Lista"
+        ],
+        "panelSeats": [],
+        "overflowX": false
+      },
+      "seleccionPorClicEn3D": true,
+      "tras_clic": [
+        "Preferencial · Fila A · Asiento 4"
+      ],
+      "lista": {
+        "canvas": 0,
+        "checkboxes": 0,
+        "seatButtons": 12,
+        "listVisible": true,
+        "planVisible": false,
+        "pressed": [
+          "Lista"
+        ],
+        "modes": [
+          "Mapa 3D",
+          "Plano",
+          "Lista"
+        ],
+        "panelSeats": [
+          "Preferencial · Fila A · Asiento 4"
+        ],
+        "overflowX": false
+      },
+      "plano": {
+        "canvas": 0,
+        "checkboxes": 0,
+        "seatButtons": 48,
+        "listVisible": false,
+        "planVisible": true,
+        "pressed": [
+          "Plano"
+        ],
+        "modes": [
+          "Mapa 3D",
+          "Plano",
+          "Lista"
+        ],
+        "panelSeats": [
+          "Preferencial · Fila A · Asiento 4"
+        ],
+        "overflowX": false
+      }
+    }
+  ],
+  "errors": []
+}

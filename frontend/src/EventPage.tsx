@@ -112,10 +112,9 @@ function SalesGate({ event, user, state, onLogin }: { event: EventDetail; user: 
 function Hero({ event, canBuy, onBuy, onBack, heroRef }: { event: EventDetail; canBuy: boolean; onBuy: () => void; onBack?: () => void; heroRef: RefObject<HTMLElement | null> }) {
   const soldOut = event.available_capacity === 0
   return <header className="ep-hero" ref={heroRef}>
-    {event.image_path ? <img className="ep-hero-image" src={event.image_path} alt={`Fotografía ilustrativa para ${event.name}`} fetchPriority="high" /> : <div className="ep-hero-image fallback" aria-hidden="true" />}
-    <div className="ep-hero-shade" aria-hidden="true" />
     <div className="ep-hero-inner">
       {onBack && <button type="button" className="ep-back" onClick={onBack}><Icon name="arrow" size={18} />Volver a eventos</button>}
+      <div className="ep-cover">{event.image_path ? <img className="ep-hero-image" src={event.image_path} alt={`Fotografía ilustrativa para ${event.name}`} fetchPriority="high" /> : <div className="ep-hero-image fallback" aria-hidden="true" />}</div>
       <div className="ep-hero-body">
         <span className="ep-chip">{event.category}</span>
         <h1>{event.name}</h1>

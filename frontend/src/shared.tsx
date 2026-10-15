@@ -152,8 +152,8 @@ export const categoryPresentation: Record<string, { label: string; Icon: IconTyp
 export const categoryOrder = Object.keys(categoryPresentation)
 
 /** Colores por zona: iguales en la lista, el plano 2D y el recinto 3D. */
-export const CONCERT_HUES = ['#ff4fa3', '#18d6b8', '#ffb43a', '#7c8cff']
-export const SEAT_HUES = ['#3a6ea5', '#a8762b', '#8a5fb0', '#2f9e8a']
+export const CONCERT_HUES = ['#c9892b', '#7a5aa6', '#4f8a6a', '#b5523f']
+export const SEAT_HUES = ['#c9892b', '#4f8a6a', '#7a5aa6', '#b5523f']
 
 export function zoneColorMap(zones: Array<{ id: number; price: number }>, concert: boolean) {
   const ordered = [...zones].sort((a, b) => concert ? b.price - a.price : a.price - b.price)

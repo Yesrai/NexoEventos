@@ -33,7 +33,7 @@ type SeatInfo = Pick<StadiumSeat, 'zone_name' | 'row' | 'number' | 'price' | 'av
 const COLORS = {
   available: new THREE.Color('#17384a'),
   occupied: new THREE.Color('#aebbc1'),
-  selected: new THREE.Color('#00c2a5'),
+  selected: new THREE.Color('#2f6bff'),
 }
 
 const GENERAL_CAMERA = new THREE.Vector3(27, 20, 31)

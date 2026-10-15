@@ -174,7 +174,7 @@ export function buildTheatre({ scene, mobile }: VenueContext, seats: VenueSeat[]
         matrix.compose(new THREE.Vector3(position.x + offset, position.y + .22, position.z), quaternion.identity(), unit)
         arms.setMatrixAt(index * 2 + slot, matrix)
       }
-      const color = new THREE.Color(chosen ? '#00e0bd' : seat.available ? colors.get(seat.zone_id) ?? '#3d73a8' : '#98a1a6')
+      const color = new THREE.Color(chosen ? '#2f6bff' : seat.available ? colors.get(seat.zone_id) ?? '#3d73a8' : '#98a1a6')
       bases.setColorAt(index, color)
       backs.setColorAt(index, color)
     })

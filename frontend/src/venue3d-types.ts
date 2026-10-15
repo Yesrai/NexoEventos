@@ -24,7 +24,7 @@ export type VenueBuild = {
   legend: Array<{ label: string; color: string }>
 }
 
-export const zonePalette = ['#3a6ea5', '#a8762b', '#8a5fb0', '#2f9e8a']
+export const zonePalette = ['#c9892b', '#4f8a6a', '#7a5aa6', '#b5523f']
 
 /** Color estable por rango de precio ascendente para que la leyenda coincida con la escena. */
 export function zoneColors(items: Array<{ id: number; price: number }>) {

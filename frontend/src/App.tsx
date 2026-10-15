@@ -604,8 +604,8 @@ export default function App() {
           {!loading && !error && filtered.length === 0 && <div className="empty-state"><span className="empty-icon"><Icon name="search" /></span><h3>No encontramos eventos</h3><p>Prueba otra fecha, categoría o rango de precio.</p><button className="button secondary" onClick={clearFilters}>Limpiar filtros</button></div>}
           {!loading && !error && filtered.length > 0 && <div className="grid">{filtered.map((item, index) => (
             <article className="card nx-card" key={item.id}>
-              <button className="card-art" onClick={() => void openDetail(item.id)} aria-label={`Ver ${item.name}`}>{item.image_path ? <img src={item.image_path} alt="" loading="lazy" /> : <span className="image-fallback">{item.category}</span>}<span className="nx-stamp" aria-hidden="true"><b>{dayOf(item.date)}</b><i>{monthOf(item.date)}</i></span><span className="category-pill">{item.category}</span></button>
-              <div className="card-body"><h3>{item.name}</h3><p className="venue"><Icon name="location" size={18} />{item.venue}, {item.city}</p><p className="date"><Icon name="clock" size={18} />{formatTime(item.time)}</p>
+              <button className="card-art" onClick={() => void openDetail(item.id)} aria-label={`Ver ${item.name}`}>{item.image_path ? <img src={item.image_path} alt="" loading="lazy" /> : <span className="image-fallback">{item.category}</span>}<span className="category-pill">{item.category}</span></button>
+              <div className="card-body"><p className="nx-when">{shortWhen(item.date, item.time)}</p><h3>{item.name}</h3><p className="venue"><Icon name="location" size={18} />{item.venue}, {item.city}</p>
                 <div className="card-footer"><strong>{formatEventPrice(item)}</strong>{item.available_capacity === 0 ? <em className="nx-few sold">Agotado</em> : item.available_capacity <= Math.max(10, Math.ceil(item.capacity * .1)) ? <em className="nx-few">Últimas entradas · {item.available_capacity}</em> : <span>{item.available_capacity} disponibles</span>}</div>
                 <button className="button secondary detail-button" onClick={() => void openDetail(item.id)}>Ver detalle <Icon name="arrow" size={18} /></button>
               </div>
@@ -624,8 +624,7 @@ export default function App() {
   )
 }
 
-const dayOf = (value: string) => String(new Date(`${value}T12:00:00`).getDate())
-const monthOf = (value: string) => new Intl.DateTimeFormat('es-PE', { month: 'short' }).format(new Date(`${value}T12:00:00`)).replace('.', '').toUpperCase()
+const shortWhen = (date: string, time: string | null) => `${new Intl.DateTimeFormat('es-PE', { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(`${date}T12:00:00`)).replace(/\./g, '')} · ${formatTime(time)}`
 
 function authErrorMessage(mode: 'login' | 'register', status: number, body: unknown) {
   const server = messageFrom(body, '')

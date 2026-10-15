@@ -175,7 +175,7 @@ export function buildMuseum({ scene, mobile }: VenueContext): VenueBuild {
 
   // Recorrido recomendado sobre el piso, con chevrones direccionales.
   const route: Array<[number, number]> = [[0, 11], [-12, 9], [-12, LOBBY_Z], [-12, -3], [-6, -3], [6, -3], [17.2, -3]]
-  const routeMaterial = std({ color: '#00c2a5', emissive: '#00e0bd', emissiveIntensity: .9, roughness: .5 })
+  const routeMaterial = std({ color: '#2f6bff', emissive: '#4d7dff', emissiveIntensity: .9, roughness: .5 })
   for (let index = 0; index < route.length - 1; index += 1) {
     const [ax, az] = route[index]
     const [bx, bz] = route[index + 1]

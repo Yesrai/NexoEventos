@@ -142,7 +142,7 @@ export function screenTexture(title: string, subtitle: string) {
       context.arc(size * .7, size * .2, 40 + line * 36, 0, Math.PI * 2)
       context.stroke()
     }
-    context.fillStyle = '#00c2a5'
+    context.fillStyle = '#2f6bff'
     context.fillRect(56, 150, 10, 200)
     context.fillStyle = '#f7fbfc'
     context.font = '700 92px Arial'
