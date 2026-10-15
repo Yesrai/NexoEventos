@@ -622,6 +622,30 @@ describe('NexoEventos catalog', () => {
     for (const control of screen.getAllByRole('button', { name: /Campo.*S\/ 45.00/ })) expect(control).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('group', { name: 'Plano de zonas frente al escenario' })).toBeInTheDocument()
   })
+  it('opens numbered seats on the plan (never a giant checkbox list) and offers a collapsible searchable list', async () => {
+    const legacy = { ...baseEvent, id: 41, name: 'Obra heredada', date: '2026-11-12', venue: 'Sala', category: 'Teatro', price: 30, capacity: 4, available_capacity: 4, ticket_mode: 'seats' as const, layout_kind: 'zones' as const }
+    const seats = ['A', 'B'].flatMap((row, r) => [1, 2].map((number) => ({ id: r * 2 + number, zone_id: 1, zone_name: 'General', row, number, price: 30, available: true })))
+    vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request) => {
+      const url = String(input)
+      if (url.endsWith('/api/auth/session')) return { ok: false, status: 401, json: async () => ({}) }
+      if (url.endsWith('/api/events/41')) return { ok: true, status: 200, json: async () => ({ ...legacy, description: 'x', zones: [{ id: 1, name: 'General', price: 30, capacity: 4, available_capacity: 4 }], seats }) }
+      return { ok: true, status: 200, json: async () => [legacy] }
+    }))
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver Obra heredada' }))
+    await screen.findByText(/El mapa 3D no está disponible en este dispositivo/)
+    expect(screen.getByRole('group', { name: 'Asientos numerados' })).toBeInTheDocument()
+    expect(document.querySelectorAll('input[type="checkbox"]').length).toBe(0)
+    fireEvent.click(screen.getByRole('button', { name: 'Lista' }))
+    expect(screen.queryByRole('group', { name: 'Asientos numerados' })).not.toBeInTheDocument()
+    expect(document.querySelectorAll('input[type="checkbox"]').length).toBe(0)
+    expect(screen.queryByRole('button', { name: /asiento 1, disponible/ })).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Buscar asiento'), { target: { value: 'B2' } })
+    fireEvent.click(await screen.findByRole('button', { name: /fila B, asiento 2, disponible/ }))
+    const panel = screen.getByRole('complementary', { name: 'Resumen de compra' })
+    expect(within(panel).getByText('General · Fila B · Asiento 2')).toBeInTheDocument()
+  })
+
   it('renders the configured plan instead of a universal auditorium fallback', async () => {
     const cases = [
       { ...baseEvent, id: 21, name: 'Teatro explícito', date: '2026-11-01', venue: 'Auditorio', category: 'Teatro', price: 30, capacity: 2, available_capacity: 2, ticket_mode: 'seats' as const, layout_kind: 'theatre' as const },

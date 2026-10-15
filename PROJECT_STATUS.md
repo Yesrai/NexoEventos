@@ -169,3 +169,9 @@ Alcance de esta fase: **inicio, catálogo y página de evento**. Registro, compr
 - **Movimiento:** solo entrada suave de la portada, elevación leve de tarjetas y barra pegajosa; se desactiva con «reducir movimiento».
 - **Verificación:** frontend 26/26, build de producción correcto, `npm audit` 0. Capturas reales de escritorio y móvil (página completa y pantalla real) en `docs/evidencias/ui/noche-nexo-fase1/`.
 - **Limitaciones:** las fotografías (Wikimedia Commons) tienen 1000–1600 px de ancho en su origen; no hay mayor resolución disponible, por lo que algunas se ven suaves en portadas a pantalla completa. Pendiente: extender el sistema a las demás pantallas tras la aprobación.
+
+## 11. Corrección: selección de asientos numerados (3D primero)
+
+- **Causa:** tres eventos con asientos numerados (1003, 1004, 1012) tienen un plano de tipo `zones`/`concert_zones`; la página solo reconocía `theatre`/`stadium` para el modo asientos, por lo que no ofrecía 3D ni plano y caía a la lista de casillas (una por asiento). No era un error de WebGL ni se mostraban 3D y lista a la vez (los modos son excluyentes).
+- **Corrección (solo integración, sin tocar geometría ni cámaras):** `venueKind()` en `EventPage.tsx` decide el recinto: modo asientos → estadio o sala de butacas; así esos eventos abren en el 3D. La lista pasó a secciones por zona con filas plegables y búsqueda («B5», «fila C»); sin casillas. Se quitó la fila de tarifas duplicada.
+- **Verificación:** 27 pruebas, build OK; `scripts/verify-seat-selection.mjs` en Chrome (escritorio y móvil, 4 eventos): abre en Mapa 3D, clic sobre butaca la selecciona y aparece en el panel, Lista/Plano sin casillas. Capturas en `docs/evidencias/ui/seleccion-asientos-v2/`. (WebGL por software; no mide FPS en GPU real.)

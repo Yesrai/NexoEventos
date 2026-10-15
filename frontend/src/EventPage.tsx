@@ -6,7 +6,16 @@ const Stadium3D = lazy(() => import('./Stadium3D'))
 
 type StageMode = '3d' | 'plan' | 'list'
 const money = (value: number) => value === 0 ? 'Gratis' : `S/ ${value.toFixed(2)}`
-const supports3D = (event: EventDetail) => ['theatre', 'stadium', 'concert_zones', 'museum'].includes(event.layout_kind ?? '')
+/** Qué recinto representa un evento. Los eventos con asientos numerados sobre planos genéricos (datos anteriores) usan la sala de butacas. */
+type VenueKind = 'theatre' | 'stadium' | 'concert' | 'museum' | null
+const venueKind = (event: EventDetail): VenueKind => {
+  const kind = event.layout_kind ?? ''
+  if (event.ticket_mode === 'seats') return kind === 'stadium' ? 'stadium' : 'theatre'
+  if (kind === 'concert_zones' && event.ticket_mode === 'zones') return 'concert'
+  if (kind === 'museum') return 'museum'
+  return null
+}
+const supports3D = (event: EventDetail) => venueKind(event) !== null
 
 /** Estado de la selección de compra. Lo usan la página del cliente y la vista previa del organizador. */
 export function useSelection(event: EventDetail | null, onChange?: () => void) {
@@ -209,39 +218,66 @@ function MuseumPlan() {
   return <ol className="ep-museum-plan" aria-label="Recorrido por las salas">{['Ingreso', 'Sala 1', 'Sala 2', 'Sala 3', 'Salida'].map((name) => <li key={name}>{name}</li>)}</ol>
 }
 
+function SeatList({ event, selection, colors }: { event: EventDetail; selection: Selection; colors: Map<number, string> }) {
+  const [query, setQuery] = useState('')
+  const [open, setOpen] = useState<Record<string, boolean>>({})
+  const term = query.trim().toLowerCase().replace(/^fila\s+/, '')
+  const match = (seat: Seat) => !term || `${seat.row}${seat.number}`.toLowerCase() === term.replace(/[\s-]/g, '') || `${seat.row} ${seat.number}`.toLowerCase().includes(term) || seat.row.toLowerCase() === term
+  return <div className="ep-seat-list-view">
+    <div className="ep-seat-search"><label htmlFor="ep-seat-q">Buscar asiento</label><input id="ep-seat-q" type="search" inputMode="text" placeholder="Ej. B5 o fila C" value={query} onChange={(e) => setQuery(e.target.value)} /></div>
+    {event.zones.map((zone) => {
+      const seats = event.seats.filter((seat) => seat.zone_id === zone.id)
+      const free = seats.filter((seat) => seat.available).length
+      const picked = seats.filter((seat) => selection.selectedSeatIds.includes(seat.id)).length
+      const rows = [...new Set(seats.map((seat) => seat.row))]
+      return <section key={zone.id} className="ep-seat-section"><h3><i className="ep-swatch" style={{ background: colors.get(zone.id) }} aria-hidden="true" />{zone.name}<small>{free} libres · {money(zone.price)}{picked ? ` · ${picked} elegidos` : ''}</small></h3>
+        {rows.map((row) => {
+          const rowSeats = seats.filter((seat) => seat.row === row)
+          const shown = rowSeats.filter(match)
+          if (!shown.length) return null
+          const key = `${zone.id}-${row}`
+          const expanded = open[key] ?? (!!term || rowSeats.some((seat) => selection.selectedSeatIds.includes(seat.id)))
+          return <div key={row} className="ep-seat-rowgroup"><button type="button" aria-expanded={expanded} aria-controls={`row-${key}`} onClick={() => setOpen({ ...open, [key]: !expanded })}><span>Fila {row}</span><small>{rowSeats.filter((seat) => seat.available).length} libres</small><Icon name={expanded ? 'minus' : 'plus'} size={16} /></button>
+            {expanded && <div id={`row-${key}`} className="ep-seat-chips">{shown.map((seat) => { const chosen = selection.selectedSeatIds.includes(seat.id); return <button key={seat.id} type="button" className={`ep-seat ${chosen ? 'selected' : ''}`} disabled={!seat.available} aria-pressed={chosen} aria-label={`Zona ${zone.name}, fila ${seat.row}, asiento ${seat.number}, ${seat.available ? chosen ? 'seleccionado' : 'disponible' : 'ocupado'}`} onClick={() => selection.toggleSeat(seat)}>{chosen ? '✓' : seat.available ? seat.number : '×'}</button> })}</div>}
+          </div>
+        })}
+      </section>
+    })}
+  </div>
+}
+
 function ListView({ event, selection, colors }: { event: EventDetail; selection: Selection; colors: Map<number, string> }) {
   if (event.ticket_mode === 'zones') return <fieldset className="ep-list"><legend>Elige una zona</legend>{event.zones.map((zone) => <label key={zone.id} className={zone.available_capacity === 0 ? 'disabled' : ''}><input type="radio" name="zone" checked={selection.zoneId === zone.id} disabled={zone.available_capacity === 0} onChange={() => selection.selectZone(zone.id)} /><i className="ep-swatch" style={{ background: colors.get(zone.id) }} aria-hidden="true" /><span>{zone.name}</span><small>{zone.available_capacity === 0 ? 'Agotada' : `${zone.available_capacity} disponibles`}</small><b>{money(zone.price)}</b></label>)}</fieldset>
-  if (event.ticket_mode === 'seats') return <div className="ep-list">{event.zones.map((zone) => <fieldset key={zone.id}><legend>{zone.name} · {money(zone.price)}</legend>{event.seats.filter((seat) => seat.zone_id === zone.id).map((seat) => <label key={seat.id} className={seat.available ? '' : 'disabled'}><input type="checkbox" checked={selection.selectedSeatIds.includes(seat.id)} disabled={!seat.available} onChange={() => selection.toggleSeat(seat)} />Fila {seat.row}, asiento {seat.number}{seat.available ? '' : ' (ocupado)'}</label>)}</fieldset>)}</div>
+  if (event.ticket_mode === 'seats') return <SeatList event={event} selection={selection} colors={colors} />
   return <p className="ep-note">Este evento no requiere elegir ubicación: indica la cantidad en tu compra.</p>
 }
 
 function Stage({ event, selection, colors }: { event: EventDetail; selection: Selection; colors: Map<number, string> }) {
   const has3D = supports3D(event)
-  const hasPlan = ['concert_zones', 'theatre', 'stadium', 'museum'].includes(event.layout_kind ?? '')
+  const kind = venueKind(event)
+  const hasPlan = kind !== null
   const [mode, setMode] = useState<StageMode>(has3D ? '3d' : hasPlan ? 'plan' : 'list')
   const [unavailable, setUnavailable] = useState(false)
   const effective: StageMode = mode === '3d' && unavailable ? 'plan' : mode
-  const kind = event.layout_kind
   const modes: Array<{ id: StageMode; label: string }> = [...(has3D && !unavailable ? [{ id: '3d' as const, label: 'Mapa 3D' }] : []), ...(hasPlan ? [{ id: 'plan' as const, label: 'Plano' }] : []), ...(event.ticket_mode !== 'general' ? [{ id: 'list' as const, label: 'Lista' }] : [])]
   const loading = <div className="ep-stage-loading" role="status"><span className="spinner" />Cargando el recinto…</div>
   return <section className="ep-stage" aria-labelledby="ep-stage-title">
-    <div className="ep-stage-head"><h2 id="ep-stage-title">{kind === 'museum' ? 'Conoce el recinto' : 'Elige tu ubicación'}</h2>{modes.length > 1 && <div className="ep-segmented" role="group" aria-label="Forma de ver el recinto">{modes.map((item) => <button key={item.id} type="button" aria-pressed={effective === item.id} className={effective === item.id ? 'active' : ''} onClick={() => setMode(item.id)}>{item.label}</button>)}</div>}</div>
+    <div className="ep-stage-head"><h2 id="ep-stage-title">{event.layout_kind === 'museum' ? 'Conoce el recinto' : 'Elige tu ubicación'}</h2>{modes.length > 1 && <div className="ep-segmented" role="group" aria-label="Forma de ver el recinto">{modes.map((item) => <button key={item.id} type="button" aria-pressed={effective === item.id} className={effective === item.id ? 'active' : ''} onClick={() => setMode(item.id)}>{item.label}</button>)}</div>}</div>
     {unavailable && <p className="ep-note" role="status">El mapa 3D no está disponible en este dispositivo. Usa el plano o la lista.</p>}
     <Tiers event={event} selection={selection} colors={colors} interactive={event.ticket_mode === 'zones'} />
     <div className="ep-stage-body">
-      {effective === '3d' && event.ticket_mode === 'zones' && <Suspense fallback={loading}><Venue3D kind="concert" zones={event.zones} selectedZoneId={selection.zoneId} onSelectZone={selection.selectZone} onUnavailable={() => setUnavailable(true)} /></Suspense>}
+      {effective === '3d' && kind === 'concert' && <Suspense fallback={loading}><Venue3D kind="concert" zones={event.zones} selectedZoneId={selection.zoneId} onSelectZone={selection.selectZone} onUnavailable={() => setUnavailable(true)} /></Suspense>}
       {effective === '3d' && kind === 'theatre' && <Suspense fallback={loading}><Venue3D kind="theatre" seats={event.seats} selectedSeatIds={selection.selectedSeatIds} onToggleSeat={selection.toggleSeat} onUnavailable={() => setUnavailable(true)} /></Suspense>}
       {effective === '3d' && kind === 'stadium' && <Suspense fallback={loading}><Stadium3D seats={event.seats} selectedSeatIds={selection.selectedSeatIds} onToggle={selection.toggleSeat} onSectorChange={() => undefined} onUnavailable={() => setUnavailable(true)} /></Suspense>}
       {effective === '3d' && kind === 'museum' && <Suspense fallback={loading}><Venue3D kind="museum" onUnavailable={() => setUnavailable(true)} /></Suspense>}
-      {effective === 'plan' && event.ticket_mode === 'zones' && <ZonePlan event={event} selection={selection} colors={colors} />}
-      {effective === 'plan' && event.ticket_mode === 'seats' && kind === 'theatre' && <TheatrePlan event={event} selection={selection} colors={colors} />}
-      {effective === 'plan' && event.ticket_mode === 'seats' && kind === 'stadium' && <StadiumPlan event={event} selection={selection} colors={colors} />}
+      {effective === 'plan' && kind === 'concert' && <ZonePlan event={event} selection={selection} colors={colors} />}
+      {effective === 'plan' && kind === 'theatre' && <TheatrePlan event={event} selection={selection} colors={colors} />}
+      {effective === 'plan' && kind === 'stadium' && <StadiumPlan event={event} selection={selection} colors={colors} />}
       {effective === 'plan' && kind === 'museum' && <MuseumPlan />}
       {effective === 'list' && <ListView event={event} selection={selection} colors={colors} />}
     </div>
     {event.ticket_mode === 'seats' && <ul className="ep-legend" aria-label="Leyenda"><li><i className="ep-dot free" />Disponible</li><li><i className="ep-dot chosen" />Seleccionado</li><li><i className="ep-dot taken" />Ocupado</li></ul>}
-    {event.ticket_mode === 'seats' && <Tiers event={event} selection={selection} colors={colors} interactive={false} />}
-    {kind === 'museum' && <p className="ep-note">En el museo se reserva por fecha, horario y cantidad: no hay asientos ni salas que elegir.</p>}
+    {event.layout_kind === 'museum' && <p className="ep-note">En el museo se reserva por fecha, horario y cantidad: no hay asientos ni salas que elegir.</p>}
   </section>
 }
 
@@ -274,7 +310,7 @@ export function EventPage({ event, selection, user, preview = false, reserving =
   event: EventDetail; selection: Selection; user: User | null; preview?: boolean; reserving?: boolean; message?: string | null; confirmedTotal?: number | null; error?: string | null
   onBack?: () => void; onSubmit?: () => Promise<void> | void; onRequireLogin?: () => void; onGoTickets?: () => void
 }) {
-  const colors = useMemo(() => zoneColorMap(event.zones, event.layout_kind === 'concert_zones'), [event.zones, event.layout_kind])
+  const colors = useMemo(() => zoneColorMap(event.zones, venueKind(event) === 'concert'), [event.zones, event.layout_kind, event.ticket_mode])
   const state = useSales(event.id, !preview && event.status === 'published')
   const buyRef = useRef<HTMLDivElement | null>(null)
   const heroRef = useRef<HTMLElement | null>(null)

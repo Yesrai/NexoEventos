@@ -258,3 +258,16 @@ button.ep-tier:hover:not(:disabled) { border-color: #4d6177; box-shadow: none; }
   .nx-hero-scrim { background: linear-gradient(0deg, rgba(8,13,19,.95) 0%, rgba(8,13,19,.8) 55%, rgba(8,13,19,.25) 100%); }
   .ep-hero-shade { background: linear-gradient(0deg, rgba(8,13,19,.94) 0%, rgba(8,13,19,.72) 55%, rgba(8,13,19,.25) 100%); }
 }
+
+/* Lista de asientos: secciones y filas plegables con búsqueda (alternativa accesible al mapa) */
+.ep-seat-list-view{display:grid;gap:14px;max-height:520px;overflow:auto;padding:4px 8px 4px 4px;color:#fff}
+.ep-seat-search{display:grid;gap:6px}
+.ep-seat-search label{font-weight:600;font-size:15px;color:#fff}
+.ep-seat-search input{min-height:44px;padding:0 14px;border-radius:10px;border:1px solid #c9cdd3;font:inherit;font-size:16px;max-width:320px}
+.ep-seat-section h3{color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 8px;font-size:17px}
+.ep-seat-section h3 small{font-weight:500;font-size:15px;opacity:.75}
+.ep-seat-rowgroup{border-top:1px solid rgba(128,128,128,.25)}
+.ep-seat-rowgroup>button{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;background:none;border:0;color:inherit;font:inherit;font-size:16px;font-weight:600;cursor:pointer;text-align:left}
+.ep-seat-rowgroup>button small{margin-left:auto;font-weight:500;font-size:15px;opacity:.75}
+.ep-seat-chips{display:flex;flex-wrap:wrap;gap:8px;padding:4px 0 14px}
+.ep-seat-chips .ep-seat{min-width:44px;min-height:44px}
