@@ -15,7 +15,8 @@ const pages = [
   { slug: 'concierto', event: 'Noche del Parque' },
   { slug: 'estadio', event: 'Clásico Metropolitano' },
   { slug: 'auditorio', event: 'Voces en el Auditorio' },
-  { slug: 'museo', event: 'Miradas Contemporáneas' },
+  { slug: 'museo', event: 'Rutas del Arte' },
+  { slug: 'feria', event: 'Feria de Sabores Locales' },
 ].filter((item) => item.slug.includes(filter))
 const viewports = [{ name: 'escritorio', width: 1440, height: 900, mobile: false, scale: 1 }, { name: 'movil', width: 390, height: 844, mobile: true, scale: 2 }]
 const port = 9900 + Math.floor(Math.random() * 90)

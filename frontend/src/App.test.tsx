@@ -611,14 +611,14 @@ describe('NexoEventos catalog', () => {
     const occupied = screen.getByRole('button', { name: /Zona Platea, fila A, asiento 2, ocupado/ })
     expect(occupied).toBeDisabled()
     const panel = screen.getByRole('complementary', { name: 'Resumen de compra' })
-    expect(within(panel).getByText(/Toca los asientos que quieras/)).toBeInTheDocument()
+    expect(within(panel).getByText(/Elige tus asientos en el mapa/)).toBeInTheDocument()
     fireEvent.click(available)
     const chosen = within(panel).getByRole('list', { name: 'Asientos elegidos' })
     expect(within(chosen).getByText('Platea · Fila A · Asiento 1')).toBeInTheDocument()
     expect(within(chosen).getByText('S/ 42.00')).toBeInTheDocument()
     expect(within(panel).getByText('S/ 42.00', { selector: 'strong' })).toBeInTheDocument()
     fireEvent.click(within(chosen).getByRole('button', { name: 'Quitar asiento A-1' }))
-    expect(within(panel).getByText(/Toca los asientos que quieras/)).toBeInTheDocument()
+    expect(within(panel).getByText(/Elige tus asientos en el mapa/)).toBeInTheDocument()
     await expectNoAccessibilityViolations()
   })
 
@@ -717,10 +717,30 @@ describe('NexoEventos catalog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Volver a eventos' }))
     fireEvent.click(await screen.findByRole('button', { name: 'Ver Museo por horario' }))
     expect(await screen.findByRole('heading', { name: 'Conoce el recinto' })).toBeInTheDocument()
-    expect(screen.getByText(/no hay asientos ni salas que elegir/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Explorar en 3D' })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByRole('button', { name: 'Plano' })).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Volver a eventos' }))
     fireEvent.click(await screen.findByRole('button', { name: 'Ver Ingreso general' }))
     expect(await screen.findByText('Entrada general')).toBeInTheDocument()
-    expect(screen.queryByText('Elige tu ubicación')).toBeInTheDocument()
+    expect(screen.queryByText('Elige tu ubicación')).not.toBeInTheDocument()
+  })
+
+  it('lets the buyer switch between real functions of the same show', async () => {
+    const make = (id: number, date: string, time: string) => ({ ...baseEvent, id, name: 'Obra con funciones', date, time, venue: 'Teatro Central', venue_id: 9, category: 'Teatro', price: 30, capacity: 50, available_capacity: 50 })
+    const list = [make(401, '2026-10-20', '19:00:00'), make(402, '2026-10-21', '20:00:00')]
+    vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request) => {
+      const url = String(input)
+      if (url.endsWith('/api/auth/session')) return { ok: false, status: 401, json: async () => ({}) }
+      const match = url.match(/\/api\/events\/(\d+)$/)
+      if (match) return { ok: true, status: 200, json: async () => ({ ...list.find((item) => item.id === Number(match[1])), description: 'Una obra en cartel.', zones: [], seats: [] }) }
+      return { ok: true, status: 200, json: async () => list }
+    }))
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver Obra con funciones' }))
+    const picker = await screen.findByRole('group', { name: 'Funciones disponibles' })
+    const [first, second] = within(picker).getAllByRole('button')
+    expect(first).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(second)
+    await waitFor(() => expect(within(screen.getByRole('group', { name: 'Funciones disponibles' })).getAllByRole('button')[1]).toHaveAttribute('aria-pressed', 'true'))
   })
 })

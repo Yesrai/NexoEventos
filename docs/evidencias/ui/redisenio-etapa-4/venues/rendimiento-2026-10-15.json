@@ -1,0 +1,26 @@
+{
+  "nota": "Medido en Chrome headless con WebGL por software (SwiftShader); no representa FPS en GPU real.",
+  "fecha": "2026-10-15",
+  "mediciones": [
+    {
+      "venue": "concierto",
+      "viewport": "escritorio",
+      "kind": "concert",
+      "buildMs": 2602,
+      "drawCalls": 241,
+      "triangles": 7568,
+      "geometries": 222,
+      "textures": 10
+    },
+    {
+      "venue": "concierto",
+      "viewport": "movil",
+      "kind": "concert",
+      "buildMs": 2505,
+      "drawCalls": 221,
+      "triangles": 5708,
+      "geometries": 212,
+      "textures": 10
+    }
+  ]
+}

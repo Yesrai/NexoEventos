@@ -1,5 +1,5 @@
 import { FormEvent, lazy, RefObject, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { api, EventDetail, formatDate, formatTime, Icon, messageFrom, Seat, SalesStatus, User, Zone, zoneColorMap } from './shared'
+import { api, EventDetail, formatDate, formatEventPrice, formatTime, Icon, messageFrom, Seat, SalesStatus, User, Zone, zoneColorMap } from './shared'
 
 const Venue3D = lazy(() => import('./Venue3D'))
 const Stadium3D = lazy(() => import('./Stadium3D'))
@@ -109,34 +109,44 @@ function SalesGate({ event, user, state, onLogin }: { event: EventDetail; user: 
   </section>
 }
 
-function Hero({ event, canBuy, onBuy, onBack, heroRef }: { event: EventDetail; canBuy: boolean; onBuy: () => void; onBack?: () => void; heroRef: RefObject<HTMLElement | null> }) {
-  const soldOut = event.available_capacity === 0
-  return <header className="ep-hero" ref={heroRef}>
-    <div className="ep-hero-inner">
-      {onBack && <button type="button" className="ep-back" onClick={onBack}><Icon name="arrow" size={18} />Volver a eventos</button>}
-      <div className="ep-cover">{event.image_path ? <img className="ep-hero-image" src={event.image_path} alt={`Fotografía ilustrativa para ${event.name}`} fetchPriority="high" /> : <div className="ep-hero-image fallback" aria-hidden="true" />}</div>
-      <div className="ep-hero-body">
-        <span className="ep-chip">{event.category}</span>
-        <h1>{event.name}</h1>
-        <ul className="ep-meta"><li><Icon name="calendar" size={20} />{formatDate(event.date)}</li><li><Icon name="clock" size={20} />{formatTime(event.time)}</li><li><Icon name="location" size={20} />{event.venue}, {event.city}</li></ul>
-        <p className="ep-lead">{event.description}</p>
-        <div className="ep-hero-actions"><button type="button" className="ep-button primary large" disabled={!canBuy || soldOut} onClick={onBuy}>{soldOut ? 'Agotado' : 'Comprar entradas'}</button><span className="ep-availability" role="status">{soldOut ? 'Sin entradas disponibles' : `${event.available_capacity} entradas disponibles`}</span></div>
-      </div>
+export type EventFunction = { id: number; date: string; time: string | null; available_capacity: number }
+
+function EventHeader({ event, onBack }: { event: EventDetail; onBack?: () => void }) {
+  const [open, setOpen] = useState(false)
+  const long = event.description.length > 200
+  return <header className="ep-head">
+    {onBack && <button type="button" className="ep-back" onClick={onBack}><Icon name="arrow" size={18} />Volver a eventos</button>}
+    <div className="ep-cover">{event.image_path ? <img className="ep-hero-image" src={event.image_path} alt={`Fotografía ilustrativa para ${event.name}`} fetchPriority="high" /> : <div className="ep-hero-image fallback" aria-hidden="true" />}</div>
+    <div className="ep-title">
+      <span className="ep-chip">{event.category}</span>
+      <h1>{event.name}</h1>
+      <ul className="ep-meta"><li><Icon name="calendar" size={20} />{formatDate(event.date)}</li><li><Icon name="clock" size={20} />{formatTime(event.time)}</li><li><Icon name="location" size={20} />{event.venue}, {event.city}</li><li><Icon name="ticket" size={20} />{formatEventPrice(event)}</li></ul>
+      <p className={`ep-lead ${open ? 'open' : ''}`}>{event.description}</p>
+      {long && <button type="button" className="ep-more" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? 'Ver menos' : 'Leer más'}</button>}
     </div>
   </header>
 }
 
-function StickyBar({ event, heroRef, onBuy }: { event: EventDetail; heroRef: RefObject<HTMLElement | null>; onBuy: () => void }) {
-  const [past, setPast] = useState(false)
-  useEffect(() => {
-    const element = heroRef.current
-    if (!element || typeof IntersectionObserver === 'undefined') return
-    const observer = new IntersectionObserver(([entry]) => setPast(!entry.isIntersecting), { rootMargin: '-90px 0px 0px 0px' })
-    observer.observe(element)
-    return () => observer.disconnect()
-  }, [heroRef])
-  const soldOut = event.available_capacity === 0
-  return <div className={`ep-sticky ${past ? 'show' : ''}`} aria-hidden={!past}><div><strong>{event.name}</strong><span>{formatDate(event.date)} · {formatTime(event.time)}</span></div><button type="button" className="ep-button primary" tabIndex={past ? 0 : -1} disabled={soldOut} onClick={onBuy}>{soldOut ? 'Agotado' : 'Comprar entradas'}</button></div>
+function FunctionPicker({ functions, currentId, onSelect }: { functions: EventFunction[]; currentId: number; onSelect: (id: number) => void }) {
+  if (functions.length < 2) return null
+  const day = (value: string) => new Intl.DateTimeFormat('es-PE', { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(`${value}T12:00:00`)).replace(/\./g, '')
+  return <section className="ep-functions" aria-labelledby="ep-fn-title"><h2 id="ep-fn-title">Elige la función</h2>
+    <div className="ep-fn-grid" role="group" aria-label="Funciones disponibles">{functions.map((item) => {
+      const current = item.id === currentId
+      const sold = item.available_capacity === 0
+      return <button key={item.id} type="button" className={`ep-fn ${current ? 'selected' : ''}`} aria-pressed={current} disabled={sold && !current} onClick={() => !current && onSelect(item.id)}><strong>{day(item.date)}</strong><span>{formatTime(item.time)}</span>{sold && <small>Agotada</small>}</button>
+    })}</div></section>
+}
+
+function MuseumExplorer({ event }: { event: EventDetail }) {
+  const [open, setOpen] = useState(false)
+  const [unavailable, setUnavailable] = useState(false)
+  return <section className="ep-stage ep-explore" aria-labelledby="ep-explore-title">
+    <div className="ep-stage-head"><div><h2 id="ep-explore-title">Conoce el recinto</h2><p className="ep-note">Opcional: recorre las salas en 3D antes de tu visita. No es necesario para comprar.</p></div>
+      {!unavailable && <button type="button" className="ep-button" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? 'Ocultar recorrido' : 'Explorar en 3D'}</button>}</div>
+    {unavailable && <p className="ep-note" role="status">El recorrido 3D no está disponible en este dispositivo.</p>}
+    {open && !unavailable && <div className="ep-stage-body"><Suspense fallback={<div className="ep-stage-loading" role="status"><span className="spinner" />Cargando el recinto…</div>}><Venue3D kind="museum" onUnavailable={() => setUnavailable(true)} /></Suspense></div>}
+  </section>
 }
 
 function Tiers({ event, selection, colors, interactive }: { event: EventDetail; selection: Selection; colors: Map<number, string>; interactive: boolean }) {
@@ -213,10 +223,6 @@ function StadiumPlan({ event, selection, colors }: { event: EventDetail; selecti
   </div>
 }
 
-function MuseumPlan() {
-  return <ol className="ep-museum-plan" aria-label="Recorrido por las salas">{['Ingreso', 'Sala 1', 'Sala 2', 'Sala 3', 'Salida'].map((name) => <li key={name}>{name}</li>)}</ol>
-}
-
 function SeatList({ event, selection, colors }: { event: EventDetail; selection: Selection; colors: Map<number, string> }) {
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState<Record<string, boolean>>({})
@@ -252,6 +258,12 @@ function ListView({ event, selection, colors }: { event: EventDetail; selection:
 }
 
 function Stage({ event, selection, colors }: { event: EventDetail; selection: Selection; colors: Map<number, string> }) {
+  if (event.layout_kind === 'museum') return <MuseumExplorer event={event} />
+  if (event.ticket_mode === 'general') return null
+  return <SeatingStage event={event} selection={selection} colors={colors} />
+}
+
+function SeatingStage({ event, selection, colors }: { event: EventDetail; selection: Selection; colors: Map<number, string> }) {
   const has3D = supports3D(event)
   const kind = venueKind(event)
   const hasPlan = kind !== null
@@ -261,22 +273,19 @@ function Stage({ event, selection, colors }: { event: EventDetail; selection: Se
   const modes: Array<{ id: StageMode; label: string }> = [...(has3D && !unavailable ? [{ id: '3d' as const, label: 'Mapa 3D' }] : []), ...(hasPlan ? [{ id: 'plan' as const, label: 'Plano' }] : []), ...(event.ticket_mode !== 'general' ? [{ id: 'list' as const, label: 'Lista' }] : [])]
   const loading = <div className="ep-stage-loading" role="status"><span className="spinner" />Cargando el recinto…</div>
   return <section className="ep-stage" aria-labelledby="ep-stage-title">
-    <div className="ep-stage-head"><h2 id="ep-stage-title">{event.layout_kind === 'museum' ? 'Conoce el recinto' : 'Elige tu ubicación'}</h2>{modes.length > 1 && <div className="ep-segmented" role="group" aria-label="Forma de ver el recinto">{modes.map((item) => <button key={item.id} type="button" aria-pressed={effective === item.id} className={effective === item.id ? 'active' : ''} onClick={() => setMode(item.id)}>{item.label}</button>)}</div>}</div>
+    <div className="ep-stage-head"><h2 id="ep-stage-title">Elige tu ubicación</h2>{modes.length > 1 && <div className="ep-segmented" role="group" aria-label="Forma de ver el recinto">{modes.map((item) => <button key={item.id} type="button" aria-pressed={effective === item.id} className={effective === item.id ? 'active' : ''} onClick={() => setMode(item.id)}>{item.label}</button>)}</div>}</div>
     {unavailable && <p className="ep-note" role="status">El mapa 3D no está disponible en este dispositivo. Usa el plano o la lista.</p>}
     <Tiers event={event} selection={selection} colors={colors} interactive={event.ticket_mode === 'zones'} />
     <div className="ep-stage-body">
       {effective === '3d' && kind === 'concert' && <Suspense fallback={loading}><Venue3D kind="concert" zones={event.zones} selectedZoneId={selection.zoneId} onSelectZone={selection.selectZone} onUnavailable={() => setUnavailable(true)} /></Suspense>}
       {effective === '3d' && kind === 'theatre' && <Suspense fallback={loading}><Venue3D kind="theatre" seats={event.seats} selectedSeatIds={selection.selectedSeatIds} onToggleSeat={selection.toggleSeat} onUnavailable={() => setUnavailable(true)} /></Suspense>}
       {effective === '3d' && kind === 'stadium' && <Suspense fallback={loading}><Stadium3D seats={event.seats} selectedSeatIds={selection.selectedSeatIds} onToggle={selection.toggleSeat} onSectorChange={() => undefined} onUnavailable={() => setUnavailable(true)} /></Suspense>}
-      {effective === '3d' && kind === 'museum' && <Suspense fallback={loading}><Venue3D kind="museum" onUnavailable={() => setUnavailable(true)} /></Suspense>}
       {effective === 'plan' && kind === 'concert' && <ZonePlan event={event} selection={selection} colors={colors} />}
       {effective === 'plan' && kind === 'theatre' && <TheatrePlan event={event} selection={selection} colors={colors} />}
       {effective === 'plan' && kind === 'stadium' && <StadiumPlan event={event} selection={selection} colors={colors} />}
-      {effective === 'plan' && kind === 'museum' && <MuseumPlan />}
       {effective === 'list' && <ListView event={event} selection={selection} colors={colors} />}
     </div>
     {event.ticket_mode === 'seats' && <ul className="ep-legend" aria-label="Leyenda"><li><i className="ep-dot free" />Disponible</li><li><i className="ep-dot chosen" />Seleccionado</li><li><i className="ep-dot taken" />Ocupado</li></ul>}
-    {event.layout_kind === 'museum' && <p className="ep-note">En el museo se reserva por fecha, horario y cantidad: no hay asientos ni salas que elegir.</p>}
   </section>
 }
 
@@ -292,32 +301,30 @@ function PurchasePanel({ event, selection, user, preview, gateBlocked, reserving
   const label = preview ? 'Vista previa: no se puede comprar' : gateBlocked ? 'Compra no disponible todavía' : reserving ? 'Confirmando…' : needsZone ? 'Elige una zona' : needsSeats ? 'Elige tus asientos' : user?.role === 'client' ? 'Confirmar compra' : 'Inicia sesión para comprar'
   if (message) return <div className="ep-panel-body ep-done" role="status"><span className="success-icon large"><Icon name="check" size={28} /></span><h2>¡Compra confirmada!</h2><p>{message}</p><p className="ep-total-line"><span>Total simulado</span><strong>{money(confirmedTotal ?? selection.total)}</strong></p><button type="button" className="ep-button primary large" onClick={onGoTickets}>Ver mis entradas</button></div>
   return <form className="ep-panel-body" onSubmit={(e: FormEvent) => { e.preventDefault(); onSubmit() }}>
-    <h2>Tu compra</h2>
-    <p className="ep-panel-event"><strong>{event.name}</strong><span>{formatDate(event.date)} · {formatTime(event.time)}</span><span>{event.venue}</span></p>
+    <h2>Elige tus entradas</h2>
+    <p className="ep-panel-event"><strong>{formatDate(event.date)} · {formatTime(event.time)}</strong><span>{event.venue}, {event.city}</span></p>
     {event.ticket_mode === 'zones' && (selection.activeZone ? <p className="ep-line"><span>Zona</span><strong>{selection.activeZone.name}</strong></p> : <p className="ep-hint">Elige una zona en el mapa o en las tarjetas de precio.</p>)}
-    {seatsMode && (selection.selectedSeats.length === 0 ? <p className="ep-hint">Toca los asientos que quieras en el mapa (hasta 10).</p> : <ul className="ep-seat-list" aria-label="Asientos elegidos">{selection.selectedSeats.map((seat) => <li key={seat.id}><span>{seat.zone_name} · Fila {seat.row} · Asiento {seat.number}</span><b>{money(seat.price)}</b><button type="button" aria-label={`Quitar asiento ${seat.row}-${seat.number}`} onClick={() => selection.removeSeat(seat.id)}><Icon name="close" size={16} /></button></li>)}</ul>)}
+    {seatsMode && (selection.selectedSeats.length === 0 ? <p className="ep-hint">Elige tus asientos en el mapa o en la lista (hasta 10).</p> : <ul className="ep-seat-list" aria-label="Asientos elegidos">{selection.selectedSeats.map((seat) => <li key={seat.id}><span>{seat.zone_name} · Fila {seat.row} · Asiento {seat.number}</span><b>{money(seat.price)}</b><button type="button" aria-label={`Quitar asiento ${seat.row}-${seat.number}`} onClick={() => selection.removeSeat(seat.id)}><Icon name="close" size={16} /></button></li>)}</ul>)}
     {event.ticket_mode === 'general' && <p className="ep-line"><span>{event.layout_kind === 'museum' ? 'Ingreso por horario' : 'Entrada general'}</span><strong>{money(event.price)}</strong></p>}
     {showQuantity && <div className="ep-quantity"><div><strong>Cantidad</strong><small>Máximo {selection.quantityLimit} por compra · {selection.activeZone ? selection.activeZone.available_capacity : event.available_capacity} disponibles</small></div><div className="stepper" role="group" aria-label="Cantidad de entradas"><button type="button" onClick={() => selection.changeQuantity(selection.quantity - 1)} disabled={selection.quantity <= 1} aria-label="Restar una entrada"><Icon name="minus" /></button><output aria-live="polite">{selection.quantity}</output><button type="button" onClick={() => selection.changeQuantity(selection.quantity + 1)} disabled={selection.quantity >= selection.quantityLimit} aria-label="Agregar una entrada"><Icon name="plus" /></button></div></div>}
-    <p className="ep-total-line"><span>Total simulado</span><strong>{needsZone || needsSeats ? '—' : money(selection.total)}</strong></p>
+    {!(needsZone || needsSeats) && <p className="ep-total-line"><span>Total</span><strong>{money(selection.total)}</strong></p>}
     <button className="ep-button primary large reserve-button" disabled={disabled} aria-busy={reserving}>{reserving && <span className="spinner" />}{label}</button>
-    <p className="ep-fineprint">Compra simulada: no se cobra dinero real. Los precios y la disponibilidad los confirma el servidor al comprar.</p>
+    <p className="ep-fineprint">Pago simulado: no se realiza ningún cobro.</p>
     {error && <p className="form-error" role="alert">{error}</p>}
   </form>
 }
 
-export function EventPage({ event, selection, user, preview = false, reserving = false, message = null, confirmedTotal = null, error = null, onBack, onSubmit, onRequireLogin, onGoTickets }: {
-  event: EventDetail; selection: Selection; user: User | null; preview?: boolean; reserving?: boolean; message?: string | null; confirmedTotal?: number | null; error?: string | null
+export function EventPage({ event, selection, user, preview = false, reserving = false, message = null, confirmedTotal = null, error = null, functions = [], onSelectFunction, onBack, onSubmit, onRequireLogin, onGoTickets }: {
+  event: EventDetail; selection: Selection; user: User | null; preview?: boolean; reserving?: boolean; message?: string | null; confirmedTotal?: number | null; error?: string | null; functions?: EventFunction[]; onSelectFunction?: (id: number) => void
   onBack?: () => void; onSubmit?: () => Promise<void> | void; onRequireLogin?: () => void; onGoTickets?: () => void
 }) {
   const colors = useMemo(() => zoneColorMap(event.zones, venueKind(event) === 'concert'), [event.zones, event.layout_kind, event.ticket_mode])
   const state = useSales(event.id, !preview && event.status === 'published')
   const buyRef = useRef<HTMLDivElement | null>(null)
-  const heroRef = useRef<HTMLElement | null>(null)
   const [sheet, setSheet] = useState(false)
   const sales = state.sales
   const queue = sales?.queue ?? null
   const blocked = Boolean(sales && (!sales.sales_open || (sales.queue_enabled && queue?.status !== 'admitted')))
-  const goBuy = () => { buyRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }); setSheet(true) }
   const submit = async () => {
     if (!user || user.role !== 'client') { onRequireLogin?.(); return }
     await onSubmit?.()
@@ -326,15 +333,14 @@ export function EventPage({ event, selection, user, preview = false, reserving =
   const summary = selection.selectedSeats.length ? `${selection.selectedSeats.length} asiento${selection.selectedSeats.length === 1 ? '' : 's'}` : selection.activeZone ? `${selection.quantity} × ${selection.activeZone.name}` : event.ticket_mode === 'general' ? `${selection.quantity} entrada${selection.quantity === 1 ? '' : 's'}` : 'Sin selección'
   useEffect(() => { if (message) setSheet(true) }, [message])
   return <article className="ep" aria-label={`Evento ${event.name}`}>
-    <Hero event={event} canBuy onBuy={goBuy} onBack={onBack} heroRef={heroRef} />
-    {!preview && <StickyBar event={event} heroRef={heroRef} onBuy={goBuy} />}
     <div className="ep-container">
     {preview && <p className="ep-preview-banner" role="note">Vista previa del organizador: así lo verán los clientes. Puedes probar la selección, pero no se compra nada.{event.status === 'draft' ? ' Está en borrador y no aparece en el catálogo.' : ''}</p>}
     <div className="ep-layout" id="comprar" ref={buyRef}>
       <div className="ep-main">
+        <EventHeader event={event} onBack={onBack} />
         {!preview && <SalesGate event={event} user={user} state={state} onLogin={() => onRequireLogin?.()} />}
+        {!preview && <FunctionPicker functions={functions} currentId={event.id} onSelect={(id) => onSelectFunction?.(id)} />}
         <Stage event={event} selection={selection} colors={colors} />
-        <section className="ep-info" aria-labelledby="ep-info-title"><h2 id="ep-info-title">Información del evento</h2><div className="ep-info-grid"><div><h3>Acerca del evento</h3><p>{event.description}</p></div><div><h3>Lugar</h3><p>{event.venue}, {event.city}</p>{event.layout_name && <p className="ep-muted">{event.layout_name}</p>}</div><div><h3>Cómo comprar</h3><ol><li>Elige tu ubicación en el mapa.</li><li>Confirma la cantidad y el total.</li><li>Recibe tus entradas con código QR.</li></ol></div></div></section>
       </div>
       <aside className={`ep-panel ${sheet ? 'open' : ''}`} aria-label="Resumen de compra">
         <button type="button" className="ep-sheet-close" aria-label="Cerrar resumen" onClick={() => setSheet(false)}><Icon name="close" size={20} /></button>

@@ -510,6 +510,7 @@ export default function App() {
   const sideFeatured = featuredEvents.length > 1
     ? [...featuredEvents.slice(featuredIndex + 1), ...featuredEvents.slice(0, featuredIndex)].slice(0, 3)
     : []
+  const functionsOf = (current: EventDetail) => upcoming.filter((item) => functionKey(item) === functionKey(current)).sort((a, b) => `${a.date} ${a.time ?? ''}`.localeCompare(`${b.date} ${b.time ?? ''}`)).map(({ id, date, time, available_capacity }) => ({ id, date, time, available_capacity }))
   function goHome() {
     setSelected(null); setReservationError(null); setReservationMessage(null); setView('catalog'); window.scrollTo?.({ top: 0 })
   }
@@ -553,7 +554,7 @@ export default function App() {
       {view === 'catalog' && (detailLoading || selected || reservationError) && <div className="ep-wrap" aria-live="polite">
         {detailLoading && <div className="status" role="status"><span className="spinner" />Cargando evento…</div>}
         {!detailLoading && !selected && reservationError && <div className="status error" role="alert"><p>{reservationError}</p><button type="button" onClick={() => { setReservationError(null) }}>Volver a eventos</button></div>}
-        {selected && !detailLoading && <EventPage event={selected} selection={selection} user={user} reserving={reserving} message={reservationMessage} confirmedTotal={confirmedTotal} error={reservationError}
+        {selected && !detailLoading && <EventPage event={selected} selection={selection} user={user} reserving={reserving} functions={functionsOf(selected)} onSelectFunction={(id) => void openDetail(id)} message={reservationMessage} confirmedTotal={confirmedTotal} error={reservationError}
           onBack={() => { setSelected(null); setReservationError(null); setReservationMessage(null); window.scrollTo?.({ top: 0 }) }}
           onSubmit={submitReservation} onRequireLogin={requireLogin} onGoTickets={() => setView('account')} />}
       </div>}

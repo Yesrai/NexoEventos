@@ -173,10 +173,12 @@ export function buildConcert({ scene, mobile }: VenueContext, zones: VenueZone[]
   box(scene, [FLOOR_HALF_WIDTH * 2 + 2.7, 1.1, .1], [0, .55, FIRST_ZONE_Z + FLOOR_DEPTH + 3.4], fence)
 
   // Torre de sonido, carpas, torres de luz y puerta de acceso.
-  const fohZ = FIRST_ZONE_Z + FLOOR_DEPTH + .4
-  box(scene, [5.2, .5, 3.4], [0, .25, fohZ], black)
-  box(scene, [4.6, 1.1, 3], [0, 1.05, fohZ], std({ color: '#222a31', roughness: .8 }))
-  box(scene, [4.2, .12, 1], [0, 1.7, fohZ - .6], std({ color: '#2f6bff', emissive: '#4d7dff', emissiveIntensity: 1.2 }))
+  if (!mobile) {
+    const fohZ = FIRST_ZONE_Z + FLOOR_DEPTH + .4
+    box(scene, [5.2, .5, 3.4], [0, .25, fohZ], black)
+    box(scene, [4.6, 1.1, 3], [0, 1.05, fohZ], std({ color: '#222a31', roughness: .8 }))
+    box(scene, [4.2, .12, 1], [0, 1.7, fohZ - .6], std({ color: '#2f6bff', emissive: '#4d7dff', emissiveIntensity: 1.2 }))
+  }
   for (const side of [-1, 1]) {
     const x = side * 24
     box(scene, [7, .2, 6], [x, 3.1, 10], std({ color: side > 0 ? '#c9473b' : '#e6e1d6', roughness: .9 }))
@@ -189,9 +191,12 @@ export function buildConcert({ scene, mobile }: VenueContext, zones: VenueZone[]
     head.lookAt(0, 0, 8)
     if (!mobile) lightBeam(scene, new THREE.Vector3(x, 12, z), new THREE.Vector3(x * .5, 0, z * .5 + 6), '#fff2c8', 3.2, .035)
   }
-  const gateZ = FIRST_ZONE_Z + FLOOR_DEPTH + 6.5
-  for (const x of [-5, 5]) box(scene, [.5, 5, .5], [x, 2.5, gateZ], black)
-  box(scene, [11, 1.1, .6], [0, 5.2, gateZ], std({ color: '#0f2a36', roughness: .6 }))
+  // Arco de entrada decorativo: en pantallas verticales queda entre la cámara y el público y lo tapa, así que solo se dibuja en escritorio.
+  if (!mobile) {
+    const gateZ = FIRST_ZONE_Z + FLOOR_DEPTH + 6.5
+    for (const x of [-5, 5]) box(scene, [.5, 5, .5], [x, 2.5, gateZ], black)
+    box(scene, [11, 1.1, .6], [0, 5.2, gateZ], std({ color: '#0f2a36', roughness: .6 }))
+  }
 
   // Zonas reales: profundidad proporcional al aforo, la de mayor precio junto al escenario.
   const ordered = [...zones].sort((a, b) => b.price - a.price)

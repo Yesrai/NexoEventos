@@ -378,3 +378,55 @@ footer { padding: 28px 24px; color: var(--c-mut); font-size: var(--fs-sm); }
 .empty-state .button { margin-top: 8px; }
 .empty-icon { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 50%; color: var(--c-action); background: var(--c-tint); }
 .category-links button .category-icon svg { stroke-width: 1.75; }
+
+/* ---------- Detalle del evento: información y compra a la vista ---------- */
+.ep-wrap { max-width: none; padding: 0 0 120px; }
+.ep-container { width: 100%; max-width: 1280px; margin: 0 auto; padding: 16px 28px 0; display: grid; gap: 20px; }
+.ep-layout { grid-template-columns: minmax(0, 1fr) 380px; gap: 32px; align-items: start; }
+.ep-main { gap: 24px; }
+.ep-head { display: grid; gap: 14px; }
+.ep-head .ep-back { margin: 0 0 -4px; }
+.ep-cover { overflow: hidden; border-radius: 12px; background: var(--c-taken); }
+.ep-cover .ep-hero-image { height: clamp(200px, 25vw, 340px); }
+.ep-title { display: grid; gap: 10px; }
+.ep-title h1 { margin: 0; }
+.ep-meta { margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 24px; list-style: none; }
+.ep-meta li { display: inline-flex; align-items: center; gap: 8px; }
+.ep-lead { margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.ep-lead.open { display: block; -webkit-line-clamp: unset; }
+.ep-more { justify-self: start; padding: 0; border: 0; background: none; color: var(--c-action); font-weight: 500; font-size: var(--fs-base); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.ep-functions { padding: 20px; border: 1px solid var(--c-line); border-radius: 12px; background: #fff; display: grid; gap: 12px; }
+.ep-functions h2 { margin: 0; font-size: var(--fs-sub); font-weight: 600; }
+.ep-fn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.ep-fn { padding: 10px 14px; display: grid; gap: 2px; justify-items: start; text-align: left; border: 1px solid var(--c-ctl); border-radius: 10px; color: var(--c-ink); background: #fff; font-size: var(--fs-base); cursor: pointer; }
+.ep-fn strong { font-weight: 600; text-transform: capitalize; }
+.ep-fn span, .ep-fn small { color: var(--c-mut); font-size: var(--fs-md); }
+.ep-fn:hover:not(:disabled) { border-color: var(--c-action); background: var(--c-tint); }
+.ep-fn.selected { padding: 9px 13px; border: 2px solid var(--c-action); background: var(--c-tint); }
+.ep-fn.selected span { color: var(--c-ink); }
+.ep-fn:disabled { color: #7a8494; background: var(--c-surf); cursor: not-allowed; }
+.ep-explore .ep-stage-head { align-items: flex-start; }
+.ep-explore .ep-note { margin: 4px 0 0; }
+.ep-panel { top: 88px; }
+.ep-panel-body { gap: 14px; }
+.ep-hint { padding: 0; border: 0; background: none; color: var(--c-mut); font-size: var(--fs-base); }
+.ep-total-line { padding-top: 12px; border-top: 1px solid var(--c-line); }
+.ep-fineprint { margin: 0; text-align: center; }
+@media (max-width: 1100px) { .ep-layout { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 800px) {
+  .ep-container { padding: 8px 16px 0; }
+  .ep-cover .ep-hero-image { height: clamp(180px, 50vw, 280px); }
+  .ep-functions { padding: 16px; }
+  .ep-fn-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.stepper button { border-color: var(--c-ctl); }
+.stepper button:last-child { border-color: var(--c-action); color: #fff; background: var(--c-action); }
+.stepper button:hover:not(:disabled) { border-color: var(--c-hover); background: var(--c-tint); color: var(--c-action); }
+.stepper button:last-child:hover:not(:disabled) { background: var(--c-hover); color: #fff; }
+.stepper button:disabled, .stepper button:last-child:disabled { border-color: var(--c-line); color: #9aa3b2; background: var(--c-surf); }
+.stepper output { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Recinto 3D en móvil: marco casi cuadrado para no mostrar franjas vacías de cielo y suelo (no cambia cámaras ni escena) */
+@media (max-width: 600px) {
+  .ep-stage .venue-3d-stage, .ep-stage .venue-3d-host { min-height: 0; height: clamp(380px, 112vw, 500px); }
+}
