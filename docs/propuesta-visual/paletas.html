@@ -5,7 +5,7 @@
 :root{--ink:#12161f;--mut:#566073;--bd:#d5dae3;--surf:#f5f6f9;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 *{box-sizing:border-box}body{margin:0;background:#fff;color:var(--ink);line-height:1.5;font-size:16px}
 .page{max-width:1280px;margin:0 auto;padding:32px 20px 80px}
-h1{font-size:28px;margin:0 0 6px}h2{font-size:22px;margin:48px 0 6px}h3{font-size:17px;margin:0 0 8px}
+h1{font-size:32px;font-weight:700;line-height:1.15;letter-spacing:-.015em;margin:0 0 6px}h2{font-size:26px;font-weight:600;line-height:1.25;letter-spacing:-.01em;margin:48px 0 6px}h3{font-size:18px;font-weight:600;line-height:1.3;margin:0 0 8px}
 .lead{color:#566073;max-width:760px;margin:0 0 16px}
 .note{background:#f5f6f9;border:1px solid #d5dae3;border-radius:8px;padding:12px 16px;font-size:15px;max-width:900px}
 table{border-collapse:collapse;width:100%;font-size:15px}th,td{border-bottom:1px solid #e3e6ec;padding:9px 10px;text-align:left;vertical-align:top}th{font-weight:600;background:#f5f6f9}
@@ -20,20 +20,20 @@ table{border-collapse:collapse;width:100%;font-size:15px}th,td{border-bottom:1px
 .pal-title{padding:12px 16px;border-bottom:1px solid var(--bd);background:var(--surf);font-weight:600}
 .pal-title small{display:block;font-weight:400;color:var(--mut)}
 .stack{padding:16px;display:grid;gap:18px}
-.lbl{font-size:13px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;margin:0 0 6px}
+.lbl{font-size:14px;font-weight:500;color:var(--mut);margin:0 0 6px}
 /* componentes */
 .hdr{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--bd);border-radius:10px;background:#fff}
-.logo{font-weight:700;font-size:17px;white-space:nowrap}.logo b{color:var(--action)}
+.logo{font-weight:500;font-size:18px;white-space:nowrap}.logo b{font-weight:700}.logo b{color:var(--action)}
 .search{flex:1;min-width:0;white-space:nowrap;overflow:hidden;display:flex;align-items:center;gap:8px;border:1px solid var(--ctl);border-radius:999px;padding:7px 14px;color:var(--mut);font-size:15px}
 .hdr a{font-size:15px;font-weight:600;color:var(--ink);text-decoration:none;white-space:nowrap}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 20px;border-radius:8px;border:1px solid transparent;font:inherit;font-weight:600;font-size:16px;cursor:pointer}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 20px;border-radius:8px;border:1px solid transparent;font:inherit;font-weight:500;font-size:16px;cursor:pointer}
 .btn.pri{background:var(--action);color:#fff}.btn.pri:hover{background:var(--hover)}
 .btn.sec{background:#fff;color:var(--action);border-color:var(--action)}
 .btn.block{width:100%}
 .card{border:1px solid var(--bd);border-radius:12px;overflow:hidden;background:#fff}
 .card img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover}
-.card .body{padding:12px 14px}.date{font-size:13px;font-weight:700;color:var(--action);text-transform:uppercase;letter-spacing:.03em}
-.card h4{margin:2px 0 4px;font-size:17px}.meta{color:var(--mut);font-size:15px;display:flex;align-items:center;gap:6px}
+.card .body{padding:12px 14px}.date{font-size:15px;font-weight:500;color:var(--action)}
+.card h4{margin:2px 0 4px;font-size:18px;font-weight:600;line-height:1.3}.meta{color:var(--mut);font-size:15px;display:flex;align-items:center;gap:6px}
 .price{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:15px;color:var(--mut)}.price b{color:var(--ink);font-size:16px}
 .chip{display:inline-block;border-radius:999px;border:1px solid var(--bd);padding:3px 10px;font-size:14px;color:var(--mut)}
 .chip.on{background:var(--tint);border-color:var(--action);color:var(--action);font-weight:600}
@@ -48,7 +48,7 @@ table{border-collapse:collapse;width:100%;font-size:15px}th,td{border-bottom:1px
 .seatmap{border:1px solid var(--bd);border-radius:12px;padding:12px;background:var(--surf)}
 .stage{background:#fff;border:1px solid var(--bd);border-radius:6px;text-align:center;font-size:13px;color:var(--mut);padding:4px;margin:0 auto 10px;width:70%}
 .seats{display:grid;grid-template-columns:repeat(10,1fr);gap:5px}
-.s{aspect-ratio:1;border-radius:5px 5px 3px 3px;border:1.5px solid var(--ctl);background:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;color:var(--mut)}
+.s{aspect-ratio:1;border-radius:5px 5px 3px 3px;border:1.5px solid var(--ctl);background:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;color:var(--mut)}
 .s.t{background:#dfe3e8;border-color:#dfe3e8;color:#8a93a3}.s.sel{background:var(--action);border-color:var(--action);color:#fff;font-weight:700}
 .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:14px;color:var(--mut)}.legend i{display:inline-block;width:14px;height:14px;border-radius:4px;border:1.5px solid var(--ctl);vertical-align:-2px;margin-right:5px;background:#fff}
 .legend i.t{background:#dfe3e8;border-color:#dfe3e8}.legend i.sel{background:var(--action);border-color:var(--action)}
@@ -68,7 +68,7 @@ table{border-collapse:collapse;width:100%;font-size:15px}th,td{border-bottom:1px
 .m-hero .big{position:relative;border-radius:12px;overflow:hidden;min-height:300px;background:#222}
 .m-hero .big img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .m-hero .cap{position:absolute;left:0;right:0;bottom:0;padding:60px 20px 18px;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.72))}
-.m-hero .cap h3{font-size:26px;margin:0}.m-hero .cap p{margin:4px 0 12px}
+.m-hero .cap h3{font-size:32px;font-weight:700;line-height:1.15;letter-spacing:-.015em;margin:0}.m-hero .cap p{margin:4px 0 12px}
 .m-side{display:grid;gap:10px;align-content:start}.m-side .card{display:grid;grid-template-columns:96px 1fr}.m-side .card img{height:100%;aspect-ratio:auto}
 .m-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:20px 28px 28px}
 .m-filters{display:flex;gap:10px;align-items:center;padding:0 28px;flex-wrap:wrap}.sel-f{border:1px solid var(--ctl);border-radius:8px;padding:8px 12px;font-size:15px;background:#fff}
@@ -88,7 +88,7 @@ table{border-collapse:collapse;width:100%;font-size:15px}th,td{border-bottom:1px
 <body><div class="page">
 <h1>NexoEventos · identidad de color</h1>
 <p class="lead">Investigación, tres paletas aplicadas a los mismos componentes y recomendación. Esto es una propuesta: no se modificó la aplicación. Espero tu aprobación antes de tocar código.</p>
-<div class="note"><b>Recomendación:</b> paleta <b>B · Verde pino</b> (<span class="mono">#0C6B4E</span>). Es la que mejor separa «seleccionado» de los colores de zona del 3D, mantiene AA con margen y es sobria. Su riesgo, dicho con claridad: pertenece a la misma familia (verde) que Joinnus, aunque más oscura y apagada. Si prefieres máxima distancia de Joinnus, la alternativa es <b>C · Terracota</b>. Detalle y puntuación más abajo.</div>
+<div class="note"><b>Decisión:</b> paleta <b>A · Cobalto</b> (<span class="mono">#2446C6</span>), elegida por ti tras la comparación; el resto de la página conserva el análisis que la respalda. La tipografía queda fijada en la sección 6 (Inter, única familia). Ya está aplicada en la aplicación (inicio, catálogo, detalle y selección 3D).</div>
 
 <h2>1 · Cómo usan el color las plataformas observadas</h2>
 <p class="lead">Medido en navegador real (estilos calculados de la portada) el 15 oct 2026. Los valores son de lo que cada sitio muestra hoy y pueden cambiar.</p>
@@ -120,12 +120,25 @@ table{border-collapse:collapse;width:100%;font-size:15px}th,td{border-bottom:1px
 <tr><td><b>Total</b></td><td><b>26</b></td><td><b>27</b></td><td><b>26</b></td><td>Resultado ajustado: la elección depende de cuánto pese la distancia con Joinnus.</td></tr></table></div>
 <div class="note" style="margin-top:12px"><b>Por qué B.</b> El diferenciador del producto es el 3D, y ahí la selección debe verse sin ambigüedad: en el modelo las zonas son azul y dorado, así que el color de acción/selección no debe ser ninguno de los dos. El verde pino también sirve de confirmación natural («compra confirmada») sin introducir un segundo color. Para alejarlo de Joinnus lo uso oscuro y sobrio (<span class="mono">#0C6B4E</span> frente a su menta <span class="mono">#00B38E</span>), sin menta ni neón en ninguna parte. <b>Si te importa más la distancia con Joinnus que la lectura del 3D, elige C.</b> No recomiendo A: es la más cómoda pero la menos propia.<br><br><b>Una consecuencia a decidir:</b> hoy el resalte de la butaca seleccionada dentro del 3D es un turquesa fijo en el código del modelo. Alinearlo al color de acción es cambiar una constante de color (no la geometría ni la lógica); lo haré solo si lo apruebas.</div>
 
-<h2>5 · Propuesta de pantallas (con la paleta recomendada)</h2>
-<p class="lead">Wireframes de alta fidelidad con el contenido real de NexoEventos y fotos del proyecto. Cambia la paleta para verlas con A o C. Tipografía Inter; sin degradados salvo el velo oscuro bajo el título de la portada para que el texto se lea.</p>
-<p><span class="mono">Paleta:</span> <button class="sw-btn" data-sw="A">A Cobalto</button><button class="sw-btn on" data-sw="B">B Verde pino</button><button class="sw-btn" data-sw="C">C Terracota</button></p>
-<div id="mocks" data-p="B"></div>
+<h2>5 · Propuesta de pantallas (con la paleta elegida: A · Cobalto)</h2>
+<p class="lead">Wireframes de alta fidelidad con el contenido real de NexoEventos y fotos del proyecto. Cambia la paleta para verlas con A o C. Tipografía Inter (ver la sección 6); sin degradados salvo el velo oscuro bajo el título de la portada para que el texto se lea.</p>
+<p><span class="mono">Paleta:</span> <button class="sw-btn on" data-sw="A">A Cobalto</button><button class="sw-btn" data-sw="B">B Verde pino</button><button class="sw-btn" data-sw="C">C Terracota</button></p>
+<div id="mocks" data-p="A"></div>
 
-<h2>6 · Comparación de patrones: Joinnus frente a NexoEventos (hoy)</h2>
+<h2>6 · Sistema tipográfico: Inter, única familia</h2>
+<p class="lead">Referencia: <span class="mono">rsms.me/inter</span>. La interfaz usa Inter variable alojada en el propio proyecto (sin cargas externas). La corrección no es solo cambiar de fuente: se fijan pesos, tamaños, interlineado, espaciado y medida de párrafo.</p>
+<div class="scroll"><table><tr><th>Uso</th><th>Tamaño</th><th>Peso</th><th>Interlineado · espaciado</th><th>Ejemplo</th></tr>
+<tr><td>Título principal (adaptable)</td><td>32–40 px</td><td>700</td><td>1.15 · −0.015 em</td><td style="font-size:32px;font-weight:700;line-height:1.15;letter-spacing:-.015em">Noche del Parque</td></tr>
+<tr><td>Encabezado de sección</td><td>24–30 px</td><td>600</td><td>1.25 · −0.01 em</td><td style="font-size:26px;font-weight:600;line-height:1.25;letter-spacing:-.01em">Próximos eventos</td></tr>
+<tr><td>Subtítulo / panel</td><td>20 px</td><td>600</td><td>1.3</td><td style="font-size:20px;font-weight:600">Elige tu ubicación</td></tr>
+<tr><td>Título de tarjeta</td><td>18 px</td><td>600</td><td>1.3</td><td style="font-size:18px;font-weight:600">Voces en el Auditorio</td></tr>
+<tr><td>Texto general</td><td>16 px</td><td>400</td><td>1.5–1.6 · medida ≤ 66 caracteres</td><td>Concierto al aire libre con escenario central y zonas numeradas.</td></tr>
+<tr><td>Etiquetas y botones</td><td>16 px (14–15 en etiquetas pequeñas)</td><td>500</td><td>1.25 · 0</td><td data-p="A"><span class="btn pri" style="min-height:36px">Comprar entradas</span></td></tr>
+<tr><td>Información secundaria</td><td>14–15 px</td><td>400</td><td>1.4</td><td style="font-size:15px;color:#566073">Parque de la Exposición, Lima</td></tr>
+<tr><td>Precios y totales</td><td>18–20 px</td><td>600 (total 700)</td><td>cifras tabulares</td><td style="font-size:18px;font-weight:600;font-variant-numeric:tabular-nums">S/ 144.00</td></tr></table></div>
+<p class="lead" style="margin-top:10px"><b>Reglas:</b> nunca 800 ni 900; el 700 solo en títulos principales y totales; sin mayúsculas decorativas; ningún texto menor de 14 px; sin tipografías redondeadas ni decorativas; iconos lineales discretos, sin emojis. Medido en Chrome sobre las pantallas reales: una sola familia, pesos 400/500/600/700, 0 textos menores de 14 px y 0 en mayúsculas forzadas (<span class="mono">scripts/audit-typography.mjs</span>).</p>
+
+<h2>7 · Comparación de patrones: Joinnus frente a NexoEventos (hoy)</h2>
 <div class="scroll"><table><tr><th>Área</th><th>Joinnus (observado)</th><th>NexoEventos «Noche Nexo»</th><th>Propuesta</th></tr>
 <tr><td>Cabecera</td><td>Clara, logo, «Descubrir», buscador central redondeado, «Registrarse» / «Iniciar sesión»</td><td>Oscura con píldora de búsqueda, color turquesa</td><td>Cabecera blanca, buscador, Eventos, Mis entradas, Ingresar. Sin fondo oscuro.</td></tr>
 <tr><td>Categorías</td><td>Carrusel de iconos circulares + página por categoría con migas</td><td>Píldoras de texto</td><td>Fila de categorías con icono discreto y texto; una página/estado por categoría.</td></tr>
@@ -170,15 +183,15 @@ document.getElementById('tbl').innerHTML=t;
 const home=`<div class="frame"><div class="frame-bar">Inicio · escritorio</div>
 <div class="m-hdr"><span class="logo">Nexo<b>Eventos</b></span><nav><span>Eventos</span><span>Mis entradas</span></nav><span class="search" style="max-width:420px;flex:1">${ic.search} Buscar por evento, artista o lugar</span><span style="margin-left:auto;display:flex;gap:10px"><button class="btn sec" style="min-height:40px">Ingresar</button></span></div>
 <div class="m-cats"><span class="chip on">Todos</span><span class="chip">Conciertos</span><span class="chip">Deportes</span><span class="chip">Teatro</span><span class="chip">Museos</span><span class="chip">Familia</span><span class="chip">Talleres</span></div>
-<div class="m-hero"><div class="big"><img src="${IMG}concert-stage.jpg" alt=""><div class="cap"><div style="font-size:14px;font-weight:600">Destacado · Sáb 17 oct</div><h3>Noche del Parque</h3><p>Parque de la Exposición, Lima · Desde S/ 70.00</p><button class="btn pri">Comprar entradas</button></div></div>
+<div class="m-hero"><div class="big"><img src="${IMG}concert-stage.jpg" alt=""><div class="cap"><div style="font-size:15px;font-weight:500">Destacado · Sáb 17 oct</div><h3>Noche del Parque</h3><p>Parque de la Exposición, Lima · Desde S/ 70.00</p><button class="btn pri">Comprar entradas</button></div></div>
 <div class="m-side"><div class="card"><img src="${IMG}football-stadium.jpg" alt=""><div class="body"><div class="date">Dom 18 oct</div><h4 style="font-size:16px">Clásico Metropolitano</h4><div class="meta">Estadio Nacional</div></div></div><div class="card"><img src="${IMG}open-theater.jpg" alt=""><div class="body"><div class="date">Mar 10 nov</div><h4 style="font-size:16px">Voces en el Auditorio</h4><div class="meta">Auditorio Nexo</div></div></div><div class="card"><img src="${IMG}culture-museum.jpg" alt=""><div class="body"><div class="date">Todos los días</div><h4 style="font-size:16px">Miradas Contemporáneas</h4><div class="meta">Museo de Arte</div></div></div></div></div>
-<div style="padding:22px 28px 6px"><h3 style="font-size:20px;margin:0 0 12px">Próximos eventos</h3></div>
+<div style="padding:22px 28px 6px"><h3 style="font-size:26px;font-weight:600;line-height:1.25;letter-spacing:-.01em;margin:0 0 12px">Próximos eventos</h3></div>
 <div class="m-filters"><span class="sel-f">Fecha: Todas ▾</span><span class="sel-f">Ciudad: Lima ▾</span><span class="sel-f">Precio: Todos ▾</span><span class="sel-f">Ordenar: Próximos ▾</span></div>
 <div class="m-grid">${card('concert-live.jpg')}${card('football-stadium.jpg').replace('Noche del Parque','Clásico Metropolitano').replace('Parque de la Exposición, Lima','Estadio Nacional, Lima')}${card('open-theater.jpg').replace('Noche del Parque','Voces en el Auditorio').replace('Parque de la Exposición, Lima','Auditorio Nexo, Lima')}${card('culture-museum.jpg').replace('Noche del Parque','Miradas Contemporáneas').replace('Parque de la Exposición, Lima','Museo de Arte, Lima')}</div></div>`;
 const detail=`<div class="frame"><div class="frame-bar">Detalle del evento · escritorio</div>
 <div class="m-hdr"><span class="logo">Nexo<b>Eventos</b></span><nav><span>Eventos</span><span>Mis entradas</span></nav><span class="search" style="max-width:420px;flex:1">${ic.search} Buscar eventos</span></div>
 <div class="m-detail"><div><div class="m-cover"><img src="${IMG}concert-stage.jpg" alt=""></div>
-<div style="display:flex;gap:8px;margin-top:14px"><span class="chip">Conciertos</span><span class="chip">Lima</span></div><h2 style="margin:8px 0 4px;font-size:28px">Noche del Parque</h2>
+<div style="display:flex;gap:8px;margin-top:14px"><span class="chip">Conciertos</span><span class="chip">Lima</span></div><h2 style="margin:8px 0 4px;font-size:32px;font-weight:700;line-height:1.15;letter-spacing:-.015em">Noche del Parque</h2>
 <div class="meta" style="font-size:16px">Sáb 17 oct 2026 · 8:00 p. m. · Parque de la Exposición, Lima</div>
 <div class="tabs"><span class="on">Entradas</span><span>Más información</span></div>
 <p style="margin:0 0 12px;color:var(--mut)">Concierto al aire libre con escenario central y zonas numeradas. Producción ficticia para la demostración académica.</p>
@@ -186,7 +199,7 @@ const detail=`<div class="frame"><div class="frame-bar">Detalle del evento · es
 <div><div class="panel" style="position:sticky;top:12px"><h3 style="margin:0">Elige tu función</h3><div class="fn"><div class="on">Sáb 17 oct<br>8:00 p. m.</div><div>Dom 18 oct<br>7:00 p. m.</div></div><div class="total"><span>Desde</span><b>S/ 70.00</b></div><button class="btn pri block">Comprar entradas</button><p style="margin:0;font-size:14px;color:var(--mut)">Elegirás tus entradas en el siguiente paso.</p></div></div></div></div>`;
 const buy=`<div class="frame"><div class="frame-bar">Selección de entradas con recinto 3D · escritorio</div>
 <div class="steps"><span class="done"><span class="n">✓</span>Evento</span>›<span class="done"><span class="n">✓</span>Función</span>›<span class="on"><span class="n">3</span>Entradas</span>›<span><span class="n">4</span>Resumen</span>›<span><span class="n">5</span>Confirmación</span></div>
-<div class="m-buy"><div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px"><h3 style="margin:0;font-size:20px">Elige tu ubicación</h3><span class="seg"><span class="on">Mapa 3D</span><span>Plano</span><span>Lista</span></span></div>
+<div class="m-buy"><div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px"><h3 style="margin:0;font-size:20px;font-weight:600">Elige tu ubicación</h3><span class="seg"><span class="on">Mapa 3D</span><span>Plano</span><span>Lista</span></span></div>
 <div class="view3d"><img src="${IMG}open-theater.jpg" alt=""><span class="tag">Vista del recinto 3D (aquí va el modelo existente, sin cambios)</span></div>
 <div class="legend" style="margin-top:10px"><span><i></i>Disponible</span><span><i class="sel"></i>Seleccionado</span><span><i class="t"></i>Ocupado</span><span class="zone"><i style="background:#3e6db5"></i>General S/ 52</span><span class="zone"><i style="background:#d9a441"></i>Preferencial S/ 72</span></div></div>
 <div><div class="panel" style="position:sticky;top:12px"><h3 style="margin:0">Tu selección</h3><div style="font-size:15px;color:var(--mut)">Movimiento en Escena · Sáb 17 oct, 8:00 p. m.</div>

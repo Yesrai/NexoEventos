@@ -185,3 +185,11 @@ Alcance de esta fase: **inicio, catálogo y página de evento**. Registro, compr
 - Pendiente (no tocado): registro/inicio de sesión, compra confirmada, sala de espera, Mis entradas, organizador.
 - Evidencias: `docs/evidencias/ui/cobalto-fase1c/` (inicio, concierto, estadio, auditorio, museo; escritorio y móvil), `cobalto-seleccion-3d/` (3D inicial, selección por clic, lista, plano; 4 eventos × 2 pantallas, 8/8 verificados), `cobalto-fase1d/` (inicio tras ajuste final).
 - Verificación: 27 pruebas, build OK, `npm audit` 0. WebGL por software; sin medición de FPS en GPU real.
+
+## 13. Sistema tipográfico (Inter, única familia)
+
+- Inter variable (paquete local `@fontsource-variable/inter`), sin Bricolage ni estilos decorativos. Capa final de `frontend/src/theme.css` y normalización de `styles.css`.
+- Escala: 14–15 px secundario, 16 px texto, 18 px título de tarjeta, 20 px subtítulo, 24–30 px sección, 32–40 px título principal adaptable (páginas de cuenta/organizador: 28–32 px). Pesos 400 / 500 (etiquetas, botones) / 600 (subtítulos) / 700 (solo título principal y totales). Eliminados 650, 800 y las mayúsculas forzadas; interlineado 1.5–1.6 en texto, medida máxima 66 ch, cifras tabulares en precios.
+- También se corrigieron restos del tema anterior: texto oscuro sobre el avatar azul, verdes azulados residuales.
+- Verificación en Chrome (`scripts/audit-typography.mjs`, estilos calculados): una sola familia, 0 textos < 14 px, 0 mayúsculas forzadas, sin desbordes; inicio, detalles, ingreso y registro en escritorio y móvil. Organizador, cliente, operador y fila virtual con `scripts/e2e-organizer.sh` (24 comprobaciones, base aislada). 27 pruebas, build OK.
+- Evidencias: `docs/evidencias/ui/tipografia-inter-v2/`, `tipografia-flujo-completo/`. Propuesta visual actualizada con la sección 7 en `docs/propuesta-visual/paletas.html`.
