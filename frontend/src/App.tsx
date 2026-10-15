@@ -362,6 +362,7 @@ export default function App() {
   const [reservationMessage, setReservationMessage] = useState<string | null>(null)
   const [reservationError, setReservationError] = useState<string | null>(null)
   const [reserving, setReserving] = useState(false)
+  const [confirmation, setConfirmation] = useState<OrderSummary | null>(null)
   const idempotencyKey = useRef<string | null>(null)
   const selection = useSelection(selected, () => { idempotencyKey.current = null; setReservationError(null); setReservationMessage(null) })
   const { quantity, zoneId, selectedSeatIds, total: currentTotal } = selection
@@ -394,7 +395,7 @@ export default function App() {
   useEffect(() => { void loadEvents(); void checkSession() }, [])
 
   async function openDetail(eventId: number) {
-    setDetailLoading(true); setReservationMessage(null); setReservationError(null); idempotencyKey.current = null
+    setDetailLoading(true); setConfirmation(null); setReservationMessage(null); setReservationError(null); idempotencyKey.current = null
     try {
       const response = await api(`/api/events/${eventId}`)
       if (!response.ok) throw new Error()
@@ -458,8 +459,15 @@ export default function App() {
         if (response.status === 409) await refreshSelected()
         throw new Error(messageFrom(body, 'No se pudo crear la reserva. Comprueba la disponibilidad e intenta de nuevo.'))
       }
-      setReservationMessage(`Reserva confirmada. Se generaron ${String(body.ticket_count)} entrada(s).`)
       setConfirmedTotal(Number(body.total))
+      setConfirmation({
+        reservationId: String(body.reservation_id ?? ''), ticketCount: Number(body.ticket_count), total: Number(body.total),
+        event: { name: selected.name, date: selected.date, time: selected.time, venue: selected.venue, city: selected.city, image_path: selected.image_path },
+        lines: selected.ticket_mode === 'seats' ? selection.selectedSeats.map((seat) => ({ label: `${seat.zone_name} · Fila ${seat.row} · Asiento ${seat.number}`, amount: seat.price }))
+          : selected.ticket_mode === 'zones' && selection.activeZone ? [{ label: `${quantity} × ${selection.activeZone.name}`, amount: selection.activeZone.price * quantity }]
+          : [{ label: `${quantity} × Entrada general`, amount: selected.price * quantity }],
+      })
+      window.scrollTo?.({ top: 0 })
       setSelected((current) => current && { ...current, available_capacity: Number(body.available_capacity) })
       idempotencyKey.current = null
       await loadEvents()
@@ -512,7 +520,7 @@ export default function App() {
     : []
   const functionsOf = (current: EventDetail) => upcoming.filter((item) => functionKey(item) === functionKey(current)).sort((a, b) => `${a.date} ${a.time ?? ''}`.localeCompare(`${b.date} ${b.time ?? ''}`)).map(({ id, date, time, available_capacity }) => ({ id, date, time, available_capacity }))
   function goHome() {
-    setSelected(null); setReservationError(null); setReservationMessage(null); setView('catalog'); window.scrollTo?.({ top: 0 })
+    setQuery(''); setSelected(null); setConfirmation(null); setReservationError(null); setReservationMessage(null); setView('catalog'); window.scrollTo?.({ top: 0 })
   }
   function clearFilters() {
     setQuery(''); setCategory(''); setCity(''); setDateFilter('all'); setDateFrom(''); setDateTo(''); setPriceFilter('all'); setSort('date')
@@ -551,14 +559,15 @@ export default function App() {
       {view === 'operator' && user?.role === 'operator' && <OperatorPanel onExpired={() => { setUser(null); setSessionNotice('Tu sesión expiró. Vuelve a iniciar sesión.'); setView('auth') }} />}
       {view === 'organizer' && user?.role === 'organizer' && <Suspense fallback={<div className="status dark" role="status">Cargando panel…</div>}><OrganizerPanel /></Suspense>}
 
-      {view === 'catalog' && (detailLoading || selected || reservationError) && <div className="ep-wrap" aria-live="polite">
+      {view === 'catalog' && confirmation && <OrderConfirmation order={confirmation} onTickets={() => { setConfirmation(null); setSelected(null); setQuery(''); setView('account'); window.scrollTo?.({ top: 0 }) }} onExplore={goHome} />}
+      {view === 'catalog' && !confirmation && (detailLoading || selected || reservationError) && <div className="ep-wrap" aria-live="polite">
         {detailLoading && <div className="status" role="status"><span className="spinner" />Cargando evento…</div>}
         {!detailLoading && !selected && reservationError && <div className="status error" role="alert"><p>{reservationError}</p><button type="button" onClick={() => { setReservationError(null) }}>Volver a eventos</button></div>}
         {selected && !detailLoading && <EventPage event={selected} selection={selection} user={user} reserving={reserving} functions={functionsOf(selected)} onSelectFunction={(id) => void openDetail(id)} message={reservationMessage} confirmedTotal={confirmedTotal} error={reservationError}
           onBack={() => { setSelected(null); setReservationError(null); setReservationMessage(null); window.scrollTo?.({ top: 0 }) }}
           onSubmit={submitReservation} onRequireLogin={requireLogin} onGoTickets={() => setView('account')} />}
       </div>}
-      {view === 'catalog' && !(detailLoading || selected || reservationError) && <>
+      {view === 'catalog' && !confirmation && !(detailLoading || selected || reservationError) && <>
         <section className="home-intro" id="inicio" aria-labelledby="featured-title">
           <h1 id="featured-title" className="sr-only">Destacados</h1>
           {loading && <div className="status" role="status">Cargando destacados…</div>}
@@ -625,7 +634,7 @@ export default function App() {
           </>}
         </section>
       </>}
-      {!(detailLoading || selected) && <nav className="nx-tabbar" aria-label="Navegación móvil">
+      {!(detailLoading || selected || confirmation) && <nav className="nx-tabbar" aria-label="Navegación móvil">
         <button type="button" onClick={() => { setSelected(null); setView('catalog'); window.scrollTo?.({ top: 0 }) }} aria-current={view === 'catalog' ? 'page' : undefined}><Icon name="ticket" size={22} /><span>Inicio</span></button>
         <button type="button" onClick={() => { setSelected(null); setView('catalog'); window.setTimeout(() => document.getElementById('main-search')?.focus(), 60) }}><Icon name="search" size={22} /><span>Buscar</span></button>
         <button type="button" onClick={() => setView(!user ? 'auth' : user.role === 'client' ? 'account' : user.role === 'operator' ? 'operator' : 'organizer')} aria-current={view === 'account' || view === 'operator' || view === 'organizer' ? 'page' : undefined}><Icon name={user?.role === 'organizer' ? 'calendar' : user?.role === 'operator' ? 'qr' : 'ticket'} size={22} /><span>{user?.role === 'organizer' ? 'Eventos' : user?.role === 'operator' ? 'Acceso' : 'Entradas'}</span></button>
@@ -634,6 +643,23 @@ export default function App() {
       <footer><span>© 2026 NexoEventos</span></footer>
     </main>
   )
+}
+
+type OrderSummary = { reservationId: string; ticketCount: number; total: number; event: { name: string; date: string; time: string | null; venue: string; city: string; image_path: string | null }; lines: Array<{ label: string; amount: number }> }
+const money = (value: number) => value === 0 ? 'Gratis' : `S/ ${value.toFixed(2)}`
+
+function OrderConfirmation({ order, onTickets, onExplore }: { order: OrderSummary; onTickets: () => void; onExplore: () => void }) {
+  return <section className="confirm" aria-labelledby="confirm-title">
+    <div className="confirm-hero"><span className="confirm-check"><Icon name="check" size={30} /></span><h1 id="confirm-title">¡Compra confirmada!</h1><p>Tus entradas ya están en tu cuenta. Presenta el código QR de cada una para ingresar.</p></div>
+    <div className="confirm-card">
+      <div className="confirm-event">{order.event.image_path ? <img src={order.event.image_path} alt="" /> : <span className="confirm-noimg"><Icon name="ticket" size={26} /></span>}<div><strong>{order.event.name}</strong><span><Icon name="calendar" size={16} />{formatDate(order.event.date)} · {formatTime(order.event.time)}</span><span><Icon name="location" size={16} />{order.event.venue}, {order.event.city}</span></div></div>
+      <ul className="confirm-lines" aria-label="Detalle de tu compra">{order.lines.map((line, index) => <li key={index}><span>{line.label}</span><b>{money(line.amount)}</b></li>)}</ul>
+      <p className="confirm-total"><span>Total</span><strong>{money(order.total)}</strong></p>
+      <dl className="confirm-ref">{order.reservationId && <div><dt>Número de reserva</dt><dd>{order.reservationId.slice(0, 8).toUpperCase()}</dd></div>}<div><dt>{order.ticketCount === 1 ? 'Entrada' : 'Entradas'}</dt><dd>{order.ticketCount}</dd></div></dl>
+      <p className="confirm-note">Pago simulado: no se realizó ningún cobro.</p>
+    </div>
+    <div className="confirm-actions"><button type="button" className="button primary" onClick={onTickets}>Ver mis entradas</button><button type="button" className="button secondary" onClick={onExplore}>Seguir explorando eventos</button></div>
+  </section>
 }
 
 const PAGE_SIZE = 12
@@ -774,26 +800,35 @@ function ClientAccount({ onExpired }: { onExpired: () => void }) {
     return 'Entrada general'
   }
 
-  return <section className="workspace account-workspace"><div className="account-heading"><div><p className="eyebrow">Área personal</p><h1 className="page-title">Mis reservas y entradas</h1><p className="muted">Cada cupo confirmado tiene una entrada digital independiente y privada.</p></div><Icon name="ticket" size={42} /></div>
-    {loading && <div className="status account-status" role="status"><span className="spinner" />Cargando tus reservas y entradas…</div>}
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date())
+  const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming')
+  const indexed = reservationGroups.flatMap(({ reservation, tickets: group }) => group.map((ticket, index) => ({ ticket, index, total: group.length, reservation })))
+  const isPast = (ticket: Ticket) => ticket.event_date < today
+  const upcomingTickets = indexed.filter(({ ticket }) => !isPast(ticket)).sort((x, y) => `${x.ticket.event_date}${x.ticket.event_time ?? ''}`.localeCompare(`${y.ticket.event_date}${y.ticket.event_time ?? ''}`))
+  const pastTickets = indexed.filter(({ ticket }) => isPast(ticket)).sort((x, y) => `${y.ticket.event_date}${y.ticket.event_time ?? ''}`.localeCompare(`${x.ticket.event_date}${x.ticket.event_time ?? ''}`))
+  const shown = tab === 'upcoming' ? upcomingTickets : pastTickets
+
+  return <section className="workspace account-workspace wallet">
+    <div className="wallet-head"><h1 className="page-title">Mis entradas</h1>
+      {!loading && !error && reservations.length > 0 && <div className="wallet-tabs" role="tablist" aria-label="Filtrar entradas"><button type="button" role="tab" aria-selected={tab === 'upcoming'} onClick={() => setTab('upcoming')}>Próximas <span>{upcomingTickets.length}</span></button><button type="button" role="tab" aria-selected={tab === 'past'} onClick={() => setTab('past')}>Pasadas <span>{pastTickets.length}</span></button></div>}</div>
+    {loading && <div className="status account-status" role="status"><span className="spinner" />Cargando tus entradas…</div>}
     {error && <div className="status error" role="alert"><div><strong>No pudimos mostrar tus entradas</strong><p>{error}</p><button onClick={() => void loadAccount()}>Reintentar</button></div></div>}
-    {!loading && !error && reservations.length === 0 && <div className="empty-state"><span className="empty-icon"><Icon name="ticket" size={30} /></span><h2>Aún no tienes entradas</h2><p>Cuando confirmes una reserva simulada, tus entradas aparecerán aquí.</p></div>}
-    {!loading && !error && reservations.length > 0 && <div className="account-sections"><div className="list-heading"><div><p className="eyebrow">Acceso personal</p><h2 className="subheading">Tus entradas digitales</h2></div><span>{tickets.length}</span></div>
-      {reservationGroups.map(({ reservation, tickets: reservationTickets }) => <section className="reservation-group" key={reservation.id}>
-        <div className="reservation-group-heading">
-          {reservationTickets[0]?.image_path ? <img src={reservationTickets[0].image_path} alt="" /> : <span className="ticket-symbol"><Icon name="ticket" /></span>}
-          <div><span className="reservation-kicker">Reserva simulada · {reservation.quantity} entrada(s)</span><h3>{reservation.event_name}</h3><small>Confirmada el {formatDate(reservation.created_at)}</small></div>
-        </div>
-        {reservationTickets.length === 0 ? <div className="empty-state compact"><p>La reserva existe, pero todavía no encontramos entradas asociadas.</p></div> : <div className="digital-tickets">{reservationTickets.map((ticket, index) => <button className="digital-ticket" key={ticket.id} onClick={(event) => { ticketTriggerRef.current = event.currentTarget; setSelected(ticket) }} aria-label={`Abrir entrada ${index + 1} para ${ticket.event_name}`}>
-          {ticket.image_path && <span className="ticket-photo"><img src={ticket.image_path} alt="" /></span>}
-          <span className="ticket-index">Entrada {index + 1} de {reservationTickets.length}</span>
-          <div className="ticket-title"><Icon name="ticket" /><strong>{ticket.event_name}</strong></div>
-          <strong className="ticket-kind">{ticketLabel(ticket)}</strong>
-          <div className="ticket-details"><span><Icon name="calendar" size={17} />{formatDate(ticket.event_date)} · {formatTime(ticket.event_time)}</span><span><Icon name="location" size={17} />{ticket.event_venue}, {ticket.event_city}</span></div>
-          <span className={ticket.used_at ? 'ticket-state used' : 'ticket-state available'}><Icon name={ticket.used_at ? 'close' : 'check'} size={16} />{ticket.used_at ? `Usada el ${formatDate(ticket.used_at)}` : 'Disponible para ingresar'}</span><span className="ticket-action"><Icon name="qr" /> Ver entrada QR <Icon name="arrow" size={17} /></span>
-        </button>)}</div>}
-      </section>)}
-    </div>}
+    {!loading && !error && reservations.length === 0 && <div className="empty-state"><span className="empty-icon"><Icon name="ticket" size={26} /></span><h2>Aún no tienes entradas</h2><p>Cuando compres entradas, aparecerán aquí con su código QR para ingresar.</p></div>}
+    {!loading && !error && reservations.length > 0 && shown.length === 0 && <div className="empty-state"><span className="empty-icon"><Icon name="calendar" size={26} /></span><h2>{tab === 'upcoming' ? 'No tienes entradas próximas' : 'Aún no tienes entradas pasadas'}</h2><p>{tab === 'upcoming' ? 'Explora el catálogo y encuentra tu próximo evento.' : 'Aquí verás las entradas de eventos que ya ocurrieron.'}</p></div>}
+    {!loading && !error && shown.length > 0 && <ul className="wallet-list">{shown.map(({ ticket, index, total }) => <li key={ticket.id}>
+      <button className={`wallet-ticket ${ticket.used_at || isPast(ticket) ? 'muted' : ''}`} onClick={(event) => { ticketTriggerRef.current = event.currentTarget; setSelected(ticket) }} aria-label={`Abrir entrada ${index + 1} para ${ticket.event_name}`}>
+        <span className="wt-photo">{ticket.image_path ? <img src={ticket.image_path} alt="" /> : <Icon name="ticket" size={28} />}</span>
+        <span className="wt-body">
+          <span className="wt-when">{formatDate(ticket.event_date)} · {formatTime(ticket.event_time)}</span>
+          <strong className="wt-title">{ticket.event_name}</strong>
+          <span className="wt-meta"><Icon name="location" size={16} />{ticket.event_venue}, {ticket.event_city}</span>
+          <span className="wt-kind">{ticketLabel(ticket)}{total > 1 ? ` · ${index + 1} de ${total}` : ''}</span>
+        </span>
+        <span className="wt-stub">
+          <span className={ticket.used_at ? 'wt-state used' : isPast(ticket) ? 'wt-state used' : 'wt-state ok'}>{ticket.used_at ? `Usada el ${formatDate(ticket.used_at)}` : isPast(ticket) ? 'Evento realizado' : 'Lista para ingresar'}</span>
+          <span className="wt-qr"><Icon name="qr" size={20} />Ver entrada QR</span>
+        </span>
+      </button></li>)}</ul>}
     {selected && <div className="modal-backdrop" onClick={closeTicket}><section className="ticket-modal" role="dialog" aria-modal="true" aria-labelledby="ticket-dialog-title" aria-describedby="ticket-dialog-instruction" onClick={(event) => event.stopPropagation()}><button ref={modalCloseRef} className="modal-close" aria-label="Cerrar entrada" onClick={closeTicket}><Icon name="close" /></button><p className="eyebrow">Entrada digital privada</p><h2 id="ticket-dialog-title">{selected.event_name}</h2><strong className="modal-ticket-kind">{ticketLabel(selected)}</strong><div className="modal-event-meta"><span><Icon name="calendar" />{formatDate(selected.event_date)} · {formatTime(selected.event_time)}</span><span><Icon name="location" />{selected.event_venue}, {selected.event_city}</span></div><div className="qr-frame">{qrImage ? <img className="qr-image" src={qrImage} alt="Código QR de la entrada" /> : <div className="qr-loading" role="status"><span className="spinner" />Preparando QR…</div>}</div><p className={selected.used_at ? 'used-badge' : 'valid-badge'}><Icon name={selected.used_at ? 'close' : 'check'} size={16} />{selected.used_at ? 'Entrada utilizada' : 'Disponible para validar'}</p><p className="ticket-instruction" id="ticket-dialog-instruction">Presenta este QR completo y con buen brillo al operador en el ingreso. Abrirlo no consume la entrada. No compartas capturas.</p></section></div>}
   </section>
 }

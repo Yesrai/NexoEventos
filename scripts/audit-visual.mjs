@@ -92,8 +92,8 @@ for (vp of viewports) {
   if (vp.mobile) { await evaluate(`document.querySelector('.ep-bar .ep-button')?.click()`); await pause(500) }
   await shot('16-compra-lista', false)
   await evaluate(`[...document.querySelectorAll('.ep-panel button')].find((b) => /Confirmar compra/.test(b.textContent))?.click()`)
-  await waitFor(`!!document.querySelector('.ep-done')`, 'compra confirmada'); await pause(900); await shot('17-compra-confirmada', false)
-  await evaluate(`[...document.querySelectorAll('.ep-panel button')].find((b) => /Ver mis entradas/.test(b.textContent))?.click()`); await pause(2200)
+  await waitFor(`!!document.querySelector('.confirm')`, 'compra confirmada'); await pause(900); await shot('17-compra-confirmada', false)
+  await evaluate(`[...document.querySelectorAll('.confirm button')].find((b) => /Ver mis entradas/.test(b.textContent))?.click()`); await pause(2200)
   await shot('18-mis-entradas-con-qr')
   await evaluate(`document.querySelector('[aria-label^="Abrir menú de"]')?.click()`); await pause(300); await clickText('Cerrar sesión', '[role="menuitem"]'); await pause(800)
 }

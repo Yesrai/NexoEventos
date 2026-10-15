@@ -430,3 +430,70 @@ footer { padding: 28px 24px; color: var(--c-mut); font-size: var(--fs-sm); }
 @media (max-width: 600px) {
   .ep-stage .venue-3d-stage, .ep-stage .venue-3d-host { min-height: 0; height: clamp(380px, 112vw, 500px); }
 }
+
+/* ---------- Confirmación de compra ---------- */
+.confirm { max-width: 640px; margin: 0 auto; padding: 40px 20px 120px; display: grid; gap: 24px; }
+.confirm-hero { display: grid; justify-items: center; gap: 8px; text-align: center; }
+.confirm-hero h1 { margin: 8px 0 0; font-size: var(--fs-h1); font-weight: 700; }
+.confirm-hero p { margin: 0; color: var(--c-mut); max-width: 460px; }
+.confirm-check { width: 64px; height: 64px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: #1b7f4b; }
+.confirm-card { border: 1px solid var(--c-line); border-radius: 12px; background: #fff; overflow: hidden; }
+.confirm-event { padding: 16px; display: grid; grid-template-columns: 96px 1fr; gap: 16px; align-items: center; border-bottom: 1px solid var(--c-line); }
+.confirm-event img, .confirm-noimg { width: 96px; height: 80px; border-radius: 8px; object-fit: cover; background: var(--c-taken); display: grid; place-items: center; color: var(--c-ctl); }
+.confirm-event div { display: grid; gap: 4px; min-width: 0; }
+.confirm-event strong { font-size: var(--fs-card); font-weight: 600; }
+.confirm-event span { display: flex; align-items: center; gap: 6px; color: var(--c-mut); font-size: var(--fs-md); }
+.confirm-lines { margin: 0; padding: 12px 16px; list-style: none; display: grid; gap: 8px; }
+.confirm-lines li { display: flex; justify-content: space-between; gap: 12px; font-size: var(--fs-base); }
+.confirm-lines b { font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.confirm-total { margin: 0; padding: 14px 16px; display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--c-line); font-size: var(--fs-base); }
+.confirm-total strong { font-size: var(--fs-sub); font-weight: 700; font-variant-numeric: tabular-nums; }
+.confirm-ref { margin: 0; padding: 12px 16px; display: flex; gap: 32px; flex-wrap: wrap; background: var(--c-surf); border-top: 1px solid var(--c-line); }
+.confirm-ref dt { color: var(--c-mut); font-size: var(--fs-sm); }
+.confirm-ref dd { margin: 2px 0 0; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.confirm-note { margin: 0; padding: 12px 16px; color: var(--c-mut); font-size: var(--fs-md); border-top: 1px solid var(--c-line); }
+.confirm-actions { display: grid; gap: 10px; }
+.confirm-actions .button { width: 100%; min-height: 48px; }
+
+/* ---------- Mis entradas (monedero digital) ---------- */
+.wallet { max-width: 900px; }
+.wallet-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; margin-bottom: 20px; }
+.wallet-head .page-title { margin: 0; }
+.wallet-tabs { display: inline-flex; padding: 3px; border: 1px solid var(--c-ctl); border-radius: 10px; background: #fff; }
+.wallet-tabs button { min-height: 40px; padding: 0 16px; display: inline-flex; gap: 8px; align-items: center; border: 0; border-radius: 7px; color: var(--c-ink); background: none; font-size: var(--fs-base); cursor: pointer; }
+.wallet-tabs button span { min-width: 22px; padding: 0 6px; border-radius: 999px; color: var(--c-mut); background: var(--c-surf); font-size: var(--fs-sm); text-align: center; }
+.wallet-tabs button[aria-selected="true"] { color: #fff; background: var(--c-action); font-weight: 600; }
+.wallet-tabs button[aria-selected="true"] span { color: var(--c-action); background: #fff; }
+.wallet-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 14px; }
+.wallet-ticket { position: relative; width: 100%; padding: 0; display: grid; grid-template-columns: 148px minmax(0, 1fr) 200px; align-items: stretch; text-align: left; overflow: hidden; border: 1px solid var(--c-line); border-radius: 12px; color: var(--c-ink); background: #fff; cursor: pointer; transition: border-color 150ms, box-shadow 150ms; }
+.wallet-ticket:hover { border-color: var(--c-ctl); box-shadow: 0 4px 16px rgba(18,22,31,.08); }
+.wallet-ticket.muted .wt-photo img { filter: grayscale(.8); opacity: .8; }
+.wt-photo { min-height: 140px; display: grid; place-items: center; color: var(--c-ctl); background: var(--c-taken); }
+.wt-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.wt-body { padding: 16px 18px; display: grid; gap: 4px; align-content: center; min-width: 0; }
+.wt-when { color: var(--c-action); font-size: var(--fs-md); font-weight: 500; }
+.wt-title { font-size: var(--fs-card); font-weight: 600; line-height: 1.3; }
+.wt-meta { display: flex; align-items: center; gap: 6px; color: var(--c-mut); font-size: var(--fs-md); }
+.wt-kind { margin-top: 2px; font-size: var(--fs-md); font-weight: 500; }
+.wt-stub { position: relative; padding: 16px; display: grid; gap: 12px; align-content: center; justify-items: start; border-left: 2px dashed var(--c-line); background: var(--c-surf); }
+.wt-stub::before, .wt-stub::after { content: ""; position: absolute; left: -9px; width: 16px; height: 16px; border: 1px solid var(--c-line); border-radius: 50%; background: #fff; }
+.wt-stub::before { top: -9px; }
+.wt-stub::after { bottom: -9px; }
+.wt-state { padding: 3px 10px; border-radius: 6px; font-size: var(--fs-sm); font-weight: 500; }
+.wt-state.ok { color: #14663a; background: #e6f4ec; }
+.wt-state.used { color: var(--c-mut); background: var(--c-taken); }
+.wt-qr { display: inline-flex; align-items: center; gap: 8px; color: var(--c-action); font-weight: 600; }
+@media (max-width: 700px) {
+  .confirm { padding: 24px 16px 100px; }
+  .confirm-event { grid-template-columns: 80px 1fr; }
+  .confirm-event img, .confirm-noimg { width: 80px; height: 68px; }
+  .wallet-ticket { grid-template-columns: 96px minmax(0, 1fr); }
+  .wt-photo { min-height: 0; grid-row: 1; }
+  .wt-body { padding: 12px 14px; }
+  .wt-stub { grid-column: 1 / -1; padding: 12px 14px; grid-template-columns: 1fr auto; align-items: center; justify-items: start; border-left: 0; border-top: 2px dashed var(--c-line); }
+  .wt-stub::before, .wt-stub::after { top: -9px; bottom: auto; }
+  .wt-stub::before { left: -9px; }
+  .wt-stub::after { left: auto; right: -9px; }
+}
+
+.workspace.wallet { width: 100%; max-width: 920px; margin: 0 auto; padding: 32px 20px 100px; }
