@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import axe from 'axe-core'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
 
@@ -9,9 +9,16 @@ vi.mock('./Stadium3D', () => ({
   default: ({ selectedSeatIds }: { selectedSeatIds: number[] }) => <div data-testid="stadium-3d-test">Visor 3D · {selectedSeatIds.length} selección</div>,
 }))
 
+beforeEach(() => {
+  // Fecha fija: el catálogo oculta eventos que ya pasaron.
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date('2026-10-01T12:00:00-05:00'))
+})
+
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
+  vi.useRealTimers()
 })
 
 describe('NexoEventos catalog', () => {
@@ -79,7 +86,29 @@ describe('NexoEventos catalog', () => {
     render(<App />)
 
     expect(await screen.findByRole('heading', { name: 'Evento persistente' })).toBeInTheDocument()
-    expect(screen.getByText('19 disponibles')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Ver Evento persistente' })).toBeInTheDocument()
+    expect(screen.queryByText('Últimas entradas')).not.toBeInTheDocument()
+  })
+
+  it('shows events in batches of 12 and groups real functions of the same show', async () => {
+    const many = Array.from({ length: 14 }, (_, index) => ({ ...baseEvent, id: 100 + index, name: `Espectáculo ${index + 1}`, date: `2026-10-${String(10 + index).padStart(2, '0')}`, venue: `Sala ${index + 1}`, venue_id: 500 + index, category: 'Teatro', price: 20, capacity: 100, available_capacity: 100 }))
+    const functions = [
+      { ...baseEvent, id: 301, name: 'Obra en cartel', date: '2026-10-28', venue: 'Teatro Central', venue_id: 9, category: 'Teatro', price: 30, capacity: 100, available_capacity: 100 },
+      { ...baseEvent, id: 302, name: 'Obra en cartel', date: '2026-10-29', venue: 'Teatro Central', venue_id: 9, category: 'Teatro', price: 30, capacity: 100, available_capacity: 100 },
+      { ...baseEvent, id: 303, name: 'Obra en cartel', date: '2026-10-30', venue: 'Otro recinto', venue_id: 10, category: 'Teatro', price: 30, capacity: 100, available_capacity: 100 },
+    ]
+    vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request) => String(input).endsWith('/api/auth/session')
+      ? { ok: false, status: 401, json: async () => ({}) }
+      : { ok: true, status: 200, json: async () => [...many, ...functions] }))
+    render(<App />)
+    await screen.findByRole('button', { name: 'Ver Espectáculo 1' })
+    expect(document.querySelectorAll('.card')).toHaveLength(12)
+    expect(screen.getByText('Mostrando 12 de 16 eventos')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Mostrar más eventos' }))
+    expect(document.querySelectorAll('.card')).toHaveLength(16)
+    expect(screen.queryByRole('button', { name: 'Mostrar más eventos' })).not.toBeInTheDocument()
+    expect(screen.getByText(/2 funciones/)).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Ver Obra en cartel' })).toHaveLength(2)
   })
 
   it('uses Desde only when the API confirms multiple real prices', async () => {
@@ -118,7 +147,7 @@ describe('NexoEventos catalog', () => {
     }))
 
     render(<App />)
-    fireEvent.click(await screen.findByRole('button', { name: 'Ver detalle' }))
+    fireEvent.click((await screen.findAllByRole('button', { name: /^Ver (?!compra|mis|más|categor)/ }))[0])
 
     const minus = await screen.findByRole('button', { name: 'Restar una entrada' })
     const plus = screen.getByRole('button', { name: 'Agregar una entrada' })
@@ -205,7 +234,7 @@ describe('NexoEventos catalog', () => {
     }))
 
     render(<App />)
-    fireEvent.click(await screen.findByRole('button', { name: 'Ver detalle' }))
+    fireEvent.click((await screen.findAllByRole('button', { name: /^Ver (?!compra|mis|más|categor)/ }))[0])
     fireEvent.click(await screen.findByRole('button', { name: 'Agregar una entrada' }))
     fireEvent.click(screen.getByRole('button', { name: 'Inicia sesión para comprar' }))
 
@@ -270,7 +299,7 @@ describe('NexoEventos catalog', () => {
       const server = new Date()
       stub(() => sales({ server_time: server.toISOString(), sales_start_at: new Date(server.getTime() + 90_000).toISOString(), sales_open: false, queue_enabled: false }))
       render(<App />)
-      fireEvent.click(await screen.findByRole('button', { name: 'Ver detalle' }))
+      fireEvent.click((await screen.findAllByRole('button', { name: /^Ver (?!compra|mis|más|categor)/ }))[0])
       expect(await screen.findByRole('timer', { name: /Faltan 00:01:(2|3)\d/ })).toBeInTheDocument()
       expect(screen.getByText(/Hora oficial del servidor/)).toBeInTheDocument()
       expect(screen.getByRole('button', { name: 'Compra no disponible todavía' })).toBeDisabled()
@@ -280,7 +309,7 @@ describe('NexoEventos catalog', () => {
       let queue: unknown = { status: 'waiting', position: 3, waiting_total: 5, expires_at: null, seconds_left: null }
       stub(() => sales({ queue }))
       render(<App />)
-      fireEvent.click(await screen.findByRole('button', { name: 'Ver detalle' }))
+      fireEvent.click((await screen.findAllByRole('button', { name: /^Ver (?!compra|mis|más|categor)/ }))[0])
       expect(await screen.findByText('2 personas delante de ti · 5 en espera')).toBeInTheDocument()
       expect(screen.getByText(/Tu lugar está guardado en el servidor, incluso si la recargas/)).toBeInTheDocument()
       expect(screen.getByRole('button', { name: 'Compra no disponible todavía' })).toBeDisabled()
@@ -294,7 +323,7 @@ describe('NexoEventos catalog', () => {
       const server = new Date()
       stub(() => sales({ server_time: server.toISOString(), queue: { status: 'admitted', position: null, waiting_total: 0, expires_at: new Date(server.getTime() + 125_000).toISOString(), seconds_left: 125 } }))
       render(<App />)
-      fireEvent.click(await screen.findByRole('button', { name: 'Ver detalle' }))
+      fireEvent.click((await screen.findAllByRole('button', { name: /^Ver (?!compra|mis|más|categor)/ }))[0])
       expect(await screen.findByText('Es tu turno')).toBeInTheDocument()
       expect(screen.getByText(/02:0\d|02:1\d|02:05/)).toBeInTheDocument()
       expect(screen.getByRole('button', { name: 'Confirmar compra' })).toBeEnabled()
@@ -305,7 +334,7 @@ describe('NexoEventos catalog', () => {
       let queue: unknown = null
       const calls = stub(() => sales({ queue }))
       render(<App />)
-      fireEvent.click(await screen.findByRole('button', { name: 'Ver detalle' }))
+      fireEvent.click((await screen.findAllByRole('button', { name: /^Ver (?!compra|mis|más|categor)/ }))[0])
       const join = await screen.findByRole('button', { name: 'Entrar a la fila' })
       queue = { status: 'waiting', position: 1, waiting_total: 1, expires_at: null, seconds_left: null }
       fireEvent.click(join)
@@ -577,7 +606,7 @@ describe('NexoEventos catalog', () => {
     }))
 
     render(<App />)
-    fireEvent.click(await screen.findByRole('button', { name: 'Ver detalle' }))
+    fireEvent.click((await screen.findAllByRole('button', { name: /^Ver (?!compra|mis|más|categor)/ }))[0])
     const available = await screen.findByRole('button', { name: /Zona Platea, fila A, asiento 1, disponible/ })
     const occupied = screen.getByRole('button', { name: /Zona Platea, fila A, asiento 2, ocupado/ })
     expect(occupied).toBeDisabled()

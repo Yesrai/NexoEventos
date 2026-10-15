@@ -1,22 +1,6 @@
 import type { ReactNode } from 'react'
 import type { IconType } from 'react-icons'
-import {
-  GiBallerinaShoes,
-  GiBearFace,
-  GiCampingTent,
-  GiClapperboard,
-  GiDramaMasks,
-  GiHammerNails,
-  GiKnifeFork,
-  GiMeshNetwork,
-  GiMicrochip,
-  GiMicrophone,
-  GiPalette,
-  GiPublicSpeaker,
-  GiShop,
-  GiSoccerBall,
-  GiWoodFrame,
-} from 'react-icons/gi'
+import { LuBaby, LuClapperboard, LuCpu, LuDrama, LuFrame, LuHammer, LuMic, LuMusic, LuPalette, LuPresentation, LuStore, LuTent, LuTrophy, LuUsers, LuUtensilsCrossed } from 'react-icons/lu'
 
 export type Role = 'client' | 'organizer' | 'operator'
 export type User = { id: string; email: string; display_name: string; role: Role; session_expires_at: string }
@@ -132,21 +116,21 @@ export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
 }
 
 export const categoryPresentation: Record<string, { label: string; Icon: IconType }> = {
-  Conciertos: { label: 'Conciertos', Icon: GiMicrophone },
-  Festivales: { label: 'Festivales', Icon: GiCampingTent },
-  'Teatro y stand-up': { label: 'Teatro', Icon: GiDramaMasks },
-  Danza: { label: 'Danza', Icon: GiBallerinaShoes },
-  Cine: { label: 'Cine', Icon: GiClapperboard },
-  Deportes: { label: 'Deportes', Icon: GiSoccerBall },
-  Gastronomía: { label: 'Gastronomía', Icon: GiKnifeFork },
-  Ferias: { label: 'Ferias', Icon: GiShop },
-  Exposiciones: { label: 'Exposiciones', Icon: GiWoodFrame },
-  'Arte y cultura': { label: 'Arte y cultura', Icon: GiPalette },
-  Talleres: { label: 'Talleres', Icon: GiHammerNails },
-  Infantil: { label: 'Infantil', Icon: GiBearFace },
-  Conferencias: { label: 'Conferencias', Icon: GiPublicSpeaker },
-  Networking: { label: 'Networking', Icon: GiMeshNetwork },
-  Tecnología: { label: 'Tecnología', Icon: GiMicrochip },
+  Conciertos: { label: 'Conciertos', Icon: LuMic },
+  Festivales: { label: 'Festivales', Icon: LuTent },
+  'Teatro y stand-up': { label: 'Teatro', Icon: LuDrama },
+  Danza: { label: 'Danza', Icon: LuMusic },
+  Cine: { label: 'Cine', Icon: LuClapperboard },
+  Deportes: { label: 'Deportes', Icon: LuTrophy },
+  Gastronomía: { label: 'Gastronomía', Icon: LuUtensilsCrossed },
+  Ferias: { label: 'Ferias', Icon: LuStore },
+  Exposiciones: { label: 'Exposiciones', Icon: LuFrame },
+  'Arte y cultura': { label: 'Arte y cultura', Icon: LuPalette },
+  Talleres: { label: 'Talleres', Icon: LuHammer },
+  Infantil: { label: 'Infantil', Icon: LuBaby },
+  Conferencias: { label: 'Conferencias', Icon: LuPresentation },
+  Networking: { label: 'Networking', Icon: LuUsers },
+  Tecnología: { label: 'Tecnología', Icon: LuCpu },
 }
 
 export const categoryOrder = Object.keys(categoryPresentation)

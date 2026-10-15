@@ -1,7 +1,7 @@
 import { FormEvent, KeyboardEvent as ReactKeyboardEvent, lazy, ReactNode, Suspense, useEffect, useId, useMemo, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import { EventPage, useSelection } from './EventPage'
-import { GiClapperboard } from 'react-icons/gi'
+import { LuClapperboard } from 'react-icons/lu'
 import { categoryOrder, categoryPresentation, type User, type EventItem, type Seat, type EventDetail, type Reservation, type Ticket, type View, type BarcodeDetectorConstructor, api, formatDate, formatTime, formatEventPrice, messageFrom, requestError, Icon } from './shared'
 
 const OrganizerPanel = lazy(() => import('./Organizer'))
@@ -474,38 +474,45 @@ export default function App() {
     setUser(null); setView('catalog'); setSessionNotice('Sesión cerrada correctamente.')
   }
 
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date())
+  const upcoming = useMemo(() => events.filter((item) => item.date >= today), [events, today])
   const filtered = useMemo(() => {
-    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date())
     const current = new Date(`${today}T12:00:00`)
     const day = current.getDay()
     const saturday = new Date(current); saturday.setDate(current.getDate() + ((6 - day + 7) % 7))
     const sunday = new Date(saturday); sunday.setDate(saturday.getDate() + 1)
     const iso = (value: Date) => value.toISOString().slice(0, 10)
-    const values = events.filter((item) => {
+    const values = upcoming.filter((item) => {
       const textMatch = `${item.name} ${item.venue} ${item.city} ${item.category}`.toLowerCase().includes(query.trim().toLowerCase())
       const dateMatch = dateFilter === 'all' || (dateFilter === 'today' && item.date === today) || (dateFilter === 'weekend' && item.date >= iso(saturday) && item.date <= iso(sunday)) || (dateFilter === 'range' && (!dateFrom || item.date >= dateFrom) && (!dateTo || item.date <= dateTo))
       return textMatch && (!category || item.category === category) && (!city || item.city === city) && dateMatch && (priceFilter === 'all' || (priceFilter === 'free' ? item.price === 0 : item.price > 0))
     })
     return [...values].sort((a, b) => sort === 'date' ? a.date.localeCompare(b.date) : sort === 'price-asc' ? a.price - b.price : b.price - a.price)
-  }, [events, query, category, city, dateFilter, dateFrom, dateTo, priceFilter, sort])
+  }, [upcoming, today, query, category, city, dateFilter, dateFrom, dateTo, priceFilter, sort])
+  const groups = useMemo(() => groupFunctions(filtered), [filtered])
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  useEffect(() => { setVisibleCount(PAGE_SIZE) }, [query, category, city, dateFilter, dateFrom, dateTo, priceFilter, sort])
 
-  const categories = useMemo(() => [...new Set(events.map((item) => item.category))].sort((left, right) => {
+  const categories = useMemo(() => [...new Set(upcoming.map((item) => item.category))].sort((left, right) => {
     const leftIndex = categoryOrder.indexOf(left)
     const rightIndex = categoryOrder.indexOf(right)
     if (leftIndex < 0 || rightIndex < 0) return leftIndex < 0 ? rightIndex < 0 ? left.localeCompare(right, 'es') : 1 : -1
     return leftIndex - rightIndex
-  }), [events])
-  const cities = useMemo(() => [...new Set(events.map((item) => item.city))].sort(), [events])
+  }), [upcoming])
+  const cities = useMemo(() => [...new Set(upcoming.map((item) => item.city))].sort(), [upcoming])
   const activeFilterCount = [category, city, dateFilter !== 'all', priceFilter !== 'all'].filter(Boolean).length
   const curatedFeatured = [1002, 1004, 1010, 1013, 1016, 1003].flatMap((id) => {
-    const item = events.find((event) => event.id === id)
+    const item = upcoming.find((event) => event.id === id)
     return item ? [item] : []
   })
-  const featuredEvents = curatedFeatured.length ? curatedFeatured : events.slice(0, 6)
+  const featuredEvents = curatedFeatured.length ? curatedFeatured : upcoming.slice(0, 6)
   const featured = featuredEvents[featuredIndex % Math.max(featuredEvents.length, 1)]
   const sideFeatured = featuredEvents.length > 1
     ? [...featuredEvents.slice(featuredIndex + 1), ...featuredEvents.slice(0, featuredIndex)].slice(0, 3)
     : []
+  function goHome() {
+    setSelected(null); setReservationError(null); setReservationMessage(null); setView('catalog'); window.scrollTo?.({ top: 0 })
+  }
   function clearFilters() {
     setQuery(''); setCategory(''); setCity(''); setDateFilter('all'); setDateFrom(''); setDateTo(''); setPriceFilter('all'); setSort('date')
   }
@@ -521,11 +528,11 @@ export default function App() {
 
   return (
     <main className="app-shell">
-      <header className="site-header">
+      <header className={`site-header view-${view}${selected || detailLoading ? ' has-event' : ''}`}>
         <nav className="nav" aria-label="Navegación principal">
-          <button className="brand link-button" onClick={() => setView('catalog')} aria-label="Ir al inicio de NexoEventos"><span className="brand-mark">N</span><span>Nexo<strong>Eventos</strong></span></button>
-          <button className="nav-link link-button events-link" onClick={() => setView('catalog')}>Eventos</button>
-          {view === 'catalog' && <form className="header-search" role="search" onSubmit={(event) => { event.preventDefault(); document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' }) }}><label className="sr-only" htmlFor="main-search">Buscar eventos</label><input id="main-search" value={query} onChange={(event) => { setQuery(event.target.value); if (selected) setSelected(null) }} placeholder="Buscar eventos" /><button type="submit" aria-label="Buscar"><Icon name="search" /></button></form>}
+          <button className="brand link-button" onClick={goHome} aria-label="Ir al inicio de NexoEventos"><span className="brand-mark">N</span><span>Nexo<strong>Eventos</strong></span></button>
+          <button className="nav-link link-button events-link" onClick={goHome}>Eventos</button>
+          <form className="header-search" role="search" onSubmit={(event) => { event.preventDefault(); if (view !== 'catalog') { setSelected(null); setView('catalog') } window.setTimeout(() => document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' }), 50) }}><label className="sr-only" htmlFor="main-search">Buscar eventos</label><input id="main-search" value={query} onChange={(event) => { setQuery(event.target.value); if (selected) setSelected(null); if (view !== 'catalog') setView('catalog') }} placeholder="Buscar eventos, artistas o lugares" /><button type="submit" aria-label="Buscar"><Icon name="search" /></button></form>
           <div className="nav-actions">
             {user?.role === 'client' && <button className="nav-link link-button" aria-label="Mis entradas" onClick={() => setView('account')}><Icon name="ticket" size={17} /><span>Mis entradas</span></button>}
             {user?.role === 'operator' && <button className="nav-link link-button" aria-label="Control de acceso" onClick={() => setView('operator')}><Icon name="qr" size={17} /><span>Control de acceso</span></button>}
@@ -534,7 +541,6 @@ export default function App() {
           </div>
         </nav>
       </header>
-      <div className="demo-strip" role="note"><span>Demo académica</span><i aria-hidden="true">·</i><span>Eventos ficticios</span><i aria-hidden="true">·</i><span>Sin cobros reales</span></div>
 
       {sessionNotice && <div className="notice" role="status">{sessionNotice}<button aria-label="Cerrar aviso" onClick={() => setSessionNotice(null)}><Icon name="close" /></button></div>}
       {!sessionReady && <div className="status dark" role="status">Comprobando sesión…</div>}
@@ -578,7 +584,7 @@ export default function App() {
             <div className="category-carousel">
               <button type="button" className="category-arrow previous" aria-label="Ver categorías anteriores" onClick={() => moveCategories(-1)}><Icon name="arrow" size={19} /></button>
               <div className="category-links" aria-label="Categorías" ref={categoryListRef}>{categories.map((value) => {
-                const presentation = categoryPresentation[value] ?? { label: value, Icon: GiClapperboard }
+                const presentation = categoryPresentation[value] ?? { label: value, Icon: LuClapperboard }
                 return <button key={value} aria-pressed={category === value} className={category === value ? 'selected' : ''} onClick={() => setCategory(category === value ? '' : value)}><span className="category-icon"><presentation.Icon aria-hidden="true" /></span><span className="category-name">{presentation.label}</span></button>
               })}</div>
               <button type="button" className="category-arrow next" aria-label="Ver más categorías" onClick={() => moveCategories(1)}><Icon name="arrow" size={19} /></button>
@@ -588,7 +594,7 @@ export default function App() {
         <section className="catalog" id="catalogo" aria-labelledby="catalog-title">
           <div className="section-heading">
             <div><h2 id="catalog-title">Próximos eventos</h2></div>
-            <div className="results-sort"><span>{filtered.length} resultado{filtered.length === 1 ? '' : 's'}</span><SelectMenu label="Ordenar" value={sort} align="end" onChange={(value) => setSort(value as typeof sort)} options={[{ value: 'date', label: 'Fecha próxima' }, { value: 'price-asc', label: 'Precio menor' }, { value: 'price-desc', label: 'Precio mayor' }]} /></div>
+            <div className="results-sort"><span>{groups.length} resultado{groups.length === 1 ? '' : 's'}</span><SelectMenu label="Ordenar" value={sort} align="end" onChange={(value) => setSort(value as typeof sort)} options={[{ value: 'date', label: 'Fecha próxima' }, { value: 'price-asc', label: 'Precio menor' }, { value: 'price-desc', label: 'Precio mayor' }]} /></div>
           </div>
           <div className="compact-filters" aria-label="Filtros del catálogo">
             <SelectMenu label="Ciudad" value={city} onChange={setCity} options={[{ value: '', label: 'Todas' }, ...cities.map((value) => ({ value, label: value }))]} />
@@ -597,20 +603,25 @@ export default function App() {
             <button className="more-filters" onClick={() => setFiltersOpen((value) => !value)} aria-expanded={filtersOpen} aria-controls="more-filters-panel"><Icon name="sliders" />Más filtros{activeFilterCount > 0 && <b>{activeFilterCount}</b>}</button>
           </div>
           {filtersOpen && <div className="more-filters-panel" id="more-filters-panel"><DateRangePicker from={dateFrom} to={dateTo} onApply={(from, to) => { setDateFrom(from); setDateTo(to); setDateFilter('range') }} onClear={() => { setDateFrom(''); setDateTo(''); if (dateFilter === 'range') setDateFilter('all') }} /></div>}
-          {(query || category || city || dateFilter !== 'all' || priceFilter !== 'all') && <div className="active-filters" aria-label="Filtros activos">{query && <button onClick={() => setQuery('')}>Búsqueda: {query}<Icon name="close" size={15} /></button>}{category && <button onClick={() => setCategory('')}>{categoryPresentation[category]?.label ?? category}<Icon name="close" size={15} /></button>}{city && <button onClick={() => setCity('')}>Ciudad: {city}<Icon name="close" size={15} /></button>}{dateFilter !== 'all' && <button onClick={() => { setDateFilter('all'); setDateFrom(''); setDateTo('') }}>Fecha: {dateFilter === 'today' ? 'Hoy' : dateFilter === 'weekend' ? 'Este fin de semana' : dateFrom && dateTo ? `${shortDate(dateFrom)} – ${shortDate(dateTo)}` : 'Rango'}<Icon name="close" size={15} /></button>}{priceFilter !== 'all' && <button onClick={() => setPriceFilter('all')}>{priceFilter === 'free' ? 'Gratuitos' : 'De pago'}<Icon name="close" size={15} /></button>}<button className="clear-active" onClick={clearFilters}>Limpiar todos</button></div>}
+          {(query || category || city || dateFilter !== 'all' || priceFilter !== 'all') && <div className="active-filters" aria-label="Filtros activos">{query && <button onClick={() => setQuery('')}>Búsqueda: {query}<Icon name="close" size={15} /></button>}{category && <button onClick={() => setCategory('')}>{categoryPresentation[category]?.label ?? category}<Icon name="close" size={15} /></button>}{city && <button onClick={() => setCity('')}>Ciudad: {city}<Icon name="close" size={15} /></button>}{dateFilter !== 'all' && <button onClick={() => { setDateFilter('all'); setDateFrom(''); setDateTo('') }}>Fecha: {dateFilter === 'today' ? 'Hoy' : dateFilter === 'weekend' ? 'Este fin de semana' : dateFrom && dateTo ? `${shortDate(dateFrom)} – ${shortDate(dateTo)}` : 'Rango'}<Icon name="close" size={15} /></button>}{priceFilter !== 'all' && <button onClick={() => setPriceFilter('all')}>{priceFilter === 'free' ? 'Gratuitos' : 'De pago'}<Icon name="close" size={15} /></button>}{groups.length > 0 && <button className="clear-active" onClick={clearFilters}>Limpiar todos</button>}</div>}
           {loading && <div className="status" role="status">Cargando experiencias…</div>}
           {loading && <div className="nx-skeletons" aria-hidden="true">{[0, 1, 2, 3, 4, 5, 6, 7].map((n) => <div key={n} className="nx-skeleton"><i /><b /><b /></div>)}</div>}
           {error && <div className="status error" role="alert"><p>{error}</p><button onClick={() => void loadEvents()}>Reintentar</button></div>}
-          {!loading && !error && filtered.length === 0 && <div className="empty-state"><span className="empty-icon"><Icon name="search" /></span><h3>No encontramos eventos</h3><p>Prueba otra fecha, categoría o rango de precio.</p><button className="button secondary" onClick={clearFilters}>Limpiar filtros</button></div>}
-          {!loading && !error && filtered.length > 0 && <div className="grid">{filtered.map((item, index) => (
-            <article className="card nx-card" key={item.id}>
-              <button className="card-art" onClick={() => void openDetail(item.id)} aria-label={`Ver ${item.name}`}>{item.image_path ? <img src={item.image_path} alt="" loading="lazy" /> : <span className="image-fallback">{item.category}</span>}<span className="category-pill">{item.category}</span></button>
-              <div className="card-body"><p className="nx-when">{shortWhen(item.date, item.time)}</p><h3>{item.name}</h3><p className="venue"><Icon name="location" size={18} />{item.venue}, {item.city}</p>
-                <div className="card-footer"><strong>{formatEventPrice(item)}</strong>{item.available_capacity === 0 ? <em className="nx-few sold">Agotado</em> : item.available_capacity <= Math.max(10, Math.ceil(item.capacity * .1)) ? <em className="nx-few">Últimas entradas · {item.available_capacity}</em> : <span>{item.available_capacity} disponibles</span>}</div>
-                <button className="button secondary detail-button" onClick={() => void openDetail(item.id)}>Ver detalle <Icon name="arrow" size={18} /></button>
-              </div>
-            </article>
-          ))}</div>}
+          {!loading && !error && groups.length === 0 && <div className="empty-state"><span className="empty-icon"><Icon name="search" /></span><h3>No encontramos eventos con esos filtros</h3><p>Prueba con otra ciudad, otra fecha o quita algún filtro.</p><button className="button secondary" onClick={clearFilters}>Limpiar filtros</button></div>}
+          {!loading && !error && groups.length > 0 && <>
+            <div className="grid">{groups.slice(0, visibleCount).map(({ item, count }) => (
+              <article className="card nx-card" key={item.id}>
+                <div className="card-art">{item.image_path ? <img src={item.image_path} alt="" loading="lazy" /> : <span className="image-fallback">{item.category}</span>}<span className="category-pill">{item.category}</span></div>
+                <div className="card-body">
+                  <p className="nx-when">{shortWhen(item.date, item.time)}{count > 1 && <b> · {count} funciones</b>}</p>
+                  <h3><button type="button" className="card-link" aria-label={`Ver ${item.name}`} onClick={() => void openDetail(item.id)}>{item.name}</button></h3>
+                  <p className="venue"><Icon name="location" size={18} /><span>{item.venue}, {item.city}</span></p>
+                  <div className="card-footer"><strong>{formatEventPrice(item)}</strong>{item.available_capacity === 0 ? <em className="nx-few sold">Agotado</em> : item.available_capacity <= Math.max(10, Math.ceil(item.capacity * .1)) ? <em className="nx-few">Últimas entradas</em> : null}</div>
+                </div>
+              </article>
+            ))}</div>
+            {groups.length > visibleCount && <div className="more-results"><p role="status">Mostrando {Math.min(visibleCount, groups.length)} de {groups.length} eventos</p><button type="button" className="button secondary" onClick={() => setVisibleCount((value) => value + PAGE_SIZE)}>Mostrar más eventos</button></div>}
+          </>}
         </section>
       </>}
       {!(detailLoading || selected) && <nav className="nx-tabbar" aria-label="Navegación móvil">
@@ -619,11 +630,23 @@ export default function App() {
         <button type="button" onClick={() => setView(!user ? 'auth' : user.role === 'client' ? 'account' : user.role === 'operator' ? 'operator' : 'organizer')} aria-current={view === 'account' || view === 'operator' || view === 'organizer' ? 'page' : undefined}><Icon name={user?.role === 'organizer' ? 'calendar' : user?.role === 'operator' ? 'qr' : 'ticket'} size={22} /><span>{user?.role === 'organizer' ? 'Eventos' : user?.role === 'operator' ? 'Acceso' : 'Entradas'}</span></button>
         <button type="button" onClick={() => { if (user) document.querySelector<HTMLButtonElement>('.account-trigger')?.click(); else setView('auth') }}><Icon name="user" size={22} /><span>Cuenta</span></button>
       </nav>}
-      <footer>Proyecto académico · Datos y pagos simulados</footer>
+      <footer><span>© 2026 NexoEventos</span></footer>
     </main>
   )
 }
 
+const PAGE_SIZE = 12
+/** Agrupa como funciones solo eventos del mismo nombre y recinto; no altera identificadores ni inventarios. */
+const functionKey = (item: EventItem) => `${item.venue_id}|${item.name.trim().toLowerCase()}`
+function groupFunctions(list: EventItem[]) {
+  const groups = new Map<string, { item: EventItem; count: number }>()
+  for (const item of list) {
+    const key = functionKey(item)
+    const found = groups.get(key)
+    if (found) found.count += 1; else groups.set(key, { item, count: 1 })
+  }
+  return [...groups.values()]
+}
 const shortWhen = (date: string, time: string | null) => `${new Intl.DateTimeFormat('es-PE', { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(`${date}T12:00:00`)).replace(/\./g, '')} · ${formatTime(time)}`
 
 function authErrorMessage(mode: 'login' | 'register', status: number, body: unknown) {
@@ -687,8 +710,8 @@ function AuthPanel({ pendingReservation, onBack, onAuthenticated }: {
 
   return <section className="workspace narrow auth-workspace">
     <button className="back-button" onClick={onBack}><Icon name="arrow" size={18} /> Volver {pendingReservation ? 'a la reserva' : 'a eventos'}</button>
-    <p className="eyebrow">Cuenta segura</p><h1 className="page-title">{mode === 'login' ? 'Inicia sesión' : 'Crea tu cuenta'}</h1>
-    <p className="muted">La sesión se protege con cookies HttpOnly y CSRF. No guardamos credenciales en el almacenamiento del navegador.</p>
+    <h1 className="page-title">{mode === 'login' ? 'Inicia sesión' : 'Crea tu cuenta'}</h1>
+    <p className="muted">{mode === 'login' ? 'Accede para comprar y ver tus entradas en un solo lugar.' : 'Guarda tus entradas y compra más rápido la próxima vez.'}</p>
     {pendingReservation && <div className="pending-summary"><strong>Tu reserva está en espera</strong><span>{pendingReservation.event.name}</span><small>{pendingReservation.quantity} entrada(s) · {pendingReservation.total === 0 ? 'Gratis' : `S/ ${pendingReservation.total.toFixed(2)}`}</small></div>}
     <div className="auth-tabs" role="tablist" aria-label="Acceso a la cuenta"><button type="button" role="tab" aria-selected={mode === 'login'} onClick={() => { setMode('login'); setError(null); setFieldErrors({}) }}>Ingresar</button><button type="button" role="tab" aria-selected={mode === 'register'} onClick={() => { setMode('register'); setError(null); setFieldErrors({}) }}>Registrarme</button></div>
     <form className="panel-form auth-form" noValidate onSubmit={(event) => void submit(event)}>
