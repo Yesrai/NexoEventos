@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NexoEventos · Propuesta de identidad de color</title>
+<style>
+:root{--ink:#12161f;--mut:#566073;--bd:#d5dae3;--surf:#f5f6f9;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:#fff;color:var(--ink);line-height:1.5;font-size:16px}
+.page{max-width:1280px;margin:0 auto;padding:32px 20px 80px}
+h1{font-size:28px;margin:0 0 6px}h2{font-size:22px;margin:48px 0 6px}h3{font-size:17px;margin:0 0 8px}
+.lead{color:#566073;max-width:760px;margin:0 0 16px}
+.note{background:#f5f6f9;border:1px solid #d5dae3;border-radius:8px;padding:12px 16px;font-size:15px;max-width:900px}
+table{border-collapse:collapse;width:100%;font-size:15px}th,td{border-bottom:1px solid #e3e6ec;padding:9px 10px;text-align:left;vertical-align:top}th{font-weight:600;background:#f5f6f9}
+.scroll{overflow-x:auto}
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:16px}
+@media(max-width:1000px){.cols{grid-template-columns:1fr}}
+/* ---------- palettas ---------- */
+[data-p="A"]{--action:#2446c6;--hover:#1a3499;--tint:#e9eefc;--pink:#12161f;--ink:#12161f;--mut:#566073;--bd:#d5dae3;--ctl:#8a93a3;--surf:#f5f6f9;--ok:#1b7f4b;--err:#b42318;--warn:#9a5b00}
+[data-p="B"]{--action:#0c6b4e;--hover:#095340;--tint:#e3f1eb;--ink:#12181a;--mut:#55625d;--bd:#d3dbd7;--ctl:#85918b;--surf:#f4f7f5;--ok:#0c6b4e;--err:#b42318;--warn:#9a5b00}
+[data-p="C"]{--action:#b2431a;--hover:#8c3313;--tint:#fbebe4;--ink:#1c1613;--mut:#6a5e57;--bd:#e0d6cf;--ctl:#968a82;--surf:#f8f5f2;--ok:#1b7f4b;--err:#b42318;--warn:#8a5a00}
+.pal{border:1px solid var(--bd);border-radius:12px;overflow:hidden;background:#fff;color:var(--ink)}
+.pal-title{padding:12px 16px;border-bottom:1px solid var(--bd);background:var(--surf);font-weight:600}
+.pal-title small{display:block;font-weight:400;color:var(--mut)}
+.stack{padding:16px;display:grid;gap:18px}
+.lbl{font-size:13px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;margin:0 0 6px}
+/* componentes */
+.hdr{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--bd);border-radius:10px;background:#fff}
+.logo{font-weight:700;font-size:17px;white-space:nowrap}.logo b{color:var(--action)}
+.search{flex:1;min-width:0;white-space:nowrap;overflow:hidden;display:flex;align-items:center;gap:8px;border:1px solid var(--ctl);border-radius:999px;padding:7px 14px;color:var(--mut);font-size:15px}
+.hdr a{font-size:15px;font-weight:600;color:var(--ink);text-decoration:none;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 20px;border-radius:8px;border:1px solid transparent;font:inherit;font-weight:600;font-size:16px;cursor:pointer}
+.btn.pri{background:var(--action);color:#fff}.btn.pri:hover{background:var(--hover)}
+.btn.sec{background:#fff;color:var(--action);border-color:var(--action)}
+.btn.block{width:100%}
+.card{border:1px solid var(--bd);border-radius:12px;overflow:hidden;background:#fff}
+.card img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover}
+.card .body{padding:12px 14px}.date{font-size:13px;font-weight:700;color:var(--action);text-transform:uppercase;letter-spacing:.03em}
+.card h4{margin:2px 0 4px;font-size:17px}.meta{color:var(--mut);font-size:15px;display:flex;align-items:center;gap:6px}
+.price{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:15px;color:var(--mut)}.price b{color:var(--ink);font-size:16px}
+.chip{display:inline-block;border-radius:999px;border:1px solid var(--bd);padding:3px 10px;font-size:14px;color:var(--mut)}
+.chip.on{background:var(--tint);border-color:var(--action);color:var(--action);font-weight:600}
+.panel{border:1px solid var(--bd);border-radius:12px;padding:14px;background:#fff;display:grid;gap:12px}
+.fn{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fn div{border:1px solid var(--ctl);border-radius:8px;padding:8px 10px;font-size:15px}
+.fn div.on{background:var(--tint);border:2px solid var(--action);padding:7px 9px;font-weight:600}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--bd);font-size:15px}
+.row small{color:var(--mut);display:block}
+.step{display:flex;align-items:center;gap:10px}.step button{width:32px;height:32px;border-radius:50%;border:1px solid var(--ctl);background:#fff;color:var(--ink);font-size:18px;line-height:1}.step button.p{background:var(--action);border-color:var(--action);color:#fff}
+.total{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--bd);padding-top:10px;font-size:15px}.total b{font-size:20px}
+.seatmap{border:1px solid var(--bd);border-radius:12px;padding:12px;background:var(--surf)}
+.stage{background:#fff;border:1px solid var(--bd);border-radius:6px;text-align:center;font-size:13px;color:var(--mut);padding:4px;margin:0 auto 10px;width:70%}
+.seats{display:grid;grid-template-columns:repeat(10,1fr);gap:5px}
+.s{aspect-ratio:1;border-radius:5px 5px 3px 3px;border:1.5px solid var(--ctl);background:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;color:var(--mut)}
+.s.t{background:#dfe3e8;border-color:#dfe3e8;color:#8a93a3}.s.sel{background:var(--action);border-color:var(--action);color:#fff;font-weight:700}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:14px;color:var(--mut)}.legend i{display:inline-block;width:14px;height:14px;border-radius:4px;border:1.5px solid var(--ctl);vertical-align:-2px;margin-right:5px;background:#fff}
+.legend i.t{background:#dfe3e8;border-color:#dfe3e8}.legend i.sel{background:var(--action);border-color:var(--action)}
+.zone{display:flex;align-items:center;gap:6px;font-size:14px}.zone i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.status{display:grid;gap:6px}.st{display:flex;gap:8px;align-items:flex-start;border-radius:8px;padding:8px 10px;font-size:15px;border:1px solid}
+.st.ok{color:var(--ok);background:#eef8f2;border-color:#b9dec9}.st.err{color:var(--err);background:#fdf0ee;border-color:#f1c2bc}.st.warn{color:var(--warn);background:#fff7e8;border-color:#f0d9a8}
+.sw{display:flex;gap:0;border-radius:8px;overflow:hidden;border:1px solid var(--bd)}.sw span{flex:1;height:34px}
+.mono{font-family:ui-monospace,Menlo,monospace;font-size:13px}
+.win{border:2px solid #12161f}
+/* mockups */
+.frame{border:1px solid #c7ccd6;border-radius:12px;overflow:hidden;background:#fff;margin-top:16px;color:var(--ink)}
+.frame-bar{background:#eef0f4;padding:8px 14px;font-size:13px;color:#566073;border-bottom:1px solid #d5dae3}
+.m-hdr{display:flex;align-items:center;gap:18px;padding:12px 28px;border-bottom:1px solid var(--bd);background:#fff}
+.m-hdr nav{display:flex;gap:18px;font-size:15px;color:var(--ink)}
+.m-cats{display:flex;gap:8px;padding:12px 28px;border-bottom:1px solid var(--bd);overflow-x:auto}
+.m-hero{display:grid;grid-template-columns:2fr 1fr;gap:16px;padding:20px 28px;background:var(--surf)}
+.m-hero .big{position:relative;border-radius:12px;overflow:hidden;min-height:300px;background:#222}
+.m-hero .big img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.m-hero .cap{position:absolute;left:0;right:0;bottom:0;padding:60px 20px 18px;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.72))}
+.m-hero .cap h3{font-size:26px;margin:0}.m-hero .cap p{margin:4px 0 12px}
+.m-side{display:grid;gap:10px;align-content:start}.m-side .card{display:grid;grid-template-columns:96px 1fr}.m-side .card img{height:100%;aspect-ratio:auto}
+.m-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:20px 28px 28px}
+.m-filters{display:flex;gap:10px;align-items:center;padding:0 28px;flex-wrap:wrap}.sel-f{border:1px solid var(--ctl);border-radius:8px;padding:8px 12px;font-size:15px;background:#fff}
+.m-detail{display:grid;grid-template-columns:1fr 380px;gap:24px;padding:20px 28px 28px}
+.m-cover{border-radius:12px;overflow:hidden;position:relative}.m-cover img{display:block;width:100%;height:300px;object-fit:cover}
+.tabs{display:flex;gap:24px;border-bottom:1px solid var(--bd);margin:18px 0 14px}.tabs span{padding:8px 0;font-weight:600;font-size:16px;color:var(--mut)}.tabs span.on{color:var(--action);border-bottom:3px solid var(--action)}
+.steps{display:flex;gap:8px;align-items:center;padding:12px 28px;border-bottom:1px solid var(--bd);font-size:15px;color:var(--mut);flex-wrap:wrap}.steps b{color:var(--ink)}.steps .n{display:inline-flex;width:24px;height:24px;border-radius:50%;background:var(--bd);color:var(--ink);align-items:center;justify-content:center;font-size:13px;margin-right:6px}.steps .on .n{background:var(--action);color:#fff}.steps .on{color:var(--ink);font-weight:600}.steps .done .n{background:var(--tint);color:var(--action)}
+.m-buy{display:grid;grid-template-columns:1fr 360px;gap:24px;padding:20px 28px 28px}
+.view3d{position:relative;border-radius:12px;overflow:hidden;background:#1a2230;min-height:340px;display:flex;align-items:center;justify-content:center;color:#cfd6e4;border:1px solid #2b3446}
+.view3d img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55}
+.view3d .tag{position:absolute;left:12px;top:12px;background:#fff;color:var(--ink);border-radius:8px;padding:5px 10px;font-size:14px;font-weight:600}
+.seg{display:inline-flex;border:1px solid var(--ctl);border-radius:8px;overflow:hidden;background:#fff}.seg span{padding:8px 14px;font-size:15px}.seg .on{background:var(--action);color:#fff;font-weight:600}
+.sw-btn{margin:0 0 0 8px;border:1px solid #12161f;background:#fff;border-radius:8px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer}.sw-btn.on{background:#12161f;color:#fff}
+.sticky{position:sticky;top:0;z-index:5;background:#fff;padding:10px 0;border-bottom:1px solid var(--bd)}
+@media(max-width:900px){.m-hero,.m-detail,.m-buy{grid-template-columns:1fr}.m-grid{grid-template-columns:repeat(2,1fr)}}
+</style></head>
+<body><div class="page">
+<h1>NexoEventos · identidad de color</h1>
+<p class="lead">Investigación, tres paletas aplicadas a los mismos componentes y recomendación. Esto es una propuesta: no se modificó la aplicación. Espero tu aprobación antes de tocar código.</p>
+<div class="note"><b>Recomendación:</b> paleta <b>B · Verde pino</b> (<span class="mono">#0C6B4E</span>). Es la que mejor separa «seleccionado» de los colores de zona del 3D, mantiene AA con margen y es sobria. Su riesgo, dicho con claridad: pertenece a la misma familia (verde) que Joinnus, aunque más oscura y apagada. Si prefieres máxima distancia de Joinnus, la alternativa es <b>C · Terracota</b>. Detalle y puntuación más abajo.</div>
+
+<h2>1 · Cómo usan el color las plataformas observadas</h2>
+<p class="lead">Medido en navegador real (estilos calculados de la portada) el 15 oct 2026. Los valores son de lo que cada sitio muestra hoy y pueden cambiar.</p>
+<div class="scroll"><table><tr><th>Plataforma</th><th>Fondos y texto</th><th>Color de acción</th><th>Tipografía</th><th>Observación</th></tr>
+<tr><td>Joinnus</td><td>Cabecera navy <span class="mono">#031425</span> en portada; fondos claros <span class="mono">#F2F6FA</span>; texto <span class="mono">#031425</span></td><td>Verde menta <span class="mono">#00B38E</span> (botones) y verde <span class="mono">#00866A</span> (texto/enlaces); botón «Seleccionar entradas» fijo abajo</td><td>Poppins</td><td>Cuerpo claro, tarjetas blancas con borde fino, fecha en etiqueta verde claro, seleccionado = relleno verde claro + borde verde. Mucha publicidad y banners.</td></tr>
+<tr><td>Eventbrite</td><td>Blanco; texto <span class="mono">#39364F</span>; morado profundo <span class="mono">#1E0A3C</span> en bloques</td><td>Azul <span class="mono">#3659E3</span> en enlaces/CTA; naranja <span class="mono">#F05537</span> como acento</td><td>Founders Grotesk (propia)</td><td>Interfaz muy clara, color solo en acciones.</td></tr>
+<tr><td>Ticketmaster</td><td>Blanco; texto <span class="mono">#121212</span>; gris <span class="mono">#646464</span></td><td>Azul <span class="mono">#024DDF</span> en buscar/CTA</td><td>Averta</td><td>Un solo azul para toda acción; el resto neutro.</td></tr>
+<tr><td>DICE</td><td>Blanco y negro puros, grises</td><td>Casi sin color de marca en la portada; el contenido (fotos) aporta el color</td><td>Favorit</td><td>Identidad por contraste, no por matiz.</td></tr></table></div>
+<p class="note" style="margin-top:12px"><b>Limitaciones:</b> Ticketmaster y DICE cargan contenido dinámico y avisos de cookies (rechacé los no esenciales en cada uno); solo medí la portada. De Joinnus vi inicio, categoría Teatro y un evento hasta «Seleccionar entradas»; el paso siguiente exige iniciar sesión, por lo que <b>no vi</b> su resumen, pago ni confirmación, y no vi un plano de asientos público. No lo describo.</p>
+<p class="lead" style="margin-top:14px"><b>Patrón común:</b> interfaz clara; <u>un</u> solo color de acción; neutros para todo lo demás; las fotos aportan color; estado seleccionado con relleno suave + borde; CTA fijo abajo en móvil; texto casi negro, nunca gris claro. Eso es lo que adoptamos; lo que no copiamos es su tono ni su marca.</p>
+
+<h2>2 · Las tres paletas aplicadas a los mismos componentes</h2>
+<p class="lead">Mismo contenido en las tres columnas: cabecera, tarjeta, botón, panel de compra, selección de asientos y estados.</p>
+<div class="cols" id="cols"></div>
+
+<h2>3 · Códigos y contraste (WCAG 2.2 AA)</h2>
+<div class="scroll"><table id="tbl"></table></div>
+<p class="lead" style="margin-top:10px">Los bordes de controles usan un gris con ≥ 3:1 sobre blanco (criterio 1.4.11); los bordes decorativos de tarjetas son más claros porque no son el único indicador. El estado «seleccionado» nunca depende solo del color: lleva relleno, número y marca ✓ en la lista.</p>
+
+<h2>4 · Evaluación (1 = débil, 5 = fuerte; mi juicio, no una medición)</h2>
+<div class="scroll"><table><tr><th>Criterio</th><th>A · Cobalto</th><th>B · Verde pino</th><th>C · Terracota</th><th>Por qué</th></tr>
+<tr><td>Legibilidad y contraste</td><td>5</td><td>4</td><td>4</td><td>Las tres superan 4.5:1 con texto blanco; A llega a 7.6:1.</td></tr>
+<tr><td>Confianza y facilidad de compra</td><td>5</td><td>4</td><td>3</td><td>El azul es el estándar de confianza (Ticketmaster, Eventbrite); el rojo-naranja puede leerse como alerta.</td></tr>
+<tr><td>Elegancia y coherencia</td><td>3</td><td>4</td><td>4</td><td>El cobalto es el más genérico; verde apagado y terracota se ven más cuidados.</td></tr>
+<tr><td>Versatilidad (conciertos, deporte, teatro, museos, familia)</td><td>5</td><td>3</td><td>4</td><td>El azul es neutro para todo; el verde se asocia a naturaleza/deporte; la terracota, a cultura.</td></tr>
+<tr><td>Integración con el 3D</td><td>2</td><td>5</td><td>3</td><td>Las zonas 3D usan azul y dorado: un «seleccionado» azul se confunde con la zona azul; el verde se distingue de ambas.</td></tr>
+<tr><td>Accesibilidad escritorio/móvil</td><td>5</td><td>4</td><td>4</td><td>Todas válidas; A con más margen.</td></tr>
+<tr><td><b>Identidad propia</b></td><td>1</td><td>3</td><td>4</td><td>Cobalto ≈ Ticketmaster/Eventbrite; verde ≈ familia Joinnus; terracota no la usa ninguna referencia.</td></tr>
+<tr><td><b>Total</b></td><td><b>26</b></td><td><b>27</b></td><td><b>26</b></td><td>Resultado ajustado: la elección depende de cuánto pese la distancia con Joinnus.</td></tr></table></div>
+<div class="note" style="margin-top:12px"><b>Por qué B.</b> El diferenciador del producto es el 3D, y ahí la selección debe verse sin ambigüedad: en el modelo las zonas son azul y dorado, así que el color de acción/selección no debe ser ninguno de los dos. El verde pino también sirve de confirmación natural («compra confirmada») sin introducir un segundo color. Para alejarlo de Joinnus lo uso oscuro y sobrio (<span class="mono">#0C6B4E</span> frente a su menta <span class="mono">#00B38E</span>), sin menta ni neón en ninguna parte. <b>Si te importa más la distancia con Joinnus que la lectura del 3D, elige C.</b> No recomiendo A: es la más cómoda pero la menos propia.<br><br><b>Una consecuencia a decidir:</b> hoy el resalte de la butaca seleccionada dentro del 3D es un turquesa fijo en el código del modelo. Alinearlo al color de acción es cambiar una constante de color (no la geometría ni la lógica); lo haré solo si lo apruebas.</div>
+
+<h2>5 · Propuesta de pantallas (con la paleta recomendada)</h2>
+<p class="lead">Wireframes de alta fidelidad con el contenido real de NexoEventos y fotos del proyecto. Cambia la paleta para verlas con A o C. Tipografía Inter; sin degradados salvo el velo oscuro bajo el título de la portada para que el texto se lea.</p>
+<p><span class="mono">Paleta:</span> <button class="sw-btn" data-sw="A">A Cobalto</button><button class="sw-btn on" data-sw="B">B Verde pino</button><button class="sw-btn" data-sw="C">C Terracota</button></p>
+<div id="mocks" data-p="B"></div>
+
+<h2>6 · Comparación de patrones: Joinnus frente a NexoEventos (hoy)</h2>
+<div class="scroll"><table><tr><th>Área</th><th>Joinnus (observado)</th><th>NexoEventos «Noche Nexo»</th><th>Propuesta</th></tr>
+<tr><td>Cabecera</td><td>Clara, logo, «Descubrir», buscador central redondeado, «Registrarse» / «Iniciar sesión»</td><td>Oscura con píldora de búsqueda, color turquesa</td><td>Cabecera blanca, buscador, Eventos, Mis entradas, Ingresar. Sin fondo oscuro.</td></tr>
+<tr><td>Categorías</td><td>Carrusel de iconos circulares + página por categoría con migas</td><td>Píldoras de texto</td><td>Fila de categorías con icono discreto y texto; una página/estado por categoría.</td></tr>
+<tr><td>Catálogo</td><td>«Destacados» en carrusel, luego «Todos los eventos» con filtro por mes y orden, paginado</td><td>Cuadrícula sin paginar, filtros propios</td><td>Destacados + cuadrícula con filtros (fecha, ciudad, precio, categoría) y orden.</td></tr>
+<tr><td>Tarjeta</td><td>Imagen cuadrada, etiqueta de fecha, ciudad, título, «Desde S/ X», favorito</td><td>Póster 4:5 con sello de fecha</td><td>Imagen 16:10, fecha, título, lugar, «Desde S/ X».</td></tr>
+<tr><td>Detalle</td><td>Portada ancha, categoría y ciudad, título, descripción con «Leer más», clasificación por edad; pestañas Entradas / Más información</td><td>Portada a sangre, panel lateral con muesca</td><td>Portada proporcionada, pestañas, organizador y condiciones, panel de compra fijo a la derecha.</td></tr>
+<tr><td>Función y entradas</td><td>Tarjetas de fecha/hora con seleccionada resaltada; lista de tarifas con «−/+» ; barra inferior fija «Seleccionar entradas» (en móvil/tablet), luego «Ver resumen» y «Reservar por S/ X»</td><td>Selector por zonas y panel</td><td>Mismo orden: Función → Entradas → Resumen → Confirmación.</td></tr>
+<tr><td>Inicio de sesión</td><td>Se pide al pasar de «Seleccionar entradas»</td><td>Se pide al comprar</td><td>Igual: elegir primero, autenticar al reservar, sin perder la selección.</td></tr>
+<tr><td>Resumen / pago / confirmación</td><td><b>No observado</b> (requiere cuenta)</td><td>Compra simulada con QR</td><td>Se diseña por criterio propio, no por copia.</td></tr>
+<tr><td>Plano de asientos</td><td><b>No observado</b> públicamente</td><td>3D + plano + lista</td><td>3D como vista principal (diferenciador).</td></tr></table></div>
+</div>
+<script>
+const P={A:{n:'A · Cobalto',s:'Azul de confianza, estándar del sector',c:{action:'#2446C6',hover:'#1A3499',tint:'#E9EEFC',ink:'#12161F',mut:'#566073',bd:'#D5DAE3',ctl:'#8A93A3',surf:'#F5F6F9',ok:'#1B7F4B',err:'#B42318',warn:'#9A5B00'}},
+B:{n:'B · Verde pino',s:'Sobrio, separa la selección de las zonas 3D (recomendada)',c:{action:'#0C6B4E',hover:'#095340',tint:'#E3F1EB',ink:'#12181A',mut:'#55625D',bd:'#D3DBD7',ctl:'#85918B',surf:'#F4F7F5',ok:'#0C6B4E',err:'#B42318',warn:'#9A5B00'}},
+C:{n:'C · Terracota',s:'Cálida, la más propia; asociada a cultura',c:{action:'#B2431A',hover:'#8C3313',tint:'#FBEBE4',ink:'#1C1613',mut:'#6A5E57',bd:'#E0D6CF',ctl:'#968A82',surf:'#F8F5F2',ok:'#1B7F4B',err:'#B42318',warn:'#8A5A00'}}};
+const IMG='../../frontend/public/events/';
+const ic={pin:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.2 7-11a7 7 0 0 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',search:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',ok:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>',err:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16v.5"/></svg>',warn:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4 2.5 20h19z"/><path d="M12 10v4M12 17v.5"/></svg>'};
+const seats=(()=>{const taken=[3,4,15,16,27,28,29,41,42,55];const sel=[34,35];let h='';for(let i=0;i<50;i++){const n=(i%10)+1;h+=`<div class="s ${taken.includes(i)?'t':sel.includes(i)?'sel':''}">${taken.includes(i)?'×':sel.includes(i)?'✓':n}</div>`}return h})();
+const card=(img='concert-live.jpg')=>`<div class="card"><img src="${IMG}${img}" alt=""><div class="body"><div class="date">Sáb 17 oct · 8:00 p. m.</div><h4>Noche del Parque</h4><div class="meta">${ic.pin}Parque de la Exposición, Lima</div><div class="price"><span>Desde</span><b>S/ 70.00</b></div></div></div>`;
+const comp=(k)=>`<div class="pal" data-p="${k}"><div class="pal-title">${P[k].n}<small>${P[k].s}</small></div><div class="stack">
+<div><p class="lbl">Cabecera</p><div class="hdr"><span class="logo">Nexo<b>Eventos</b></span><span class="search">${ic.search} Buscar eventos</span><a href="#">Ingresar</a></div></div>
+<div><p class="lbl">Tarjeta de evento</p>${card()}</div>
+<div><p class="lbl">Botones y filtros</p><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn pri">Comprar entradas</button><button class="btn sec">Ver detalle</button><span class="chip on">Conciertos</span><span class="chip">Teatro</span></div></div>
+<div><p class="lbl">Panel de compra</p><div class="panel"><div class="fn"><div class="on">Sáb 17 oct · 8:00 p. m.</div><div>Dom 18 oct · 7:00 p. m.</div></div>
+<div><div class="row"><span>General<small>S/ 70.00</small></span><span class="step"><button>−</button>1<button class="p">+</button></span></div><div class="row"><span>Preferencial<small>S/ 90.00</small></span><span class="step"><button>−</button>0<button class="p">+</button></span></div></div>
+<div class="total"><span>Total simulado</span><b>S/ 70.00</b></div><button class="btn pri block">Continuar</button></div></div>
+<div><p class="lbl">Selección de asientos</p><div class="seatmap"><div class="stage">ESCENARIO</div><div class="seats">${seats}</div><div class="legend"><span><i></i>Disponible</span><span><i class="sel"></i>Seleccionado</span><span><i class="t"></i>Ocupado</span></div><div style="display:flex;gap:14px;margin-top:8px"><span class="zone"><i style="background:#3e6db5"></i>General</span><span class="zone"><i style="background:#d9a441"></i>Preferencial</span></div></div></div>
+<div><p class="lbl">Estados</p><div class="status"><div class="st ok">${ic.ok}<span>Compra confirmada. Tus entradas están listas.</span></div><div class="st warn">${ic.warn}<span>Quedan pocas entradas en esta zona.</span></div><div class="st err">${ic.err}<span>No se pudo reservar. Intenta de nuevo.</span></div></div></div>
+</div></div>`;
+document.getElementById('cols').innerHTML=['A','B','C'].map(comp).join('');
+// tabla
+const lum=h=>{h=h.replace('#','');const [r,g,b]=[0,2,4].map(i=>parseInt(h.slice(i,i+2),16)/255).map(c=>c<=.03928?c/12.92:((c+.055)/1.055)**2.4);return .2126*r+.7152*g+.0722*b};
+const cr=(a,b)=>{const [x,y]=[lum(a),lum(b)].sort((m,n)=>n-m);return ((x+.05)/(y+.05)).toFixed(2)};
+const roles=[['Acción (botón, enlace, seleccionado)','action'],['Acción en hover','hover'],['Fondo suave de seleccionado','tint'],['Texto principal','ink'],['Texto secundario','mut'],['Borde decorativo','bd'],['Borde de controles','ctl'],['Superficie','surf'],['Éxito','ok'],['Error','err'],['Aviso','warn']];
+let t='<tr><th>Rol</th>'+['A','B','C'].map(k=>`<th>${P[k].n}</th>`).join('')+'</tr>';
+roles.forEach(([n,r])=>{t+=`<tr><td>${n}</td>`+['A','B','C'].map(k=>`<td><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:${P[k].c[r]};border:1px solid #d5dae3;vertical-align:-2px"></span> <span class="mono">${P[k].c[r]}</span></td>`).join('')+'</tr>'});
+t+='<tr><td>Fondo de página / tarjeta</td><td colspan="3"><span class="mono">#FFFFFF</span> (tarjetas y páginas); superficies como arriba. «Ocupado»: <span class="mono">#DFE3E8</span> con ×. Zonas 3D (sin cambios): azul <span class="mono">#3E6DB5</span>, dorado <span class="mono">#D9A441</span>.</td></tr>';
+t+='<tr><th>Contraste</th><th colspan="3">Calculado con la fórmula WCAG</th></tr>';
+[['Texto blanco sobre botón de acción (≥ 4.5)',k=>cr('#FFFFFF',P[k].c.action)],['Texto blanco sobre hover',k=>cr('#FFFFFF',P[k].c.hover)],['Acción sobre fondo suave (≥ 4.5)',k=>cr(P[k].c.action,P[k].c.tint)],['Texto principal sobre blanco',k=>cr(P[k].c.ink,'#FFFFFF')],['Texto secundario sobre blanco',k=>cr(P[k].c.mut,'#FFFFFF')],['Texto secundario sobre superficie',k=>cr(P[k].c.mut,P[k].c.surf)],['Borde de control sobre blanco (≥ 3)',k=>cr(P[k].c.ctl,'#FFFFFF')],['Éxito / Error / Aviso sobre blanco',k=>cr(P[k].c.ok,'#FFFFFF')+' / '+cr(P[k].c.err,'#FFFFFF')+' / '+cr(P[k].c.warn,'#FFFFFF')]].forEach(([n,f])=>{t+=`<tr><td>${n}</td>`+['A','B','C'].map(k=>`<td>${f(k)}:1</td>`).join('')+'</tr>'});
+document.getElementById('tbl').innerHTML=t;
+// mockups
+const home=`<div class="frame"><div class="frame-bar">Inicio · escritorio</div>
+<div class="m-hdr"><span class="logo">Nexo<b>Eventos</b></span><nav><span>Eventos</span><span>Mis entradas</span></nav><span class="search" style="max-width:420px;flex:1">${ic.search} Buscar por evento, artista o lugar</span><span style="margin-left:auto;display:flex;gap:10px"><button class="btn sec" style="min-height:40px">Ingresar</button></span></div>
+<div class="m-cats"><span class="chip on">Todos</span><span class="chip">Conciertos</span><span class="chip">Deportes</span><span class="chip">Teatro</span><span class="chip">Museos</span><span class="chip">Familia</span><span class="chip">Talleres</span></div>
+<div class="m-hero"><div class="big"><img src="${IMG}concert-stage.jpg" alt=""><div class="cap"><div style="font-size:14px;font-weight:600">Destacado · Sáb 17 oct</div><h3>Noche del Parque</h3><p>Parque de la Exposición, Lima · Desde S/ 70.00</p><button class="btn pri">Comprar entradas</button></div></div>
+<div class="m-side"><div class="card"><img src="${IMG}football-stadium.jpg" alt=""><div class="body"><div class="date">Dom 18 oct</div><h4 style="font-size:16px">Clásico Metropolitano</h4><div class="meta">Estadio Nacional</div></div></div><div class="card"><img src="${IMG}open-theater.jpg" alt=""><div class="body"><div class="date">Mar 10 nov</div><h4 style="font-size:16px">Voces en el Auditorio</h4><div class="meta">Auditorio Nexo</div></div></div><div class="card"><img src="${IMG}culture-museum.jpg" alt=""><div class="body"><div class="date">Todos los días</div><h4 style="font-size:16px">Miradas Contemporáneas</h4><div class="meta">Museo de Arte</div></div></div></div></div>
+<div style="padding:22px 28px 6px"><h3 style="font-size:20px;margin:0 0 12px">Próximos eventos</h3></div>
+<div class="m-filters"><span class="sel-f">Fecha: Todas ▾</span><span class="sel-f">Ciudad: Lima ▾</span><span class="sel-f">Precio: Todos ▾</span><span class="sel-f">Ordenar: Próximos ▾</span></div>
+<div class="m-grid">${card('concert-live.jpg')}${card('football-stadium.jpg').replace('Noche del Parque','Clásico Metropolitano').replace('Parque de la Exposición, Lima','Estadio Nacional, Lima')}${card('open-theater.jpg').replace('Noche del Parque','Voces en el Auditorio').replace('Parque de la Exposición, Lima','Auditorio Nexo, Lima')}${card('culture-museum.jpg').replace('Noche del Parque','Miradas Contemporáneas').replace('Parque de la Exposición, Lima','Museo de Arte, Lima')}</div></div>`;
+const detail=`<div class="frame"><div class="frame-bar">Detalle del evento · escritorio</div>
+<div class="m-hdr"><span class="logo">Nexo<b>Eventos</b></span><nav><span>Eventos</span><span>Mis entradas</span></nav><span class="search" style="max-width:420px;flex:1">${ic.search} Buscar eventos</span></div>
+<div class="m-detail"><div><div class="m-cover"><img src="${IMG}concert-stage.jpg" alt=""></div>
+<div style="display:flex;gap:8px;margin-top:14px"><span class="chip">Conciertos</span><span class="chip">Lima</span></div><h2 style="margin:8px 0 4px;font-size:28px">Noche del Parque</h2>
+<div class="meta" style="font-size:16px">Sáb 17 oct 2026 · 8:00 p. m. · Parque de la Exposición, Lima</div>
+<div class="tabs"><span class="on">Entradas</span><span>Más información</span></div>
+<p style="margin:0 0 12px;color:var(--mut)">Concierto al aire libre con escenario central y zonas numeradas. Producción ficticia para la demostración académica.</p>
+<h3 style="margin-top:18px">Organizador y condiciones</h3><p style="margin:0;color:var(--mut)">Organiza: Producciones Nexo. Apto para todo público. Compra simulada: no se cobra dinero real. Las entradas se entregan con código QR.</p></div>
+<div><div class="panel" style="position:sticky;top:12px"><h3 style="margin:0">Elige tu función</h3><div class="fn"><div class="on">Sáb 17 oct<br>8:00 p. m.</div><div>Dom 18 oct<br>7:00 p. m.</div></div><div class="total"><span>Desde</span><b>S/ 70.00</b></div><button class="btn pri block">Comprar entradas</button><p style="margin:0;font-size:14px;color:var(--mut)">Elegirás tus entradas en el siguiente paso.</p></div></div></div></div>`;
+const buy=`<div class="frame"><div class="frame-bar">Selección de entradas con recinto 3D · escritorio</div>
+<div class="steps"><span class="done"><span class="n">✓</span>Evento</span>›<span class="done"><span class="n">✓</span>Función</span>›<span class="on"><span class="n">3</span>Entradas</span>›<span><span class="n">4</span>Resumen</span>›<span><span class="n">5</span>Confirmación</span></div>
+<div class="m-buy"><div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px"><h3 style="margin:0;font-size:20px">Elige tu ubicación</h3><span class="seg"><span class="on">Mapa 3D</span><span>Plano</span><span>Lista</span></span></div>
+<div class="view3d"><img src="${IMG}open-theater.jpg" alt=""><span class="tag">Vista del recinto 3D (aquí va el modelo existente, sin cambios)</span></div>
+<div class="legend" style="margin-top:10px"><span><i></i>Disponible</span><span><i class="sel"></i>Seleccionado</span><span><i class="t"></i>Ocupado</span><span class="zone"><i style="background:#3e6db5"></i>General S/ 52</span><span class="zone"><i style="background:#d9a441"></i>Preferencial S/ 72</span></div></div>
+<div><div class="panel" style="position:sticky;top:12px"><h3 style="margin:0">Tu selección</h3><div style="font-size:15px;color:var(--mut)">Movimiento en Escena · Sáb 17 oct, 8:00 p. m.</div>
+<div class="row"><span>Preferencial · Fila A · Asiento 3</span><b>S/ 72.00</b></div><div class="row"><span>Preferencial · Fila A · Asiento 4</span><b>S/ 72.00</b></div>
+<div class="total"><span>Total simulado</span><b>S/ 144.00</b></div><button class="btn pri block">Continuar al resumen</button><p style="margin:0;font-size:14px;color:var(--mut)">Los precios y la disponibilidad los confirma el servidor.</p></div></div></div></div>`;
+const mocks=document.getElementById('mocks');mocks.innerHTML=home+detail+buy;
+document.querySelectorAll('.sw-btn').forEach(b=>b.onclick=()=>{mocks.dataset.p=b.dataset.sw;document.querySelectorAll('.sw-btn').forEach(x=>x.classList.toggle('on',x===b))});
+</script></body></html>
