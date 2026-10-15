@@ -1,5 +1,6 @@
 import { FormEvent, KeyboardEvent, useCallback, useEffect, useMemo, useState } from 'react'
-import { api, AuditoriumSeatPicker, categoryOrder, EventDetail, EventItem, formatDate, formatTime, MuseumVisitGuide, StadiumSeatPicker, ZoneLayoutPicker } from './shared'
+import { EventPage, useSelection } from './EventPage'
+import { api, categoryOrder, EventDetail, EventItem, formatDate, formatTime } from './shared'
 
 type LayoutKind = NonNullable<EventItem['layout_kind']>
 type LayoutOption = { layout_id: number; name: string; layout_kind: LayoutKind; ticket_mode: 'general' | 'zones' | 'seats' }
@@ -15,11 +16,14 @@ type ZoneDraft = { name: string; price: string; capacity: string }
 type SectionDraft = { name: string; price: string; rows: string; seats_per_row: string }
 type Inventory = { layoutId: number | null; price: string; capacity: string; zones: ZoneDraft[]; sections: SectionDraft[] }
 type Feedback = { kind: 'success' | 'error'; text: string } | null
-type TabId = 'summary' | 'data' | 'inventory' | 'preview' | 'operators'
+type TabId = 'summary' | 'data' | 'inventory' | 'sales' | 'preview' | 'operators'
 
 const IMAGES = ['concert-live', 'concert-stage', 'concert-energy', 'festival-stage', 'theater-performance', 'open-theater', 'standup-stage', 'dance-stage', 'football-stadium', 'running-race', 'art-exhibition', 'culture-museum', 'conference-speaker', 'technology-exhibition', 'cinema-room', 'pottery-hands', 'cooking-workshop', 'food-fair', 'children-workshop', 'networking-professionals']
 const STADIUM_SIDES = ['Tribuna Norte', 'Tribuna Sur', 'Tribuna Oriente', 'Tribuna Occidente']
-const TABS: Array<{ id: TabId; label: string }> = [{ id: 'summary', label: 'Resumen' }, { id: 'data', label: 'Datos' }, { id: 'inventory', label: 'Recinto y entradas' }, { id: 'preview', label: 'Vista previa' }, { id: 'operators', label: 'Operadores' }]
+const TABS: Array<{ id: TabId; label: string }> = [{ id: 'summary', label: 'Resumen' }, { id: 'data', label: 'Datos' }, { id: 'inventory', label: 'Recinto y entradas' }, { id: 'sales', label: 'Ventas y fila' }, { id: 'preview', label: 'Vista previa' }, { id: 'operators', label: 'Operadores' }]
+
+const toLocalLima = (iso: string | null) => iso ? new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Lima', dateStyle: 'short', timeStyle: 'short' }).format(new Date(iso)).replace(' ', 'T') : ''
+type SalesForm = { start: string; queue: boolean; active: string; minutes: string }
 
 const emptyInventory: Inventory = { layoutId: null, price: '', capacity: '', zones: [], sections: [] }
 const today = () => new Date().toISOString().slice(0, 10)
@@ -104,18 +108,10 @@ function InventoryEditor({ venues, value, onChange, disabled }: { venues: VenueO
 }
 
 function Preview({ detail }: { detail: EventDetail }) {
-  const [seatIds, setSeatIds] = useState<number[]>([])
-  const [zoneId, setZoneId] = useState<number | null>(null)
-  const toggle = (seat: { id: number }) => setSeatIds((current) => current.includes(seat.id) ? current.filter((id) => id !== seat.id) : [...current, seat.id].slice(0, 10))
-  useEffect(() => { setSeatIds([]); setZoneId(null) }, [detail.id, detail.zones.length, detail.seats.length, detail.layout_id])
-  const kind = detail.layout_kind
-  return <div className="organizer-preview">
-    <p className="organizer-banner" role="note">Vista previa: así verán este evento los clientes. Puedes probar la selección, pero aquí no se reserva nada.{detail.status === 'draft' ? ' Está en borrador y no aparece en el catálogo.' : ''}</p>
-    <article className="event-story"><div className="detail-photo">{detail.image_path ? <img src={detail.image_path} alt={`Fotografía ilustrativa para ${detail.name}`} /> : <span>{detail.category}</span>}</div><div className="event-copy"><p className="eyebrow">Evento ficticio de demostración</p><h3>{detail.name}</h3><div className="event-meta"><span>{formatDate(detail.date)}</span><span>{formatTime(detail.time)}</span><span>{detail.venue}, {detail.city}</span></div><p>{detail.description}</p><span className="availability">{detail.available_capacity} cupos disponibles de {detail.capacity}</span></div></article>
-    {detail.ticket_mode === 'general' && <><div className="ticket-option selected-option"><div><strong>{kind === 'museum' ? 'Ingreso por horario' : 'Entrada general'}</strong><small>{kind === 'museum' ? 'Elige cantidad de visitantes; las salas no se reservan' : 'Acceso sin asiento ni ubicación asignados'}</small></div><b>{detail.price === 0 ? 'Gratis' : `S/ ${detail.price.toFixed(2)}`}</b></div>{kind === 'museum' && <MuseumVisitGuide />}</>}
-    {detail.ticket_mode === 'zones' && <ZoneLayoutPicker zones={detail.zones} selectedZoneId={zoneId} concert={kind === 'concert_zones'} onSelect={setZoneId} />}
-    {detail.ticket_mode === 'seats' && (kind === 'stadium' ? <StadiumSeatPicker seats={detail.seats} selectedSeatIds={seatIds} onToggle={toggle} /> : kind === 'theatre' ? <AuditoriumSeatPicker seats={detail.seats} selectedSeatIds={seatIds} onToggle={toggle} /> : <div className="form-error" role="alert">Este evento usa asientos numerados pero su plano no admite asientos.</div>)}
-  </div>
+  const selection = useSelection(detail)
+  const { reset } = selection
+  useEffect(() => { reset() }, [detail.id, detail.zones.length, detail.seats.length, detail.layout_id]) // eslint-disable-line react-hooks/exhaustive-deps
+  return <EventPage event={detail} selection={selection} user={null} preview />
 }
 
 function StatsView({ stats }: { stats: Stats }) {
@@ -164,6 +160,7 @@ function EventWorkspace({ eventId, venues, notice, onChanged, onGone, onSelect }
   const [operatorEmail, setOperatorEmail] = useState('')
   const [functionForm, setFunctionForm] = useState<{ date: string; time: string } | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [salesForm, setSalesForm] = useState<SalesForm>({ start: '', queue: false, active: '50', minutes: '10' })
 
   const loadAll = useCallback(async () => {
     const [detailResponse, stateResponse, statsResponse, operatorsResponse] = await Promise.all([api(`/api/organizer/events/${eventId}`), api(`/api/organizer/events/${eventId}/state`), api(`/api/organizer/events/${eventId}/stats`), api(`/api/organizer/events/${eventId}/operators`)])
@@ -172,6 +169,7 @@ function EventWorkspace({ eventId, venues, notice, onChanged, onGone, onSelect }
     setDetail(loaded)
     setData({ name: loaded.name, date: loaded.date, time: loaded.time?.slice(0, 5) ?? '', category: loaded.category, description: loaded.description, image: loaded.image_path?.replace('/events/', '').replace('.jpg', '') ?? '' })
     setInventory(inventoryFromDetail(loaded))
+    setSalesForm({ start: toLocalLima(loaded.sales_start_at), queue: loaded.queue_enabled, active: String(loaded.queue_max_active ?? 50), minutes: String(loaded.queue_pass_minutes ?? 10) })
     if (stateResponse.ok) setState(await stateResponse.json() as EventState)
     if (statsResponse.ok) setStats(await statsResponse.json() as Stats)
     if (operatorsResponse.ok) setOperators(await operatorsResponse.json() as Operator[])
@@ -202,6 +200,11 @@ function EventWorkspace({ eventId, venues, notice, onChanged, onGone, onSelect }
   async function saveInventory(event: FormEvent) {
     event.preventDefault()
     if (await mutate(() => api(`/api/organizer/events/${eventId}/inventory`, { method: 'PUT', body: JSON.stringify(inventoryBody(inventory, kind)) }), 'Recinto e inventario guardados. Revisa la vista previa.')) { await loadAll(); setTab('preview') }
+  }
+  async function saveSales(event: FormEvent) {
+    event.preventDefault()
+    const body = { sales_start_at: salesForm.start ? `${salesForm.start}:00-05:00` : null, queue_enabled: salesForm.queue, queue_max_active: Number(salesForm.active), queue_pass_minutes: Number(salesForm.minutes) }
+    if (await mutate(() => api(`/api/organizer/events/${eventId}/sales`, { method: 'PUT', body: JSON.stringify(body) }), 'Ventas y fila virtual guardadas.')) await loadAll()
   }
   const publish = async (path: 'publish' | 'unpublish', success: string) => { if (await mutate(() => api(`/api/organizer/events/${eventId}/${path}`, { method: 'POST' }), success)) await loadAll() }
   async function addOperator(event: FormEvent) {
@@ -250,6 +253,18 @@ function EventWorkspace({ eventId, venues, notice, onChanged, onGone, onSelect }
       </>}
       {tab === 'data' && <form className="panel-form organizer-form" onSubmit={(event) => void saveData(event)}><DataFields value={data} onChange={setData} locked={state.has_sales} /><button className="primary" disabled={busy}>{busy ? 'Guardando…' : 'Guardar datos'}</button></form>}
       {tab === 'inventory' && <form className="panel-form organizer-form" onSubmit={(event) => void saveInventory(event)}><InventoryEditor venues={venues} value={inventory} onChange={setInventory} disabled={!state.can_edit_inventory} />{state.can_edit_inventory && <button className="primary" disabled={busy || !inventory.layoutId}>{busy ? 'Guardando…' : 'Guardar recinto e inventario'}</button>}</form>}
+      {tab === 'sales' && <form className="panel-form organizer-form" onSubmit={(event) => void saveSales(event)}>
+        <fieldset className="organizer-fieldset"><legend>Inicio de ventas</legend>
+          <label>Fecha y hora de inicio (hora de Lima)<input type="datetime-local" value={salesForm.start} onChange={(event) => setSalesForm({ ...salesForm, start: event.target.value })} disabled={state.has_sales} /></label>
+          <p className="organizer-hint">{state.has_sales ? 'Ya hay reservas: el inicio de ventas no puede cambiar.' : 'Déjalo vacío para vender desde que publiques. Antes de la hora, el evento muestra una cuenta regresiva con la hora del servidor y no admite compras.'}</p>
+        </fieldset>
+        <fieldset className="organizer-fieldset"><legend>Fila virtual para alta demanda</legend>
+          <label className="organizer-check"><input type="checkbox" checked={salesForm.queue} onChange={(event) => setSalesForm({ ...salesForm, queue: event.target.checked })} />Activar fila virtual (sala de espera)</label>
+          <div className="organizer-form-row"><label>Personas comprando a la vez<input type="number" min="1" max="1000" step="1" value={salesForm.active} onChange={(event) => setSalesForm({ ...salesForm, active: event.target.value })} disabled={!salesForm.queue} required /></label><label>Minutos por turno<input type="number" min="1" max="60" step="1" value={salesForm.minutes} onChange={(event) => setSalesForm({ ...salesForm, minutes: event.target.value })} disabled={!salesForm.queue} required /></label></div>
+          <p className="organizer-hint">Con la fila activa, cada cliente debe esperar su turno por orden de llegada; el servidor controla quién compra y cuánto dura el turno. No se estiman tiempos de espera. Diseño y costos: docs/sala-de-espera-y-cola.md.</p>
+        </fieldset>
+        <button className="primary" disabled={busy}>{busy ? 'Guardando…' : 'Guardar ventas y fila'}</button>
+      </form>}
       {tab === 'preview' && <Preview detail={detail} />}
       {tab === 'operators' && <section aria-label="Operadores de ingreso"><p className="muted">Solo los operadores asignados pueden validar los QR de este evento.</p>{operators.length === 0 ? <div className="status dark">Aún no hay operadores asignados.</div> : <ul className="organizer-operators">{operators.map((operator) => <li key={operator.user_id}><span><strong>{operator.display_name}</strong><small>{operator.email}</small></span><button type="button" className="outline" disabled={busy} aria-label={`Retirar a ${operator.display_name}`} onClick={() => void removeOperator(operator)}>Retirar</button></li>)}</ul>}<form className="panel-form organizer-inline" onSubmit={(event) => void addOperator(event)}><label>Correo del operador<input type="email" value={operatorEmail} onChange={(event) => setOperatorEmail(event.target.value)} required /></label><button className="primary" disabled={busy}>Asignar operador</button></form></section>}
     </div>

@@ -1,7 +1,8 @@
 import { FormEvent, KeyboardEvent as ReactKeyboardEvent, lazy, ReactNode, Suspense, useEffect, useId, useMemo, useRef, useState } from 'react'
 import QRCode from 'qrcode'
+import { EventPage, useSelection } from './EventPage'
 import { GiClapperboard } from 'react-icons/gi'
-import { categoryOrder, categoryPresentation, type User, type EventItem, type Seat, type EventDetail, type Reservation, type Ticket, type View, type BarcodeDetectorConstructor, api, formatDate, formatTime, formatEventPrice, messageFrom, requestError, Icon, AuditoriumSeatPicker, StadiumSeatPicker, ZoneLayoutPicker, MuseumVisitGuide } from './shared'
+import { categoryOrder, categoryPresentation, type User, type EventItem, type Seat, type EventDetail, type Reservation, type Ticket, type View, type BarcodeDetectorConstructor, api, formatDate, formatTime, formatEventPrice, messageFrom, requestError, Icon } from './shared'
 
 const OrganizerPanel = lazy(() => import('./Organizer'))
 
@@ -357,14 +358,13 @@ export default function App() {
   const [featuredIndex, setFeaturedIndex] = useState(0)
   const [selected, setSelected] = useState<EventDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
-  const [quantity, setQuantity] = useState(1)
-  const [zoneId, setZoneId] = useState<number | null>(null)
-  const [selectedSeatIds, setSelectedSeatIds] = useState<number[]>([])
   const [confirmedTotal, setConfirmedTotal] = useState<number | null>(null)
   const [reservationMessage, setReservationMessage] = useState<string | null>(null)
   const [reservationError, setReservationError] = useState<string | null>(null)
   const [reserving, setReserving] = useState(false)
   const idempotencyKey = useRef<string | null>(null)
+  const selection = useSelection(selected, () => { idempotencyKey.current = null; setReservationError(null); setReservationMessage(null) })
+  const { quantity, zoneId, selectedSeatIds, total: currentTotal } = selection
   const categoryListRef = useRef<HTMLDivElement>(null)
 
   async function loadEvents() {
@@ -399,11 +399,9 @@ export default function App() {
       const response = await api(`/api/events/${eventId}`)
       if (!response.ok) throw new Error()
       setSelected(await response.json() as EventDetail)
-      setQuantity(1)
-      setZoneId(null)
-      setSelectedSeatIds([])
+      selection.reset()
       setConfirmedTotal(null)
-      window.setTimeout(() => document.querySelector('.event-detail')?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }), 0)
+      window.scrollTo?.({ top: 0 })
     } catch {
       setReservationError('No pudimos cargar el detalle del evento.')
     } finally { setDetailLoading(false) }
@@ -416,12 +414,12 @@ export default function App() {
       if (!response.ok) throw new Error()
       const current = await response.json() as EventDetail
       setSelected(current)
-      setSelectedSeatIds((ids) => {
+      selection.setSelectedSeatIds((ids) => {
         const availableIds = ids.filter((id) => current.seats.some((seat) => seat.id === id && seat.available))
-        if (current.ticket_mode === 'seats') setQuantity(Math.max(1, availableIds.length))
+        if (current.ticket_mode === 'seats') selection.setQuantity(Math.max(1, availableIds.length))
         return availableIds
       })
-      setQuantity((value) => Math.max(1, Math.min(value, Math.min(10, current.available_capacity || 1))))
+      selection.setQuantity((value) => Math.max(1, Math.min(value, Math.min(10, current.available_capacity || 1))))
     } catch {
       setReservationError('No pudimos volver a comprobar la disponibilidad. Intenta de nuevo antes de reservar.')
     }
@@ -438,15 +436,13 @@ export default function App() {
       setView('catalog')
       setSessionNotice('Sesión iniciada. Revisa la disponibilidad y confirma tu reserva simulada.')
       await refreshSelected()
-      window.setTimeout(() => document.querySelector('.event-detail')?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }), 0)
       return
     }
     setSessionNotice(null)
     setView(value.role === 'client' ? 'account' : value.role === 'operator' ? 'operator' : 'organizer')
   }
 
-  async function submitReservation(event: FormEvent) {
-    event.preventDefault()
+  async function submitReservation() {
     if (!selected) return
     if (!user || user.role !== 'client') { requireLogin(); return }
     setReserving(true); setReservationError(null); setReservationMessage(null)
@@ -522,35 +518,13 @@ export default function App() {
     categoryListRef.current?.scrollBy({ left: direction * 620, behavior: 'smooth' })
   }
 
-  const activeZone = selected?.zones?.find((zone) => zone.id === zoneId) ?? null
-  const quantityLimit = selected ? Math.min(10, activeZone?.available_capacity ?? selected.available_capacity) : 1
-  const currentPrice = selected ? activeZone?.price ?? selected.price : 0
-  const currentTotal = selected?.ticket_mode === 'seats'
-    ? selected.seats.filter((seat) => selectedSeatIds.includes(seat.id)).reduce((sum, seat) => sum + seat.price, 0)
-    : currentPrice * quantity
-
-  function changeQuantity(next: number) {
-    setQuantity(Math.max(1, Math.min(quantityLimit, next)))
-    idempotencyKey.current = null
-  }
-
-  function toggleSeat(seat: Seat) {
-    if (!seat.available) return
-    setSelectedSeatIds((current) => {
-      const next = current.includes(seat.id) ? current.filter((id) => id !== seat.id) : current.length < 10 ? [...current, seat.id] : current
-      setQuantity(Math.max(1, next.length))
-      return next
-    })
-    setReservationError(null); setReservationMessage(null); idempotencyKey.current = null
-  }
-
   return (
     <main className="app-shell">
       <header className="site-header">
         <nav className="nav" aria-label="Navegación principal">
           <button className="brand link-button" onClick={() => setView('catalog')} aria-label="Ir al inicio de NexoEventos"><span className="brand-mark">N</span><span>Nexo<strong>Eventos</strong></span></button>
           <button className="nav-link link-button events-link" onClick={() => setView('catalog')}>Eventos</button>
-          {view === 'catalog' && <form className="header-search" role="search" onSubmit={(event) => { event.preventDefault(); document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' }) }}><label className="sr-only" htmlFor="main-search">Buscar eventos</label><input id="main-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar eventos" /><button type="submit" aria-label="Buscar"><Icon name="search" /></button></form>}
+          {view === 'catalog' && <form className="header-search" role="search" onSubmit={(event) => { event.preventDefault(); document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' }) }}><label className="sr-only" htmlFor="main-search">Buscar eventos</label><input id="main-search" value={query} onChange={(event) => { setQuery(event.target.value); if (selected) setSelected(null) }} placeholder="Buscar eventos" /><button type="submit" aria-label="Buscar"><Icon name="search" /></button></form>}
           <div className="nav-actions">
             {user?.role === 'client' && <button className="nav-link link-button" aria-label="Mis entradas" onClick={() => setView('account')}><Icon name="ticket" size={17} /><span>Mis entradas</span></button>}
             {user?.role === 'operator' && <button className="nav-link link-button" aria-label="Control de acceso" onClick={() => setView('operator')}><Icon name="qr" size={17} /><span>Control de acceso</span></button>}
@@ -569,7 +543,14 @@ export default function App() {
       {view === 'operator' && user?.role === 'operator' && <OperatorPanel onExpired={() => { setUser(null); setSessionNotice('Tu sesión expiró. Vuelve a iniciar sesión.'); setView('auth') }} />}
       {view === 'organizer' && user?.role === 'organizer' && <Suspense fallback={<div className="status dark" role="status">Cargando panel…</div>}><OrganizerPanel /></Suspense>}
 
-      {view === 'catalog' && <>
+      {view === 'catalog' && (detailLoading || selected || reservationError) && <div className="ep-wrap" aria-live="polite">
+        {detailLoading && <div className="status" role="status"><span className="spinner" />Cargando evento…</div>}
+        {!detailLoading && !selected && reservationError && <div className="status error" role="alert"><p>{reservationError}</p><button type="button" onClick={() => { setReservationError(null) }}>Volver a eventos</button></div>}
+        {selected && !detailLoading && <EventPage event={selected} selection={selection} user={user} reserving={reserving} message={reservationMessage} confirmedTotal={confirmedTotal} error={reservationError}
+          onBack={() => { setSelected(null); setReservationError(null); setReservationMessage(null); window.scrollTo?.({ top: 0 }) }}
+          onSubmit={submitReservation} onRequireLogin={requireLogin} onGoTickets={() => setView('account')} />}
+      </div>}
+      {view === 'catalog' && !(detailLoading || selected || reservationError) && <>
         <section className="home-intro" id="inicio" aria-labelledby="featured-title">
           <div className="home-section-title"><h1 id="featured-title">Destacados</h1></div>
           {loading && <div className="status" role="status">Cargando destacados…</div>}
@@ -623,25 +604,6 @@ export default function App() {
             </article>
           ))}</div>}
         </section>
-        {(detailLoading || selected || reservationError) && <section className="event-detail" aria-live="polite">
-          {detailLoading && <div className="status" role="status"><span className="spinner" />Cargando detalle…</div>}
-          {selected && !detailLoading && <div className={`detail-layout ${selected.ticket_mode === 'seats' ? 'seat-detail-layout' : ''} ${selected.layout_kind === 'stadium' ? 'stadium-detail-layout' : ''} ${['stadium', 'theatre', 'concert_zones', 'museum'].includes(selected.layout_kind ?? '') ? 'immersive-detail-layout' : ''}`}>
-            <article className="event-story"><div className="detail-photo">{selected.image_path ? <img src={selected.image_path} alt={`Fotografía ilustrativa para ${selected.name}`} /> : <span>{selected.category}</span>}</div><div className="event-copy"><p className="eyebrow">Evento ficticio de demostración</p><h2>{selected.name}</h2><div className="event-meta"><span><Icon name="calendar" />{formatDate(selected.date)}</span><span><Icon name="clock" />{formatTime(selected.time)}</span><span><Icon name="location" />{selected.venue}, {selected.city}</span></div><p>{selected.description}</p><span className="availability">{selected.available_capacity} cupos disponibles de {selected.capacity}</span></div></article>
-            <form className="booking-panel" onSubmit={(event) => void submitReservation(event)}>
-              <div className="booking-heading"><div><p className="eyebrow">Tu reserva</p><h3>Selecciona tus entradas</h3></div><Icon name="ticket" size={26} /></div>
-              {selected.ticket_mode === 'general' && <><div className="ticket-option selected-option"><span className="selection-check"><Icon name="check" size={16} /></span><div><strong>{selected.layout_kind === 'museum' ? 'Ingreso por horario' : 'Entrada general'}</strong><small>{selected.layout_kind === 'museum' ? 'Elige cantidad de visitantes; las salas no se reservan' : 'Acceso sin asiento ni ubicación asignados'}</small></div><b>{selected.price === 0 ? 'Gratis' : `S/ ${selected.price.toFixed(2)}`}</b></div>{selected.layout_kind === 'museum' && <MuseumVisitGuide />}</>}
-              {selected.ticket_mode === 'zones' && <ZoneLayoutPicker zones={selected.zones} selectedZoneId={zoneId} concert={selected.layout_kind === 'concert_zones'} onSelect={(id) => { setZoneId(id); setQuantity(1); setReservationMessage(null); setReservationError(null); idempotencyKey.current = null }} />}
-              {selected.ticket_mode === 'seats' && (selected.layout_kind === 'stadium' ? <StadiumSeatPicker seats={selected.seats} selectedSeatIds={selectedSeatIds} onToggle={toggleSeat} /> : selected.layout_kind === 'theatre' ? <AuditoriumSeatPicker seats={selected.seats} selectedSeatIds={selectedSeatIds} onToggle={toggleSeat} /> : <div className="form-error" role="alert">Este evento usa localidades numeradas, pero todavía no tiene un plano configurado. No se habilita una geometría genérica.</div>)}
-              <dl className="booking-facts"><div><dt>Evento</dt><dd>{selected.name}</dd></div><div><dt>Fecha</dt><dd>{formatDate(selected.date)} · {formatTime(selected.time)}</dd></div><div><dt>Lugar</dt><dd>{selected.venue}, {selected.city}</dd></div>{activeZone && <div><dt>Zona</dt><dd>{activeZone.name}</dd></div>}{selected.ticket_mode === 'seats' && selectedSeatIds.length > 0 && <div><dt>Asientos</dt><dd>{selected.seats.filter((seat) => selectedSeatIds.includes(seat.id)).map((seat) => `${seat.zone_name} ${seat.row}-${seat.number}`).join(', ')}</dd></div>}</dl>
-              {selected.ticket_mode !== 'seats' && (selected.ticket_mode === 'general' || activeZone) && <div className="quantity-row"><div><strong>Cantidad</strong><small>Máximo {quantityLimit} por reserva</small></div><div className="stepper" aria-label="Cantidad de entradas"><button type="button" onClick={() => changeQuantity(quantity - 1)} disabled={quantity <= 1} aria-label="Restar una entrada"><Icon name="minus" /></button><output aria-live="polite">{quantity}</output><button type="button" onClick={() => changeQuantity(quantity + 1)} disabled={quantity >= quantityLimit} aria-label="Agregar una entrada"><Icon name="plus" /></button></div></div>}
-              <div className="booking-summary"><span>Total simulado</span><strong>{selected.ticket_mode === 'seats' && selectedSeatIds.length === 0 ? 'Selecciona asientos' : currentTotal === 0 ? 'Gratis' : `S/ ${currentTotal.toFixed(2)}`}</strong></div>
-              <button className="button primary reserve-button" disabled={reserving || selected.available_capacity === 0 || (selected.ticket_mode === 'zones' && !zoneId) || (selected.ticket_mode === 'seats' && selectedSeatIds.length === 0)} aria-busy={reserving}>{reserving && <span className="spinner" />}{reserving ? 'Confirmando reserva…' : user?.role === 'client' ? 'Confirmar reserva simulada' : 'Inicia sesión para reservar'}</button>
-              <small>Compra simulada: no se procesa ni se cobra dinero real. La reserva queda vinculada a tu cuenta.</small>
-              {reservationMessage && <div className="success reservation-confirmation" role="status"><span className="success-icon"><Icon name="check" /></span><div><strong>Reserva simulada confirmada</strong><p>{reservationMessage} Total simulado: {confirmedTotal === 0 ? 'Gratis' : `S/ ${(confirmedTotal ?? currentTotal).toFixed(2)}`}.</p><button type="button" className="button secondary" onClick={() => setView('account')}>Ir a Mis entradas <Icon name="arrow" size={18} /></button></div></div>}
-              {reservationError && <p className="form-error" role="alert">{reservationError}</p>}
-            </form>
-          </div>}
-        </section>}
       </>}
       <footer>Proyecto académico · Datos y pagos simulados</footer>
     </main>

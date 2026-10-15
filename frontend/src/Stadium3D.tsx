@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { addStadiumEnvironment } from './venue3d-stadium-env'
+import { zoneColors } from './venue3d-types'
 
 export type StadiumSeat = {
   id: number
@@ -120,6 +121,7 @@ export default function Stadium3D({ seats, selectedSeatIds, onToggle, onSectorCh
   const [seatInfo, setSeatInfo] = useState<SeatInfo | null>(null)
   const [ready, setReady] = useState(false)
 
+  const zoneTint = useMemo(() => new Map([...zoneColors(seats.map((seat) => ({ id: seat.zone_id, price: seat.price })))].map(([id, hex]) => [id, new THREE.Color(hex)])), [seats])
   const sectors = [...new Map(seats.map((seat) => [seat.zone_id, { id: seat.zone_id, name: seat.zone_name }])).values()]
   const activeSector = sectors.find((sector) => sector.id === activeZoneId) ?? null
 
@@ -356,7 +358,7 @@ export default function Stadium3D({ seats, selectedSeatIds, onToggle, onSectorCh
 
     const updateSeatColors = () => {
       seats.forEach((seat, index) => {
-        const color = selectedRef.current.includes(seat.id) ? COLORS.selected : seat.available ? COLORS.available : COLORS.occupied
+        const color = selectedRef.current.includes(seat.id) ? COLORS.selected : seat.available ? zoneTint.get(seat.zone_id) ?? COLORS.available : COLORS.occupied
         seatBases.setColorAt(index, color)
         seatBacks.setColorAt(index, color)
       })
@@ -486,7 +488,7 @@ export default function Stadium3D({ seats, selectedSeatIds, onToggle, onSectorCh
     const meshes = seatMeshesRef.current
     if (meshes.length !== 2) return
     seats.forEach((seat, index) => {
-      const color = selectedSeatIds.includes(seat.id) ? COLORS.selected : seat.available ? COLORS.available : COLORS.occupied
+      const color = selectedSeatIds.includes(seat.id) ? COLORS.selected : seat.available ? zoneTint.get(seat.zone_id) ?? COLORS.available : COLORS.occupied
       meshes[0].setColorAt(index, color)
       meshes[1].setColorAt(index, color)
     })
@@ -504,7 +506,6 @@ export default function Stadium3D({ seats, selectedSeatIds, onToggle, onSectorCh
       </div>
       <div ref={hostRef} className="stadium-3d-host" aria-busy={!ready} />
       {!ready && <div className="stadium-3d-loading" role="status"><span className="spinner" />Preparando estadio 3D…</div>}
-      <div className="stadium-3d-hint">Arrastra para rotar · Pellizca o desplaza para acercar</div>
       {seatInfo && <div className="stadium-3d-tooltip" role="status"><strong>{seatInfo.zone_name}</strong><span>Fila {seatInfo.row} · Asiento {seatInfo.number}</span><b>S/ {seatInfo.price.toFixed(2)} · {seatInfo.available ? 'Disponible' : 'Ocupado'}</b></div>}
     </div>
     <div className="stadium-3d-sector-list" role="group" aria-label="Seleccionar tribuna en el visor 3D">
@@ -513,6 +514,5 @@ export default function Stadium3D({ seats, selectedSeatIds, onToggle, onSectorCh
         return <button type="button" key={sector.id} className={activeZoneId === sector.id ? 'active' : ''} aria-pressed={activeZoneId === sector.id} onClick={() => apiRef.current?.focusSector(sector.id)}><strong>{sector.name.replace('Tribuna ', '')}</strong><span>{available} disponibles</span></button>
       })}
     </div>
-    <p className="stadium-3d-note">Representación 3D aproximada de un recinto ficticio. La disponibilidad y los precios proceden del inventario real de esta función.</p>
   </div>
 }

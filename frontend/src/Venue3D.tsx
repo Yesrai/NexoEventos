@@ -43,7 +43,6 @@ export default function Venue3D({ kind, seats = NO_SEATS, selectedSeatIds = NO_S
   const [hover, setHover] = useState<string | null>(null)
   const [views, setViews] = useState<Array<{ id: string; label: string }>>([])
   const [activeView, setActiveView] = useState<string | null>(null)
-  const [legend, setLegend] = useState<VenueBuild['legend']>([])
 
   useEffect(() => { handlersRef.current = { onToggleSeat, onSelectZone, onUnavailable } }, [onToggleSeat, onSelectZone, onUnavailable])
   useEffect(() => {
@@ -118,7 +117,6 @@ export default function Venue3D({ kind, seats = NO_SEATS, selectedSeatIds = NO_S
     }
     setViews(build.views.map(({ id, label }) => ({ id, label })))
     setActiveView(firstView.id)
-    setLegend(build.legend)
     setReady(true)
 
     let frame = 0
@@ -223,14 +221,11 @@ export default function Venue3D({ kind, seats = NO_SEATS, selectedSeatIds = NO_S
 
   return <div className={`venue-3d-shell venue-3d-${kind}`}>
     <div className="venue-3d-stage">
-      <div className="venue-3d-toolbar" role="group" aria-label="Controles de cámara 3D"><button type="button" aria-label="Acercar cámara" onClick={() => cameraApi.current?.zoom(.8)}>+</button><button type="button" aria-label="Alejar cámara" onClick={() => cameraApi.current?.zoom(1.25)}>−</button><button type="button" onClick={() => cameraApi.current?.reset()}>Restablecer</button></div>
+      <div className="venue-3d-toolbar" role="group" aria-label="Controles de cámara 3D"><button type="button" aria-label="Acercar cámara" onClick={() => cameraApi.current?.zoom(.8)}>+</button><button type="button" aria-label="Alejar cámara" onClick={() => cameraApi.current?.zoom(1.25)}>−</button><button type="button" onClick={() => cameraApi.current?.reset()}>Vista inicial</button></div>
       <div ref={hostRef} className="venue-3d-host" aria-busy={!ready} />
-      {!ready && <div className="venue-3d-loading" role="status"><span className="spinner" />Preparando ambiente 3D…</div>}
-      {ready && views.length > 1 && <div className="venue-3d-views" role="group" aria-label="Vistas de cámara">{views.map((view) => <button type="button" key={view.id} className={activeView === view.id ? 'active' : ''} aria-pressed={activeView === view.id} onClick={() => cameraApi.current?.view(view.id)}>{view.label}</button>)}</div>}
-      <div className="venue-3d-hint">Arrastra para girar · Rueda o pellizco para acercar</div>
+      {!ready && <div className="venue-3d-loading" role="status"><span className="spinner" />Preparando el recinto…</div>}
       {hover && <div className="venue-3d-tooltip" role="status">{hover}</div>}
     </div>
-    {legend.length > 0 && <ul className="venue-3d-legend" aria-label="Zonas del plano">{legend.map((item) => <li key={item.label}><i style={{ background: item.color }} />{item.label}</li>)}</ul>}
-    <p className="venue-3d-note">{kind === 'museum' ? 'Recorrido orientativo de un museo ficticio. Las salas no se reservan: el acceso es por fecha, horario y cantidad.' : 'Representación 3D propia de un recinto ficticio. Solo el inventario real de esta función permite reservar.'}</p>
+    {ready && views.length > 1 && <div className="venue-3d-views" role="group" aria-label="Perspectivas">{views.map((view) => <button type="button" key={view.id} className={activeView === view.id ? 'active' : ''} aria-pressed={activeView === view.id} onClick={() => cameraApi.current?.view(view.id)}>{view.label}</button>)}</div>}
   </div>
 }

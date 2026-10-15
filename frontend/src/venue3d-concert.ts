@@ -175,15 +175,13 @@ export function buildConcert({ scene, mobile }: VenueContext, zones: VenueZone[]
   // Torre de sonido, carpas, torres de luz y puerta de acceso.
   const fohZ = FIRST_ZONE_Z + FLOOR_DEPTH + .4
   box(scene, [5.2, .5, 3.4], [0, .25, fohZ], black)
-  box(scene, [4.6, 2.4, 3], [0, 1.7, fohZ], std({ color: '#222a31', roughness: .8 }))
-  box(scene, [4.2, .12, 1], [0, 2.5, fohZ - .6], std({ color: '#00c2a5', emissive: '#00e0bd', emissiveIntensity: 1.2 }))
+  box(scene, [4.6, 1.1, 3], [0, 1.05, fohZ], std({ color: '#222a31', roughness: .8 }))
+  box(scene, [4.2, .12, 1], [0, 1.7, fohZ - .6], std({ color: '#00c2a5', emissive: '#00e0bd', emissiveIntensity: 1.2 }))
   for (const side of [-1, 1]) {
     const x = side * 24
     box(scene, [7, .2, 6], [x, 3.1, 10], std({ color: side > 0 ? '#c9473b' : '#e6e1d6', roughness: .9 }))
     for (const dx of [-3.2, 3.2]) for (const dz of [-2.7, 2.7]) cylinder(scene, .08, .08, 3, [x + dx, 1.5, 10 + dz], metal, 8)
     box(scene, [5.2, 1, 1.4], [x, .5, 10.8], std({ color: '#2b343b', roughness: .7 }))
-    const sign = labelSprite(side > 0 ? 'Bar y comida' : 'Mercancía', { scale: 3.4, background: 'rgba(255,255,255,.88)', color: '#16313f' })
-    if (sign) { sign.position.set(x, 4.6, 10); scene.add(sign) }
   }
   for (const [x, z] of [[-FLOOR_HALF_WIDTH - 3, 24], [FLOOR_HALF_WIDTH + 3, 24], [-FLOOR_HALF_WIDTH - 3, -4], [FLOOR_HALF_WIDTH + 3, -4]] as const) {
     cylinder(scene, .16, .22, 12, [x, 6, z], metal, 10, true)
@@ -194,8 +192,6 @@ export function buildConcert({ scene, mobile }: VenueContext, zones: VenueZone[]
   const gateZ = FIRST_ZONE_Z + FLOOR_DEPTH + 6.5
   for (const x of [-5, 5]) box(scene, [.5, 5, .5], [x, 2.5, gateZ], black)
   box(scene, [11, 1.1, .6], [0, 5.2, gateZ], std({ color: '#0f2a36', roughness: .6 }))
-  const gateSign = labelSprite('ENTRADA', { scale: 4.2, background: 'rgba(0,194,165,.95)', color: '#052b26' })
-  if (gateSign) { gateSign.position.set(0, 5.2, gateZ + .5); scene.add(gateSign) }
 
   // Zonas reales: profundidad proporcional al aforo, la de mayor precio junto al escenario.
   const ordered = [...zones].sort((a, b) => b.price - a.price)
@@ -216,7 +212,7 @@ export function buildConcert({ scene, mobile }: VenueContext, zones: VenueZone[]
     const outline = new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry), new THREE.LineBasicMaterial({ color: '#ffffff', transparent: true, opacity: .55 }))
     outline.position.copy(mesh.position)
     scene.add(outline)
-    const label = labelSprite(`${item.zone.name} · S/ ${item.zone.price.toFixed(2)}`, { scale: 6, background: 'rgba(10,18,30,.82)' })
+    const label = labelSprite(`${item.zone.name} · S/ ${item.zone.price.toFixed(2)}`, { scale: 5.2, background: 'rgba(10,18,30,.86)' })
     if (label) { label.position.set(0, 3.4, item.z); scene.add(label) }
     slabs.push({ mesh, zone: item.zone, hue: item.hue, outline, label })
   }
@@ -245,9 +241,9 @@ export function buildConcert({ scene, mobile }: VenueContext, zones: VenueZone[]
 
   return {
     views: [
-      { id: 'general', label: 'Desde la entrada', position: new THREE.Vector3(0, 19, 43), target: new THREE.Vector3(0, 3, -4) },
-      { id: 'zonas', label: 'Zonas', position: new THREE.Vector3(0, 40, 22), target: new THREE.Vector3(0, 0, 4) },
-      { id: 'escenario', label: 'Frente al escenario', position: new THREE.Vector3(0, 3.2, 12), target: new THREE.Vector3(0, 6, -12) },
+      { id: 'general', label: 'Frente al escenario', position: new THREE.Vector3(0, 11, 34), target: new THREE.Vector3(0, 2.6, -7) },
+      { id: 'zonas', label: 'Vista de zonas', position: new THREE.Vector3(0, 34, 30), target: new THREE.Vector3(0, 0, 6) },
+      { id: 'escenario', label: 'Cerca del escenario', position: new THREE.Vector3(0, 3.2, 12), target: new THREE.Vector3(0, 6, -12) },
       { id: 'lateral', label: 'Lateral', position: new THREE.Vector3(40, 16, 6), target: new THREE.Vector3(0, 3, -2) },
     ],
     background: '#190f2e',

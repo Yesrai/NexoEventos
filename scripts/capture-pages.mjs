@@ -34,7 +34,10 @@ for (const item of pages) for (const viewport of viewports) {
   await send('Page.navigate', { url: base }); await pause(1800)
   await evaluate(`(() => { const input = document.querySelector('#main-search'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(item.event)}); input.dispatchEvent(new Event('input', { bubbles: true })) })()`)
   await pause(300)
-  await evaluate(`[...document.querySelectorAll('button')].find((b) => b.getAttribute('aria-label') === ${JSON.stringify(`Ver ${item.event}`)})?.click()`)
+  for (let attempt = 0; attempt < 12 && !(await evaluate(`!!document.querySelector('.ep')`)); attempt += 1) {
+    await evaluate(`[...document.querySelectorAll('button')].find((b) => b.getAttribute('aria-label') === ${JSON.stringify(`Ver ${item.event}`)})?.click()`)
+    await pause(700)
+  }
   await pause(3500)
   const height = await evaluate('Math.ceil(document.documentElement.scrollHeight)')
   const shot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true, clip: { x: 0, y: 0, width: viewport.width, height: Math.min(height, 6000), scale: 1 } })
