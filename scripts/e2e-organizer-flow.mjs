@@ -97,6 +97,7 @@ try {
   // 1) Organizador: crear evento, elegir recinto y plano, configurar entradas.
   await loginAs(accounts.organizer)
   await clickText('Mis eventos')
+  await waitFor(`(() => { const b = ${textButton('Nuevo evento')}; return !!b && !b.disabled })()`, 'botón Nuevo evento habilitado')
   await clickText('Nuevo evento')
   await setField('Nombre', eventName)
   await setField('Fecha', plusDays(21))
@@ -136,6 +137,7 @@ try {
   await waitFor(`/Evento publicado/.test(document.body.innerText)`, 'publicación')
   check('El evento publicado aparece en el catálogo público', (await evaluate(`fetch(${J(apiBase + '/api/events')}).then((response) => response.json())`)).some((item) => item.name === eventName))
   await shot('04-publicado-resumen', '.organizer-detail')
+  await shot('org-01-escritorio-resumen')
   await logout()
 
   // 4) Cliente: registrarse, elegir asiento en el plano y reservar.
@@ -173,6 +175,7 @@ try {
   await loginAs(accounts.operator)
   await clickText('Control de acceso')
   await waitFor(`[...document.querySelectorAll('select option')].some((option) => option.textContent === ${J(eventName)})`, 'evento asignado al operador')
+  await shot('op-01-escritorio-inicio')
   const operatorSelect = `[...document.querySelectorAll('select')].find((node) => [...node.options].some((option) => option.textContent === ${J(eventName)}))`
   await evaluate(`(() => { const select = ${operatorSelect}; const option = [...select.options].find((item) => item.textContent === ${J(eventName)}); Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(select, option.value); select.dispatchEvent(new Event('change', { bubbles: true })) })()`)
   await setField('Código QR', token)
@@ -180,9 +183,12 @@ try {
   await waitFor(`/Ingreso aceptado/.test(document.body.innerText)`, 'ingreso aceptado')
   check('El operador valida el QR y registra el ingreso', true)
   await shot('06-operador-ingreso-aceptado', '.operator-grid')
+  await shot('op-02-escritorio-aceptado')
+  await setField('Código QR', token)
   await clickText('Validar ingreso')
   await waitFor(`/Entrada ya utilizada/.test(document.body.innerText)`, 'reutilización rechazada')
   check('Una segunda validación del mismo QR se rechaza', true)
+  await shot('op-03-escritorio-ya-utilizada')
   await logout()
 
   // 6) Organizador: estadísticas y bloqueos tras la venta.
@@ -283,6 +289,18 @@ try {
   await shot('09-organizador-movil')
   await clickText('Recinto y entradas')
   await shot('10-inventario-movil', '.organizer-detail')
+  await logout()
+  await loginAs(accounts.operator)
+  await clickText('Control de acceso')
+  await waitFor(`!!document.querySelector('.op-event')`, 'panel del operador móvil')
+  const opOverflow = await evaluate(`document.documentElement.scrollWidth - document.documentElement.clientWidth`)
+  check('El panel del operador no desborda en móvil y el botón principal es cómodo (≥ 52 px)', opOverflow <= 1 && (await evaluate(`document.getElementById('op-validate').getBoundingClientRect().height`)) >= 52, `${opOverflow}px`)
+  await shot('op-04-movil-inicio')
+  await setField('Código QR', 'nexo_codigo-invalido-para-prueba-visual')
+  await clickText('Validar ingreso')
+  await waitFor(`/Código no válido/.test(document.body.innerText)`, 'resultado de código inválido')
+  check('Un código inexistente se muestra como «Código no válido» de forma inmediata', true)
+  await shot('op-05-movil-invalido')
   await writeFile(resolve(output, `resultado-e2e-${stamp}.json`), JSON.stringify({ fecha: stamp, flujo: 'crear → recinto/plano → función → publicar → reservar → QR → validar', verificaciones: results, excepcionesDePagina: pageErrors }, null, 2))
   console.log(pageErrors.length ? `Excepciones de página: ${pageErrors.length}` : 'Sin excepciones de página')
 } catch (error) {

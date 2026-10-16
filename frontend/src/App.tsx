@@ -2,9 +2,10 @@ import { FormEvent, KeyboardEvent as ReactKeyboardEvent, lazy, ReactNode, Suspen
 import QRCode from 'qrcode'
 import { EventPage, useSelection } from './EventPage'
 import { LuClapperboard } from 'react-icons/lu'
-import { categoryOrder, categoryPresentation, type User, type EventItem, type Seat, type EventDetail, type Reservation, type Ticket, type View, type BarcodeDetectorConstructor, api, formatDate, formatTime, formatEventPrice, messageFrom, requestError, Icon } from './shared'
+import { categoryOrder, categoryPresentation, type User, type EventItem, type Seat, type EventDetail, type Reservation, type Ticket, type View, api, formatDate, formatTime, formatEventPrice, messageFrom, requestError, Icon } from './shared'
 
 const OrganizerPanel = lazy(() => import('./Organizer'))
+const OperatorPanel = lazy(() => import('./Operator'))
 
 function AccountMenu({ user, onLogout }: { user: User; onLogout: () => Promise<void> }) {
   const [open, setOpen] = useState(false)
@@ -578,7 +579,7 @@ export default function App() {
 
       {view === 'auth' && <AuthPanel pendingReservation={selected ? { event: selected, quantity, total: currentTotal } : null} onBack={() => setView('catalog')} onAuthenticated={(value) => void authenticated(value)} />}
       {view === 'account' && user?.role === 'client' && <ClientAccount onExpired={() => { setUser(null); setSessionNotice('Tu sesión expiró. Vuelve a iniciar sesión.'); setView('auth') }} />}
-      {view === 'operator' && user?.role === 'operator' && <OperatorPanel onExpired={() => { setUser(null); setSessionNotice('Tu sesión expiró. Vuelve a iniciar sesión.'); setView('auth') }} />}
+      {view === 'operator' && user?.role === 'operator' && <Suspense fallback={<div className="status" role="status">Cargando…</div>}><OperatorPanel onExpired={() => { setUser(null); setSessionNotice('Tu sesión expiró. Vuelve a iniciar sesión.'); setView('auth') }} /></Suspense>}
       {view === 'organizer' && user?.role === 'organizer' && <Suspense fallback={<div className="status dark" role="status">Cargando panel…</div>}><OrganizerPanel /></Suspense>}
 
       {view === 'catalog' && confirmation && <OrderConfirmation order={confirmation} onTickets={() => { setConfirmation(null); setSelected(null); setQuery(''); setSessionNotice(null); setView('account'); window.scrollTo?.({ top: 0 }) }} onExplore={goHome} />}
@@ -860,36 +861,4 @@ function ClientAccount({ onExpired }: { onExpired: () => void }) {
       </button></li>)}</ul>}
     {selected && <div className="modal-backdrop" onClick={closeTicket}><section className="ticket-modal" role="dialog" aria-modal="true" aria-labelledby="ticket-dialog-title" aria-describedby="ticket-dialog-instruction" onClick={(event) => event.stopPropagation()}><button ref={modalCloseRef} className="modal-close" aria-label="Cerrar entrada" onClick={closeTicket}><Icon name="close" /></button><p className="eyebrow">Entrada digital privada</p><h2 id="ticket-dialog-title">{selected.event_name}</h2><strong className="modal-ticket-kind">{ticketLabel(selected)}</strong><div className="modal-event-meta"><span><Icon name="calendar" />{formatDate(selected.event_date)} · {formatTime(selected.event_time)}</span><span><Icon name="location" />{selected.event_venue}, {selected.event_city}</span></div><div className="qr-frame">{qrImage ? <img className="qr-image" src={qrImage} alt="Código QR de la entrada" /> : <div className="qr-loading" role="status"><span className="spinner" />Preparando QR…</div>}</div><p className={selected.used_at ? 'used-badge' : 'valid-badge'}><Icon name={selected.used_at ? 'close' : 'check'} size={16} />{selected.used_at ? 'Entrada utilizada' : 'Disponible para validar'}</p><p className="ticket-instruction" id="ticket-dialog-instruction">Presenta este QR completo y con buen brillo al operador en el ingreso. Abrirlo no consume la entrada. No compartas capturas.</p></section></div>}
   </section>
-}
-
-function OperatorPanel({ onExpired }: { onExpired: () => void }) {
-  const [events, setEvents] = useState<EventItem[]>([])
-  const [eventId, setEventId] = useState(0)
-  const [token, setToken] = useState('')
-  const [status, setStatus] = useState<{ kind: 'success' | 'error'; text: string } | null>(null)
-  const [busy, setBusy] = useState(false)
-  const [cameraError, setCameraError] = useState<string | null>(null)
-  const [stream, setStream] = useState<MediaStream | null>(null)
-  const videoRef = useRef<HTMLVideoElement>(null)
-  useEffect(() => { void (async () => { const response = await api('/api/operator/events'); if (response.status === 401) { onExpired(); return } if (response.ok) { const values = await response.json() as EventItem[]; setEvents(values); setEventId(values[0]?.id ?? 0) } })() }, [])
-  useEffect(() => () => stream?.getTracks().forEach((track) => track.stop()), [stream])
-  useEffect(() => { if (videoRef.current && stream) videoRef.current.srcObject = stream }, [stream])
-  async function startCamera() { setCameraError(null); try { const value = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }); setStream(value) } catch { setCameraError('No se pudo abrir la cámara. Usa la alternativa manual.') } }
-  function stopCamera() { stream?.getTracks().forEach((track) => track.stop()); setStream(null) }
-  async function readFrame() { const Detector = (window as unknown as { BarcodeDetector?: BarcodeDetectorConstructor }).BarcodeDetector; if (!Detector || !videoRef.current) { setCameraError('Este navegador no ofrece lectura QR directa. Copia el código en el campo manual.'); return } const results = await new Detector({ formats: ['qr_code'] }).detect(videoRef.current); if (results[0]) { setToken(results[0].rawValue); stopCamera() } else setCameraError('No se detectó un QR en la imagen. Intenta de nuevo.') }
-  async function validate(event: FormEvent) {
-    event.preventDefault()
-    if (busy) return
-    setBusy(true); setStatus(null)
-    try {
-      const response = await api('/api/operator/validate', { method: 'POST', body: JSON.stringify({ event_id: eventId, qr_token: token.trim() }) })
-      const body = await response.json() as unknown
-      if (response.status === 401) { onExpired(); return }
-      const accepted = body as { ticket_location?: string }
-      setStatus(response.ok ? { kind: 'success', text: `Ingreso aceptado. ${accepted.ticket_location ?? 'Entrada general'}. La entrada quedó consumida.` } : { kind: 'error', text: messageFrom(body, 'No se pudo validar la entrada.') })
-    } catch {
-      setStatus({ kind: 'error', text: 'No pudimos conectar con el servicio de validación. Intenta nuevamente.' })
-    } finally { setBusy(false) }
-  }
-  return <section className="workspace"><p className="eyebrow">Operación</p><h1 className="page-title">Control de acceso</h1><p className="muted">Solo aparecen eventos asignados a esta cuenta. Cada validación queda auditada sin guardar el token completo.</p>{events.length === 0 ? <div className="status dark">No tienes eventos asignados.</div> : <div className="operator-grid"><form className="panel-form" onSubmit={(event) => void validate(event)}><label>Evento asignado<select value={eventId} onChange={(event) => setEventId(Number(event.target.value))}>{events.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><label>Código QR o token manual<textarea value={token} onChange={(event) => setToken(event.target.value)} minLength={20} required placeholder="nexo_…" /></label><button className="primary" disabled={busy}>{busy ? 'Validando…' : 'Validar ingreso'}</button>{status && <p className={status.kind === 'success' ? 'success' : 'form-error'} role="status">{status.text}</p>}</form><div className="camera-panel"><h2 className="subheading">Lector QR</h2>{stream ? <><video ref={videoRef} autoPlay playsInline muted /><div className="button-row"><button className="primary" onClick={() => void readFrame()}>Leer QR</button><button className="outline" onClick={stopCamera}>Cerrar cámara</button></div></> : <button className="outline" onClick={() => void startCamera()}>Permitir cámara</button>}{cameraError && <p className="form-error">{cameraError}</p>}<small>La cámara solo se solicita al pulsar el botón. La entrada se consume únicamente al confirmar “Validar ingreso”.</small></div></div>}</section>
 }

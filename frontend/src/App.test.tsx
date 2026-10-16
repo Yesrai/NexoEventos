@@ -414,8 +414,9 @@ describe('NexoEventos catalog', () => {
       })
       render(<App />)
       fireEvent.click(await screen.findByRole('button', { name: 'Mis eventos' }))
-      fireEvent.click(await screen.findByRole('button', { name: 'Nuevo evento' }))
-      fireEvent.change(screen.getByLabelText('Nombre'), { target: { value: 'Obra nueva' } })
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Nuevo evento' })).toBeEnabled())
+      fireEvent.click(screen.getByRole('button', { name: 'Nuevo evento' }))
+      fireEvent.change(await screen.findByLabelText('Nombre'), { target: { value: 'Obra nueva' } })
       fireEvent.change(screen.getByLabelText('Fecha'), { target: { value: '2030-01-10' } })
       fireEvent.change(screen.getByLabelText('Descripción'), { target: { value: 'Obra ficticia con asientos numerados.' } })
       fireEvent.change(screen.getByLabelText('Recinto'), { target: { value: '1' } })
@@ -762,5 +763,41 @@ describe('NexoEventos catalog', () => {
     window.history.back()
     await waitFor(() => expect(screen.queryByRole('heading', { name: 'Evento con historial', level: 1 })).not.toBeInTheDocument())
     expect(screen.getByRole('heading', { name: 'Próximos eventos' })).toBeInTheDocument()
+  })
+
+  it('shows a clear, immediate result for each door validation outcome', async () => {
+    const event = { ...baseEvent, id: 91, name: 'Concierto en puerta', date: '2026-10-22', venue: 'Arena Sur', category: 'Conciertos', price: 30, capacity: 100, available_capacity: 90 }
+    const outcomes: Record<string, { status: number; body: unknown }> = {
+      ['a'.repeat(24)]: { status: 200, body: { result: 'accepted', ticket_location: 'Platea · fila A, asiento 3', used_at: '2026-10-22T01:00:00Z' } },
+      ['b'.repeat(24)]: { status: 409, body: { detail: 'Entrada ya utilizada' } },
+      ['c'.repeat(24)]: { status: 404, body: { detail: 'Código QR inexistente' } },
+      ['d'.repeat(24)]: { status: 403, body: { detail: 'Operador no asignado a este evento' } },
+      ['e'.repeat(24)]: { status: 409, body: { detail: 'La entrada corresponde a otro evento' } },
+    }
+    vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input)
+      if (url.endsWith('/api/auth/session')) return { ok: true, status: 200, json: async () => ({ id: 'op', email: 'operador@example.com', display_name: 'Operador', role: 'operator', session_expires_at: '2030-01-01T00:00:00Z' }) }
+      if (url.endsWith('/api/operator/events')) return { ok: true, status: 200, json: async () => [event] }
+      if (url.endsWith('/api/operator/validate')) { const { qr_token } = JSON.parse(String(init?.body)); const outcome = outcomes[qr_token]; return { ok: outcome.status === 200, status: outcome.status, json: async () => outcome.body } }
+      return { ok: true, status: 200, json: async () => [] }
+    }))
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Control de acceso' }))
+    expect((await screen.findAllByText('Concierto en puerta')).length).toBeGreaterThan(0)
+    expect(screen.getByText(/Arena Sur, Lima/)).toBeInTheDocument()
+    const field = screen.getByLabelText(/Código QR o código manual/)
+    const run = async (letter: string, title: string, detail?: RegExp) => {
+      fireEvent.change(field, { target: { value: letter.repeat(24) } })
+      fireEvent.click(screen.getByRole('button', { name: 'Validar ingreso' }))
+      expect(await screen.findByText(title)).toBeInTheDocument()
+      if (detail) expect(screen.getByText(detail)).toBeInTheDocument()
+      await waitFor(() => expect(field).toHaveValue(''))
+    }
+    await run('a', 'Ingreso aceptado', /Platea · fila A, asiento 3/)
+    await run('b', 'Entrada ya utilizada')
+    await run('c', 'Código no válido')
+    await run('d', 'Sin autorización')
+    await run('e', 'Entrada de otro evento')
+    await expectNoAccessibilityViolations()
   })
 })

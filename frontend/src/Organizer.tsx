@@ -1,6 +1,6 @@
 import { FormEvent, KeyboardEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import { EventPage, useSelection } from './EventPage'
-import { api, categoryOrder, EventDetail, EventItem, formatDate, formatTime } from './shared'
+import { api, categoryOrder, EventDetail, EventItem, formatDate, formatTime, Icon } from './shared'
 
 type LayoutKind = NonNullable<EventItem['layout_kind']>
 type LayoutOption = { layout_id: number; name: string; layout_kind: LayoutKind; ticket_mode: 'general' | 'zones' | 'seats' }
@@ -304,6 +304,7 @@ export default function OrganizerPanel() {
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState<number | 'new' | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [filter, setFilter] = useState<'all' | 'published' | 'draft'>('all')
 
   const reload = useCallback(async () => {
     const [eventsResponse, venuesResponse] = await Promise.all([api('/api/organizer/events'), api('/api/organizer/venues')])
@@ -314,13 +315,17 @@ export default function OrganizerPanel() {
   useEffect(() => { if (selectedId === null && events.length) setSelectedId(events[0].id) }, [events, selectedId])
 
   const afterChange = async (detail: EventDetail) => { await reload(); if (selectedId === 'new') setSelectedId(detail.id) }
-  return <section className="workspace"><p className="eyebrow">Organización</p><h1 className="page-title">Mis eventos</h1><p className="muted">Crea eventos y funciones, elige recinto y plano, configura entradas y publica. El backend limita todo a los eventos propiedad del organizador.</p>
-    {loading && <div className="status dark" role="status">Cargando eventos…</div>}
-    {!loading && <div className="organizer-layout">
+  const counts = { all: events.length, published: events.filter((item) => item.status === 'published').length, draft: events.filter((item) => item.status !== 'published').length }
+  const shownEvents = events.filter((item) => filter === 'all' || (filter === 'published' ? item.status === 'published' : item.status !== 'published'))
+  return <section className="workspace organizer">
+    <header className="org-head"><div><h1 className="page-title">Mis eventos</h1><p className="muted">Crea, configura y publica tus eventos y funciones.</p></div><button type="button" className="button primary" disabled={loading} onClick={() => { setNotice(null); setSelectedId('new') }}>Nuevo evento</button></header>
+    {loading && <div className="status" role="status"><span className="spinner" />Cargando eventos…</div>}
+    {!loading && events.length === 0 && selectedId !== 'new' && <div className="empty-state"><span className="empty-icon"><Icon name="calendar" size={26} /></span><h2>Aún no tienes eventos</h2><p>Crea tu primer evento: elige el recinto, define las entradas y publícalo cuando esté listo.</p><button type="button" className="button primary" onClick={() => setSelectedId('new')}>Crear mi primer evento</button></div>}
+    {!loading && (events.length > 0 || selectedId === 'new') && <div className="organizer-layout">
       <div className="organizer-sidebar">
-        <button type="button" className="primary organizer-new" onClick={() => { setNotice(null); setSelectedId('new') }}>Nuevo evento</button>
-        {events.length === 0 && <div className="status dark">Aún no tienes eventos. Crea el primero.</div>}
-        <div className="organizer-list" role="group" aria-label="Eventos del organizador">{events.map((item) => <button type="button" key={item.id} className={`row-card organizer-item ${item.id === selectedId ? 'active' : ''}`} aria-pressed={item.id === selectedId} onClick={() => { setNotice(null); setSelectedId(item.id) }}><strong>{item.name}</strong><span>{formatDate(item.date)} · {formatTime(item.time)}</span><small><span className={`organizer-badge ${item.status === 'published' ? 'published' : 'draft'}`}>{item.status === 'published' ? 'Publicado' : 'Borrador'}</span> {item.available_capacity} de {item.capacity} cupos · {item.layout_name ?? 'Sin plano'}</small></button>)}</div>
+        <div className="org-filter" role="tablist" aria-label="Filtrar eventos">{([['all', 'Todos'], ['published', 'Publicados'], ['draft', 'Borradores']] as const).map(([value, label]) => <button type="button" key={value} role="tab" aria-selected={filter === value} onClick={() => setFilter(value)}>{label} <span>{counts[value]}</span></button>)}</div>
+        {shownEvents.length === 0 && <p className="organizer-hint">No hay eventos en esta vista.</p>}
+        <div className="organizer-list" role="group" aria-label="Eventos del organizador">{shownEvents.map((item) => <button type="button" key={item.id} className={`row-card organizer-item ${item.id === selectedId ? 'active' : ''}`} aria-pressed={item.id === selectedId} onClick={() => { setNotice(null); setSelectedId(item.id) }}><strong>{item.name}</strong><span>{formatDate(item.date)} · {formatTime(item.time)}</span><small><span className={`organizer-badge ${item.status === 'published' ? 'published' : 'draft'}`}>{item.status === 'published' ? 'Publicado' : 'Borrador'}</span> {item.available_capacity} de {item.capacity} cupos</small></button>)}</div>
       </div>
       <div className="organizer-detail">
         {selectedId === 'new' && <NewEvent venues={venues} onCreated={(detail) => { void reload().then(() => { setNotice('Borrador creado. Revisa la vista previa y publícalo cuando esté listo.'); setSelectedId(detail.id) }) }} />}

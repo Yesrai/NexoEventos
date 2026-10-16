@@ -333,7 +333,7 @@ export function EventPage({ event, selection, user, preview = false, reserving =
   }
   const summary = selection.selectedSeats.length ? `${selection.selectedSeats.length} asiento${selection.selectedSeats.length === 1 ? '' : 's'}` : selection.activeZone ? `${selection.quantity} × ${selection.activeZone.name}` : event.ticket_mode === 'general' ? `${selection.quantity} entrada${selection.quantity === 1 ? '' : 's'}` : 'Sin selección'
   useEffect(() => { if (message) setSheet(true) }, [message])
-  return <article className="ep" aria-label={`Evento ${event.name}`}>
+  return <article className={`ep${preview ? ' ep-preview' : ''}`} aria-label={`Evento ${event.name}`}>
     <div className="ep-container">
     {preview && <p className="ep-preview-banner" role="note">Vista previa del organizador: así lo verán los clientes. Puedes probar la selección, pero no se compra nada.{event.status === 'draft' ? ' Está en borrador y no aparece en el catálogo.' : ''}</p>}
     <div className="ep-layout" id="comprar" ref={buyRef}>
