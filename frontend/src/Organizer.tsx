@@ -188,7 +188,7 @@ function EventWorkspace({ eventId, venues, notice, onChanged, onGone, onSelect }
       else if (response.status !== 204) onChanged(await response.json() as EventDetail)
       setFeedback({ kind: 'success', text: success })
       return true
-    } catch { setFeedback({ kind: 'error', text: 'No se pudo conectar con el servidor. Revisa tu conexión.' }); return false } finally { setBusy(false) }
+    } catch { setFeedback({ kind: 'error', text: 'No se pudo conectar con el servicio. Revisa tu conexión.' }); return false } finally { setBusy(false) }
   }
 
   async function saveData(event: FormEvent) {
@@ -256,12 +256,12 @@ function EventWorkspace({ eventId, venues, notice, onChanged, onGone, onSelect }
       {tab === 'sales' && <form className="panel-form organizer-form" onSubmit={(event) => void saveSales(event)}>
         <fieldset className="organizer-fieldset"><legend>Inicio de ventas</legend>
           <label>Fecha y hora de inicio (hora de Lima)<input type="datetime-local" value={salesForm.start} onChange={(event) => setSalesForm({ ...salesForm, start: event.target.value })} disabled={state.has_sales} /></label>
-          <p className="organizer-hint">{state.has_sales ? 'Ya hay reservas: el inicio de ventas no puede cambiar.' : 'Déjalo vacío para vender desde que publiques. Antes de la hora, el evento muestra una cuenta regresiva con la hora del servidor y no admite compras.'}</p>
+          <p className="organizer-hint">{state.has_sales ? 'Ya hay reservas: el inicio de ventas no puede cambiar.' : 'Déjalo vacío para vender desde que publiques. Antes de la hora, los clientes ven una cuenta regresiva y no pueden comprar.'}</p>
         </fieldset>
         <fieldset className="organizer-fieldset"><legend>Fila virtual para alta demanda</legend>
           <label className="organizer-check"><input type="checkbox" checked={salesForm.queue} onChange={(event) => setSalesForm({ ...salesForm, queue: event.target.checked })} />Activar fila virtual (sala de espera)</label>
           <div className="organizer-form-row"><label>Personas comprando a la vez<input type="number" min="1" max="1000" step="1" value={salesForm.active} onChange={(event) => setSalesForm({ ...salesForm, active: event.target.value })} disabled={!salesForm.queue} required /></label><label>Minutos por turno<input type="number" min="1" max="60" step="1" value={salesForm.minutes} onChange={(event) => setSalesForm({ ...salesForm, minutes: event.target.value })} disabled={!salesForm.queue} required /></label></div>
-          <p className="organizer-hint">Con la fila activa, cada cliente debe esperar su turno por orden de llegada; el servidor controla quién compra y cuánto dura el turno. No se estiman tiempos de espera. Diseño y costos: docs/sala-de-espera-y-cola.md.</p>
+          <p className="organizer-hint">Con la fila activa, los clientes compran por turnos, por orden de llegada. No se muestran tiempos estimados porque no se pueden calcular con fiabilidad.</p>
         </fieldset>
         <button className="primary" disabled={busy}>{busy ? 'Guardando…' : 'Guardar ventas y fila'}</button>
       </form>}
@@ -286,7 +286,7 @@ function NewEvent({ venues, onCreated }: { venues: VenueOption[]; onCreated: (de
       const response = await api('/api/organizer/events', { method: 'POST', body: JSON.stringify(body) })
       if (response.ok) onCreated(await response.json() as EventDetail)
       else setFeedback({ kind: 'error', text: errorText(await response.json().catch(() => ({})), 'No se pudo crear el evento.') })
-    } catch { setFeedback({ kind: 'error', text: 'No se pudo conectar con el servidor. Revisa tu conexión.' }) } finally { setBusy(false) }
+    } catch { setFeedback({ kind: 'error', text: 'No se pudo conectar con el servicio. Revisa tu conexión.' }) } finally { setBusy(false) }
   }
   return <form className="panel-form organizer-form" onSubmit={(event) => void submit(event)}>
     <h2 className="subheading">Nuevo evento</h2>

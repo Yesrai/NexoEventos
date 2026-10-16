@@ -128,6 +128,7 @@ try {
 
   // 3) Operador y publicación.
   await clickText('Operadores')
+  await shot('org-03-operadores', '.organizer-detail')
   await setField('Correo del operador', accounts.operator.email)
   await clickText('Asignar operador')
   await waitFor(`/Operador asignado/.test(document.body.innerText)`, 'operador asignado')
@@ -221,6 +222,7 @@ try {
   await clickText(eventName, 'button.organizer-item strong')
   await waitFor(`!!document.querySelector('.organizer-kpis')`, 'evento original')
   await clickText('Ventas y fila')
+  await shot('org-02-ventas-y-fila', '.organizer-detail')
   await evaluate(`${controlByLabel('Activar fila virtual')}.click()`)
   await setField('Personas comprando a la vez', '1')
   await clickText('Guardar ventas y fila')

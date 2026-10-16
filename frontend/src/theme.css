@@ -623,3 +623,5 @@ footer { padding: 28px 24px; color: var(--c-mut); font-size: var(--fs-sm); }
   .op-camera .op-hint { display: none; }
   .op-event { padding: 14px 16px; }
 }
+
+.empty-state.compact { border: 1px solid var(--c-line); background: #fff; padding: 20px; }
