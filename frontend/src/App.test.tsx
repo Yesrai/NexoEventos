@@ -153,11 +153,14 @@ describe('NexoEventos catalog', () => {
     const plus = screen.getByRole('button', { name: 'Agregar una entrada' })
     expect(minus).toBeDisabled()
     const panel = screen.getByRole('complementary', { name: 'Resumen de compra' })
-    expect(within(panel).getAllByText('S/ 10.00')).toHaveLength(2)
+    expect(within(panel).getByText('1 × S/ 10.00')).toBeInTheDocument()
+    expect(within(panel).getByText('Total · 1 entrada')).toBeInTheDocument()
 
     fireEvent.click(plus)
     expect(minus).toBeEnabled()
-    expect(within(panel).getByText('S/ 20.00')).toBeInTheDocument()
+    expect(within(panel).getByText('2 × S/ 10.00')).toBeInTheDocument()
+    expect(within(panel).getByText('Total · 2 entradas')).toBeInTheDocument()
+    expect(within(panel).getByText('S/ 20.00', { selector: 'strong' })).toBeInTheDocument()
   })
 
   it('shows specific registration errors and can reveal the password', async () => {
@@ -240,7 +243,7 @@ describe('NexoEventos catalog', () => {
 
     expect(await screen.findByText('Tu reserva está en espera')).toBeInTheDocument()
     expect(screen.getByText('Evento pendiente')).toBeInTheDocument()
-    expect(screen.getByText('2 entrada(s) · S/ 20.00')).toBeInTheDocument()
+    expect(screen.getByText('2 entradas · S/ 20.00')).toBeInTheDocument()
   })
 
   it('returns to login with a clear notice when a private request is unauthorized', async () => {
@@ -742,5 +745,22 @@ describe('NexoEventos catalog', () => {
     expect(first).toHaveAttribute('aria-pressed', 'true')
     fireEvent.click(second)
     await waitFor(() => expect(within(screen.getByRole('group', { name: 'Funciones disponibles' })).getAllByRole('button')[1]).toHaveAttribute('aria-pressed', 'true'))
+  })
+
+  it('uses the browser Back button to go up one level instead of leaving the site', async () => {
+    const event = { ...baseEvent, id: 61, name: 'Evento con historial', date: '2026-10-22', venue: 'Sala', category: 'Teatro', price: 10, capacity: 20, available_capacity: 20 }
+    vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request) => {
+      const url = String(input)
+      if (url.endsWith('/api/auth/session')) return { ok: false, status: 401, json: async () => ({}) }
+      if (url.endsWith('/api/events/61')) return { ok: true, status: 200, json: async () => ({ ...event, description: 'Descripción', zones: [], seats: [] }) }
+      return { ok: true, status: 200, json: async () => [event] }
+    }))
+    window.history.pushState(null, '') // entrada inicial de la página (otras pruebas dejan entradas previas)
+    render(<App />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Ver Evento con historial' }))
+    await screen.findByRole('heading', { name: 'Evento con historial', level: 1 })
+    window.history.back()
+    await waitFor(() => expect(screen.queryByRole('heading', { name: 'Evento con historial', level: 1 })).not.toBeInTheDocument())
+    expect(screen.getByRole('heading', { name: 'Próximos eventos' })).toBeInTheDocument()
   })
 })

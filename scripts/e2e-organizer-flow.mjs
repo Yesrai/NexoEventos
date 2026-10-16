@@ -144,7 +144,7 @@ try {
   await clickText('Registrarme', '[role="tab"]')
   await setFieldById('display-name', accounts.client.name); await setFieldById('auth-email', accounts.client.email); await setFieldById('auth-password', accounts.client.password)
   await clickText('Crear cuenta de cliente')
-  await waitFor(`/Ir a Mis entradas|Continuar con mi reserva/.test(document.body.innerText)`, 'cuenta creada')
+  await waitFor(`/Tu cuenta está lista/.test(document.body.innerText)`, 'cuenta creada')
   await go()
   await setFieldById('main-search', eventName)
   await clickText(`Ver ${eventName}`)

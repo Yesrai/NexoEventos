@@ -56,9 +56,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .account-popover > button:hover, .account-popover > button:focus-visible { background: var(--accent-soft); }
 .demo-strip { min-height: 30px; padding: 5px 20px; display: flex; gap: 8px; align-items: center; justify-content: center; border-bottom: 1px solid #e0e7ea; color: #526773; background: #f1f4f5; font-size: 0.875rem; font-weight: 400; text-align: center; }
 .demo-strip i { color: #7f929d; font-style: normal; }
-.notice { max-width: 1224px; margin: 12px auto 0; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #8adfce; border-radius: 12px; color: #1b7f4b; background: var(--accent-soft); }
+.notice { max-width: 1224px; margin: 12px auto 0; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #a9b8ee; border-radius: 12px; color: #1b7f4b; background: var(--accent-soft); }
 .notice button { width: 36px; height: 36px; border: 0; border-radius: 50%; color: inherit; background: transparent; font-size: 1.25rem; }
-.notice button:hover { background: rgba(0,107,91,.08); }
+.notice button:hover { background: rgba(36,70,198,.08); }
 .home-intro { max-width: 1280px; margin: auto; padding: 24px 28px 30px; }
 .home-section-title { margin-bottom: 14px; display: flex; gap: 28px; align-items: end; justify-content: space-between; }
 .home-section-title h1, .home-section-title h2 { margin: 0; font-size: clamp(1.5rem,1.2rem + 1vw,1.875rem); font-weight: 700; letter-spacing: -.005em; }

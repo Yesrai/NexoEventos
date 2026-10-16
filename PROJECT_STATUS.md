@@ -208,3 +208,9 @@ Alcance de esta fase: **inicio, catálogo y página de evento**. Registro, compr
 - **Verificación**: 29 pruebas de interfaz, 38 de backend, build OK; flujo completo en base aislada 25/25 (incluye confirmación, QR, operador y fila virtual; una primera pasada agotó el tiempo esperando el botón «Mapa 3D» de la vista previa del organizador y las siguientes pasaron: intermitencia no diagnosticada); selección por clic en el 3D 8/8 (escritorio y móvil).
 - **Pendiente**: rediseño de organizador/operador; organizador y condiciones (la API no expone esos datos); ver el selector de funciones con datos reales; fotos de cerámica y conferencia por revisar; FPS en GPU real y lector de pantalla.
 - Evidencias: `docs/evidencias/ui/redisenio-despues/` (después), `auditoria-visual-v2/` (antes), `redisenio-seleccion-3d/`, `redisenio-flujo-completo-c/`. Comparación: `docs/auditoria-visual/antes-despues.html`.
+
+## 16. Pulido del flujo de compra (recorrido del comprador)
+
+- Panel de compra con filas de resumen (cantidad × precio unitario, subtotal) y «Total · N entradas»; «Mis entradas» con QR visible en la tarjeta y botón «Ver entrada QR»; el registro con una compra pendiente vuelve directo al evento con la selección intacta; el aviso de sesión ya no queda pegado tras comprar; botón «Atrás» del navegador sube un nivel (evento → catálogo) en lugar de salir del sitio.
+- Fallo intermitente de «Mapa 3D» en la vista previa del organizador: causa = el e2e usaba el servidor de desarrollo y una edición de archivos mientras corría provocaba una recarga completa. `e2e-organizer.sh` y `audit-visual.sh` ahora usan una compilación aislada (`vite build` + `vite preview`). Dos pasadas consecutivas 25/25.
+- Nuevo `scripts/journey-buyer.sh` (base aislada): 16 comprobaciones en escritorio y móvil (3D → asiento → registro → confirmación → Mis entradas → QR). Evidencias en `docs/evidencias/ui/recorrido-comprador-3/`.

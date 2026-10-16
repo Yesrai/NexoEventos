@@ -460,6 +460,7 @@ export default function App() {
         throw new Error(messageFrom(body, 'No se pudo crear la reserva. Comprueba la disponibilidad e intenta de nuevo.'))
       }
       setConfirmedTotal(Number(body.total))
+      setSessionNotice(null)
       setConfirmation({
         reservationId: String(body.reservation_id ?? ''), ticketCount: Number(body.ticket_count), total: Number(body.total),
         event: { name: selected.name, date: selected.date, time: selected.time, venue: selected.venue, city: selected.city, image_path: selected.image_path },
@@ -519,8 +520,29 @@ export default function App() {
     ? [...featuredEvents.slice(featuredIndex + 1), ...featuredEvents.slice(0, featuredIndex)].slice(0, 3)
     : []
   const functionsOf = (current: EventDetail) => upcoming.filter((item) => functionKey(item) === functionKey(current)).sort((a, b) => `${a.date} ${a.time ?? ''}`.localeCompare(`${b.date} ${b.time ?? ''}`)).map(({ id, date, time, available_capacity }) => ({ id, date, time, available_capacity }))
+  // Botón «Atrás» del navegador: cada nivel (evento, acceso/cuenta, confirmación) añade una entrada y «Atrás» sube un nivel en vez de salir del sitio.
+  const depth = (view !== 'catalog' ? 1 : 0) + (selected ? 1 : 0) + (confirmation ? 1 : 0)
+  const nav = useRef({ depth: 0, view, selected, confirmation })
+  nav.current.view = view; nav.current.selected = selected; nav.current.confirmation = confirmation
+  useEffect(() => {
+    if (depth > nav.current.depth) window.history.pushState({ nx: depth }, '')
+    else if (depth < nav.current.depth && (window.history.state?.nx ?? 0) > depth) window.history.back()
+    nav.current.depth = depth
+  }, [depth])
+  useEffect(() => { window.history.replaceState({ nx: 0 }, '') }, []) // al recargar, la entrada actual vuelve a ser el nivel 0
+  useEffect(() => {
+    const onPop = () => {
+      const target = window.history.state?.nx ?? 0
+      let current = nav.current.depth
+      if (current > target && nav.current.view !== 'catalog') { setView('catalog'); current -= 1 }
+      if (current > target && nav.current.confirmation) { setConfirmation(null); current -= 1 }
+      if (current > target && nav.current.selected) { setSelected(null); setReservationError(null) }
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
   function goHome() {
-    setQuery(''); setSelected(null); setConfirmation(null); setReservationError(null); setReservationMessage(null); setView('catalog'); window.scrollTo?.({ top: 0 })
+    setQuery(''); setSessionNotice(null); setSelected(null); setConfirmation(null); setReservationError(null); setReservationMessage(null); setView('catalog'); window.scrollTo?.({ top: 0 })
   }
   function clearFilters() {
     setQuery(''); setCategory(''); setCity(''); setDateFilter('all'); setDateFrom(''); setDateTo(''); setPriceFilter('all'); setSort('date')
@@ -559,7 +581,7 @@ export default function App() {
       {view === 'operator' && user?.role === 'operator' && <OperatorPanel onExpired={() => { setUser(null); setSessionNotice('Tu sesión expiró. Vuelve a iniciar sesión.'); setView('auth') }} />}
       {view === 'organizer' && user?.role === 'organizer' && <Suspense fallback={<div className="status dark" role="status">Cargando panel…</div>}><OrganizerPanel /></Suspense>}
 
-      {view === 'catalog' && confirmation && <OrderConfirmation order={confirmation} onTickets={() => { setConfirmation(null); setSelected(null); setQuery(''); setView('account'); window.scrollTo?.({ top: 0 }) }} onExplore={goHome} />}
+      {view === 'catalog' && confirmation && <OrderConfirmation order={confirmation} onTickets={() => { setConfirmation(null); setSelected(null); setQuery(''); setSessionNotice(null); setView('account'); window.scrollTo?.({ top: 0 }) }} onExplore={goHome} />}
       {view === 'catalog' && !confirmation && (detailLoading || selected || reservationError) && <div className="ep-wrap" aria-live="polite">
         {detailLoading && <div className="status" role="status"><span className="spinner" />Cargando evento…</div>}
         {!detailLoading && !selected && reservationError && <div className="status error" role="alert"><p>{reservationError}</p><button type="button" onClick={() => { setReservationError(null) }}>Volver a eventos</button></div>}
@@ -725,7 +747,7 @@ function AuthPanel({ pendingReservation, onBack, onAuthenticated }: {
       if (!response.ok) { setError(authErrorMessage(mode, response.status, body)); setConflict(mode === 'register' && response.status === 409); return }
       setConflict(false)
       setPassword('')
-      if (mode === 'register') setRegisteredUser(body as User)
+      if (mode === 'register' && !pendingReservation) setRegisteredUser(body as User)
       else onAuthenticated(body as User)
     } catch (caught) {
       setError(caught instanceof TypeError ? 'No se pudo conectar con el servidor. Comprueba que el backend esté en marcha y que tengas conexión.' : requestError(caught, 'No pudimos completar la solicitud. Intenta nuevamente.'))
@@ -733,13 +755,13 @@ function AuthPanel({ pendingReservation, onBack, onAuthenticated }: {
     finally { setBusy(false) }
   }
 
-  if (registeredUser) return <section className="workspace narrow auth-success" aria-live="polite"><span className="success-icon large"><Icon name="check" size={28} /></span><p className="eyebrow">Registro completado</p><h1 className="page-title">Tu cuenta está lista</h1><p>El servidor creó tu cuenta de cliente y abrió una sesión segura.</p>{pendingReservation && <div className="pending-summary"><strong>Tu selección sigue guardada</strong><span>{pendingReservation.event.name}</span><small>{pendingReservation.quantity} entrada(s) · {pendingReservation.total === 0 ? 'Gratis' : `S/ ${pendingReservation.total.toFixed(2)}`}</small></div>}<button className="button primary" onClick={() => onAuthenticated(registeredUser)}>{pendingReservation ? 'Continuar con mi reserva' : 'Ir a Mis entradas'} <Icon name="arrow" /></button></section>
+  if (registeredUser) return <section className="workspace narrow auth-success" aria-live="polite"><span className="success-icon large"><Icon name="check" size={28} /></span><p className="eyebrow">Registro completado</p><h1 className="page-title">Tu cuenta está lista</h1><p>Ya puedes comprar entradas y guardarlas en tu cuenta.</p>{pendingReservation && <div className="pending-summary"><strong>Tu selección sigue guardada</strong><span>{pendingReservation.event.name}</span><small>{pendingReservation.quantity} {pendingReservation.quantity === 1 ? 'entrada' : 'entradas'} · {pendingReservation.total === 0 ? 'Gratis' : `S/ ${pendingReservation.total.toFixed(2)}`}</small></div>}<button className="button primary" onClick={() => onAuthenticated(registeredUser)}>{pendingReservation ? 'Continuar con mi compra' : 'Ver eventos'} <Icon name="arrow" /></button></section>
 
   return <section className="workspace narrow auth-workspace">
     <button className="back-button" onClick={onBack}><Icon name="arrow" size={18} /> Volver {pendingReservation ? 'a la reserva' : 'a eventos'}</button>
     <h1 className="page-title">{mode === 'login' ? 'Inicia sesión' : 'Crea tu cuenta'}</h1>
     <p className="muted">{mode === 'login' ? 'Accede para comprar y ver tus entradas en un solo lugar.' : 'Guarda tus entradas y compra más rápido la próxima vez.'}</p>
-    {pendingReservation && <div className="pending-summary"><strong>Tu reserva está en espera</strong><span>{pendingReservation.event.name}</span><small>{pendingReservation.quantity} entrada(s) · {pendingReservation.total === 0 ? 'Gratis' : `S/ ${pendingReservation.total.toFixed(2)}`}</small></div>}
+    {pendingReservation && <div className="pending-summary"><strong>Tu reserva está en espera</strong><span>{pendingReservation.event.name}</span><small>{pendingReservation.quantity} {pendingReservation.quantity === 1 ? 'entrada' : 'entradas'} · {pendingReservation.total === 0 ? 'Gratis' : `S/ ${pendingReservation.total.toFixed(2)}`}</small></div>}
     <div className="auth-tabs" role="tablist" aria-label="Acceso a la cuenta"><button type="button" role="tab" aria-selected={mode === 'login'} onClick={() => { setMode('login'); setError(null); setFieldErrors({}) }}>Ingresar</button><button type="button" role="tab" aria-selected={mode === 'register'} onClick={() => { setMode('register'); setError(null); setFieldErrors({}) }}>Registrarme</button></div>
     <form className="panel-form auth-form" noValidate onSubmit={(event) => void submit(event)}>
       {mode === 'register' && <div className="field-group"><label htmlFor="display-name">Nombre</label><input id="display-name" value={displayName} onChange={(event) => { setDisplayName(event.target.value); setFieldErrors((value) => ({ ...value, displayName: '' })) }} autoComplete="name" aria-invalid={Boolean(fieldErrors.displayName)} aria-describedby={fieldErrors.displayName ? 'display-name-error' : undefined} />{fieldErrors.displayName && <small className="field-error" id="display-name-error">{fieldErrors.displayName}</small>}</div>}
@@ -802,6 +824,13 @@ function ClientAccount({ onExpired }: { onExpired: () => void }) {
 
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date())
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming')
+  const [thumbs, setThumbs] = useState<Record<string, string>>({})
+  useEffect(() => {
+    let live = true
+    void Promise.all(tickets.map(async (item) => [item.id, await QRCode.toDataURL(item.qr_token, { width: 168, margin: 1, errorCorrectionLevel: 'M' })] as const))
+      .then((pairs) => { if (live) setThumbs(Object.fromEntries(pairs)) }).catch(() => undefined)
+    return () => { live = false }
+  }, [tickets])
   const indexed = reservationGroups.flatMap(({ reservation, tickets: group }) => group.map((ticket, index) => ({ ticket, index, total: group.length, reservation })))
   const isPast = (ticket: Ticket) => ticket.event_date < today
   const upcomingTickets = indexed.filter(({ ticket }) => !isPast(ticket)).sort((x, y) => `${x.ticket.event_date}${x.ticket.event_time ?? ''}`.localeCompare(`${y.ticket.event_date}${y.ticket.event_time ?? ''}`))
@@ -826,7 +855,7 @@ function ClientAccount({ onExpired }: { onExpired: () => void }) {
         </span>
         <span className="wt-stub">
           <span className={ticket.used_at ? 'wt-state used' : isPast(ticket) ? 'wt-state used' : 'wt-state ok'}>{ticket.used_at ? `Usada el ${formatDate(ticket.used_at)}` : isPast(ticket) ? 'Evento realizado' : 'Lista para ingresar'}</span>
-          <span className="wt-qr"><Icon name="qr" size={20} />Ver entrada QR</span>
+          {thumbs[ticket.id] && <img className="wt-qrimg" src={thumbs[ticket.id]} alt="" />}<span className="wt-qr"><Icon name="qr" size={20} />Ver entrada QR</span>
         </span>
       </button></li>)}</ul>}
     {selected && <div className="modal-backdrop" onClick={closeTicket}><section className="ticket-modal" role="dialog" aria-modal="true" aria-labelledby="ticket-dialog-title" aria-describedby="ticket-dialog-instruction" onClick={(event) => event.stopPropagation()}><button ref={modalCloseRef} className="modal-close" aria-label="Cerrar entrada" onClick={closeTicket}><Icon name="close" /></button><p className="eyebrow">Entrada digital privada</p><h2 id="ticket-dialog-title">{selected.event_name}</h2><strong className="modal-ticket-kind">{ticketLabel(selected)}</strong><div className="modal-event-meta"><span><Icon name="calendar" />{formatDate(selected.event_date)} · {formatTime(selected.event_time)}</span><span><Icon name="location" />{selected.event_venue}, {selected.event_city}</span></div><div className="qr-frame">{qrImage ? <img className="qr-image" src={qrImage} alt="Código QR de la entrada" /> : <div className="qr-loading" role="status"><span className="spinner" />Preparando QR…</div>}</div><p className={selected.used_at ? 'used-badge' : 'valid-badge'}><Icon name={selected.used_at ? 'close' : 'check'} size={16} />{selected.used_at ? 'Entrada utilizada' : 'Disponible para validar'}</p><p className="ticket-instruction" id="ticket-dialog-instruction">Presenta este QR completo y con buen brillo al operador en el ingreso. Abrirlo no consume la entrada. No compartas capturas.</p></section></div>}

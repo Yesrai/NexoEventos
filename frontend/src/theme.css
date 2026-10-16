@@ -504,3 +504,31 @@ footer { padding: 28px 24px; color: var(--c-mut); font-size: var(--fs-sm); }
 /* La hoja de compra móvil se ajusta a su contenido (anclada abajo) */
 @media (max-width: 1100px) { .ep-panel { top: auto; } }
 .workspace.narrow { min-height: 0; }
+
+/* Panel de compra: filas de resumen con cantidad y precio unitario */
+.ep-seat-list li span small, .ep-order li span small { display: block; color: var(--c-mut); font-size: var(--fs-sm); font-weight: 400; }
+.ep-order { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.ep-order li { padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; gap: 12px; border: 1px solid var(--c-line); border-radius: 8px; font-size: var(--fs-base); }
+.ep-order li b { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ep-seat-list li b { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Mis entradas: la entrada protagoniza y el QR se ve en la propia tarjeta */
+.wallet-ticket { grid-template-columns: 168px minmax(0, 1fr) 220px; }
+.wt-photo { min-height: 168px; }
+.wt-body { padding: 20px 22px; gap: 6px; }
+.wt-title { font-size: var(--fs-sub); }
+.wt-stub { justify-items: center; text-align: center; gap: 10px; }
+.wt-qrimg { width: 112px; height: 112px; padding: 6px; border: 1px solid var(--c-line); border-radius: 8px; background: #fff; image-rendering: pixelated; }
+.wallet-ticket.muted .wt-qrimg { opacity: .45; }
+.wallet-ticket:hover .wt-qr { text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 700px) {
+  .wallet-ticket { grid-template-columns: 112px minmax(0, 1fr); }
+  .wt-photo { min-height: 0; }
+  .wt-stub { grid-template-columns: auto 1fr; justify-items: start; text-align: left; align-items: center; column-gap: 14px; }
+  .wt-stub .wt-state { grid-column: 2; grid-row: 1; justify-self: start; }
+  .wt-stub .wt-qr { grid-column: 2; grid-row: 2; }
+  .wt-qrimg { grid-column: 1; grid-row: 1 / span 2; width: 96px; height: 96px; }
+}
+
+.notice { border: 1px solid var(--c-tint-line); color: var(--c-ink); background: var(--c-tint); }
+.notice button { color: var(--c-ink); }

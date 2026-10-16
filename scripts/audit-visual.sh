@@ -31,7 +31,9 @@ PY
 KEY="$("$PY" -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')"
 (cd "$ROOT/backend" && DATABASE_URL="postgresql+psycopg://nexoeventos_app@/$DB" TICKET_ENCRYPTION_KEY="$KEY" FRONTEND_ORIGINS="http://127.0.0.1:$WEB_PORT" .venv/bin/uvicorn app.main:app --port $API_PORT >"$WORK/api.log" 2>&1) &
 API_PID=$!
-(cd "$ROOT/frontend" && VITE_API_URL="http://127.0.0.1:$API_PORT" npx vite --host 127.0.0.1 --port $WEB_PORT --strictPort >"$WORK/web.log" 2>&1) &
+# Compilación aislada: el recorrido no depende de ediciones del código mientras corre.
+(cd "$ROOT/frontend" && VITE_API_URL="http://127.0.0.1:$API_PORT" npx vite build --outDir "$WORK/dist" --emptyOutDir >"$WORK/build.log" 2>&1)
+(cd "$ROOT/frontend" && npx vite preview --outDir "$WORK/dist" --host 127.0.0.1 --port $WEB_PORT --strictPort >"$WORK/web.log" 2>&1) &
 WEB_PID=$!
 for _ in $(seq 1 60); do curl -sf "http://127.0.0.1:$API_PORT/health" >/dev/null && curl -sf "http://127.0.0.1:$WEB_PORT/" >/dev/null && break; sleep 0.5; done
 
