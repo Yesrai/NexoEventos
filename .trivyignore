@@ -1,0 +1,4 @@
+# Excepciones de Trivy. Vacío a propósito: no se oculta ningún hallazgo.
+# Cada entrada futura debe llevar, en el mismo commit, el CVE o ID, la justificación técnica
+# (por qué no es explotable aquí), el responsable y una fecha de revisión. Ejemplo:
+#   CVE-0000-00000  # justificación; responsable; revisar antes de 2026-12-31

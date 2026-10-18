@@ -221,3 +221,10 @@ Alcance de esta fase: **inicio, catálogo y página de evento**. Registro, compr
 - **Organizador**: encabezado sin texto técnico, filtro Todos/Publicados/Borradores con conteos, estado vacío con acción, lista en tira horizontal en móvil para ver el detalle de inmediato, vista previa en una sola columna sin barra/hoja flotantes, textos de «Ventas y fila» sin rutas de archivos ni jerga, estados vacíos sin recuadro punteado.
 - **Pruebas**: 31 de interfaz (nueva: resultados de validación del operador), 38 de backend, flujo e2e aislado 27/27 con capturas de organizador (resumen, ventas y fila, operadores, móvil) y operador (escritorio y móvil) en `docs/evidencias/ui/paneles-2/`.
 - **Pendiente**: el organizador no puede consultar el listado de reservas/entradas individuales (la API solo expone estadísticas agregadas; requiere endpoint nuevo); no hay edición de fecha/hora tras tener ventas (regla vigente del backend).
+
+## 18. Docker, CI y Trivy (sin cambios en AWS)
+
+- Añadidos `backend/Dockerfile`, `backend/.dockerignore`, `docker-compose.yml`, `scripts/docker-dev.sh`, `.trivyignore` y reescrito `.github/workflows/ci.yml`; guía en `docs/operacion/ci-docker.md`.
+- Trivy encontró **cryptography 49.0.0 con CVE-2026-69247 (HIGH, corregido en 50.0.0)**; se actualizó a 50.0.0 en los tres archivos de dependencias (la app solo usa Fernet; 38/38 pruebas y QR descifrables). Sin excepciones.
+- El análisis de configuración informa de decisiones V1 conocidas en Terraform (egreso 443 abierto, IP pública de la EC2, S3 sin clave propia, RDS de recuperación); quedan visibles y sin bloquear.
+- **Nota para el despliegue Cloud:** `cryptography` 50.0.0 formará parte de la próxima actualización (Fernet no cambia de formato).

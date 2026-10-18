@@ -1,0 +1,72 @@
+# Entorno local de desarrollo y pruebas: backend + PostgreSQL. No toca AWS ni ninguna base real.
+#
+# Seguridad contra conexiones accidentales a producción:
+#   - la URL de la base está escrita aquí y apunta solo al servicio `db` de esta red;
+#   - no se usa env_file ni se interpola DATABASE_URL desde tu shell;
+#   - PostgreSQL solo se publica en 127.0.0.1.
+#
+# Uso:  scripts/docker-dev.sh up      (crea .env con una clave local, levanta, migra)
+#       scripts/docker-dev.sh down    (detiene; añade -v para borrar los datos locales)
+name: nexoeventos-dev
+
+services:
+  db:
+    image: postgres:18@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336
+    configs:
+      - source: db_init
+        target: /docker-entrypoint-initdb.d/10-roles.sql
+        mode: 0444
+    environment:
+      POSTGRES_PASSWORD: dev-local-only-admin
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    build: ./backend
+    profiles: ["tools"]
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      MIGRATION_DATABASE_URL: postgresql+psycopg://postgres:dev-local-only-admin@db:5432/nexoeventos
+    depends_on:
+      db:
+        condition: service_healthy
+
+  backend:
+    build: ./backend
+    environment:
+      APP_ENV: development
+      DATABASE_URL: postgresql+psycopg://nexoeventos_app:dev-local-only-app@db:5432/nexoeventos
+      FRONTEND_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      TICKET_ENCRYPTION_KEY: "${TICKET_ENCRYPTION_KEY:?Falta la clave local, ejecuta scripts/docker-dev.sh up}"
+    ports:
+      - "127.0.0.1:8001:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+
+configs:
+  db_init:
+    content: |
+      -- Solo desarrollo local con Docker Compose. Se ejecuta una vez, al crear el volumen de PostgreSQL.
+      -- Reproduce la separación de identidades de producción: propietario sin login y aplicación con privilegios mínimos.
+      -- Las contraseñas son de uso local exclusivo y no sirven para ningún otro entorno.
+      CREATE ROLE nexoeventos_owner NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+      CREATE ROLE nexoeventos_app LOGIN PASSWORD 'dev-local-only-app' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+      CREATE DATABASE nexoeventos OWNER nexoeventos_owner;
+      REVOKE ALL ON DATABASE nexoeventos FROM PUBLIC;
+      GRANT CONNECT ON DATABASE nexoeventos TO nexoeventos_app;
+
+volumes:
+  db-data:
