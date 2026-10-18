@@ -182,23 +182,19 @@
         executable: /bin/bash
       no_log: true
 
-    - name: Confirmar revisión 0005
+    - name: Exigir que la base esté en el head de migraciones del release antes del cambio de versión
       ansible.builtin.shell:
         cmd: |
           set -a
           . /etc/nexoeventos/migration.env
           set +a
-          .venv/bin/alembic current
+          current="$(.venv/bin/alembic current 2>/dev/null | awk 'NR==1{print $1}')"
+          head="$(.venv/bin/alembic heads 2>/dev/null | awk 'NR==1{print $1}')"
+          test -n "$head" && test "$current" = "$head"
         chdir: "{{ nexoeventos_release_root }}/releases/{{ release_id }}/backend"
         executable: /bin/bash
-      register: migration_current
       changed_when: false
       no_log: true
-
-    - name: Exigir head esperado antes del cambio de versión
-      ansible.builtin.assert:
-        that: "'0005' in migration_current.stdout"
-        fail_msg: La base no llegó a la revisión 0005; no se publicó la aplicación.
   rescue:
     - name: Reiniciar la aplicación anterior tras un fallo transaccional
       ansible.builtin.systemd_service:
