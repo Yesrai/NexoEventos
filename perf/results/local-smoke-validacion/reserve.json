@@ -1,0 +1,94 @@
+{
+  "schema": 1,
+  "scenario": "reserve",
+  "profile": "smoke",
+  "started_at": "2026-10-19T04:39:51+00:00",
+  "duration_s": 19.1,
+  "vus_max": 2,
+  "iterations": 37,
+  "requests": 140,
+  "rps": 7.3,
+  "latency_ms": {
+    "p50": 15.7,
+    "p95": 39.9,
+    "p99": 67.6,
+    "avg": 19.9,
+    "max": 71.5
+  },
+  "latency_ms_by_op": {
+    "reserve": {
+      "p50": 10.7,
+      "p95": 21.3,
+      "p99": 33.1,
+      "max": 39.9
+    },
+    "login": {
+      "p50": 68.3,
+      "p95": 71.2,
+      "p99": 71.4,
+      "max": 71.5
+    }
+  },
+  "unexpected_errors": 0,
+  "failed_request_rate": 0,
+  "reservations": {
+    "created": 37,
+    "idempotent_replays": 1,
+    "expected_conflicts": 0
+  },
+  "checks": {
+    "passed": 5,
+    "failed": 0
+  },
+  "resources": {
+    "backend": {
+      "cpu_pct_avg": 38.9,
+      "cpu_pct_max": 210.6,
+      "mem_mib_max": 92.1,
+      "samples": 6
+    },
+    "db": {
+      "cpu_pct_avg": 1.4,
+      "cpu_pct_max": 2.9,
+      "mem_mib_max": 54.4,
+      "samples": 6
+    }
+  },
+  "k6_thresholds": {
+    "http_req_duration: p(95)<2000": true,
+    "http_req_duration{op:reserve}: p(95)<2000": true,
+    "http_req_failed: rate<0.01": true,
+    "http_req_duration{op:login}: p(95)<3600000": true,
+    "errores_inesperados: count==0": true
+  },
+  "k6_exit_code": 0,
+  "observations": [],
+  "integrity": {
+    "violations": {
+      "asiento_con_mas_de_una_entrada": 0,
+      "asiento_ocupado_sin_entrada": 0,
+      "entrada_con_asiento_no_marcado_ocupado": 0,
+      "reservas_con_cantidad_distinta_de_entradas": 0,
+      "reservas_sin_entradas": 0,
+      "entradas_sin_reserva_del_mismo_evento": 0,
+      "evento_con_contador_distinto_de_entradas": 0,
+      "evento_vendido_por_encima_del_aforo": 0,
+      "zona_con_contador_distinto_de_entradas": 0,
+      "zona_vendida_por_encima_del_aforo": 0,
+      "claves_de_idempotencia_duplicadas": 0
+    },
+    "total_violations": 0,
+    "totals": {
+      "reservations": 37,
+      "tickets": 54,
+      "seat_tickets": 14
+    },
+    "seat_unique_index_present": true
+  },
+  "verdict": {
+    "k6_thresholds_ok": true,
+    "checks_ok": true,
+    "integrity_ok": true
+  },
+  "passed": true
+}

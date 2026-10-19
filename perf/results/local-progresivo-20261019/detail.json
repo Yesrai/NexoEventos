@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "scenario": "detail",
+  "profile": "progressive",
+  "started_at": "2026-10-19T04:29:58+00:00",
+  "duration_s": 125.5,
+  "vus_max": 50,
+  "iterations": 5864,
+  "requests": 5865,
+  "rps": 46.7,
+  "latency_ms": {
+    "p50": 4.6,
+    "p95": 13.7,
+    "p99": 25.0,
+    "avg": 6.8,
+    "max": 459.4
+  },
+  "latency_ms_by_op": {},
+  "unexpected_errors": 0,
+  "failed_request_rate": 0,
+  "reservations": {
+    "created": 0,
+    "idempotent_replays": 0,
+    "expected_conflicts": 0
+  },
+  "checks": {
+    "passed": 5864,
+    "failed": 0
+  },
+  "resources": {
+    "backend": {
+      "cpu_pct_avg": 15.7,
+      "cpu_pct_max": 24.7,
+      "mem_mib_max": 88.2,
+      "samples": 35
+    },
+    "db": {
+      "cpu_pct_avg": 4.2,
+      "cpu_pct_max": 8.3,
+      "mem_mib_max": 49.9,
+      "samples": 35
+    }
+  },
+  "k6_thresholds": {
+    "errores_inesperados: count==0": true,
+    "http_req_duration{op:reserve}: p(95)<2000": true,
+    "http_req_failed: rate<0.01": true,
+    "http_req_duration: p(95)<2000": true
+  },
+  "k6_exit_code": 0,
+  "observations": [],
+  "verdict": {
+    "k6_thresholds_ok": true,
+    "checks_ok": true
+  },
+  "passed": true
+}

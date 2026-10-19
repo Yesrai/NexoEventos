@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "scenario": "same_seat",
+  "profile": "smoke",
+  "started_at": "2026-10-19T04:40:13+00:00",
+  "duration_s": 11.5,
+  "vus_max": 5,
+  "iterations": 15,
+  "requests": 28,
+  "rps": 2.4,
+  "latency_ms": {
+    "p50": 43.0,
+    "p95": 241.4,
+    "p99": 241.7,
+    "avg": 74.5,
+    "max": 241.8
+  },
+  "latency_ms_by_op": {
+    "reserve": {
+      "p50": 42.5,
+      "p95": 60.6,
+      "p99": 62.2,
+      "max": 62.6
+    },
+    "login": {
+      "p50": 241.2,
+      "p95": 241.7,
+      "p99": 241.8,
+      "max": 241.8
+    }
+  },
+  "unexpected_errors": 0,
+  "failed_request_rate": 0,
+  "reservations": {
+    "created": 3,
+    "idempotent_replays": 0,
+    "expected_conflicts": 12
+  },
+  "checks": {
+    "passed": 0,
+    "failed": 0
+  },
+  "resources": {
+    "backend": {
+      "cpu_pct_avg": 6.5,
+      "cpu_pct_max": 18.8,
+      "mem_mib_max": 89.8,
+      "samples": 3
+    },
+    "db": {
+      "cpu_pct_avg": 0.9,
+      "cpu_pct_max": 2.7,
+      "mem_mib_max": 54.5,
+      "samples": 3
+    }
+  },
+  "k6_thresholds": {
+    "http_req_duration: p(95)<2000": true,
+    "http_req_duration{op:reserve}: p(95)<2000": true,
+    "http_req_failed: rate<0.01": true,
+    "http_req_duration{op:login}: p(95)<3600000": true,
+    "errores_inesperados: count==0": true
+  },
+  "k6_exit_code": 0,
+  "observations": [],
+  "integrity": {
+    "violations": {
+      "asiento_con_mas_de_una_entrada": 0,
+      "asiento_ocupado_sin_entrada": 0,
+      "entrada_con_asiento_no_marcado_ocupado": 0,
+      "reservas_con_cantidad_distinta_de_entradas": 0,
+      "reservas_sin_entradas": 0,
+      "entradas_sin_reserva_del_mismo_evento": 0,
+      "evento_con_contador_distinto_de_entradas": 0,
+      "evento_vendido_por_encima_del_aforo": 0,
+      "zona_con_contador_distinto_de_entradas": 0,
+      "zona_vendida_por_encima_del_aforo": 0,
+      "claves_de_idempotencia_duplicadas": 0
+    },
+    "total_violations": 0,
+    "totals": {
+      "reservations": 3,
+      "tickets": 3,
+      "seat_tickets": 3
+    },
+    "seat_unique_index_present": true
+  },
+  "same_seat": {
+    "seats_contested": 3,
+    "attempts": 15,
+    "winners": 3,
+    "rejected_409": 12
+  },
+  "verdict": {
+    "k6_thresholds_ok": true,
+    "checks_ok": true,
+    "integrity_ok": true,
+    "one_winner_per_seat": true
+  },
+  "passed": true
+}

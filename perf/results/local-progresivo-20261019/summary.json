@@ -1,0 +1,134 @@
+{
+  "schema": 1,
+  "label": "local-progresivo-20261019",
+  "profile": "progressive",
+  "environment": {
+    "kind": "local-docker (isolated)",
+    "docker_vm_cpus": 8,
+    "docker_vm_mem_gib": 3.8,
+    "backend": "uvicorn, 1 worker, container read-only",
+    "database": "postgres (PostgreSQL) 18.6 (Debian 18.6-1.pgdg13+2)",
+    "k6": "grafana/k6:2.3.0",
+    "note": "Mac local; no equivale a t3.small ni a RDS."
+  },
+  "results": {
+    "catalog": {
+      "vus_max": 50,
+      "rps": 46.4,
+      "latency_ms": {
+        "p50": 5.4,
+        "p95": 16.4,
+        "p99": 105.6,
+        "avg": 9.6,
+        "max": 494.2
+      },
+      "unexpected_errors": 0,
+      "reservations": {
+        "created": 0,
+        "idempotent_replays": 0,
+        "expected_conflicts": 0
+      },
+      "passed": true
+    },
+    "detail": {
+      "vus_max": 50,
+      "rps": 46.7,
+      "latency_ms": {
+        "p50": 4.6,
+        "p95": 13.7,
+        "p99": 25.0,
+        "avg": 6.8,
+        "max": 459.4
+      },
+      "unexpected_errors": 0,
+      "reservations": {
+        "created": 0,
+        "idempotent_replays": 0,
+        "expected_conflicts": 0
+      },
+      "passed": true
+    },
+    "availability": {
+      "vus_max": 50,
+      "rps": 91.8,
+      "latency_ms": {
+        "p50": 3.6,
+        "p95": 14.7,
+        "p99": 84.8,
+        "avg": 7.4,
+        "max": 539.5
+      },
+      "unexpected_errors": 0,
+      "reservations": {
+        "created": 0,
+        "idempotent_replays": 0,
+        "expected_conflicts": 0
+      },
+      "passed": true
+    },
+    "reserve": {
+      "vus_max": 40,
+      "rps": 92.8,
+      "latency_ms": {
+        "p50": 6.7,
+        "p95": 60.3,
+        "p99": 231.9,
+        "avg": 18.9,
+        "max": 1627.4
+      },
+      "latency_ms_by_op": {
+        "reserve": {
+          "p50": 8.6,
+          "p95": 56.9,
+          "p99": 139.9,
+          "max": 574.9
+        },
+        "login": {
+          "p50": 54.7,
+          "p95": 86.1,
+          "p99": 187.4,
+          "max": 247.0
+        }
+      },
+      "unexpected_errors": 0,
+      "reservations": {
+        "created": 4142,
+        "idempotent_replays": 336,
+        "expected_conflicts": 246
+      },
+      "passed": true
+    },
+    "same_seat": {
+      "vus_max": 50,
+      "rps": 46.3,
+      "latency_ms": {
+        "p50": 144.1,
+        "p95": 329.2,
+        "p99": 2348.1,
+        "avg": 209.3,
+        "max": 2458.2
+      },
+      "latency_ms_by_op": {
+        "reserve": {
+          "p50": 144.4,
+          "p95": 233.6,
+          "p99": 325.0,
+          "max": 337.2
+        },
+        "login": {
+          "p50": 1717.2,
+          "p95": 2446.7,
+          "p99": 2457.5,
+          "max": 2458.2
+        }
+      },
+      "unexpected_errors": 0,
+      "reservations": {
+        "created": 20,
+        "idempotent_replays": 0,
+        "expected_conflicts": 980
+      },
+      "passed": true
+    }
+  }
+}

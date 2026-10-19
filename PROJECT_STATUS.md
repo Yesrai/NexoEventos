@@ -228,3 +228,10 @@ Alcance de esta fase: **inicio, catálogo y página de evento**. Registro, compr
 - Trivy encontró **cryptography 49.0.0 con CVE-2026-69247 (HIGH, corregido en 50.0.0)**; se actualizó a 50.0.0 en los tres archivos de dependencias (la app solo usa Fernet; 38/38 pruebas y QR descifrables). Sin excepciones.
 - El análisis de configuración informa de decisiones V1 conocidas en Terraform (egreso 443 abierto, IP pública de la EC2, S3 sin clave propia, RDS de recuperación); quedan visibles y sin bloquear.
 - **Nota para el despliegue Cloud:** `cryptography` 50.0.0 formará parte de la próxima actualización (Fernet no cambia de formato).
+
+## 19. Fase 2 · rendimiento e integridad con k6 (solo local, sin AWS)
+
+- `perf/`: escenarios k6 (`catalog`, `detail`, `availability`, `reserve`, `same_seat`), fixture aislado, verificación de integridad en PostgreSQL y orquestador (`perf/run_local.py`); guía y criterios de aceptación en `perf/README.md`. k6 corre en Docker (`grafana/k6:2.3.0`); los scripts rechazan cualquier base distinta de la local del Compose.
+- Resultados reutilizables para comparar V1/V2 en `perf/results/local-smoke-validacion/` y `local-progresivo-20261019/` (JSON, esquema 1).
+- Resultado: 0 errores inesperados, 0 violaciones de integridad en las 11 comprobaciones y exactamente 1 ganador por asiento en 1 000 intentos concurrentes. Observación: 50 inicios de sesión simultáneos tardan p95 ≈ 2.4 s (Argon2, 1 worker); no es un defecto de las reservas.
+- Pendiente (AWS, con autorización y presupuesto): 100/500/1 000 usuarios y comparación V1/V2.
