@@ -32,12 +32,15 @@ CHECKS = {
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--database-url", default=DEFAULT_URL)
+    parser.add_argument("--read-only-remote", action="store_true", help="permite una base no local (p. ej. la RDS desde la EC2) abriendo la sesión en SOLO LECTURA")
     parser.add_argument("--event-ids", help="Limita los totales informativos a estos eventos (coma)", default="")
     args = parser.parse_args()
     parsed = urlparse(args.database_url)
-    if parsed.hostname not in {"127.0.0.1", "localhost"}:
-        raise SystemExit("Rechazado: solo se verifica la base local aislada.")
-    with psycopg.connect(args.database_url) as connection, connection.cursor() as cur:
+    local = parsed.hostname in {"127.0.0.1", "localhost"}
+    if not local and not args.read_only_remote:
+        raise SystemExit("Rechazado: solo se verifica la base local aislada (use --read-only-remote para una base remota en solo lectura).")
+    options = None if local else "-c default_transaction_read_only=on"
+    with psycopg.connect(args.database_url, options=options) as connection, connection.cursor() as cur:
         violations = {}
         for name, query in CHECKS.items():
             cur.execute(query)

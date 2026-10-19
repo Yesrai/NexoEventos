@@ -24,15 +24,19 @@ from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
 K6_IMAGE = "grafana/k6:2.3.0"
-STEPS = {"smoke": (1, 60), "10": (10, 120), "20": (20, 180), "40": (40, 180), "50": (50, 120)}  # (usuarios, segundos de meseta)
+STEPS = {"smoke": (1, 60), "10": (10, 120), "20": (20, 150), "40": (40, 150), "50": (50, 120)}  # (usuarios, segundos de meseta)
 ALL = ["catalog", "detail", "availability", "reserve", "same_seat"]
+CHOICES = ALL + ["mix"]  # mix: perfil mixto (30 % catálogo, 25 % detalle, 20 % disponibilidad, 25 % reserva) con exactamente N usuarios
 MAX_TOTAL_SECONDS = 30 * 60
 DISPUTE_SEATS = 20
 HOST_RE = re.compile(r"^[a-z0-9-]+\.duckdns\.org$")
 
 
-def scenario_seconds(scenario: str, hold: int) -> int:
-    return 180 if scenario == "same_seat" else 30 + hold + 5 + 15  # rampa + meseta + bajada + registro de usuarios
+def scenario_seconds(scenario: str, hold: int, vus: int = 10) -> int:
+    if scenario == "same_seat":
+        return 180
+    setup = 10 + int(vus * 0.6) if scenario in {"reserve", "mix"} else 5  # registro de usuarios ficticios (Argon2)
+    return 30 + hold + 5 + setup  # rampa + meseta + bajada + preparación
 
 
 def validate(args: argparse.Namespace) -> tuple[str, str, str]:
@@ -53,7 +57,7 @@ def validate(args: argparse.Namespace) -> tuple[str, str, str]:
 
 def precheck_fixture(host_url: str, scenario: str) -> None:
     """Lectura previa: el fixture existe y, para la disputa, sus 20 asientos siguen libres (se consumen en cada ejecución)."""
-    if scenario not in {"reserve", "same_seat"}:
+    if scenario not in {"reserve", "same_seat", "mix"}:
         return
     for event_id in (90001, 90002, 90003, 90004):
         try:
@@ -82,6 +86,7 @@ def run_one(scenario: str, vus: int, hold: int, k6_base: str, origin: str, run_i
         "duration_s": round(k6["duration_ms"] / 1000, 1), "vus_max": int((k6["vus_max"] or {}).get("max", 0)), "iterations": int(k6["iterations"]["count"]),
         "requests": int(k6["requests"]["count"]), "rps": round(k6["requests"]["rate"], 1),
         "latency_ms": {"p50": round(k6["latency_ms"]["med"], 1), "p95": round(k6["latency_ms"]["p(95)"], 1), "p99": round(k6["latency_ms"]["p(99)"], 1), "avg": round(k6["latency_ms"]["avg"], 1), "max": round(k6["latency_ms"]["max"], 1)},
+        "latency_ms_by_name": {n: {"p50": round(v["med"], 1), "p95": round(v["p(95)"], 1), "p99": round(v["p(99)"], 1), "max": round(v["max"], 1)} for n, v in (k6.get("latency_by_name") or {}).items() if v and v.get("max", 0) > 0},
         "latency_ms_by_op": {op: {"p50": round(v["med"], 1), "p95": round(v["p(95)"], 1), "p99": round(v["p(99)"], 1), "max": round(v["max"], 1)} for op, v in (k6.get("latency_by_op") or {}).items() if v and v.get("max", 0) > 0},
         "unexpected_errors": c["errores_inesperados"], "failed_request_rate": round(k6["failed_rate"]["rate"], 4),
         "reservations": {"created": c["reservas_ok"], "idempotent_replays": c["reservas_repetidas_idempotentes"], "expected_conflicts": c["conflictos_esperados"]},
@@ -105,16 +110,21 @@ def main() -> None:
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--step", choices=list(STEPS), required=True)
     parser.add_argument("--scenarios", default=",".join(ALL))
+    parser.add_argument("--hold", type=int, default=None, help="solo con --local-rehearsal: acorta la meseta para ensayar")
     parser.add_argument("--label", default=None)
     parser.add_argument("--local-rehearsal", action="store_true")
     parser.add_argument("--integrity-url", default=None, help="solo con --local-rehearsal: base desechable para verificar integridad aquí")
     parser.add_argument("--plan", action="store_true", help="muestra el plan y sale sin generar tráfico")
     args = parser.parse_args()
     scenarios = args.scenarios.split(",")
-    if not set(scenarios) <= set(ALL):
+    if not set(scenarios) <= set(CHOICES):
         sys.exit("Escenario desconocido.")
     vus, hold = STEPS[args.step]
-    total = sum(scenario_seconds(s, hold) for s in scenarios)
+    if args.hold is not None:
+        if not args.local_rehearsal:
+            sys.exit("--hold solo se admite con --local-rehearsal.")
+        hold = args.hold
+    total = sum(scenario_seconds(s, hold, vus) for s in scenarios)
     if vus > 50 or total > MAX_TOTAL_SECONDS:
         sys.exit(f"Rechazado: {vus} usuarios / {total} s superan el límite (50 usuarios, {MAX_TOTAL_SECONDS} s).")
     host_url, k6_base, origin = validate(args)
@@ -129,7 +139,7 @@ def main() -> None:
         print(f"▶ {scenario}", flush=True)
         precheck_fixture(host_url, scenario)
         r = run_one(scenario, vus, hold, k6_base, origin, args.run_id)
-        if scenario in {"reserve", "same_seat"}:
+        if scenario in {"reserve", "same_seat", "mix"}:
             if args.local_rehearsal and args.integrity_url:
                 proc = subprocess.run([sys.executable, str(ROOT / "perf" / "check_integrity.py"), "--database-url", args.integrity_url, "--event-ids", "90001,90002,90003,90004"], capture_output=True, text=True)
                 r["integrity"] = json.loads(proc.stdout.strip().splitlines()[-1])
@@ -145,7 +155,7 @@ def main() -> None:
             break
     summary = {"schema": 1, "label": label, "profile": "step", "step": args.step,
                "environment": {"kind": "local-rehearsal" if args.local_rehearsal else "aws-v1", "k6": K6_IMAGE, "generator": "Mac del autor, vía Internet" if not args.local_rehearsal else "Mac local"},
-               "results": {r["scenario"]: {k: r[k] for k in ("vus_max", "rps", "latency_ms", "latency_ms_by_op", "unexpected_errors", "reservations", "passed", "metrics_window_utc")} for r in results}}
+               "results": {r["scenario"]: {k: r[k] for k in ("vus_max", "rps", "latency_ms", "latency_ms_by_name", "latency_ms_by_op", "unexpected_errors", "reservations", "passed", "metrics_window_utc")} for r in results}}
     (outdir / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"Resultados en perf/results/{label}/")
     sys.exit(0 if all(r["passed"] for r in results) else 1)

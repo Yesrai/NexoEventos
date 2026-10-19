@@ -31,7 +31,7 @@ const stages = (peak) => step
   : smoke
   ? [{ duration: '5s', target: 2 }, { duration: '10s', target: 2 }, { duration: '2s', target: 0 }]
   : [{ duration: '20s', target: Math.round(peak / 5) }, { duration: '30s', target: Math.round(peak / 2) }, { duration: '30s', target: peak }, { duration: '40s', target: peak }, { duration: '5s', target: 0 }]
-const PEAK = step ? { catalog: STEP_VUS, detail: STEP_VUS, availability: STEP_VUS, reserve: STEP_VUS } : { catalog: 50, detail: 50, availability: 50, reserve: 40 }
+const PEAK = step ? { catalog: STEP_VUS, detail: STEP_VUS, availability: STEP_VUS, reserve: STEP_VUS, mix: STEP_VUS } : { catalog: 50, detail: 50, availability: 50, reserve: 40 }
 const DISPUTE_SEATS = smoke ? 3 : 20
 const DISPUTE_VUS = smoke ? 5 : step ? Math.max(5, STEP_VUS) : MAX_VUS
 
@@ -48,6 +48,10 @@ const abortThresholds = step ? {
   'http_req_duration{name:GET /api/events}': [{ threshold: 'p(95)<2000', abortOnFail: true, delayAbortEval: '45s' }],
 } : {}
 
+// Sub-métricas por endpoint (umbral siempre verdadero) para informar latencias por operación en el perfil mixto.
+const NAMES = ['GET /api/events', 'GET /api/events/{id}', 'GET /api/events/{id} (asientos y zonas)', 'GET /api/events/{id}/sales', 'POST /api/events/{id}/reservations', 'GET /api/me/tickets']
+const byName = step ? Object.fromEntries(NAMES.map((n) => [`http_req_duration{name:${n}}`, ['max>=0']])) : {}
+
 export const options = {
   scenarios: { [SCENARIO]: scenarioConfig() },
   noCookiesReset: true, // la sesión de cada usuario virtual persiste entre iteraciones
@@ -55,7 +59,9 @@ export const options = {
   thresholds: {
     http_req_duration: ['p(95)<2000'], // objetivo del proyecto (E01)
     ...(step ? {} : { http_req_failed: ['rate<0.01'] }),
+    ...byName,
     ...abortThresholds,
+    ...(step ? { http_req_duration: [{ threshold: 'p(95)<2000', abortOnFail: true, delayAbortEval: '60s' }] } : {}),
     errores_inesperados: ['count==0'],
     ...(step ? {} : { 'http_req_duration{op:reserve}': ['p(95)<2000'] }), // solo la reserva, sin el inicio de sesión (que usa Argon2)
     'http_req_duration{op:login}': ['p(95)<3600000'], // sin límite real: solo hace que k6 informe la latencia del inicio de sesión
@@ -73,8 +79,8 @@ export function setup() {
   const catalog = http.get(`${BASE}/api/events`)
   const ids = (jsonOf(catalog) || []).map((item) => item.id).filter((id) => id < 90000)
   const data = { ids, users: [], seatIds: {}, startAt: 0 }
-  if (SCENARIO === 'reserve' || SCENARIO === 'same_seat') {
-    const total = SCENARIO === 'same_seat' ? DISPUTE_VUS : PEAK.reserve
+  if (SCENARIO === 'reserve' || SCENARIO === 'same_seat' || SCENARIO === 'mix') {
+    const total = SCENARIO === 'same_seat' ? DISPUTE_VUS : SCENARIO === 'mix' ? PEAK.mix : PEAK.reserve
     for (let i = 0; i < total; i += 1) {
       const user = { email: `k6-${RUN}-${i}@example.com`, password: secret(), display_name: `Usuario K6 ${i}` }
       const response = http.post(`${BASE}/api/auth/register`, JSON.stringify(user), { headers: JSON_HEADERS })
@@ -166,6 +172,15 @@ export function reserve(data) {
   sleep(0.3 + Math.random() * 0.7)
 }
 
+// Perfil mixto (solo nube): cada iteración elige una acción: catálogo 30 %, detalle 25 %, disponibilidad 20 %, reserva 25 %.
+export function mix(data) {
+  const roll = Math.random()
+  if (roll < 0.30) catalog()
+  else if (roll < 0.55) detail(data)
+  else if (roll < 0.75) availability()
+  else reserve(data)
+}
+
 // Todos los usuarios intentan el MISMO asiento casi a la vez; cada «oleada» es un asiento distinto.
 export function same_seat(data) {
   const wave = exec.vu.iterationInScenario
@@ -186,6 +201,7 @@ export function handleSummary(data) {
     requests: pick('http_reqs', ['count', 'rate']),
     latency_ms: pick('http_req_duration', ['avg', 'med', 'p(90)', 'p(95)', 'p(99)', 'max']),
     latency_by_op: { reserve: pick('http_req_duration{op:reserve}', ['med', 'p(95)', 'p(99)', 'max']), login: pick('http_req_duration{op:login}', ['med', 'p(95)', 'p(99)', 'max']) },
+    latency_by_name: Object.fromEntries(NAMES.map((n) => [n, pick(`http_req_duration{name:${n}}`, ['med', 'p(95)', 'p(99)', 'max'])]).filter(([, v]) => v)),
     failed_rate: pick('http_req_failed', ['rate']),
     vus_max: pick('vus_max', ['max']),
     iterations: pick('iterations', ['count']),
