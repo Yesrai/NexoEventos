@@ -8,3 +8,10 @@
 /backend/tests export-ignore
 /scripts/rehearsal export-ignore
 /.gitattributes export-ignore
+/frontend/src/test export-ignore
+*.test.ts export-ignore
+*.test.tsx export-ignore
+/docker-compose.yml export-ignore
+/backend/Dockerfile export-ignore
+/backend/.dockerignore export-ignore
+/.trivyignore export-ignore
