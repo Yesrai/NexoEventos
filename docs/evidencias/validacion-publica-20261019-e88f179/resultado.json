@@ -1,0 +1,219 @@
+{
+  "schema": 1,
+  "when_utc": "2026-10-19T14:36:14+00:00",
+  "base": "https://nexoeventos-demo.duckdns.org",
+  "run": "a7986070",
+  "event_id": 90101,
+  "passed": false,
+  "results": [
+    {
+      "name": "El evento de ensayo NO aparece en el catálogo público",
+      "ok": true,
+      "detail": "32 eventos públicos"
+    },
+    {
+      "name": "El evento de ensayo es accesible por id con sus asientos y zonas",
+      "ok": true,
+      "detail": "96 asientos, 2 zonas"
+    },
+    {
+      "name": "Registro de cuenta ficticia de cliente y de operador (201)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Inicio de sesión del cliente y de la operadora",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Sesión válida en 40 lecturas consecutivas (2 workers)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Reserva simulada de 2 asientos (201) y repetición idempotente (200, misma reserva)",
+      "ok": true,
+      "detail": "total 110.0"
+    },
+    {
+      "name": "Mis entradas: 1 reserva y 2 entradas con QR",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Validación por operadora asignada: aceptada la primera vez y rechazada la segunda (409)",
+      "ok": true,
+      "detail": "200/409"
+    },
+    {
+      "name": "La operadora no puede validar en un evento no asignado (403)",
+      "ok": true,
+      "detail": "403"
+    },
+    {
+      "name": "Un cliente no puede validar entradas (403)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Con fila activa, reservar sin turno se rechaza",
+      "ok": true,
+      "detail": "403"
+    },
+    {
+      "name": "Fila virtual: 5 cuentas entran a la vez; 2 admitidas y 3 en espera con posiciones 1..3",
+      "ok": true,
+      "detail": "admitidas=2 posiciones=[1, 2, 3]"
+    },
+    {
+      "name": "Disputa del mismo asiento: exactamente 1 ganador; el resto 409 o sin turno",
+      "ok": true,
+      "detail": "[201, 403, 403, 403, 409]"
+    },
+    {
+      "name": "UI: [escritorio] El evento oculto NO aparece en el catálogo",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "UI: [escritorio] El enlace directo abre el evento y retira el parámetro de la URL",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "UI: [escritorio] El detalle abre con el recinto 3D como vista principal",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "UI: [escritorio] El botón Atrás del navegador vuelve al catálogo",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "UI: [escritorio] Un clic sobre una butaca del 3D la selecciona y aparece en el panel",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "UI: [escritorio] El panel muestra asiento, cantidad, precio unitario y total",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "UI: [escritorio] Tras registrarse vuelve al evento con el asiento todavía seleccionado",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "UI: [escritorio] La confirmación resume evento, asiento, total y aviso de pago simulado",
+      "ok": false,
+      "detail": ""
+    },
+    {
+      "name": "UI: [escritorio] Mis entradas muestra la entrada con su QR visible en la tarjeta",
+      "ok": false,
+      "detail": ""
+    },
+    {
+      "name": "UI: [escritorio] El QR se abre a tamaño completo",
+      "ok": false,
+      "detail": ""
+    },
+    {
+      "name": "UI: [movil] El evento oculto NO aparece en el catálogo",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "UI: [movil] El enlace directo abre el evento y retira el parámetro de la URL",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "UI: [movil] El detalle abre con el recinto 3D como vista principal",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "UI: [movil] El botón Atrás del navegador vuelve al catálogo",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "UI: [movil] Un clic sobre una butaca del 3D la selecciona y aparece en el panel",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "UI: [movil] El panel muestra asiento, cantidad, precio unitario y total",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "UI: [movil] Tras registrarse vuelve al evento con el asiento todavía seleccionado",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "UI: [movil] La confirmación resume evento, asiento, total y aviso de pago simulado",
+      "ok": false,
+      "detail": ""
+    },
+    {
+      "name": "UI: [movil] Mis entradas muestra la entrada con su QR visible en la tarjeta",
+      "ok": false,
+      "detail": ""
+    },
+    {
+      "name": "UI: [movil] El QR se abre a tamaño completo",
+      "ok": false,
+      "detail": ""
+    },
+    {
+      "name": "UI: sin excepciones de página",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "UI pública: recorrido completo catálogo → 3D → registro → reserva → confirmación → Mis entradas → QR",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Limpieza: la huella del inventario, reservas, entradas y usuarios es idéntica a la previa",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "No quedan evento ni cuentas de ensayo",
+      "ok": true,
+      "detail": "evento=0 cuentas=0"
+    }
+  ],
+  "fingerprint_before": [
+    "reservations=135:cbe0c1c26e4cee71ffac596dd24d3607",
+    "tickets=135",
+    "users=25",
+    "events=35:0733e3db986c355aeaf0225cd403607f",
+    "event_seats=240",
+    "ocupados=0",
+    "zonas_reservadas=0",
+    "queue_entries=0",
+    "access_logs=9",
+    "alembic=0008"
+  ],
+  "fingerprint_after": [
+    "reservations=135:cbe0c1c26e4cee71ffac596dd24d3607",
+    "tickets=135",
+    "users=25",
+    "events=35:0733e3db986c355aeaf0225cd403607f",
+    "event_seats=240",
+    "ocupados=0",
+    "zonas_reservadas=0",
+    "queue_entries=0",
+    "access_logs=9",
+    "alembic=0008"
+  ]
+}

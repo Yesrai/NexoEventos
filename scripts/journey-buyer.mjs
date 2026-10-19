@@ -79,6 +79,7 @@ for (const vp of viewports) {
   // 4 vuelve al evento con la selección intacta (sin pasos extra)
   await waitFor(`!!document.querySelector('.ep-panel')`, 'regreso al evento'); await pause(1500)
   if (vp.mobile) { await evaluate(`document.querySelector('.ep-bar .ep-button')?.click()`); await pause(500) }
+  check(`[${tag}] Tras registrarse la sesión queda iniciada (aparece «Mis entradas»)`, await evaluate(`!!document.querySelector('[aria-label="Mis entradas"]') || [...document.querySelectorAll('.nav-actions button, .nav-actions a')].some((b) => /Mis entradas/.test(b.textContent))`))
   check(`[${tag}] Tras registrarse vuelve al evento con el asiento todavía seleccionado`, await evaluate(`document.querySelectorAll('.ep-seat-list li').length === 1`))
   await shot(`j2-${tag}-regreso-con-seleccion`)
   // 5 confirmación
@@ -97,3 +98,4 @@ for (const vp of viewports) {
 await writeFile(resolve(output, 'resultado.json'), JSON.stringify({ results, pageErrors }, null, 2))
 console.log(pageErrors.length ? `Excepciones: ${pageErrors.length}` : 'Sin excepciones de página')
 socket.close(); browser.kill('SIGTERM')
+process.exit(results.every((r) => r.ok) && pageErrors.length === 0 ? 0 : 1)

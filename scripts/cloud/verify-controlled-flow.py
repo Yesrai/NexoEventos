@@ -155,6 +155,19 @@ def main() -> None:
         wrong = operator.http.post("/api/operator/validate", json={"event_id": OTHER, "qr_token": tickets[1]["qr_token"]}, headers=operator.csrf())
         check(results, "La operadora no puede validar en un evento no asignado (403)", wrong.status_code == 403, str(wrong.status_code))
         check(results, "Un cliente no puede validar entradas (403)", client.http.post("/api/operator/validate", json={"event_id": EVENT, "qr_token": tickets[1]["qr_token"]}, headers=client.csrf()).status_code == 403)
+        if not args.skip_ui:
+            env = {**os.environ, "E2E_BASE": BASE, "E2E_RUN": run, "E2E_EVENT_ID": str(EVENT), "E2E_EVENT_NAME": "[ENSAYO] Evento oculto",
+                   "E2E_CLIENT_EMAIL_PREFIX": "ensayo-ui-", "E2E_CLIENT_PASSWORD": secrets.token_urlsafe(18), "PATH": "/opt/homebrew/opt/node@24/bin:" + os.environ["PATH"]}
+            ui = subprocess.run(["node", str(ROOT / "scripts" / "journey-buyer.mjs"), str(out / "ui")], env=env, capture_output=True, text=True)
+            lines = [l for l in ui.stdout.splitlines() if l.startswith(("OK", "FALL", "Sin exc", "Excep"))]
+            for l in lines:
+                if l.startswith("Sin exc"):
+                    check(results, "UI: sin excepciones de página", True)
+                elif l.startswith("Excep"):
+                    check(results, "UI: " + l, False)
+                else:
+                    check(results, "UI: " + l.split(" ", 1)[1].split(" — ")[0].strip()[:110], l.startswith("OK"))
+            check(results, "UI pública: recorrido completo catálogo → 3D → registro → reserva → confirmación → Mis entradas → QR", ui.returncode == 0 and len(lines) > 20 and all(l.startswith(("OK", "Sin exc")) for l in lines))
         # fila virtual y disputa de asiento con cuentas ficticias
         ssm(f"UPDATE events SET queue_enabled=true, queue_max_active=2, queue_pass_minutes=10 WHERE id={EVENT};", "ensayo: activar fila virtual en el evento de ensayo")
         users = [User(f"q{i}", run) for i in range(5)]
@@ -174,19 +187,6 @@ def main() -> None:
         threads = [threading.Thread(target=lambda u=u: codes.append(u.http.post(f"/api/events/{EVENT}/reservations", json={"quantity": 1, "seat_ids": [free]}, headers={**u.csrf(), "Idempotency-Key": uuid.uuid4().hex}).status_code)) for u in users]
         [t.start() for t in threads]; [t.join() for t in threads]
         check(results, "Disputa del mismo asiento: exactamente 1 ganador; el resto 409 o sin turno", codes.count(201) == 1 and all(c in (201, 409, 403, 423) for c in codes), str(sorted(codes)))
-        if not args.skip_ui:
-            env = {**os.environ, "E2E_BASE": BASE, "E2E_RUN": run, "E2E_EVENT_ID": str(EVENT), "E2E_EVENT_NAME": "[ENSAYO] Evento oculto",
-                   "E2E_CLIENT_EMAIL_PREFIX": "ensayo-ui-", "E2E_CLIENT_PASSWORD": secrets.token_urlsafe(18), "PATH": "/opt/homebrew/opt/node@24/bin:" + os.environ["PATH"]}
-            ui = subprocess.run(["node", str(ROOT / "scripts" / "journey-buyer.mjs"), str(out / "ui")], env=env, capture_output=True, text=True)
-            lines = [l for l in ui.stdout.splitlines() if l.startswith(("OK", "FALL", "Sin exc", "Excep"))]
-            for l in lines:
-                if l.startswith("Sin exc"):
-                    check(results, "UI: sin excepciones de página", True)
-                elif l.startswith("Excep"):
-                    check(results, "UI: " + l, False)
-                else:
-                    check(results, "UI: " + l.split(" ", 1)[1].split(" — ")[0].strip()[:110], l.startswith("OK"))
-            check(results, "UI pública: recorrido completo catálogo → 3D → registro → reserva → confirmación → Mis entradas → QR", ui.returncode == 0 and len(lines) > 20)
     finally:
         if created:
             ssm(CLEANUP, "ensayo: limpieza del evento y cuentas ficticias")
