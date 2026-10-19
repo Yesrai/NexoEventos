@@ -1,0 +1,10 @@
+# El artefacto de despliegue (git archive, scripts/build-release.sh) solo lleva lo que la EC2 necesita.
+# Evidencias, informes, pruebas, rendimiento, ensayos y CI no se publican en producción.
+/docs export-ignore
+/outputs export-ignore
+/perf export-ignore
+/.github export-ignore
+/.vscode export-ignore
+/backend/tests export-ignore
+/scripts/rehearsal export-ignore
+/.gitattributes export-ignore
