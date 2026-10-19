@@ -17,6 +17,7 @@ import os
 import re
 import subprocess
 import sys
+import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
@@ -55,15 +56,27 @@ def validate(args: argparse.Namespace) -> tuple[str, str, str]:
     return args.base_url.rstrip("/"), args.base_url.rstrip("/"), f"https://{url.hostname}"
 
 
+def _ssl_context():
+    """El Python del Mac puede no traer certificados de CA para urllib: usa certifi si está disponible."""
+    import ssl
+    try:
+        import certifi
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:  # noqa: BLE001
+        return ssl.create_default_context()
+
+
 def precheck_fixture(host_url: str, scenario: str) -> None:
     """Lectura previa: el fixture existe y, para la disputa, sus 20 asientos siguen libres (se consumen en cada ejecución)."""
     if scenario not in {"reserve", "same_seat", "mix"}:
         return
     for event_id in (90001, 90002, 90003, 90004):
         try:
-            detail = json.loads(urllib.request.urlopen(f"{host_url}/api/events/{event_id}", timeout=15).read())
-        except Exception:
-            sys.exit(f"Falta el fixture del evento {event_id}: ejecutar perf/cloud_fixture.py up (autorizado) antes de {scenario}.")
+            detail = json.loads(urllib.request.urlopen(f"{host_url}/api/events/{event_id}", timeout=15, context=_ssl_context() if host_url.startswith("https") else None).read())
+        except urllib.error.HTTPError as error:
+            sys.exit(f"Falta el fixture del evento {event_id} (HTTP {error.code}): ejecutar perf/cloud_fixture.py up (autorizado) antes de {scenario}.")
+        except Exception as error:  # noqa: BLE001
+            sys.exit(f"No se pudo consultar el evento {event_id} ({type(error).__name__}: {str(error)[:120]}); se aborta antes de generar tráfico.")
         if scenario == "same_seat" and event_id == 90004 and not all(seat["available"] for seat in detail["seats"]):
             sys.exit("Los asientos de la disputa (90004) ya se usaron: recrear el fixture (cloud_fixture.py up) antes de repetir same_seat.")
 

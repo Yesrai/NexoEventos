@@ -1,0 +1,342 @@
+{
+ "schema": 1,
+ "run": "aws1",
+ "target": "https://nexoeventos-demo.duckdns.org",
+ "started_utc": "2026-10-19T15:17:42+00:00",
+ "levels": [
+  {
+   "label": "nivel-smoke",
+   "step": "smoke",
+   "scenarios": "mix",
+   "run_id": "aws10",
+   "rc": 1,
+   "stdout_tail": [
+    "Plan: smoke → 1 usuarios, meseta 60 s, escenarios ['mix'], ≈ 1 min 45 s máximos, destino nexoeventos-demo.duckdns.org",
+    "▶ mix"
+   ],
+   "stderr_tail": "Falta el fixture del evento 90001: ejecutar perf/cloud_fixture.py up (autorizado) antes de mix.\n",
+   "start_epoch": 1792423090.986633,
+   "end_epoch": 1792423091.481173,
+   "elapsed_s": 0.5,
+   "instance": {
+    "samples": 1,
+    "cpu_avg_pct": 1.0,
+    "cpu_max_pct": 1.0,
+    "cpu_2min_max_avg_pct": 1.0,
+    "steal_max_pct": 0.0,
+    "mem_avail_min_mb": 1367,
+    "api_rss_max_mb": 237,
+    "nginx_rss_max_mb": 21,
+    "db_conns_max": 8
+   },
+   "integrity": {
+    "violations": {
+     "asiento_con_mas_de_una_entrada": 0,
+     "asiento_ocupado_sin_entrada": 0,
+     "entrada_con_asiento_no_marcado_ocupado": 0,
+     "reservas_con_cantidad_distinta_de_entradas": 0,
+     "reservas_sin_entradas": 0,
+     "entradas_sin_reserva_del_mismo_evento": 0,
+     "evento_con_contador_distinto_de_entradas": 0,
+     "evento_vendido_por_encima_del_aforo": 0,
+     "zona_con_contador_distinto_de_entradas": 0,
+     "zona_vendida_por_encima_del_aforo": 0,
+     "claves_de_idempotencia_duplicadas": 0
+    },
+    "total_violations": 0,
+    "totals": {
+     "reservations": 135,
+     "tickets": 135,
+     "seat_tickets": 0
+    },
+    "seat_unique_index_present": true
+   },
+   "credits_latest": 393.2,
+   "rds_recent": {
+    "cpu_pct_1min_max": 3.99,
+    "connections_max": 7.0,
+    "freeable_memory_mb_min": 171.66,
+    "read_iops_max": 0.0,
+    "write_iops_max": 0.25,
+    "disk_queue_depth_max": 0.0,
+    "cpu_credit_balance_min": 267.55
+   },
+   "ok": false,
+   "stop_reasons": [
+    "k6 terminó con error o umbral/abort (rc=1)"
+   ]
+  }
+ ],
+ "stopped_reason": "nivel-smoke: k6 terminó con error o umbral/abort (rc=1)",
+ "environment": {
+  "ec2": {
+   "type": "t3.small",
+   "state": "running",
+   "monitoring": "disabled",
+   "cpu_credits_mode": "unlimited"
+  },
+  "rds": {
+   "class": "db.t3.micro",
+   "status": "available",
+   "multi_az": false,
+   "storage_gib": 20,
+   "storage_type": "gp2"
+  },
+  "generator": "Mac del autor, vía Internet; k6 2.3.0 en Docker"
+ },
+ "fingerprint_before": [
+  "alembic=0008",
+  "reservations=135:cbe0c1c26e4cee71ffac596dd24d3607",
+  "tickets=135 usados=3",
+  "users=25:47c94f8b3ed4eb4ebe1960b42300601e",
+  "access_logs=9",
+  "events=35:0733e3db986c355aeaf0225cd403607f",
+  "event_seats=240 ocupados=0",
+  "zonas_reservadas=0",
+  "queue_entries=0",
+  ""
+ ],
+ "baseline_metrics": {
+  "window_utc": [
+   "2026-10-19T15:02:56+00:00",
+   "2026-10-19T15:17:56+00:00"
+  ],
+  "ec2": {
+   "cpu_pct_5min": [
+    0.9,
+    1.2,
+    1.6
+   ],
+   "cpu_credit_balance": [
+    389.3,
+    391.3,
+    393.2
+   ],
+   "cpu_credit_usage": [
+    0.15,
+    0.09,
+    0.09
+   ],
+   "network_out_mb": 0.1,
+   "network_in_mb": 0.2
+  },
+  "rds": {
+   "cpu_pct_1min_max": [
+    3.75,
+    4.31,
+    3.8,
+    3.83,
+    4.5,
+    3.67,
+    4.05,
+    3.65,
+    4.11,
+    5.17,
+    3.8,
+    3.85,
+    3.81,
+    4.2,
+    4.77
+   ],
+   "connections_max": [
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0
+   ],
+   "freeable_memory_mb_min": [
+    172.45,
+    171.29,
+    170.61,
+    170.01,
+    170.68,
+    173.29,
+    170.34,
+    171.72,
+    171.05,
+    175.64,
+    173.22,
+    172.06,
+    171.75,
+    173.7,
+    174.49
+   ],
+   "read_iops_max": [
+    0.12,
+    0.42,
+    0.0,
+    1.3,
+    0.12,
+    0.0,
+    0.0,
+    0.0,
+    1.4,
+    0.02,
+    0.2,
+    0.38,
+    0.0,
+    1.3,
+    0.08
+   ],
+   "write_iops_max": [
+    10.42,
+    0.5,
+    0.32,
+    0.18,
+    1.47,
+    9.75,
+    0.4,
+    0.22,
+    0.37,
+    0.32,
+    9.47,
+    0.77,
+    0.18,
+    0.27,
+    0.75
+   ],
+   "disk_queue_depth_max": [
+    0.03,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.03,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.03,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "cpu_credit_balance_min": [
+    266.37,
+    266.96,
+    267.55
+   ]
+  }
+ },
+ "cleanup": {
+  "leftovers": [
+   "fixture_events=0",
+   "k6_users=0"
+  ],
+  "complete": true
+ },
+ "fingerprint_after": [
+  "alembic=0008",
+  "reservations=135:cbe0c1c26e4cee71ffac596dd24d3607",
+  "tickets=135 usados=3",
+  "users=25:47c94f8b3ed4eb4ebe1960b42300601e",
+  "access_logs=9",
+  "events=35:0733e3db986c355aeaf0225cd403607f",
+  "event_seats=240 ocupados=0",
+  "zonas_reservadas=0",
+  "queue_entries=0",
+  ""
+ ],
+ "fingerprint_identical": true,
+ "ended_utc": "2026-10-19T15:21:13+00:00",
+ "elapsed_s": 211.0,
+ "cloudwatch": {
+  "window_utc": [
+   "2026-10-19T15:15:42+00:00",
+   "2026-10-19T15:23:43+00:00"
+  ],
+  "ec2": {
+   "cpu_pct_5min": [
+    1.6,
+    1.5
+   ],
+   "cpu_credit_balance": [
+    393.2,
+    395.0
+   ],
+   "cpu_credit_usage": [
+    0.09,
+    0.16
+   ],
+   "network_out_mb": 0.2,
+   "network_in_mb": 0.4
+  },
+  "rds": {
+   "cpu_pct_1min_max": [
+    4.2,
+    4.77,
+    4.0,
+    3.99,
+    3.91,
+    4.35,
+    5.45
+   ],
+   "connections_max": [
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0,
+    7.0
+   ],
+   "freeable_memory_mb_min": [
+    173.7,
+    174.49,
+    173.23,
+    171.57,
+    171.66,
+    171.62,
+    173.6,
+    171.27
+   ],
+   "read_iops_max": [
+    1.3,
+    0.08,
+    0.08,
+    0.1,
+    0.0,
+    1.75,
+    0.17,
+    0.1
+   ],
+   "write_iops_max": [
+    0.27,
+    0.75,
+    9.78,
+    1.15,
+    0.25,
+    0.4,
+    2.48,
+    9.32
+   ],
+   "disk_queue_depth_max": [
+    0.0,
+    0.0,
+    0.02,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.03
+   ],
+   "cpu_credit_balance_min": [
+    267.55,
+    268.12
+   ]
+  }
+ }
+}
