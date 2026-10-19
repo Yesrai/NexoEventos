@@ -1,5 +1,5 @@
 // Escenarios k6 de NexoEventos (solo entorno local aislado; datos ficticios).
-// Uso: lo lanza perf/run_local.py. Variables: BASE_URL, SCENARIO, PROFILE (smoke|progressive), RUN_ID.
+// Uso: lo lanzan perf/run_local.py y perf/run_cloud.py. Variables: BASE_URL, SCENARIO, PROFILE (smoke|progressive|step), RUN_ID, ORIGIN, STEP_VUS, STEP_SECONDS.
 // Escenarios: catalog | detail | availability | reserve | same_seat
 import http from 'k6/http'
 import { check, sleep } from 'k6'
@@ -10,7 +10,7 @@ const BASE = __ENV.BASE_URL
 const SCENARIO = __ENV.SCENARIO
 const PROFILE = __ENV.PROFILE || 'smoke'
 const RUN = __ENV.RUN_ID || String(Date.now())
-const ORIGIN = 'http://localhost:5173' // origen permitido por el backend local
+const ORIGIN = __ENV.ORIGIN || 'http://localhost:5173' // origen permitido por el backend (local o dominio del despliegue)
 const FIX = { general: 90001, zones: 90002, seats: 90003, dispute: 90004 } // creados por perf/fixture.py
 const SEAT_EVENTS = [1028, 1029, 1030] // asientos numerados del catálogo demo
 const MAX_VUS = 50 // límite duro de esta fase
@@ -23,12 +23,17 @@ const erroresInesperados = new Counter('errores_inesperados')
 const intentosMismoAsiento = new Counter('intentos_mismo_asiento')
 
 const smoke = PROFILE === 'smoke'
-const stages = (peak) => smoke
+const step = PROFILE === 'step' // un peldaño de la escalera de nube: STEP_VUS usuarios (≤ MAX_VUS), STEP_SECONDS de meseta
+const STEP_VUS = Math.min(Number(__ENV.STEP_VUS || 10), MAX_VUS)
+const STEP_SECONDS = Math.min(Number(__ENV.STEP_SECONDS || 120), 300)
+const stages = (peak) => step
+  ? [{ duration: '30s', target: peak }, { duration: `${STEP_SECONDS}s`, target: peak }, { duration: '5s', target: 0 }]
+  : smoke
   ? [{ duration: '5s', target: 2 }, { duration: '10s', target: 2 }, { duration: '2s', target: 0 }]
   : [{ duration: '20s', target: Math.round(peak / 5) }, { duration: '30s', target: Math.round(peak / 2) }, { duration: '30s', target: peak }, { duration: '40s', target: peak }, { duration: '5s', target: 0 }]
-const PEAK = { catalog: 50, detail: 50, availability: 50, reserve: 40 }
+const PEAK = step ? { catalog: STEP_VUS, detail: STEP_VUS, availability: STEP_VUS, reserve: STEP_VUS } : { catalog: 50, detail: 50, availability: 50, reserve: 40 }
 const DISPUTE_SEATS = smoke ? 3 : 20
-const DISPUTE_VUS = smoke ? 5 : MAX_VUS
+const DISPUTE_VUS = smoke ? 5 : step ? Math.max(5, STEP_VUS) : MAX_VUS
 
 function scenarioConfig() {
   if (SCENARIO === 'same_seat') return { executor: 'per-vu-iterations', vus: DISPUTE_VUS, iterations: DISPUTE_SEATS, maxDuration: '3m', exec: 'same_seat' }
@@ -36,15 +41,23 @@ function scenarioConfig() {
   return { executor: 'ramping-vus', startVUs: 0, stages: stages(PEAK[SCENARIO]), gracefulRampDown: '5s', exec: SCENARIO }
 }
 
+// En la nube la prueba se corta sola si el servicio se degrada (parada automática del peldaño).
+const abortThresholds = step ? {
+  http_req_failed: [{ threshold: 'rate<0.01', abortOnFail: true, delayAbortEval: '30s' }],
+  ...(SCENARIO === 'same_seat' ? {} : { 'http_req_duration{op:reserve}': [{ threshold: 'p(95)<2000', abortOnFail: true, delayAbortEval: '45s' }] }),
+  'http_req_duration{name:GET /api/events}': [{ threshold: 'p(95)<2000', abortOnFail: true, delayAbortEval: '45s' }],
+} : {}
+
 export const options = {
   scenarios: { [SCENARIO]: scenarioConfig() },
   noCookiesReset: true, // la sesión de cada usuario virtual persiste entre iteraciones
   summaryTrendStats: ['avg', 'med', 'p(90)', 'p(95)', 'p(99)', 'max'],
   thresholds: {
     http_req_duration: ['p(95)<2000'], // objetivo del proyecto (E01)
-    http_req_failed: ['rate<0.01'],
+    ...(step ? {} : { http_req_failed: ['rate<0.01'] }),
+    ...abortThresholds,
     errores_inesperados: ['count==0'],
-    'http_req_duration{op:reserve}': ['p(95)<2000'], // solo la reserva, sin el inicio de sesión (que usa Argon2)
+    ...(step ? {} : { 'http_req_duration{op:reserve}': ['p(95)<2000'] }), // solo la reserva, sin el inicio de sesión (que usa Argon2)
     'http_req_duration{op:login}': ['p(95)<3600000'], // sin límite real: solo hace que k6 informe la latencia del inicio de sesión
   },
 }

@@ -35,3 +35,6 @@ El fixture (`perf/fixture.py`) crea los eventos `90001–90004` (cupos enormes p
 
 ## Límites
 Los resultados locales (un Mac, un worker de uvicorn, PostgreSQL en contenedor) **no equivalen** a la EC2 `t3.small` + RDS de AWS: sirven para validar la lógica, la integridad y para fijar una base reproducible. Las pruebas de 100, 500 y 1 000 usuarios y la comparación V1/V2 se harán en AWS con autorización y control de presupuesto.
+
+## Nube (AWS V1): `run_cloud.py`
+No se ejecuta sin autorización. Un peldaño por invocación (`smoke`, `10`, `20`, `40`, `50` usuarios), guardas en la cabecera del script, SQL del fixture y su limpieza con `perf/cloud_fixture.py up|down` (se ejecuta en la EC2 con la identidad migradora). `--plan` muestra el plan sin generar tráfico; `--local-rehearsal` solo admite 127.0.0.1. La integridad (`check_integrity.py`) se ejecuta en la EC2 y los resultados llevan `metrics_window_utc` para consultar CloudWatch con la misma ventana.
