@@ -16,6 +16,7 @@ import os
 import re
 import subprocess
 import sys
+import threading
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -154,6 +155,26 @@ def integrity() -> dict:
     return json.loads(lines[-1]) if lines else {"error": "sin salida", "total_violations": -1}
 
 
+def rds_free_mb_now() -> float | None:
+    end = datetime.now(timezone.utc)
+    pts = cw("AWS/RDS", "FreeableMemory", ("DBInstanceIdentifier", "nexoeventos-academy-postgres"), end - timedelta(minutes=4), end, 60, "Minimum")
+    return round(pts[-1][1] / 2**20, 1) if pts else None
+
+
+def watchdog(container: str, stop: threading.Event, found: dict) -> None:
+    """Corta k6 de inmediato si la memoria liberable de RDS cae por debajo del límite (sondeo de CloudWatch cada ~40 s)."""
+    while not stop.wait(40):
+        try:
+            mb = rds_free_mb_now()
+        except Exception:  # noqa: BLE001
+            continue
+        found.setdefault("rds_free_mb_samples", []).append(mb)
+        if mb is not None and mb < RDS_FREE_MIN_MB:
+            found["tripped"] = f"RDS memoria liberable {mb} MB < {RDS_FREE_MIN_MB} MB: k6 detenido"
+            subprocess.run(["docker", "stop", container], capture_output=True)
+            return
+
+
 def run_level(base_run: str, index: int, step: str, scenarios: str, label: str) -> dict:
     run_id = f"{base_run}{index}"
     hold = {"smoke": 60, "10": 120, "20": 150, "40": 150, "50": 120}[step]
@@ -162,22 +183,31 @@ def run_level(base_run: str, index: int, step: str, scenarios: str, label: str) 
     cid, iid = ssm_start(sampler_script(est), f"k6 {label}: muestreo de CPU/memoria")
     t0 = time.time()
     env = {**os.environ, "NEXO_LOAD_TEST_APPROVED": run_id}
+    stop, found = threading.Event(), {}
+    thread = threading.Thread(target=watchdog, args=(f"k6-{run_id}-{scenarios.replace('_', '-')}", stop, found), daemon=True)
+    thread.start()
     proc = subprocess.run([PY, str(ROOT / "perf" / "run_cloud.py"), "--base-url", BASE, "--run-id", run_id, "--step", step, "--scenarios", scenarios, "--label", f"aws-v1-{base_run}/{label}"], env=env, capture_output=True, text=True)
     t1 = time.time()
+    stop.set()
     samples = parse_samples(ssm_wait(cid, iid, 300))
     return {"label": label, "step": step, "scenarios": scenarios, "run_id": run_id, "rc": proc.returncode, "stdout_tail": proc.stdout.strip().splitlines()[-6:], "stderr_tail": proc.stderr[-400:],
-            "start_epoch": t0, "end_epoch": t1, "elapsed_s": round(t1 - t0, 1), "instance": cpu_stats(samples, t0, t1), "samples": samples}
+            "start_epoch": t0, "end_epoch": t1, "elapsed_s": round(t1 - t0, 1), "instance": cpu_stats(samples, t0, t1), "watchdog": found, "samples": samples}
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--run-id", required=True)
     ap.add_argument("--plan", action="store_true")
+    ap.add_argument("--levels", default=",".join(LEVELS), help="peldaños a ejecutar, en orden (p. ej. smoke,10)")
+    ap.add_argument("--no-dispute", action="store_true", help="omite la disputa de asiento final")
     args = ap.parse_args()
     base = args.run_id
     if not re.fullmatch(r"[a-z0-9]{3,8}", base):
         sys.exit("--run-id: 3-8 caracteres alfanuméricos en minúsculas.")
-    plan = [(s, "mix") for s in LEVELS] + [("20", "same_seat")]
+    levels = [x for x in args.levels.split(",") if x]
+    if not levels or any(x not in LEVELS for x in levels):
+        sys.exit("--levels: valores permitidos " + ",".join(LEVELS))
+    plan = [(x, "mix") for x in levels] + ([] if args.no_dispute else [("20", "same_seat")])
     print(f"Plan: {', '.join(f'{s}/{sc}' for s, sc in plan)} · destino {BASE} · máx. {MAX_TOTAL_SECONDS // 60} min de escalera · 50 usuarios como máximo")
     if args.plan:
         return
@@ -223,6 +253,7 @@ def main() -> None:
             lv["credits_latest"] = credits_now
             lv["rds_recent"] = {k: (v[-1] if v else None) for k, v in recent["rds"].items()}
             reasons = []
+            if lv["watchdog"].get("tripped"): reasons.append(lv["watchdog"]["tripped"])
             if lv["rc"] != 0: reasons.append(f"k6 terminó con error o umbral/abort (rc={lv['rc']})")
             if lv["integrity"].get("total_violations") != 0: reasons.append(f"integridad: {lv['integrity'].get('total_violations')}")
             if inst_s.get("samples", 0) == 0: reasons.append("sin muestras de CPU (métrica crítica no observable)")

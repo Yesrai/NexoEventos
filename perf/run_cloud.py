@@ -84,7 +84,7 @@ def precheck_fixture(host_url: str, scenario: str) -> None:
 def run_one(scenario: str, vus: int, hold: int, k6_base: str, origin: str, run_id: str) -> dict:
     script = (ROOT / "perf" / "k6" / "nexo.js").read_text(encoding="utf-8")
     started = datetime.now(timezone.utc)
-    cmd = ["docker", "run", "--rm", "-i", "--add-host=host.docker.internal:host-gateway", K6_IMAGE, "run", "--quiet",
+    cmd = ["docker", "run", "--rm", "-i", "--name", f"k6-{run_id}-{scenario.replace('_', '-')}", "--add-host=host.docker.internal:host-gateway", K6_IMAGE, "run", "--quiet",
            "-e", f"BASE_URL={k6_base}", "-e", f"ORIGIN={origin}", "-e", f"SCENARIO={scenario}", "-e", "PROFILE=step",
            "-e", f"STEP_VUS={vus}", "-e", f"STEP_SECONDS={hold}", "-e", f"RUN_ID={run_id}-{scenario.replace('_', '-')}", "-"]  # un conjunto de usuarios por escenario
     proc = subprocess.run(cmd, input=script, capture_output=True, text=True)
