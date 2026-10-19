@@ -394,6 +394,15 @@ export default function App() {
   }
 
   useEffect(() => { void loadEvents(); void checkSession() }, [])
+  // Enlace directo `/?evento=ID`: abre el detalle por el mismo endpoint público (solo eventos publicados; el resto responde 404).
+  // No añade el evento al catálogo ni concede permisos; se retira el parámetro para que recargar vuelva al catálogo.
+  useEffect(() => {
+    const raw = new URLSearchParams(window.location.search).get('evento')
+    if (raw === null) return
+    const id = /^\d{1,9}$/.test(raw) ? Number(raw) : 0
+    window.history.replaceState(window.history.state, '', window.location.pathname)
+    if (id > 0) void openDetail(id)
+  }, [])
 
   async function openDetail(eventId: number) {
     setDetailLoading(true); setConfirmation(null); setReservationMessage(null); setReservationError(null); idempotencyKey.current = null

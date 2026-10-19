@@ -16,6 +16,18 @@ psql postgres -q -c "DROP DATABASE IF EXISTS $DB WITH (FORCE)" -c "CREATE DATABA
 (cd "$ROOT/backend" && MIGRATION_DATABASE_URL="postgresql+psycopg:///$DB" .venv/bin/alembic upgrade head >/dev/null 2>&1)
 "$PY" "$ROOT/scripts/seed-demo-catalog.py" --database-url "postgresql+psycopg:///$DB" >/dev/null
 
+# HIDDEN_EVENT=1: añade un evento ficticio OCULTO (publicado, is_demo=false) copiando la estructura del 1028 y lo abre por enlace directo.
+if [[ "${HIDDEN_EVENT:-0}" == 1 ]]; then
+  psql "$DB" -q -v ON_ERROR_STOP=1 <<'SQL'
+INSERT INTO events (id, name, event_date, event_time, venue, city, category, description, price, capacity, reserved_count, image_path, ticket_mode, is_demo, status, venue_id, layout_id)
+SELECT 90101, '[ENSAYO] Evento oculto', event_date, event_time, venue, city, category, 'Evento ficticio de ensayo.', price, capacity, 0, image_path, ticket_mode, false, 'published', venue_id, layout_id FROM events WHERE id = 1028;
+INSERT INTO event_zones (event_id, name, price, capacity, reserved_count) SELECT 90101, name, price, capacity, 0 FROM event_zones WHERE event_id = 1028;
+INSERT INTO event_seats (event_id, zone_id, row_label, seat_number)
+SELECT 90101, nz.id, s.row_label, s.seat_number FROM event_seats s JOIN event_zones oz ON oz.id = s.zone_id JOIN event_zones nz ON nz.event_id = 90101 AND nz.name = oz.name WHERE s.event_id = 1028;
+SQL
+  export E2E_EVENT_ID=90101 E2E_EVENT_NAME='[ENSAYO] Evento oculto'
+fi
+
 export E2E_ORGANIZER_PASSWORD="$(openssl rand -base64 24)" E2E_OPERATOR_PASSWORD="$(openssl rand -base64 24)" E2E_CLIENT_PASSWORD="$(openssl rand -base64 24)"
 export E2E_DB="$DB" PYTHONPATH="$ROOT/backend"
 "$PY" - <<'PY'

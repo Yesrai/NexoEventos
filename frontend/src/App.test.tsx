@@ -800,4 +800,46 @@ describe('NexoEventos catalog', () => {
     await run('e', 'Entrada de otro evento')
     await expectNoAccessibilityViolations()
   })
+  describe('direct event link (?evento=ID)', () => {
+    const hidden = { ...baseEvent, id: 90101, name: '[ENSAYO] Evento oculto', date: '2026-10-20', venue: 'Sala Ensayo', category: 'Prueba', price: 10, capacity: 20, available_capacity: 20, is_demo: false, description: 'Ficticio', zones: [], seats: [] }
+    afterEach(() => window.history.replaceState(null, '', '/'))
+
+    it('opens a published event that is not in the catalog, removes the parameter and keeps the catalog empty', async () => {
+      window.history.replaceState(null, '', '/?evento=90101')
+      const fetchMock = vi.fn(async (input: string | URL | Request) => {
+        const url = String(input)
+        if (url.endsWith('/api/auth/session')) return { ok: false, status: 401, json: async () => ({}) }
+        if (url.endsWith('/api/events/90101')) return { ok: true, status: 200, json: async () => hidden }
+        return { ok: true, status: 200, json: async () => [] }
+      })
+      vi.stubGlobal('fetch', fetchMock)
+
+      render(<App />)
+      expect(await screen.findByRole('heading', { name: '[ENSAYO] Evento oculto' })).toBeInTheDocument()
+      expect(window.location.search).toBe('')
+      expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith('/api/events/90101'))).toBe(true)
+    })
+
+    it('shows the normal error for an unpublished or unknown event and ignores malformed ids', async () => {
+      window.history.replaceState(null, '', '/?evento=90101')
+      vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request) => {
+        const url = String(input)
+        if (url.endsWith('/api/auth/session')) return { ok: false, status: 401, json: async () => ({}) }
+        if (url.endsWith('/api/events/90101')) return { ok: false, status: 404, json: async () => ({ detail: 'Evento no encontrado' }) }
+        return { ok: true, status: 200, json: async () => [] }
+      }))
+      render(<App />)
+      expect(await screen.findByText('No pudimos cargar el detalle del evento.')).toBeInTheDocument()
+      cleanup()
+
+      window.history.replaceState(null, '', '/?evento=abc%2F..')
+      const fetchMock = vi.fn(async (input: string | URL | Request) => String(input).endsWith('/api/auth/session')
+        ? { ok: false, status: 401, json: async () => ({}) }
+        : { ok: true, status: 200, json: async () => [] })
+      vi.stubGlobal('fetch', fetchMock)
+      render(<App />)
+      await waitFor(() => expect(fetchMock).toHaveBeenCalled())
+      expect(fetchMock.mock.calls.every(([url]) => !/\/api\/events\/[^/]+$/.test(String(url)))).toBe(true)
+    })
+  })
 })

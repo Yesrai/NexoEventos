@@ -9,6 +9,9 @@ const base = process.env.E2E_BASE
 const output = resolve(process.argv[2])
 await mkdir(output, { recursive: true })
 const J = JSON.stringify
+// Con E2E_EVENT_ID se prueba un evento OCULTO (publicado, fuera del catálogo) abierto por enlace directo `/?evento=ID`.
+const DIRECT_ID = process.env.E2E_EVENT_ID
+const EVENT_NAME = process.env.E2E_EVENT_NAME ?? 'Voces en el Auditorio'
 const port = 9400 + Math.floor(Math.random() * 300)
 const browser = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', ['--headless=new', `--remote-debugging-port=${port}`, '--use-angle=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist', '--disable-gpu-sandbox', `--user-data-dir=/tmp/nexo-journey-${Date.now()}`, 'about:blank'], { stdio: 'ignore' })
 const pause = (ms) => new Promise((done) => setTimeout(done, ms))
@@ -45,13 +48,22 @@ for (const vp of viewports) {
   const tag = vp.name
   // 1 catálogo → detalle
   await send('Page.navigate', { url: base }); await waitFor(`document.querySelectorAll('.card').length > 3`, 'catálogo'); await pause(800)
-  await setValue('#main-search', 'Voces en el Auditorio'); await pause(500)
-  await clickText('Ver Voces en el Auditorio'); await waitFor(`!!document.querySelector('.venue-3d-canvas')`, 'recinto 3D'); await pause(2500)
+  if (DIRECT_ID) {
+    await setValue('#main-search', EVENT_NAME); await pause(500)
+    check(`[${tag}] El evento oculto NO aparece en el catálogo`, await evaluate(`![...document.querySelectorAll('.card')].some((c) => c.textContent.includes(${J(EVENT_NAME)}))`))
+    await send('Page.navigate', { url: `${base}/?evento=${DIRECT_ID}` }); await waitFor(`!!document.querySelector('.venue-3d-canvas')`, 'recinto 3D por enlace directo'); await pause(2500)
+    check(`[${tag}] El enlace directo abre el evento y retira el parámetro de la URL`, await evaluate(`location.search === '' && document.body.innerText.includes(${J(EVENT_NAME)})`))
+  } else {
+    await setValue('#main-search', 'Voces en el Auditorio'); await pause(500)
+    await clickText('Ver Voces en el Auditorio'); await waitFor(`!!document.querySelector('.venue-3d-canvas')`, 'recinto 3D'); await pause(2500)
+  }
   check(`[${tag}] El detalle abre con el recinto 3D como vista principal`, await evaluate(`document.querySelector('.ep-segmented button[aria-pressed="true"]')?.textContent.trim() === 'Mapa 3D' && !document.querySelector('.ep-seat-list-view')`))
   // «Atrás» del navegador sube un nivel (no sale del sitio) y se puede volver a abrir el evento
   await evaluate('history.back()')
   check(`[${tag}] El botón Atrás del navegador vuelve al catálogo`, await waitFor(`!document.querySelector('.ep') && document.querySelectorAll('.card').length > 0`, 'atrás'))
-  await clickText('Ver Voces en el Auditorio'); await waitFor(`!!document.querySelector('.venue-3d-canvas')`, 'recinto 3D (de nuevo)'); await pause(2500)
+  if (DIRECT_ID) await send('Page.navigate', { url: `${base}/?evento=${DIRECT_ID}` })
+  else await clickText('Ver Voces en el Auditorio')
+  await waitFor(`!!document.querySelector('.venue-3d-canvas')`, 'recinto 3D (de nuevo)'); await pause(2500)
   await evaluate(`document.querySelector('.ep-stage').scrollIntoView({ block: 'start' })`); await pause(500)
   // 2 asiento en el 3D
   check(`[${tag}] Un clic sobre una butaca del 3D la selecciona y aparece en el panel`, await clickCanvas())
@@ -62,7 +74,7 @@ for (const vp of viewports) {
   // 3 inicio de sesión (registro) y regreso con la selección
   await clickText('Inicia sesión para comprar'); await waitFor(`!!document.getElementById('auth-email')`, 'formulario de acceso')
   await clickText('Registrarme'); await pause(300)
-  await setValue('#display-name', client.name); await setValue('#auth-email', `${tag}-${client.email}`); await setValue('#auth-password', client.password)
+  await setValue('#display-name', client.name); await setValue('#auth-email', process.env.E2E_CLIENT_EMAIL_PREFIX ? `${process.env.E2E_CLIENT_EMAIL_PREFIX}${tag}-${process.env.E2E_RUN}@example.com` : `${tag}-${client.email}`); await setValue('#auth-password', client.password)
   await clickText('Crear cuenta de cliente'); await pause(500)
   // 4 vuelve al evento con la selección intacta (sin pasos extra)
   await waitFor(`!!document.querySelector('.ep-panel')`, 'regreso al evento'); await pause(1500)
@@ -72,7 +84,7 @@ for (const vp of viewports) {
   // 5 confirmación
   await clickText('Confirmar compra'); await waitFor(`!!document.querySelector('.confirm')`, 'confirmación')
   const confirm = await evaluate(`document.querySelector('.confirm')?.innerText ?? ''`)
-  check(`[${tag}] La confirmación resume evento, asiento, total y aviso de pago simulado`, /Voces en el Auditorio/.test(confirm) && /Fila . · Asiento \d+/.test(confirm) && /Total/.test(confirm) && /Pago simulado/.test(confirm))
+  check(`[${tag}] La confirmación resume evento, asiento, total y aviso de pago simulado`, new RegExp(EVENT_NAME.replace(/[\[\]]/g, '\\$&')).test(confirm) && /Fila . · Asiento \d+/.test(confirm) && /Total/.test(confirm) && /Pago simulado/.test(confirm))
   await shot(`j3-${tag}-confirmacion`)
   // 6 Mis entradas y QR
   await clickText('Ver mis entradas'); await waitFor(`!!document.querySelector('.wallet-ticket')`, 'Mis entradas'); await pause(1200)

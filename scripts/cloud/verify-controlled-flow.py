@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Verificación controlada de la versión PÚBLICA de AWS V1 con un evento y cuentas ficticias dedicadas.
 
-Evento [ENSAYO] id 90101 (copia de la estructura del 1028): publicado pero con is_demo=false, por lo que NO aparece en el catálogo
+Eventos [ENSAYO] 90101 (asignado) y 90102 (sin asignar), copias de la estructura del 1028: publicado pero con is_demo=false, por lo que NO aparece en el catálogo
 público (que lista solo is_demo=true) y sigue siendo accesible por id. Cuentas ensayo-*@example.com. No toca reservas ni eventos
 existentes; al terminar borra solo lo identificado por el id 90101 y el prefijo ensayo-, y compara una huella previa/posterior.
 
@@ -26,7 +26,8 @@ import httpx
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "https://nexoeventos-demo.duckdns.org"
-EVENT = 90101
+EVENT = 90101          # ficticio asignado a la operadora
+OTHER = 90102          # ficticio NO asignado: recibe el intento denegado (los accesos se registran en el evento indicado)
 SOURCE = 1028
 HEADERS = {"Origin": BASE}
 MIG = 'set -euo pipefail; set -a; . /etc/nexoeventos/migration.env; set +a; DB_URL=${MIGRATION_DATABASE_URL/postgresql+psycopg:/postgresql:}\n'
@@ -35,39 +36,39 @@ FINGERPRINT = """
 SELECT 'reservations='||count(*)||':'||md5(coalesce(string_agg(id::text, ',' ORDER BY id::text),'')) FROM reservations;
 SELECT 'tickets='||count(*) FROM tickets;
 SELECT 'users='||count(*) FROM users WHERE email NOT LIKE 'ensayo-%@example.com';
-SELECT 'events='||count(*)||':'||md5(coalesce(string_agg(id||':'||capacity||':'||reserved_count||':'||status||':'||event_date, ',' ORDER BY id),'')) FROM events WHERE id <> 90101;
-SELECT 'event_seats='||count(*)||' ocupados='||count(reservation_id) FROM event_seats WHERE event_id <> 90101;
-SELECT 'zonas_reservadas='||coalesce(sum(reserved_count),0) FROM event_zones WHERE event_id <> 90101;
-SELECT 'queue_entries='||count(*) FROM queue_entries WHERE event_id <> 90101;
-SELECT 'access_logs='||count(*) FROM access_logs WHERE event_id <> 90101;
+SELECT 'events='||count(*)||':'||md5(coalesce(string_agg(id||':'||capacity||':'||reserved_count||':'||status||':'||event_date, ',' ORDER BY id),'')) FROM events WHERE id NOT IN (90101, 90102);
+SELECT 'event_seats='||count(*)||' ocupados='||count(reservation_id) FROM event_seats WHERE event_id NOT IN (90101, 90102);
+SELECT 'zonas_reservadas='||coalesce(sum(reserved_count),0) FROM event_zones WHERE event_id NOT IN (90101, 90102);
+SELECT 'queue_entries='||count(*) FROM queue_entries WHERE event_id NOT IN (90101, 90102);
+SELECT 'access_logs='||count(*) FROM access_logs WHERE event_id NOT IN (90101, 90102);
 SELECT 'alembic='||version_num FROM alembic_version;
 """
 
 SETUP = f"""BEGIN;
 DO $$ BEGIN
-  IF EXISTS (SELECT 1 FROM events WHERE id = {EVENT}) THEN RAISE EXCEPTION 'El evento de ensayo ya existe'; END IF;
+  IF EXISTS (SELECT 1 FROM events WHERE id IN ({EVENT}, {OTHER})) THEN RAISE EXCEPTION 'Los eventos de ensayo ya existen'; END IF;
   IF NOT EXISTS (SELECT 1 FROM events WHERE id = {SOURCE}) THEN RAISE EXCEPTION 'Falta el evento origen'; END IF;
 END $$;
 INSERT INTO events (id, name, event_date, event_time, venue, city, category, description, price, capacity, reserved_count, image_path, ticket_mode, is_demo, status, venue_id, layout_id)
-SELECT {EVENT}, '[ENSAYO] Verificación pública', event_date, event_time, venue, city, category, 'Evento ficticio de verificación; no es una función real.', price, capacity, 0, image_path, ticket_mode, false, 'published', venue_id, layout_id FROM events WHERE id = {SOURCE};
-INSERT INTO event_zones (event_id, name, price, capacity, reserved_count) SELECT {EVENT}, name, price, capacity, 0 FROM event_zones WHERE event_id = {SOURCE};
+SELECT ids.id, '[ENSAYO] ' || ids.label, event_date, event_time, venue, city, category, 'Evento ficticio de verificación; no es una función real.', price, capacity, 0, image_path, ticket_mode, false, 'published', venue_id, layout_id FROM events, (VALUES ({EVENT}, 'Evento oculto'), ({OTHER}, 'Evento sin asignar')) AS ids(id, label) WHERE events.id = {SOURCE};
+INSERT INTO event_zones (event_id, name, price, capacity, reserved_count) SELECT ids.id, name, price, capacity, 0 FROM event_zones, (VALUES ({EVENT}), ({OTHER})) AS ids(id) WHERE event_id = {SOURCE};
 INSERT INTO event_seats (event_id, zone_id, row_label, seat_number)
-SELECT {EVENT}, nz.id, s.row_label, s.seat_number FROM event_seats s JOIN event_zones oz ON oz.id = s.zone_id JOIN event_zones nz ON nz.event_id = {EVENT} AND nz.name = oz.name WHERE s.event_id = {SOURCE};
+SELECT nz.event_id, nz.id, s.row_label, s.seat_number FROM event_seats s JOIN event_zones oz ON oz.id = s.zone_id JOIN event_zones nz ON nz.event_id IN ({EVENT}, {OTHER}) AND nz.name = oz.name WHERE s.event_id = {SOURCE};
 COMMIT;"""
 
 CLEANUP = f"""BEGIN;
 DO $$ BEGIN
-  IF EXISTS (SELECT 1 FROM events WHERE id = {EVENT} AND name NOT LIKE '[ENSAYO]%') THEN RAISE EXCEPTION 'El id {EVENT} no es el evento de ensayo; abortado'; END IF;
-  IF EXISTS (SELECT 1 FROM reservations r JOIN users u ON u.id = r.user_id WHERE r.event_id = {EVENT} AND u.email NOT LIKE 'ensayo-%@example.com') THEN RAISE EXCEPTION 'Hay reservas ajenas en el evento de ensayo; abortado'; END IF;
+  IF EXISTS (SELECT 1 FROM events WHERE id IN ({EVENT}, {OTHER}) AND name NOT LIKE '[ENSAYO]%') THEN RAISE EXCEPTION 'El id {EVENT} no es el evento de ensayo; abortado'; END IF;
+  IF EXISTS (SELECT 1 FROM reservations r JOIN users u ON u.id = r.user_id WHERE r.event_id IN ({EVENT}, {OTHER}) AND u.email NOT LIKE 'ensayo-%@example.com') THEN RAISE EXCEPTION 'Hay reservas ajenas en el evento de ensayo; abortado'; END IF;
 END $$;
-DELETE FROM access_logs WHERE event_id = {EVENT} OR operator_user_id IN (SELECT id FROM users WHERE email LIKE 'ensayo-%@example.com');  -- incluye el intento denegado sobre otro evento
-DELETE FROM tickets WHERE event_id = {EVENT};
-UPDATE event_seats SET reservation_id = NULL WHERE event_id = {EVENT};
-DELETE FROM reservations WHERE event_id = {EVENT};
-DELETE FROM queue_entries WHERE event_id = {EVENT};
-DELETE FROM event_seats WHERE event_id = {EVENT};
-DELETE FROM event_zones WHERE event_id = {EVENT};
-DELETE FROM events WHERE id = {EVENT} AND name LIKE '[ENSAYO]%';
+DELETE FROM access_logs WHERE event_id IN ({EVENT}, {OTHER}) OR operator_user_id IN (SELECT id FROM users WHERE email LIKE 'ensayo-%@example.com');  -- incluye el intento denegado sobre otro evento
+DELETE FROM tickets WHERE event_id IN ({EVENT}, {OTHER});
+UPDATE event_seats SET reservation_id = NULL WHERE event_id IN ({EVENT}, {OTHER});
+DELETE FROM reservations WHERE event_id IN ({EVENT}, {OTHER});
+DELETE FROM queue_entries WHERE event_id IN ({EVENT}, {OTHER});
+DELETE FROM event_seats WHERE event_id IN ({EVENT}, {OTHER});
+DELETE FROM event_zones WHERE event_id IN ({EVENT}, {OTHER});
+DELETE FROM events WHERE id IN ({EVENT}, {OTHER}) AND name LIKE '[ENSAYO]%';
 DELETE FROM users u WHERE u.email LIKE 'ensayo-%@example.com' AND NOT EXISTS (SELECT 1 FROM reservations r WHERE r.user_id = u.id) AND NOT EXISTS (SELECT 1 FROM tickets t WHERE t.owner_user_id = u.id OR t.used_by_user_id = u.id);
 COMMIT;"""
 
@@ -151,7 +152,7 @@ def main() -> None:
         v1 = operator.http.post("/api/operator/validate", json={"event_id": EVENT, "qr_token": tok}, headers=operator.csrf())
         v2 = operator.http.post("/api/operator/validate", json={"event_id": EVENT, "qr_token": tok}, headers=operator.csrf())
         check(results, "Validación por operadora asignada: aceptada la primera vez y rechazada la segunda (409)", v1.status_code == 200 and v2.status_code == 409, f"{v1.status_code}/{v2.status_code}")
-        wrong = operator.http.post("/api/operator/validate", json={"event_id": 1028, "qr_token": tickets[1]["qr_token"]}, headers=operator.csrf())
+        wrong = operator.http.post("/api/operator/validate", json={"event_id": OTHER, "qr_token": tickets[1]["qr_token"]}, headers=operator.csrf())
         check(results, "La operadora no puede validar en un evento no asignado (403)", wrong.status_code == 403, str(wrong.status_code))
         check(results, "Un cliente no puede validar entradas (403)", client.http.post("/api/operator/validate", json={"event_id": EVENT, "qr_token": tickets[1]["qr_token"]}, headers=client.csrf()).status_code == 403)
         # fila virtual y disputa de asiento con cuentas ficticias
@@ -174,8 +175,9 @@ def main() -> None:
         [t.start() for t in threads]; [t.join() for t in threads]
         check(results, "Disputa del mismo asiento: exactamente 1 ganador; el resto 409 o sin turno", codes.count(201) == 1 and all(c in (201, 409, 403, 423) for c in codes), str(sorted(codes)))
         if not args.skip_ui:
-            env = {**os.environ, "E2E_BASE": BASE, "E2E_RUN": run, "E2E_CLIENT_PASSWORD": secrets.token_urlsafe(18), "PATH": "/opt/homebrew/opt/node@24/bin:" + os.environ["PATH"]}
-            ui = subprocess.run(["node", str(ROOT / "scripts" / "cloud" / "verify-public-ui.mjs"), str(out / "ui")], env=env, capture_output=True, text=True)
+            env = {**os.environ, "E2E_BASE": BASE, "E2E_RUN": run, "E2E_EVENT_ID": str(EVENT), "E2E_EVENT_NAME": "[ENSAYO] Evento oculto",
+                   "E2E_CLIENT_EMAIL_PREFIX": "ensayo-ui-", "E2E_CLIENT_PASSWORD": secrets.token_urlsafe(18), "PATH": "/opt/homebrew/opt/node@24/bin:" + os.environ["PATH"]}
+            ui = subprocess.run(["node", str(ROOT / "scripts" / "journey-buyer.mjs"), str(out / "ui")], env=env, capture_output=True, text=True)
             lines = [l for l in ui.stdout.splitlines() if l.startswith(("OK", "FALL", "Sin exc", "Excep"))]
             for l in lines:
                 if l.startswith("Sin exc"):
@@ -184,14 +186,14 @@ def main() -> None:
                     check(results, "UI: " + l, False)
                 else:
                     check(results, "UI: " + l.split(" ", 1)[1].split(" — ")[0].strip()[:110], l.startswith("OK"))
-            check(results, "UI pública: recorrido catálogo → 3D → registro sin excepciones", ui.returncode == 0)
+            check(results, "UI pública: recorrido completo catálogo → 3D → registro → reserva → confirmación → Mis entradas → QR", ui.returncode == 0 and len(lines) > 20)
     finally:
         if created:
             ssm(CLEANUP, "ensayo: limpieza del evento y cuentas ficticias")
         after = ssm(FINGERPRINT, "ensayo: huella posterior (lectura)")
         same = before == after
         check(results, "Limpieza: la huella del inventario, reservas, entradas y usuarios es idéntica a la previa", same)
-        leftovers = ssm(f"SELECT 'evento='||count(*) FROM events WHERE id={EVENT}; SELECT 'cuentas='||count(*) FROM users WHERE email LIKE 'ensayo-%@example.com';", "ensayo: restos (lectura)").split()
+        leftovers = ssm(f"SELECT 'evento='||count(*) FROM events WHERE id IN ({EVENT}, {OTHER}); SELECT 'cuentas='||count(*) FROM users WHERE email LIKE 'ensayo-%@example.com';", "ensayo: restos (lectura)").split()
         check(results, "No quedan evento ni cuentas de ensayo", leftovers == ["evento=0", "cuentas=0"], " ".join(leftovers))
         summary = {"schema": 1, "when_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"), "base": BASE, "run": run, "event_id": EVENT, "passed": all(r["ok"] for r in results), "results": results, "fingerprint_before": before.split(), "fingerprint_after": after.split()}
         (out / "resultado.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
