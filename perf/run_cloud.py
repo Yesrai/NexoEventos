@@ -81,10 +81,11 @@ def precheck_fixture(host_url: str, scenario: str) -> None:
             sys.exit("Los asientos de la disputa (90004) ya se usaron: recrear el fixture (cloud_fixture.py up) antes de repetir same_seat.")
 
 
-def run_one(scenario: str, vus: int, hold: int, k6_base: str, origin: str, run_id: str) -> dict:
+def run_one(scenario: str, vus: int, hold: int, k6_base: str, origin: str, run_id: str, resolve_ip: str | None = None) -> dict:
     script = (ROOT / "perf" / "k6" / "nexo.js").read_text(encoding="utf-8")
     started = datetime.now(timezone.utc)
-    cmd = ["docker", "run", "--rm", "-i", "--name", f"k6-{run_id}-{scenario.replace('_', '-')}", "--add-host=host.docker.internal:host-gateway", K6_IMAGE, "run", "--quiet",
+    cmd = ["docker", "run", "--rm", "-i", "--name", f"k6-{run_id}-{scenario.replace('_', '-')}", "--add-host=host.docker.internal:host-gateway",
+           *([f"--add-host={urlparse(k6_base).hostname}:{resolve_ip}"] if resolve_ip else []), K6_IMAGE, "run", "--quiet",
            "-e", f"BASE_URL={k6_base}", "-e", f"ORIGIN={origin}", "-e", f"SCENARIO={scenario}", "-e", "PROFILE=step",
            "-e", f"STEP_VUS={vus}", "-e", f"STEP_SECONDS={hold}", "-e", f"RUN_ID={run_id}-{scenario.replace('_', '-')}", "-"]  # un conjunto de usuarios por escenario
     proc = subprocess.run(cmd, input=script, capture_output=True, text=True)
@@ -127,6 +128,7 @@ def main() -> None:
     parser.add_argument("--label", default=None)
     parser.add_argument("--local-rehearsal", action="store_true")
     parser.add_argument("--integrity-url", default=None, help="solo con --local-rehearsal: base desechable para verificar integridad aquí")
+    parser.add_argument("--resolve-ip", default=None, help="IPv4 del ALB de V2: k6 resuelve el dominio autorizado a esa IP (mismo nombre y certificado, sin tocar DNS)")
     parser.add_argument("--plan", action="store_true", help="muestra el plan y sale sin generar tráfico")
     args = parser.parse_args()
     scenarios = args.scenarios.split(",")
@@ -140,6 +142,8 @@ def main() -> None:
     total = sum(scenario_seconds(s, hold, vus) for s in scenarios)
     if vus > 50 or total > MAX_TOTAL_SECONDS:
         sys.exit(f"Rechazado: {vus} usuarios / {total} s superan el límite (50 usuarios, {MAX_TOTAL_SECONDS} s).")
+    if args.resolve_ip and (args.local_rehearsal or not re.fullmatch(r"(\d{1,3}\.){3}\d{1,3}", args.resolve_ip)):
+        sys.exit("--resolve-ip requiere una IPv4 y no se combina con --local-rehearsal.")
     host_url, k6_base, origin = validate(args)
     print(f"Plan: {args.step} → {vus} usuarios, meseta {hold} s, escenarios {scenarios}, ≈ {total // 60} min {total % 60} s máximos, destino {urlparse(host_url).hostname}")
     if args.plan:
@@ -151,7 +155,7 @@ def main() -> None:
     for scenario in scenarios:
         print(f"▶ {scenario}", flush=True)
         precheck_fixture(host_url, scenario)
-        r = run_one(scenario, vus, hold, k6_base, origin, args.run_id)
+        r = run_one(scenario, vus, hold, k6_base, origin, args.run_id, args.resolve_ip)
         if scenario in {"reserve", "same_seat", "mix"}:
             if args.local_rehearsal and args.integrity_url:
                 proc = subprocess.run([sys.executable, str(ROOT / "perf" / "check_integrity.py"), "--database-url", args.integrity_url, "--event-ids", "90001,90002,90003,90004"], capture_output=True, text=True)

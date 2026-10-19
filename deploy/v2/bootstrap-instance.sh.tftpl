@@ -1,0 +1,35 @@
+#!/bin/bash
+# user_data de las instancias de NexoEventos V2 (plantilla de Terraform). No contiene secretos: solo el NOMBRE del secreto compartido.
+# La AMI dorada ya trae Nginx (modo ALB), la API y la versión desplegada; aquí solo se instala la configuración secreta y se arranca.
+set -euo pipefail
+umask 077
+REGION="${region}"
+SECRET="${secret_name}"
+ENV_FILE=/etc/nexoeventos/backend.env
+
+install -d -m 0755 /etc/nexoeventos
+tmp="$(mktemp)"
+trap 'shred -u "$tmp" 2>/dev/null || rm -f "$tmp"' EXIT
+
+# Credenciales temporales del rol de la instancia (IMDSv2); el valor del secreto no se imprime.
+for attempt in 1 2 3 4 5 6; do
+  if aws secretsmanager get-secret-value --region "$REGION" --secret-id "$SECRET" --query SecretString --output text >"$tmp" 2>/dev/null; then break; fi
+  [ "$attempt" = 6 ] && { echo "No se pudo leer el secreto compartido; la instancia no arrancará la API." >&2; exit 1; }
+  sleep 10
+done
+
+# Claves imprescindibles y IDÉNTICAS en todas las instancias (cifrado de QR, hash de seguridad, base de datos, orígenes).
+for key in DATABASE_URL TICKET_ENCRYPTION_KEY SECURITY_HASH_KEY FRONTEND_ORIGINS; do
+  grep -q "^$key=." "$tmp" || { echo "Falta $key en el secreto compartido." >&2; exit 1; }
+done
+
+# Conexiones a RDS acotadas por proceso: 2 workers x (pool + desborde) por instancia.
+{ grep -vE '^(DB_POOL_SIZE|DB_MAX_OVERFLOW)=' "$tmp"; echo "DB_POOL_SIZE=${db_pool_size}"; echo "DB_MAX_OVERFLOW=${db_max_overflow}"; } >"$ENV_FILE.new"
+chmod 0600 "$ENV_FILE.new"
+mv -f "$ENV_FILE.new" "$ENV_FILE"
+
+# V2 termina TLS en el ALB: sin DuckDNS ni renovación de certificados en las instancias.
+systemctl disable --now nexoeventos-duckdns.timer 2>/dev/null || true
+systemctl disable --now certbot-renew.timer 2>/dev/null || true
+systemctl daemon-reload
+systemctl enable --now nexoeventos-api.service nginx.service

@@ -175,7 +175,7 @@ def watchdog(container: str, stop: threading.Event, found: dict) -> None:
             return
 
 
-def run_level(base_run: str, index: int, step: str, scenarios: str, label: str) -> dict:
+def run_level(base_run: str, index: int, step: str, scenarios: str, label: str, resolve_ip: str | None = None) -> dict:
     run_id = f"{base_run}{index}"
     hold = {"smoke": 60, "10": 120, "20": 150, "40": 150, "50": 120}[step]
     vus = {"smoke": 1, "10": 10, "20": 20, "40": 40, "50": 50}[step]
@@ -186,7 +186,7 @@ def run_level(base_run: str, index: int, step: str, scenarios: str, label: str) 
     stop, found = threading.Event(), {}
     thread = threading.Thread(target=watchdog, args=(f"k6-{run_id}-{scenarios.replace('_', '-')}", stop, found), daemon=True)
     thread.start()
-    proc = subprocess.run([PY, str(ROOT / "perf" / "run_cloud.py"), "--base-url", BASE, "--run-id", run_id, "--step", step, "--scenarios", scenarios, "--label", f"aws-v1-{base_run}/{label}"], env=env, capture_output=True, text=True)
+    proc = subprocess.run([PY, str(ROOT / "perf" / "run_cloud.py"), "--base-url", BASE, "--run-id", run_id, "--step", step, "--scenarios", scenarios, "--label", f"aws-v1-{base_run}/{label}", *(["--resolve-ip", resolve_ip] if resolve_ip else [])], env=env, capture_output=True, text=True)
     t1 = time.time()
     stop.set()
     samples = parse_samples(ssm_wait(cid, iid, 300))
@@ -200,6 +200,7 @@ def main() -> None:
     ap.add_argument("--plan", action="store_true")
     ap.add_argument("--levels", default=",".join(LEVELS), help="peldaños a ejecutar, en orden (p. ej. smoke,10)")
     ap.add_argument("--no-dispute", action="store_true", help="omite la disputa de asiento final")
+    ap.add_argument("--resolve-ip", default=None, help="V2: IPv4 del ALB; k6 usa el mismo dominio y certificado resueltos a esa IP")
     args = ap.parse_args()
     base = args.run_id
     if not re.fullmatch(r"[a-z0-9]{3,8}", base):
@@ -244,7 +245,7 @@ def main() -> None:
                 report["stopped_reason"] = "límite de 28 min de escalera"; break
             label = f"{step}-{scenarios}" if scenarios != "mix" else f"nivel-{step}"
             print(f"▶ {label} …", flush=True)
-            lv = run_level(base, i, step, scenarios, label)
+            lv = run_level(base, i, step, scenarios, label, args.resolve_ip)
             lv["integrity"] = integrity()
             inst_s = lv["instance"]
             # métricas recientes de CloudWatch (con retraso de minutos; informativas y para créditos)

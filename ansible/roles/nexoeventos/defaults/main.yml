@@ -3,3 +3,7 @@ nexoeventos_release_root: /opt/nexoeventos-deploy
 nexoeventos_keep_releases: 3
 nexoeventos_domain: nexoeventos-demo.duckdns.org
 nexoeventos_run_migrations: true
+# Borde de la aplicación: "direct" (V1: Nginx con TLS propio y Let's Encrypt) o "alb" (V2: el ALB termina TLS y Nginx escucha en :80).
+nexoeventos_edge: direct
+# Red desde la que Nginx confía en X-Forwarded-For en modo "alb" (la VPC; el SG ya limita el origen al ALB).
+nexoeventos_alb_cidr: 10.20.0.0/16

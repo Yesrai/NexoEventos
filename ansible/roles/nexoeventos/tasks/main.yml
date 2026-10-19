@@ -15,6 +15,7 @@
       - platform_check.rc == 0
       - release_id is match('^[0-9a-f]{7,40}$')
       - release_artifact is file
+      - nexoeventos_edge in ['direct', 'alb']
       - nexoeventos_domain is match('^[a-z0-9.-]+\\.(duckdns\\.org|sslip\\.io)$')
     fail_msg: Plataforma, dominio o artefacto no válidos; no se modificó la aplicación.
 
@@ -24,8 +25,8 @@
   loop:
     - /etc/nexoeventos/backend.env
     - /etc/nexoeventos/migration.env
-    - "/etc/letsencrypt/live/{{ nexoeventos_domain }}/fullchain.pem"
-    - "/etc/letsencrypt/live/{{ nexoeventos_domain }}/privkey.pem"
+    - "{{ '/etc/letsencrypt/live/' ~ nexoeventos_domain ~ '/fullchain.pem' if nexoeventos_edge == 'direct' else '/etc/nexoeventos/backend.env' }}"
+    - "{{ '/etc/letsencrypt/live/' ~ nexoeventos_domain ~ '/privkey.pem' if nexoeventos_edge == 'direct' else '/etc/nexoeventos/backend.env' }}"
   register: protected_files
   no_log: true
 
@@ -257,7 +258,7 @@
 
 - name: Instalar configuración Nginx versionada
   ansible.builtin.template:
-    src: nexoeventos-nginx.conf.j2
+    src: "{{ 'nexoeventos-nginx-alb.conf.j2' if nexoeventos_edge == 'alb' else 'nexoeventos-nginx.conf.j2' }}"
     dest: /etc/nginx/conf.d/nexoeventos.conf
     owner: root
     group: root

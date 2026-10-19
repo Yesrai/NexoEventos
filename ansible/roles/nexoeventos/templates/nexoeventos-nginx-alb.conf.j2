@@ -1,0 +1,49 @@
+# Nginx detrás del ALB (V2): el ALB termina TLS y reenvía por HTTP; este servidor solo acepta tráfico del grupo de seguridad del ALB.
+log_format nexoeventos_safe escape=json
+    '$time_iso8601 method=$request_method path=$uri status=$status '
+    'bytes=$body_bytes_sent request_time=$request_time request_id=$request_id';
+
+# IP real del cliente: se confía en X-Forwarded-For SOLO cuando la conexión viene de la red del ALB (la VPC). Con real_ip_recursive se toma
+# la dirección más a la derecha que no sea de confianza, de modo que un X-Forwarded-For falsificado por el cliente no sirve para evadir el
+# limitador de intentos ni para suplantar su IP.
+set_real_ip_from {{ nexoeventos_alb_cidr }};
+real_ip_header X-Forwarded-For;
+real_ip_recursive on;
+
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+    access_log /var/log/nginx/nexoeventos-access.log nexoeventos_safe;
+    error_log /var/log/nginx/nexoeventos-error.log error;
+    root {{ nexoeventos_release_root }}/current/frontend/dist;
+    index index.html;
+    client_max_body_size 1m;
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "camera=(self), microphone=(), geolocation=()" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" always;
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        # Un solo valor: la IP real ya resuelta (uvicorn confía en 127.0.0.1 y la usa como cliente).
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_read_timeout 30s;
+    }
+    # Health check del ALB (host = IP de la instancia): comprueba FastAPI y PostgreSQL.
+    location = /healthz {
+        access_log off;
+        proxy_pass http://127.0.0.1:8000/ready;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+    location ^~ /_observability/ {
+        default_type text/plain;
+        return 204;
+    }
+    location / { try_files $uri $uri/ /index.html; }
+}
