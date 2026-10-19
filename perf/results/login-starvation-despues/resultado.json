@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "label": "despues",
+  "container_memory_mb": 1536,
+  "workers": 2,
+  "login": {
+    "n": 100,
+    "burst_p50": 1784,
+    "burst_max": 3388,
+    "codes": {
+      "200": 100
+    },
+    "ready": {
+      "sondeos": 39,
+      "p95": 35,
+      "max": 662,
+      "no200": 0
+    },
+    "catalogo": {
+      "sondeos": 39,
+      "p95": 27,
+      "max": 141,
+      "no200": 0
+    }
+  },
+  "registro": {
+    "n": 100,
+    "burst_p50": 31606,
+    "burst_max": 31725,
+    "codes": {
+      "201": 98,
+      "500": 2
+    },
+    "ready": {
+      "sondeos": 20,
+      "p95": 52,
+      "max": 95,
+      "no200": 0
+    },
+    "catalogo": {
+      "sondeos": 20,
+      "p95": 12,
+      "max": 31604,
+      "no200": 0
+    }
+  }
+}

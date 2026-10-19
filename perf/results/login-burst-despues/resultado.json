@@ -21,16 +21,16 @@
       "container": "running oom=false exit=0",
       "oom_kills": 0,
       "latency_ms": {
-        "p50": 331,
-        "p95": 450,
-        "p99": 478,
-        "max": 478
+        "p50": 303,
+        "p95": 423,
+        "p99": 434,
+        "max": 434
       },
-      "throughput_logins_per_s": 22.7,
-      "burst_wall_s": 0.44,
+      "throughput_logins_per_s": 24.7,
+      "burst_wall_s": 0.41,
       "mem_idle_mb": 160,
       "mem_peak_mb": 387,
-      "mem_peak_delta_mb": 226
+      "mem_peak_delta_mb": 227
     },
     {
       "size": 20,
@@ -43,15 +43,15 @@
       "container": "running oom=false exit=0",
       "oom_kills": 0,
       "latency_ms": {
-        "p50": 730,
-        "p95": 1153,
-        "p99": 1178,
-        "max": 1196
+        "p50": 651,
+        "p95": 1955,
+        "p99": 2013,
+        "max": 2040
       },
-      "throughput_logins_per_s": 19.4,
-      "burst_wall_s": 1.03,
-      "mem_idle_mb": 163,
-      "mem_peak_mb": 421,
+      "throughput_logins_per_s": 16.3,
+      "burst_wall_s": 1.23,
+      "mem_idle_mb": 162,
+      "mem_peak_mb": 420,
       "mem_peak_delta_mb": 258
     },
     {
@@ -65,16 +65,16 @@
       "container": "running oom=false exit=0",
       "oom_kills": 0,
       "latency_ms": {
-        "p50": 1019,
-        "p95": 1667,
-        "p99": 1945,
-        "max": 1952
+        "p50": 1057,
+        "p95": 1856,
+        "p99": 2022,
+        "max": 2024
       },
-      "throughput_logins_per_s": 28.4,
-      "burst_wall_s": 1.76,
+      "throughput_logins_per_s": 26.9,
+      "burst_wall_s": 1.86,
       "mem_idle_mb": 166,
-      "mem_peak_mb": 434,
-      "mem_peak_delta_mb": 268
+      "mem_peak_mb": 425,
+      "mem_peak_delta_mb": 259
     }
   ]
 }

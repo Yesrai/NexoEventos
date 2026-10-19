@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "label": "antes",
+  "note": "Semáforo de Argon2 (634a54e) SIN devolver la conexión al pool antes de esperar turno. Cifras transcritas de la salida de la ejecución (mismo contenedor: 1 536 MB, 2 workers, 100 simultáneos).",
+  "container_memory_mb": 1536,
+  "workers": 2,
+  "login": {"n": 100, "burst_p50": 30453, "burst_max": 31359, "codes": {"200": 78, "500": 22}, "ready": {"p95": 17, "max": 30396, "no200": 0}, "catalogo": {"p95": 63, "max": 264, "no200": 0}},
+  "registro": {"n": 100, "burst_p50": 31981, "burst_max": 32083, "codes": {"201": 98, "500": 2}, "ready": {"p95": 24, "max": 170, "no200": 0}, "catalogo": {"p95": 20, "max": 95, "no200": 0}}
+}

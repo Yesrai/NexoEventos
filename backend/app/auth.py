@@ -45,8 +45,12 @@ def verify_password(password: str, encoded: str) -> bool:
 
 def verify_login(session: Session, email: str, password: str) -> User | None:
     user = session.scalar(select(User).where(User.email == normalize_email(email)))
-    valid = verify_password(password, user.password_hash if user else _dummy_hash)
-    return user if user and user.is_active and valid else None
+    encoded, active = (user.password_hash, user.is_active) if user else (_dummy_hash, False)
+    # Se devuelve la conexión al pool antes de esperar turno y calcular Argon2: sin esto, los accesos en espera retenían las 15 conexiones
+    # del worker, los hilos libres se agotaban y el resto del tráfico esperaba hasta el tiempo límite del pool (500 con ~100 simultáneos).
+    session.rollback()
+    valid = verify_password(password, encoded)
+    return user if user and active and valid else None
 
 
 def issue_session(session: Session, user: User) -> tuple[str, str, datetime]:
