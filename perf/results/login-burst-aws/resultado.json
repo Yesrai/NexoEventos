@@ -1,0 +1,127 @@
+{
+  "schema": 1,
+  "run": "787deacb",
+  "target": "https://nexoeventos-demo.duckdns.org",
+  "started_utc": "2026-10-19T20:37:24+00:00",
+  "bursts": [
+    {
+      "size": 20,
+      "errors": 0,
+      "status_codes": {
+        "200": 20
+      },
+      "latency_ms": {
+        "p50": 2242,
+        "p95": 3345,
+        "p99": 3376,
+        "max": 3376
+      },
+      "wall_s": 3.38,
+      "logins_per_s": 5.9,
+      "instance": {
+        "cpu_avg_pct": 25.3,
+        "cpu_max_pct": 69.0,
+        "cpu_2min_max_avg_pct": 25.3,
+        "steal_max_pct": 0.0,
+        "mem_avail_min_mb": 1099,
+        "api_rss_max_mb": 323,
+        "nginx_rss_max_mb": 20,
+        "db_conns_max": 11
+      },
+      "api_rss_peak_mb": 323,
+      "mem_avail_min_mb": 1099,
+      "cpu_max_pct": 69.0,
+      "ready": {
+        "sondeos": 17,
+        "p95_ms": 126,
+        "max_ms": 293,
+        "no200": 0
+      },
+      "catalogo": {
+        "sondeos": 17,
+        "p95_ms": 185,
+        "max_ms": 277,
+        "no200": 0
+      },
+      "ready_degraded": false,
+      "ok": true,
+      "stop_reasons": []
+    },
+    {
+      "size": 50,
+      "errors": 0,
+      "status_codes": {
+        "200": 50
+      },
+      "latency_ms": {
+        "p50": 4450,
+        "p95": 7895,
+        "p99": 7925,
+        "max": 7925
+      },
+      "wall_s": 7.93,
+      "logins_per_s": 6.3,
+      "instance": {
+        "cpu_avg_pct": 38.4,
+        "cpu_max_pct": 100.0,
+        "cpu_2min_max_avg_pct": 38.4,
+        "steal_max_pct": 4.0,
+        "mem_avail_min_mb": 1090,
+        "api_rss_max_mb": 390,
+        "nginx_rss_max_mb": 22,
+        "db_conns_max": 11
+      },
+      "api_rss_peak_mb": 390,
+      "mem_avail_min_mb": 1090,
+      "cpu_max_pct": 100.0,
+      "ready": {
+        "sondeos": 26,
+        "p95_ms": 493,
+        "max_ms": 543,
+        "no200": 0
+      },
+      "catalogo": {
+        "sondeos": 26,
+        "p95_ms": 257,
+        "max_ms": 272,
+        "no200": 0
+      },
+      "ready_degraded": false,
+      "ok": true,
+      "stop_reasons": []
+    }
+  ],
+  "stopped_reason": null,
+  "cleanup": {
+    "leftovers": [
+      "cuentas=0",
+      "rate_limits=0"
+    ],
+    "complete": true
+  },
+  "fingerprint_before": [
+    "alembic=0008",
+    "reservations=135:cbe0c1c26e4cee71ffac596dd24d3607",
+    "tickets=135 usados=3",
+    "users=25:47c94f8b3ed4eb4ebe1960b42300601e",
+    "access_logs=9",
+    "events=35:0733e3db986c355aeaf0225cd403607f",
+    "event_seats=240 ocupados=0",
+    "zonas_reservadas=0",
+    "queue_entries=0",
+    ""
+  ],
+  "fingerprint_after": [
+    "alembic=0008",
+    "reservations=135:cbe0c1c26e4cee71ffac596dd24d3607",
+    "tickets=135 usados=3",
+    "users=25:47c94f8b3ed4eb4ebe1960b42300601e",
+    "access_logs=9",
+    "events=35:0733e3db986c355aeaf0225cd403607f",
+    "event_seats=240 ocupados=0",
+    "zonas_reservadas=0",
+    "queue_entries=0",
+    ""
+  ],
+  "fingerprint_identical": true
+}
