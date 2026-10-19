@@ -17,10 +17,21 @@ EC2_ID="$(ec2_instance_id)"
 [[ -n "$EC2_ID" && "$EC2_ID" != "None" && "$EC2_ID" != *$'\t'* ]] || die "No se encontró exactamente una EC2 con tag Name=$EC2_NAME_TAG."
 
 rds_autostart_deadline() {
-  # Último evento 'stopped' de RDS (eventos retenidos 14 días) + 7 días.
-  local t
+  # El límite de 7 días solo corre mientras la RDS está detenida; se calcula desde el último evento exacto "DB instance stopped".
+  # Los eventos de arranque automático ("... being started due to it exceeding the maximum allowed time being stopped")
+  # también contienen la palabra "stopped": no son paradas y no deben contarse.
+  local state t auto
+  state="$(rds_status "$RDS_ID")"
+  auto="$(aws rds describe-events --source-type db-instance --source-identifier "$RDS_ID" --duration 20160 \
+        --query "Events[?contains(Message, 'being started due to it exceeding')].Date | [-1]" --output text 2>/dev/null || true)"
+  if [[ "$state" != "stopped" ]]; then
+    local extra=""
+    [[ -n "$auto" && "$auto" != "None" ]] && extra="; último arranque automático por exceder 7 días: $auto"
+    echo "no aplica: RDS en estado '$state' (el límite solo corre mientras está detenida)$extra"
+    return
+  fi
   t="$(aws rds describe-events --source-type db-instance --source-identifier "$RDS_ID" --duration 20160 \
-        --query "Events[?contains(Message, 'stopped')].Date | [-1]" --output text 2>/dev/null || true)"
+        --query "Events[?Message=='DB instance stopped'].Date | [-1]" --output text 2>/dev/null || true)"
   if [[ -z "$t" || "$t" == "None" ]]; then echo "desconocida (sin evento de parada en 14 días)"; return; fi
   python3 - "$t" <<'PY'
 import sys
@@ -29,7 +40,7 @@ stop = datetime.fromisoformat(sys.argv[1].replace("Z", "+00:00"))
 limit = stop + timedelta(days=7)
 lima = timezone(timedelta(hours=-5))
 left = limit - datetime.now(timezone.utc)
-print(f"detenida {stop.astimezone(lima):%Y-%m-%d %H:%M} Lima -> reinicio automático aprox. {limit.astimezone(lima):%Y-%m-%d %H:%M} Lima (faltan {left.days} d {left.seconds//3600} h)")
+print(f"detenida {stop.astimezone(lima):%Y-%m-%d %H:%M} Lima -> reinicio automático aprox. {limit.astimezone(lima):%Y-%m-%d %H:%M} Lima (faltan {left.days} d {left.seconds // 3600} h)")
 PY
 }
 
