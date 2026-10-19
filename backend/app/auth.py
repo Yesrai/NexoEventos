@@ -1,5 +1,6 @@
 import hashlib
 import secrets
+import threading
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from hmac import compare_digest
@@ -10,7 +11,7 @@ from pwdlib import PasswordHash
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.config import ALLOWED_ORIGINS, COOKIE_SECURE, CSRF_COOKIE, SESSION_COOKIE, SESSION_HOURS
+from app.config import ALLOWED_ORIGINS, ARGON2_MAX_CONCURRENT, COOKIE_SECURE, CSRF_COOKIE, SESSION_COOKIE, SESSION_HOURS
 from app.database import get_session
 from app.models import AuthSession, User
 
@@ -26,12 +27,20 @@ def normalize_email(email: str) -> str:
     return email.strip().lower()
 
 
+# Las rutas síncronas de registro e inicio de sesión corren en un pool de hasta 40 hilos por worker y cada Argon2id reserva ~64 MiB:
+# una ráfaga de accesos simultáneos agotaba la memoria de una instancia de 2 GB. Este límite por proceso encola el exceso (sin cambiar
+# los parámetros de Argon2 ni el esquema); los logins extra esperan su turno en lugar de competir por memoria y CPU.
+_argon2_slots = threading.BoundedSemaphore(ARGON2_MAX_CONCURRENT)
+
+
 def hash_password(password: str) -> str:
-    return password_hash.hash(password)
+    with _argon2_slots:
+        return password_hash.hash(password)
 
 
 def verify_password(password: str, encoded: str) -> bool:
-    return password_hash.verify(password, encoded)
+    with _argon2_slots:
+        return password_hash.verify(password, encoded)
 
 
 def verify_login(session: Session, email: str, password: str) -> User | None:

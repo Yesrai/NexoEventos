@@ -11,6 +11,8 @@ CSRF_COOKIE = "nexoeventos_csrf"
 SESSION_HOURS = int(os.getenv("SESSION_HOURS", "8"))
 COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "false").lower() == "true"
 LOGIN_MAX_FAILURES = int(os.getenv("LOGIN_MAX_FAILURES", "5"))
+# Argon2id usa ~64 MiB por operación: se limita cuántas coinciden en cada proceso para acotar la memoria (por worker; cada instancia protege la suya).
+ARGON2_MAX_CONCURRENT = max(1, int(os.getenv("ARGON2_MAX_CONCURRENT", "2")))
 LOGIN_WINDOW_MINUTES = int(os.getenv("LOGIN_WINDOW_MINUTES", "15"))
 LOGIN_BLOCK_MINUTES = int(os.getenv("LOGIN_BLOCK_MINUTES", "15"))
 

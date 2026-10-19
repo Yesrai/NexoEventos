@@ -1,0 +1,80 @@
+{
+  "schema": 1,
+  "label": "despues",
+  "environment": {
+    "container_memory_limit_mb": 1536,
+    "workers": 2,
+    "docker_vm_cpus": 8,
+    "argon2": "pwdlib recommended: Argon2id m=64 MiB, t=3, p=4",
+    "max_concurrent_env": null,
+    "note": "Contenedor local con tope de memoria; compara antes/después, no equivale a la t3.small."
+  },
+  "bursts": [
+    {
+      "size": 10,
+      "rounds": 3,
+      "logins": 30,
+      "errors": 0,
+      "status_codes": {
+        "200": 30
+      },
+      "container": "running oom=false exit=0",
+      "oom_kills": 0,
+      "latency_ms": {
+        "p50": 331,
+        "p95": 450,
+        "p99": 478,
+        "max": 478
+      },
+      "throughput_logins_per_s": 22.7,
+      "burst_wall_s": 0.44,
+      "mem_idle_mb": 160,
+      "mem_peak_mb": 387,
+      "mem_peak_delta_mb": 226
+    },
+    {
+      "size": 20,
+      "rounds": 3,
+      "logins": 60,
+      "errors": 0,
+      "status_codes": {
+        "200": 60
+      },
+      "container": "running oom=false exit=0",
+      "oom_kills": 0,
+      "latency_ms": {
+        "p50": 730,
+        "p95": 1153,
+        "p99": 1178,
+        "max": 1196
+      },
+      "throughput_logins_per_s": 19.4,
+      "burst_wall_s": 1.03,
+      "mem_idle_mb": 163,
+      "mem_peak_mb": 421,
+      "mem_peak_delta_mb": 258
+    },
+    {
+      "size": 50,
+      "rounds": 3,
+      "logins": 150,
+      "errors": 0,
+      "status_codes": {
+        "200": 150
+      },
+      "container": "running oom=false exit=0",
+      "oom_kills": 0,
+      "latency_ms": {
+        "p50": 1019,
+        "p95": 1667,
+        "p99": 1945,
+        "max": 1952
+      },
+      "throughput_logins_per_s": 28.4,
+      "burst_wall_s": 1.76,
+      "mem_idle_mb": 166,
+      "mem_peak_mb": 434,
+      "mem_peak_delta_mb": 268
+    }
+  ]
+}
