@@ -1,0 +1,78 @@
+{
+  "schema": 1,
+  "scenario": "same_seat",
+  "profile": "step",
+  "started_at": "2026-10-19T16:30:15+00:00",
+  "ended_at": "2026-10-19T16:30:45+00:00",
+  "duration_s": 28.7,
+  "vus_max": 20,
+  "iterations": 400,
+  "requests": 443,
+  "rps": 15.4,
+  "latency_ms": {
+    "p50": 270.8,
+    "p95": 386.8,
+    "p99": 3268.4,
+    "avg": 396.3,
+    "max": 3303.8
+  },
+  "latency_ms_by_name": {
+    "POST /api/events/{id}/reservations": {
+      "p50": 270.9,
+      "p95": 325.0,
+      "p99": 342.4,
+      "max": 400.9
+    }
+  },
+  "latency_ms_by_op": {
+    "login": {
+      "p50": 3198.3,
+      "p95": 3302.5,
+      "p99": 3303.5,
+      "max": 3303.8
+    }
+  },
+  "unexpected_errors": 0,
+  "failed_request_rate": 0,
+  "reservations": {
+    "created": 20,
+    "idempotent_replays": 0,
+    "expected_conflicts": 380
+  },
+  "checks": {
+    "passed": 0,
+    "failed": 0
+  },
+  "k6_thresholds": {
+    "http_req_failed: rate<0.01": true,
+    "http_req_duration{name:GET /api/events/{id}}: max>=0": true,
+    "http_req_duration{name:GET /api/me/tickets}: max>=0": true,
+    "http_req_duration{name:POST /api/events/{id}/reservations}: max>=0": true,
+    "http_req_duration{name:GET /api/events}: p(95)<2000": true,
+    "http_req_duration{name:GET /api/events/{id}/sales}: max>=0": true,
+    "http_req_duration{name:GET /api/events/{id} (asientos y zonas)}: max>=0": true,
+    "errores_inesperados: count==0": true,
+    "http_req_duration: p(95)<2000": true,
+    "http_req_duration{op:login}: p(95)<3600000": true
+  },
+  "k6_exit_code": 0,
+  "metrics_window_utc": [
+    "2026-10-19T16:30:15+00:00",
+    "2026-10-19T16:30:45+00:00"
+  ],
+  "same_seat": {
+    "seats_contested": 20,
+    "attempts": 400,
+    "winners": 20,
+    "rejected_409": 380
+  },
+  "verdict": {
+    "k6_thresholds_ok": true,
+    "checks_ok": true,
+    "one_winner_per_seat": true
+  },
+  "passed": true,
+  "integrity": {
+    "status": "pendiente: ejecutar perf/check_integrity.py en la EC2 con la identidad migradora antes de dar el peldaño por válido"
+  }
+}

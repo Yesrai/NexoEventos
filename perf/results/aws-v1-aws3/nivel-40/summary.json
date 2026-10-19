@@ -1,0 +1,87 @@
+{
+  "schema": 1,
+  "label": "aws-v1-aws3/nivel-40",
+  "profile": "step",
+  "step": "40",
+  "environment": {
+    "kind": "aws-v1",
+    "k6": "grafana/k6:2.3.0",
+    "generator": "Mac del autor, vía Internet"
+  },
+  "results": {
+    "mix": {
+      "vus_max": 40,
+      "rps": 61.5,
+      "latency_ms": {
+        "p50": 117.1,
+        "p95": 232.4,
+        "p99": 359.0,
+        "avg": 151.0,
+        "max": 2174.4
+      },
+      "latency_ms_by_name": {
+        "GET /api/events": {
+          "p50": 200.5,
+          "p95": 245.7,
+          "p99": 350.2,
+          "max": 1116.6
+        },
+        "GET /api/events/{id}": {
+          "p50": 103.1,
+          "p95": 132.7,
+          "p99": 225.1,
+          "max": 715.9
+        },
+        "GET /api/events/{id} (asientos y zonas)": {
+          "p50": 108.3,
+          "p95": 151.0,
+          "p99": 354.9,
+          "max": 913.1
+        },
+        "GET /api/events/{id}/sales": {
+          "p50": 105.2,
+          "p95": 138.7,
+          "p99": 321.3,
+          "max": 1008.3
+        },
+        "POST /api/events/{id}/reservations": {
+          "p50": 116.5,
+          "p95": 156.2,
+          "p99": 335.8,
+          "max": 944.8
+        },
+        "GET /api/me/tickets": {
+          "p50": 202.3,
+          "p95": 381.0,
+          "p99": 694.7,
+          "max": 2174.4
+        }
+      },
+      "latency_ms_by_op": {
+        "reserve": {
+          "p50": 116.5,
+          "p95": 156.2,
+          "p99": 335.8,
+          "max": 944.8
+        },
+        "login": {
+          "p50": 335.7,
+          "p95": 538.2,
+          "p99": 545.2,
+          "max": 545.6
+        }
+      },
+      "unexpected_errors": 0,
+      "reservations": {
+        "created": 1767,
+        "idempotent_replays": 136,
+        "expected_conflicts": 83
+      },
+      "passed": true,
+      "metrics_window_utc": [
+        "2026-10-19T16:21:28+00:00",
+        "2026-10-19T16:24:46+00:00"
+      ]
+    }
+  }
+}

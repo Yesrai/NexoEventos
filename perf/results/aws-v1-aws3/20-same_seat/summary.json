@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "label": "aws-v1-aws3/20-same_seat",
+  "profile": "step",
+  "step": "20",
+  "environment": {
+    "kind": "aws-v1",
+    "k6": "grafana/k6:2.3.0",
+    "generator": "Mac del autor, vía Internet"
+  },
+  "results": {
+    "same_seat": {
+      "vus_max": 20,
+      "rps": 15.4,
+      "latency_ms": {
+        "p50": 270.8,
+        "p95": 386.8,
+        "p99": 3268.4,
+        "avg": 396.3,
+        "max": 3303.8
+      },
+      "latency_ms_by_name": {
+        "POST /api/events/{id}/reservations": {
+          "p50": 270.9,
+          "p95": 325.0,
+          "p99": 342.4,
+          "max": 400.9
+        }
+      },
+      "latency_ms_by_op": {
+        "login": {
+          "p50": 3198.3,
+          "p95": 3302.5,
+          "p99": 3303.5,
+          "max": 3303.8
+        }
+      },
+      "unexpected_errors": 0,
+      "reservations": {
+        "created": 20,
+        "idempotent_replays": 0,
+        "expected_conflicts": 380
+      },
+      "passed": true,
+      "metrics_window_utc": [
+        "2026-10-19T16:30:15+00:00",
+        "2026-10-19T16:30:45+00:00"
+      ]
+    }
+  }
+}

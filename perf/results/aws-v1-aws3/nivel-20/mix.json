@@ -1,0 +1,108 @@
+{
+  "schema": 1,
+  "scenario": "mix",
+  "profile": "step",
+  "started_at": "2026-10-19T16:16:59+00:00",
+  "ended_at": "2026-10-19T16:20:13+00:00",
+  "duration_s": 192.5,
+  "vus_max": 20,
+  "iterations": 3730,
+  "requests": 5983,
+  "rps": 31.1,
+  "latency_ms": {
+    "p50": 112.9,
+    "p95": 236.0,
+    "p99": 580.8,
+    "avg": 152.9,
+    "max": 1551.8
+  },
+  "latency_ms_by_name": {
+    "GET /api/events": {
+      "p50": 198.5,
+      "p95": 279.5,
+      "p99": 712.7,
+      "max": 953.1
+    },
+    "GET /api/events/{id}": {
+      "p50": 101.8,
+      "p95": 137.5,
+      "p99": 456.7,
+      "max": 890.2
+    },
+    "GET /api/events/{id} (asientos y zonas)": {
+      "p50": 106.9,
+      "p95": 166.0,
+      "p99": 445.2,
+      "max": 731.6
+    },
+    "GET /api/events/{id}/sales": {
+      "p50": 103.1,
+      "p95": 127.1,
+      "p99": 343.4,
+      "max": 800.6
+    },
+    "POST /api/events/{id}/reservations": {
+      "p50": 113.9,
+      "p95": 157.7,
+      "p99": 446.9,
+      "max": 1497.7
+    },
+    "GET /api/me/tickets": {
+      "p50": 184.0,
+      "p95": 260.6,
+      "p99": 421.9,
+      "max": 450.1
+    }
+  },
+  "latency_ms_by_op": {
+    "reserve": {
+      "p50": 113.9,
+      "p95": 157.7,
+      "p99": 446.9,
+      "max": 1497.7
+    },
+    "login": {
+      "p50": 264.1,
+      "p95": 352.3,
+      "p99": 1311.9,
+      "max": 1551.8
+    }
+  },
+  "unexpected_errors": 0,
+  "failed_request_rate": 0,
+  "reservations": {
+    "created": 852,
+    "idempotent_replays": 67,
+    "expected_conflicts": 10
+  },
+  "checks": {
+    "passed": 4561,
+    "failed": 0
+  },
+  "k6_thresholds": {
+    "http_req_duration{op:reserve}: p(95)<2000": true,
+    "http_req_duration{name:GET /api/me/tickets}: max>=0": true,
+    "http_req_failed: rate<0.01": true,
+    "http_req_duration{name:POST /api/events/{id}/reservations}: max>=0": true,
+    "http_req_duration{name:GET /api/events/{id}}: max>=0": true,
+    "http_req_duration: p(95)<2000": true,
+    "errores_inesperados: count==0": true,
+    "http_req_duration{op:login}: p(95)<3600000": true,
+    "http_req_duration{name:GET /api/events/{id} (asientos y zonas)}: max>=0": true,
+    "http_req_duration{name:GET /api/events}: p(95)<2000": true,
+    "http_req_duration{name:GET /api/events/{id}/sales}: max>=0": true
+  },
+  "k6_exit_code": 0,
+  "metrics_window_utc": [
+    "2026-10-19T16:16:59+00:00",
+    "2026-10-19T16:20:13+00:00"
+  ],
+  "verdict": {
+    "k6_thresholds_ok": true,
+    "checks_ok": true
+  },
+  "passed": true,
+  "integrity": {
+    "status": "pendiente: ejecutar perf/check_integrity.py en la EC2 con la identidad migradora antes de dar el peldaño por válido"
+  }
+}

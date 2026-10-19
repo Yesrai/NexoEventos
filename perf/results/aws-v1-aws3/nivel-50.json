@@ -1,0 +1,70 @@
+{
+ "label": "nivel-50",
+ "step": "50",
+ "scenarios": "mix",
+ "run_id": "aws32",
+ "rc": 0,
+ "stdout_tail": [
+  "Plan: 50 → 50 usuarios, meseta 120 s, escenarios ['mix'], ≈ 3 min 15 s máximos, destino nexoeventos-demo.duckdns.org",
+  "▶ mix",
+  "   50 VUs · 71.6 req/s · p50 123.8 / p95 287.6 / p99 555.7 ms · errores 0 · OK",
+  "Resultados en perf/results/aws-v1-aws3/nivel-50/"
+ ],
+ "stderr_tail": "",
+ "start_epoch": 1792427157.4882822,
+ "end_epoch": 1792427330.637259,
+ "elapsed_s": 173.1,
+ "instance": {
+  "samples": 43,
+  "cpu_avg_pct": 37.2,
+  "cpu_max_pct": 68.0,
+  "cpu_2min_max_avg_pct": 39.4,
+  "steal_max_pct": 28.0,
+  "mem_avail_min_mb": 1205,
+  "api_rss_max_mb": 316,
+  "nginx_rss_max_mb": 22,
+  "db_conns_max": 11
+ },
+ "watchdog": {
+  "rds_free_mb_samples": [
+   155.4,
+   159.2,
+   157.4,
+   157.4
+  ]
+ },
+ "integrity": {
+  "violations": {
+   "asiento_con_mas_de_una_entrada": 0,
+   "asiento_ocupado_sin_entrada": 0,
+   "entrada_con_asiento_no_marcado_ocupado": 0,
+   "reservas_con_cantidad_distinta_de_entradas": 0,
+   "reservas_sin_entradas": 0,
+   "entradas_sin_reserva_del_mismo_evento": 0,
+   "evento_con_contador_distinto_de_entradas": 0,
+   "evento_vendido_por_encima_del_aforo": 0,
+   "zona_con_contador_distinto_de_entradas": 0,
+   "zona_vendida_por_encima_del_aforo": 0,
+   "claves_de_idempotencia_duplicadas": 0
+  },
+  "total_violations": 0,
+  "totals": {
+   "reservations": 4512,
+   "tickets": 6973,
+   "seat_tickets": 750
+  },
+  "seat_unique_index_present": true
+ },
+ "credits_latest": 416.1,
+ "rds_recent": {
+  "cpu_pct_1min_max": 16.61,
+  "connections_max": 10.0,
+  "freeable_memory_mb_min": 155.02,
+  "read_iops_max": 0.0,
+  "write_iops_max": 0.52,
+  "disk_queue_depth_max": 0.0,
+  "cpu_credit_balance_min": 274.68
+ },
+ "ok": true,
+ "stop_reasons": []
+}
