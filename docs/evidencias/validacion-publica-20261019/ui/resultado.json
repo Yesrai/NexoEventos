@@ -1,0 +1,55 @@
+{
+  "results": [
+    {
+      "name": "[escritorio] El detalle abre con el recinto 3D como vista principal",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[escritorio] El botón Atrás del navegador vuelve al catálogo",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[escritorio] Un clic sobre una butaca del 3D la selecciona y aparece en el panel",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[escritorio] El panel muestra asiento, cantidad, precio unitario y total",
+      "ok": true,
+      "detail": "Elige tus entradas 17 nov. 2026 · 8:00 p. m. Auditorio Nexo, Lima Preferencial · Fila A · Asiento 1 1 × S/ 55.00 S/ 55.00 Total · 1 entrada "
+    },
+    {
+      "name": "[escritorio] Tras registrarse vuelve al evento con el asiento todavía seleccionado",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[movil] El detalle abre con el recinto 3D como vista principal",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[movil] El botón Atrás del navegador vuelve al catálogo",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[movil] Un clic sobre una butaca del 3D la selecciona y aparece en el panel",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "[movil] El panel muestra asiento, cantidad, precio unitario y total",
+      "ok": true,
+      "detail": "Elige tus entradas 17 nov. 2026 · 8:00 p. m. Auditorio Nexo, Lima Preferencial · Fila A · Asiento 2 1 × S/ 55.00 S/ 55.00 Total · 1 entrada "
+    },
+    {
+      "name": "[movil] Tras registrarse vuelve al evento con el asiento todavía seleccionado",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "pageErrors": []
+}

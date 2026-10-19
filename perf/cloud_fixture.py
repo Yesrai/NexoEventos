@@ -30,10 +30,10 @@ DELETE FROM events WHERE id BETWEEN 90001 AND 90099;
 UP = """
 INSERT INTO events (id, name, event_date, event_time, venue, city, category, description, price, capacity, reserved_count, image_path, ticket_mode, is_demo, status)
 VALUES
- (90001, '[K6] General', current_date + 30, '20:00', 'Fixture k6', 'Lima', 'Conciertos', 'Evento ficticio para pruebas de carga.', 10, 1000000, 0, NULL, 'general', true, 'published'),
- (90002, '[K6] Zonas', current_date + 30, '20:00', 'Fixture k6', 'Lima', 'Conciertos', 'Evento ficticio para pruebas de carga.', 10, 2000000, 0, NULL, 'zones', true, 'published'),
- (90003, '[K6] Asientos (flujo)', current_date + 30, '20:00', 'Fixture k6', 'Lima', 'Conciertos', 'Evento ficticio para pruebas de carga.', 10, 2000, 0, NULL, 'seats', true, 'published'),
- (90004, '[K6] Disputa de asiento', current_date + 30, '20:00', 'Fixture k6', 'Lima', 'Conciertos', 'Evento ficticio para pruebas de carga.', 10, 20, 0, NULL, 'seats', true, 'published');
+ (90001, '[K6] General', current_date + 30, '20:00', 'Fixture k6', 'Lima', 'Conciertos', 'Evento ficticio para pruebas de carga.', 10, 1000000, 0, NULL, 'general', false, 'published'),
+ (90002, '[K6] Zonas', current_date + 30, '20:00', 'Fixture k6', 'Lima', 'Conciertos', 'Evento ficticio para pruebas de carga.', 10, 2000000, 0, NULL, 'zones', false, 'published'),
+ (90003, '[K6] Asientos (flujo)', current_date + 30, '20:00', 'Fixture k6', 'Lima', 'Conciertos', 'Evento ficticio para pruebas de carga.', 10, 2000, 0, NULL, 'seats', false, 'published'),
+ (90004, '[K6] Disputa de asiento', current_date + 30, '20:00', 'Fixture k6', 'Lima', 'Conciertos', 'Evento ficticio para pruebas de carga.', 10, 20, 0, NULL, 'seats', false, 'published');
 INSERT INTO event_zones (event_id, name, price, capacity, reserved_count) VALUES
  (90002, 'Campo', 20, 1000000, 0), (90002, 'Tribuna', 20, 1000000, 0), (90003, 'Platea', 20, 2000, 0), (90004, 'Unica', 20, 20, 0);
 INSERT INTO event_seats (event_id, zone_id, row_label, seat_number)
