@@ -60,7 +60,9 @@ aws s3api head-bucket --bucket "$BUCKET" >/dev/null
 
 mkdir -p "$(dirname "$RUNTIME")"
 umask 077
-RELEASE_ID="$($GIT_BIN -C "$ROOT" rev-parse HEAD)"
+# NEXO_RELEASE_COMMIT: usa el artefacto de OTRA revisión ya construida (p. ej. la aprobada por el CI) con los playbooks de este árbol.
+RELEASE_ID="${NEXO_RELEASE_COMMIT:-$($GIT_BIN -C "$ROOT" rev-parse HEAD)}"
+[[ "$RELEASE_ID" =~ ^[0-9a-f]{40}$ ]] || { echo "NEXO_RELEASE_COMMIT debe ser un hash completo." >&2; exit 1; }
 ARTIFACT="$ROOT/work/releases/nexoeventos-${RELEASE_ID}.tar.gz"
 {
   printf '%s\n' '---'
@@ -93,7 +95,7 @@ if [[ "$ACTION" == deploy ]]; then
   "$ROOT/scripts/build-release.sh"
   ansible-playbook -i "$INVENTORY" "$ROOT/ansible/playbooks/deploy.yml" --limit nexoeventos-academy-app
 elif [[ "$ACTION" == bake ]]; then
-  "$ROOT/scripts/build-release.sh"
+  [[ -f "$ARTIFACT" ]] || "$ROOT/scripts/build-release.sh"
   ansible-playbook -i "$INVENTORY" "$ROOT/ansible/playbooks/bake-v2.yml" --limit nexoeventos-academy-app
 elif [[ "$ACTION" == rollback ]]; then
   ansible-playbook -i "$INVENTORY" "$ROOT/ansible/playbooks/rollback.yml" --limit nexoeventos-academy-app
