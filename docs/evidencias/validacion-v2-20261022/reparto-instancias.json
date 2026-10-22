@@ -1,0 +1,41 @@
+{
+  "window_utc": [
+    "2026-10-22T05:45:46Z",
+    "2026-10-22T05:46:51Z"
+  ],
+  "target": "ALB de V2 (dominio autorizado resuelto a la IP del ALB, una conexión por solicitud)",
+  "distribution": {
+    "8e59c6": {
+      "api": {
+        "requests": 39,
+        "errors_5xx": 0
+      },
+      "session": {
+        "requests": 20,
+        "errors_5xx": 0
+      },
+      "reservations": {
+        "requests": 10,
+        "errors_5xx": 0
+      }
+    },
+    "0b55d7": {
+      "api": {
+        "requests": 37,
+        "errors_5xx": 0
+      },
+      "session": {
+        "requests": 20,
+        "errors_5xx": 0
+      },
+      "reservations": {
+        "requests": 10,
+        "errors_5xx": 0
+      }
+    }
+  },
+  "share_pct": {
+    "8e59c6": 51,
+    "0b55d7": 49
+  }
+}
