@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "scenario": "login_rate",
+  "profile": "step",
+  "started_at": "2026-10-22T16:56:53+00:00",
+  "ended_at": "2026-10-22T17:05:54+00:00",
+  "duration_s": 539.2,
+  "vus_max": 25,
+  "iterations": 4202,
+  "requests": 4253,
+  "rps": 7.9,
+  "latency_ms": {
+    "p50": 258.3,
+    "p95": 395.4,
+    "p99": 1186.7,
+    "avg": 290.3,
+    "max": 2022.6
+  },
+  "latency_ms_by_name": {},
+  "latency_ms_by_op": {
+    "login": {
+      "p50": 258.3,
+      "p95": 397.6,
+      "p99": 1200.6,
+      "max": 2022.6
+    }
+  },
+  "unexpected_errors": 0,
+  "failed_request_rate": 0,
+  "reservations": {
+    "created": 0,
+    "idempotent_replays": 0,
+    "expected_conflicts": 0
+  },
+  "checks": {
+    "passed": 4202,
+    "failed": 0
+  },
+  "k6_thresholds": {
+    "errores_inesperados: count==0": true,
+    "http_req_failed: rate<0.01": true,
+    "http_req_duration: p(95)<3000": true,
+    "http_req_duration{op:login}: p(95)<3600000": true
+  },
+  "k6_exit_code": 105,
+  "metrics_window_utc": [
+    "2026-10-22T16:56:53+00:00",
+    "2026-10-22T17:05:54+00:00"
+  ],
+  "verdict": {
+    "k6_thresholds_ok": true,
+    "checks_ok": true
+  },
+  "passed": true
+}

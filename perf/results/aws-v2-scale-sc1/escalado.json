@@ -1,0 +1,682 @@
+{
+ "schema": 1,
+ "run": "sc1",
+ "started_utc": "2026-10-22T16:56:38+00:00",
+ "milestones": {
+  "load_started_at_s": 15.5,
+  "alarm_high_at_s": 508.0,
+  "desired_3_at_s": 508.0,
+  "new_instance_seen_at_s": 525.2,
+  "new_instance_inservice_at_s": 525.2
+ },
+ "timeline": [
+  {
+   "t": 18.3,
+   "desired": 2,
+   "asg": {
+    "e173fa": [
+     "us-east-1b",
+     "InService",
+     "Healthy"
+    ],
+    "16b726": [
+     "us-east-1a",
+     "InService",
+     "Healthy"
+    ]
+   },
+   "alb": {
+    "16b726": "healthy",
+    "e173fa": "healthy"
+   },
+   "alarms": {
+    "alta": "OK",
+    "baja": "ALARM"
+   }
+  },
+  {
+   "t": 318.8,
+   "desired": 2,
+   "asg": {
+    "e173fa": [
+     "us-east-1b",
+     "InService",
+     "Healthy"
+    ],
+    "16b726": [
+     "us-east-1a",
+     "InService",
+     "Healthy"
+    ]
+   },
+   "alb": {
+    "16b726": "healthy",
+    "e173fa": "healthy"
+   },
+   "alarms": {
+    "alta": "OK",
+    "baja": "OK"
+   }
+  },
+  {
+   "t": 508.0,
+   "desired": 3,
+   "asg": {
+    "e173fa": [
+     "us-east-1b",
+     "InService",
+     "Healthy"
+    ],
+    "16b726": [
+     "us-east-1a",
+     "InService",
+     "Healthy"
+    ]
+   },
+   "alb": {
+    "16b726": "healthy",
+    "e173fa": "healthy"
+   },
+   "alarms": {
+    "alta": "ALARM",
+    "baja": "OK"
+   }
+  },
+  {
+   "t": 525.2,
+   "desired": 3,
+   "asg": {
+    "e173fa": [
+     "us-east-1b",
+     "InService",
+     "Healthy"
+    ],
+    "7c2ea5": [
+     "us-east-1a",
+     "InService",
+     "Healthy"
+    ],
+    "16b726": [
+     "us-east-1a",
+     "InService",
+     "Healthy"
+    ]
+   },
+   "alb": {
+    "7c2ea5": "initial",
+    "16b726": "healthy",
+    "e173fa": "healthy"
+   },
+   "alarms": {
+    "alta": "ALARM",
+    "baja": "OK"
+   }
+  },
+  {
+   "t": 541.2,
+   "desired": 3,
+   "asg": {
+    "e173fa": [
+     "us-east-1b",
+     "InService",
+     "Healthy"
+    ],
+    "7c2ea5": [
+     "us-east-1a",
+     "InService",
+     "Healthy"
+    ],
+    "16b726": [
+     "us-east-1a",
+     "InService",
+     "Healthy"
+    ]
+   },
+   "alb": {
+    "7c2ea5": "unhealthy",
+    "16b726": "healthy",
+    "e173fa": "healthy"
+   },
+   "alarms": {
+    "alta": "ALARM",
+    "baja": "OK"
+   }
+  }
+ ],
+ "probes": [
+  {
+   "t": 24.9,
+   "instance": "e173fa",
+   "cpu": 29,
+   "mem_avail_mb": 1344,
+   "api_rss_mb": 224
+  },
+  {
+   "t": 24.9,
+   "instance": "16b726",
+   "cpu": 28,
+   "mem_avail_mb": 1387,
+   "api_rss_mb": 238
+  },
+  {
+   "t": 27.1,
+   "rds": {
+    "cpu": 4.25,
+    "free_mb": 158.46875,
+    "conns": 13.0
+   }
+  },
+  {
+   "t": 60.0,
+   "instance": "e173fa",
+   "cpu": 55,
+   "mem_avail_mb": 1364,
+   "api_rss_mb": 289
+  },
+  {
+   "t": 60.0,
+   "instance": "16b726",
+   "cpu": 56,
+   "mem_avail_mb": 1322,
+   "api_rss_mb": 238
+  },
+  {
+   "t": 80.6,
+   "rds": {
+    "cpu": 3.938,
+    "free_mb": 158.46875,
+    "conns": 13.0
+   }
+  },
+  {
+   "t": 92.9,
+   "instance": "e173fa",
+   "cpu": 54,
+   "mem_avail_mb": 1351,
+   "api_rss_mb": 290
+  },
+  {
+   "t": 92.9,
+   "instance": "16b726",
+   "cpu": 55,
+   "mem_avail_mb": 1369,
+   "api_rss_mb": 238
+  },
+  {
+   "t": 126.0,
+   "instance": "e173fa",
+   "cpu": 54,
+   "mem_avail_mb": 1369,
+   "api_rss_mb": 277
+  },
+  {
+   "t": 126.0,
+   "instance": "16b726",
+   "cpu": 56,
+   "mem_avail_mb": 1315,
+   "api_rss_mb": 238
+  },
+  {
+   "t": 146.5,
+   "rds": {
+    "cpu": 4.113,
+    "free_mb": 152.6015625,
+    "conns": 14.0
+   }
+  },
+  {
+   "t": 159.0,
+   "instance": "e173fa",
+   "cpu": 55,
+   "mem_avail_mb": 1343,
+   "api_rss_mb": 226
+  },
+  {
+   "t": 159.0,
+   "instance": "16b726",
+   "cpu": 57,
+   "mem_avail_mb": 1328,
+   "api_rss_mb": 302
+  },
+  {
+   "t": 192.1,
+   "instance": "e173fa",
+   "cpu": 57,
+   "mem_avail_mb": 1340,
+   "api_rss_mb": 290
+  },
+  {
+   "t": 192.1,
+   "instance": "16b726",
+   "cpu": 58,
+   "mem_avail_mb": 1330,
+   "api_rss_mb": 302
+  },
+  {
+   "t": 214.0,
+   "rds": {
+    "cpu": 5.671,
+    "free_mb": 150.9921875,
+    "conns": 14.0
+   }
+  },
+  {
+   "t": 226.1,
+   "instance": "e173fa",
+   "cpu": 55,
+   "mem_avail_mb": 1335,
+   "api_rss_mb": 290
+  },
+  {
+   "t": 226.1,
+   "instance": "16b726",
+   "cpu": 55,
+   "mem_avail_mb": 1307,
+   "api_rss_mb": 238
+  },
+  {
+   "t": 259.0,
+   "instance": "e173fa",
+   "cpu": 60,
+   "mem_avail_mb": 1335,
+   "api_rss_mb": 290
+  },
+  {
+   "t": 259.0,
+   "instance": "16b726",
+   "cpu": 62,
+   "mem_avail_mb": 1320,
+   "api_rss_mb": 238
+  },
+  {
+   "t": 279.7,
+   "rds": {
+    "cpu": 6.52,
+    "free_mb": 150.55859375,
+    "conns": 14.0
+   }
+  },
+  {
+   "t": 292.2,
+   "instance": "e173fa",
+   "cpu": 55,
+   "mem_avail_mb": 1350,
+   "api_rss_mb": 226
+  },
+  {
+   "t": 292.2,
+   "instance": "16b726",
+   "cpu": 58,
+   "mem_avail_mb": 1337,
+   "api_rss_mb": 238
+  },
+  {
+   "t": 325.0,
+   "instance": "e173fa",
+   "cpu": 59,
+   "mem_avail_mb": 1347,
+   "api_rss_mb": 226
+  },
+  {
+   "t": 325.0,
+   "instance": "16b726",
+   "cpu": 56,
+   "mem_avail_mb": 1322,
+   "api_rss_mb": 294
+  },
+  {
+   "t": 345.4,
+   "rds": {
+    "cpu": 6.253,
+    "free_mb": 148.36328125,
+    "conns": 16.0
+   }
+  },
+  {
+   "t": 357.8,
+   "instance": "e173fa",
+   "cpu": 57,
+   "mem_avail_mb": 1334,
+   "api_rss_mb": 260
+  },
+  {
+   "t": 357.9,
+   "instance": "16b726",
+   "cpu": 56,
+   "mem_avail_mb": 1345,
+   "api_rss_mb": 238
+  },
+  {
+   "t": 390.7,
+   "instance": "e173fa",
+   "cpu": 60,
+   "mem_avail_mb": 1330,
+   "api_rss_mb": 290
+  },
+  {
+   "t": 390.7,
+   "instance": "16b726",
+   "cpu": 55,
+   "mem_avail_mb": 1353,
+   "api_rss_mb": 238
+  },
+  {
+   "t": 411.1,
+   "rds": {
+    "cpu": 5.524,
+    "free_mb": 146.9140625,
+    "conns": 16.0
+   }
+  },
+  {
+   "t": 423.8,
+   "instance": "e173fa",
+   "cpu": 57,
+   "mem_avail_mb": 1335,
+   "api_rss_mb": 226
+  },
+  {
+   "t": 423.8,
+   "instance": "16b726",
+   "cpu": 54,
+   "mem_avail_mb": 1315,
+   "api_rss_mb": 238
+  },
+  {
+   "t": 456.5,
+   "instance": "e173fa",
+   "cpu": 59,
+   "mem_avail_mb": 1345,
+   "api_rss_mb": 226
+  },
+  {
+   "t": 456.5,
+   "instance": "16b726",
+   "cpu": 55,
+   "mem_avail_mb": 1335,
+   "api_rss_mb": 238
+  },
+  {
+   "t": 477.0,
+   "rds": {
+    "cpu": 5.794,
+    "free_mb": 147.8984375,
+    "conns": 16.0
+   }
+  },
+  {
+   "t": 489.4,
+   "instance": "e173fa",
+   "cpu": 56,
+   "mem_avail_mb": 1349,
+   "api_rss_mb": 226
+  },
+  {
+   "t": 489.4,
+   "instance": "16b726",
+   "cpu": 57,
+   "mem_avail_mb": 1322,
+   "api_rss_mb": 238
+  },
+  {
+   "t": 522.6,
+   "instance": "e173fa",
+   "cpu": 57,
+   "mem_avail_mb": 1413,
+   "api_rss_mb": 239
+  },
+  {
+   "t": 522.6,
+   "instance": "16b726",
+   "cpu": 56,
+   "mem_avail_mb": 1319,
+   "api_rss_mb": 238
+  },
+  {
+   "t": 543.1,
+   "rds": {
+    "cpu": 6.311,
+    "free_mb": 145.4296875,
+    "conns": 16.0
+   }
+  },
+  {
+   "t": 555.7,
+   "instance": "e173fa",
+   "cpu": 57,
+   "mem_avail_mb": 1332,
+   "api_rss_mb": 290
+  }
+ ],
+ "stop_reason": "error del orquestador: CalledProcessError: Command '['aws', 'ssm', 'send-command', '--instance-ids', 'i-0a08e53cd207c2ea5', '--document-name', 'AWS-RunShellScript', '--parameters', '{\"commands\": [\"v=$(vmstat 3 2 | tail -1); echo \\\\\"P $(echo $v | awk \\'{print 100-$15}\\') $(awk \\'/MemAvailable/{print int($2/1024)}\\' /proc/meminfo) $(ps -eo rss",
+ "fingerprint_before": [
+  "alembic=0008",
+  "reservations=135:cbe0c1c26e4cee71ffac596dd24d3607",
+  "tickets=135 usados=3",
+  "users=25:47c94f8b3ed4eb4ebe1960b42300601e",
+  "access_logs=9",
+  "events=35:0733e3db986c355aeaf0225cd403607f",
+  "event_seats=240 ocupados=0",
+  "zonas_reservadas=0",
+  "queue_entries=0",
+  ""
+ ],
+ "cleanup": {
+  "leftovers": [
+   "k6_users=0",
+   "fixture_events=0"
+  ],
+  "complete": true
+ },
+ "fingerprint_after": [
+  "alembic=0008",
+  "reservations=135:cbe0c1c26e4cee71ffac596dd24d3607",
+  "tickets=135 usados=3",
+  "users=25:47c94f8b3ed4eb4ebe1960b42300601e",
+  "access_logs=9",
+  "events=35:0733e3db986c355aeaf0225cd403607f",
+  "event_seats=240 ocupados=0",
+  "zonas_reservadas=0",
+  "queue_entries=0",
+  ""
+ ],
+ "fingerprint_identical": true,
+ "v1_ec2_stopped": true,
+ "ended_utc": "2026-10-22T17:06:45+00:00",
+ "cloudwatch": {
+  "window_utc": [
+   "2026-10-22T16:54:38+00:00",
+   "2026-10-22T17:08:45+00:00"
+  ],
+  "alb": {
+   "request_count": [
+    0.0,
+    0.0,
+    21.0,
+    442.0,
+    481.0,
+    480.0,
+    480.0,
+    480.0,
+    480.0,
+    480.0,
+    481.0,
+    432.0,
+    0.0,
+    1.0
+   ],
+   "target_response_p95_s": [
+    0.161,
+    0.317,
+    0.202,
+    0.186,
+    1.154,
+    0.206,
+    0.183,
+    0.198,
+    0.193,
+    0.276,
+    0.003
+   ],
+   "target_5xx": [],
+   "elb_5xx": [],
+   "healthy_hosts_min": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    3.0,
+    3.0
+   ]
+  },
+  "ec2": {
+   "7c2ea5": {
+    "cpu_pct_5min_max": [
+     5.258
+    ],
+    "cpu_credit_balance": [],
+    "cpu_surplus_credit_balance": [],
+    "network_out_mb": 0.1
+   },
+   "16b726": {
+    "cpu_pct_5min_max": [
+     56.987,
+     56.728,
+     57.641
+    ],
+    "cpu_credit_balance": [
+     36.932,
+     35.3,
+     31.618
+    ],
+    "cpu_surplus_credit_balance": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "network_out_mb": 10.4
+   },
+   "e173fa": {
+    "cpu_pct_5min_max": [
+     55.62,
+     58.211,
+     56.508
+    ],
+    "cpu_credit_balance": [
+     6.085,
+     3.941,
+     0.27
+    ],
+    "cpu_surplus_credit_balance": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "network_out_mb": 9.7
+   }
+  },
+  "rds": {
+   "cpu_pct_1min_max": [
+    4.488,
+    4.25,
+    3.938,
+    4.113,
+    5.671,
+    5.945,
+    6.52,
+    6.253,
+    5.524,
+    5.794,
+    6.311,
+    6.141,
+    5.474,
+    3.668
+   ],
+   "connections_max": [
+    13.0,
+    13.0,
+    13.0,
+    13.0,
+    14.0,
+    14.0,
+    14.0,
+    16.0,
+    16.0,
+    16.0,
+    16.0,
+    16.0,
+    16.0,
+    18.0
+   ],
+   "freeable_memory_mb_min": [
+    155.1,
+    155.8,
+    158.5,
+    155.6,
+    152.6,
+    151.0,
+    150.6,
+    148.4,
+    146.9,
+    147.9,
+    145.4,
+    146.3,
+    147.6,
+    142.7
+   ],
+   "write_iops_max": [
+    0.55,
+    0.783,
+    0.25,
+    1.116,
+    18.523,
+    9.385,
+    10.13,
+    9.067,
+    8.692,
+    17.78,
+    9.715,
+    10.068,
+    7.201,
+    0.45
+   ],
+   "cpu_credit_balance_min": [
+    76.491,
+    76.942,
+    77.341
+   ]
+  }
+ },
+ "alarm_history": [
+  {
+   "alarm": "0bccc16b44",
+   "t": "2026-10-22T12:07:59.394000-05:00",
+   "summary": "Alarm updated from ALARM to OK"
+  },
+  {
+   "alarm": "0bccc16b44",
+   "t": "2026-10-22T12:04:59.394000-05:00",
+   "summary": "Alarm updated from OK to ALARM"
+  },
+  {
+   "alarm": "f6647c9b35",
+   "t": "2026-10-22T12:01:55.299000-05:00",
+   "summary": "Alarm updated from ALARM to OK"
+  }
+ ],
+ "asg_activities": [
+  {
+   "t": "2026-10-22T17:05:15.434000+00:00",
+   "status": "Successful",
+   "cause": "At 2026-10-22T17:04:59Z a monitor alarm TargetTracking-nexoeventos-academy-v2-asg-AlarmHigh-eaf9f3f5-382f-46b5-ba3f-4f0bccc16b44 in state AL"
+  }
+ ]
+}

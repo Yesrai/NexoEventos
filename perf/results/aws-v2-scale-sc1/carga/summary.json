@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "label": "aws-v2-scale-sc1/carga",
+  "profile": "step",
+  "step": "scale",
+  "environment": {
+    "kind": "aws-v1",
+    "k6": "grafana/k6:2.3.0",
+    "generator": "Mac del autor, vía Internet"
+  },
+  "results": {
+    "login_rate": {
+      "vus_max": 25,
+      "rps": 7.9,
+      "latency_ms": {
+        "p50": 258.3,
+        "p95": 395.4,
+        "p99": 1186.7,
+        "avg": 290.3,
+        "max": 2022.6
+      },
+      "latency_ms_by_name": {},
+      "latency_ms_by_op": {
+        "login": {
+          "p50": 258.3,
+          "p95": 397.6,
+          "p99": 1200.6,
+          "max": 2022.6
+        }
+      },
+      "unexpected_errors": 0,
+      "reservations": {
+        "created": 0,
+        "idempotent_replays": 0,
+        "expected_conflicts": 0
+      },
+      "passed": true,
+      "metrics_window_utc": [
+        "2026-10-22T16:56:53+00:00",
+        "2026-10-22T17:05:54+00:00"
+      ]
+    }
+  }
+}

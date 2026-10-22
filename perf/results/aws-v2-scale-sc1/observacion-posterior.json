@@ -1,0 +1,139 @@
+{
+ "observacion_posterior_a_la_carga": [
+  {
+   "utc": "17:10:16",
+   "desired": 3,
+   "asg": {
+    "e173fa": [
+     "InService",
+     "Healthy"
+    ],
+    "7c2ea5": [
+     "InService",
+     "Healthy"
+    ],
+    "16b726": [
+     "InService",
+     "Healthy"
+    ]
+   },
+   "alb": {
+    "7c2ea5": "healthy",
+    "16b726": "healthy",
+    "e173fa": "healthy"
+   },
+   "alarms": {
+    "alta": "OK",
+    "baja": "OK"
+   }
+  },
+  {
+   "utc": "17:22:07",
+   "desired": 2,
+   "asg": {
+    "e173fa": [
+     "InService",
+     "Healthy"
+    ],
+    "7c2ea5": [
+     "InService",
+     "Healthy"
+    ],
+    "16b726": [
+     "InService",
+     "Healthy"
+    ]
+   },
+   "alb": {
+    "7c2ea5": "healthy",
+    "16b726": "healthy",
+    "e173fa": "healthy"
+   },
+   "alarms": {
+    "alta": "OK",
+    "baja": "ALARM"
+   }
+  },
+  {
+   "utc": "17:22:20",
+   "desired": 2,
+   "asg": {
+    "e173fa": [
+     "InService",
+     "Healthy"
+    ],
+    "7c2ea5": [
+     "InService",
+     "Healthy"
+    ],
+    "16b726": [
+     "Terminating",
+     "Healthy"
+    ]
+   },
+   "alb": {
+    "7c2ea5": "healthy",
+    "16b726": "draining",
+    "e173fa": "healthy"
+   },
+   "alarms": {
+    "alta": "OK",
+    "baja": "ALARM"
+   }
+  },
+  {
+   "utc": "17:22:46",
+   "desired": 2,
+   "asg": {
+    "e173fa": [
+     "InService",
+     "Healthy"
+    ],
+    "7c2ea5": [
+     "InService",
+     "Healthy"
+    ],
+    "16b726": [
+     "Terminating",
+     "Healthy"
+    ]
+   },
+   "alb": {
+    "7c2ea5": "healthy",
+    "e173fa": "healthy"
+   },
+   "alarms": {
+    "alta": "OK",
+    "baja": "ALARM"
+   }
+  },
+  {
+   "utc": "17:23:26",
+   "desired": 2,
+   "asg": {
+    "e173fa": [
+     "InService",
+     "Healthy"
+    ],
+    "7c2ea5": [
+     "InService",
+     "Healthy"
+    ]
+   },
+   "alb": {
+    "7c2ea5": "healthy",
+    "e173fa": "healthy"
+   },
+   "alarms": {
+    "alta": "OK",
+    "baja": "ALARM"
+   }
+  }
+ ],
+ "hitos": {
+  "third_healthy_seen_utc": "17:10:16",
+  "alarm_low_utc": "17:22:07",
+  "desired_2_utc": "17:22:07",
+  "back_to_2_utc": "17:23:26"
+ }
+}
