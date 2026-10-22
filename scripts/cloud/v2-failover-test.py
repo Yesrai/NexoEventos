@@ -9,6 +9,7 @@ import argparse
 import importlib.util
 import json
 import os
+import random
 import socket
 import subprocess
 import sys
@@ -44,6 +45,7 @@ def main() -> None:
     ap.add_argument("--out", required=True)
     ap.add_argument("--hold-after-detect", type=int, default=20)
     ap.add_argument("--rate", type=float, default=5.0)
+    ap.add_argument("--clients", type=int, default=4, help="clientes independientes (conexiones distintas) que reparten el ritmo total")
     args = ap.parse_args()
     if os.environ.get("NEXO_ALLOW_CLOUD_CHANGES") != "YES":
         sys.exit("Requiere NEXO_ALLOW_CLOUD_CHANGES=YES (detiene temporalmente la API de una instancia de V2).")
@@ -63,18 +65,21 @@ def main() -> None:
     requests_log: list[dict] = []
     timeline: list[dict] = []
 
-    def traffic() -> None:
-        paths, i = ["/api/events", "/healthz"], 0
+    def traffic(worker: int) -> None:
+        # Cada trabajador es un cliente independiente con su propio ritmo y elige la ruta AL AZAR (sin alternancia que pueda sincronizarse con el ALB).
+        rng = random.Random(1000 + worker)
+        per_worker = args.rate / args.clients
+        stop.wait(rng.uniform(0, 1 / per_worker))
         while not stop.is_set():
-            path, i = paths[i % 2], i + 1
+            path = rng.choice(["/api/events", "/healthz"])
             t = time.time()
             try:
                 with httpx.Client(headers={"Connection": "close"}, timeout=15) as c:
                     code = c.get(f"https://{DOMAIN}{path}").status_code
-            except httpx.HTTPError as error:
+            except httpx.HTTPError:
                 code = -1
-            requests_log.append({"t": round(t - T0, 2), "path": path, "status": code, "ms": round((time.time() - t) * 1000)})
-            stop.wait(max(0.0, 1 / args.rate - (time.time() - t)))
+            requests_log.append({"t": round(t - T0, 2), "path": path, "status": code, "ms": round((time.time() - t) * 1000), "client": worker})
+            stop.wait(max(0.0, 1 / per_worker - (time.time() - t)))
 
     def poll() -> None:
         last = None
@@ -95,7 +100,7 @@ def main() -> None:
                 timeline.append({"t": now(), "error": str(error)[:120]})
     # el ciclo de consulta ya tarda ~2 s por las dos llamadas
 
-    threads = [threading.Thread(target=traffic), threading.Thread(target=poll)]
+    threads = [threading.Thread(target=traffic, args=(w,)) for w in range(args.clients)] + [threading.Thread(target=poll)]
     [t.start() for t in threads]
     events: dict = {"victim": victim[-6:], "other": other[-6:], "rate_req_per_s": args.rate}
     stopped = False
@@ -138,6 +143,7 @@ def main() -> None:
     ok_lat = [r["ms"] for r in requests_log if r["status"] == 200]
     errors = [r for r in requests_log if r["status"] != 200]
     summary = {"requests": len(requests_log), "ok": len(ok_lat), "errors": len(errors), "error_statuses": {str(s): sum(1 for r in errors if r["status"] == s) for s in sorted({r["status"] for r in errors})},
+               "by_path": {p: {"requests": sum(1 for r in requests_log if r["path"] == p), "errors": sum(1 for r in errors if r["path"] == p), "first_error_at": next((r["t"] for r in errors if r["path"] == p), None), "last_error_at": next((r["t"] for r in reversed(errors) if r["path"] == p), None)} for p in ("/api/events", "/healthz")},
                "first_error_at": errors[0]["t"] if errors else None, "last_error_at": errors[-1]["t"] if errors else None, "p95_ok_ms": sorted(ok_lat)[int(0.95 * (len(ok_lat) - 1))] if ok_lat else None,
                "availability_pct": round(100 * len(ok_lat) / max(1, len(requests_log)), 2)}
     if events.get("alb_marked_unhealthy_at") is not None:
