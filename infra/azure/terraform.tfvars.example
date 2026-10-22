@@ -1,0 +1,7 @@
+# Copie a work/terraform-envs/azure.tfvars (ignorado por Git). Sin secretos: autenticación con `az login`.
+subscription_id = "00000000-0000-0000-0000-000000000000"   # REEMPLAZAR (ejemplo)
+# azure_region          = "centralus"                       # solo regiones permitidas
+# create_monitoring_vm  = false                              # true solo en una ventana autorizada
+# admin_cidr            = "203.0.113.10/32"                  # IP del operador (nunca 0.0.0.0/0)
+# ssh_public_key        = "ssh-ed25519 AAAA... operador"
+# alert_emails          = ["correo@example.com"]

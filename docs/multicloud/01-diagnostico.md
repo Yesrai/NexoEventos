@@ -22,8 +22,8 @@
 Resultados medidos que se conservan: V1 vs V2 hasta 50 usuarios (p95 ≈ 140–290 ms, 0 errores), ráfagas de login con límite de Argon2, autohealing, Auto Scaling 2→3→2 (alarma a los 8 min 6 s; 3.ª instancia sana ≈ 9 min; regreso a 2 a los 16 min). Ver `docs/evidencias/` y `perf/results/`.
 
 ## OCI y Azure
-- **OCI:** sin cuenta. Nada creado. **PENDIENTE** (`infra/` no tiene raíz OCI).
-- **Azure:** suscripción *Azure for Students* activa, sin recursos; crédito USD 100 **informado, no verificado** (saldo/vigencia pendientes); política que **deniega** regiones salvo `southcentralus`, `mexicocentral`, `westus3`, `canadacentral`, `centralus`; proveedores `Microsoft.Compute/Network/Storage` **NotRegistered**; cuotas de vCPU **desconocidas** (`docs/diagnostico-entorno.md`). `infra/azure` es un esqueleto sin recursos.
+- **OCI:** sin cuenta. Nada creado. **PENDIENTE** de despliegue; Terraform modular preparado y validado en `infra/oci` (sin plan ni apply).
+- **Azure:** suscripción *Azure for Students* activa, sin recursos; crédito USD 100 **informado, no verificado** (saldo/vigencia pendientes); política que **deniega** regiones salvo `southcentralus`, `mexicocentral`, `westus3`, `canadacentral`, `centralus`; proveedores `Microsoft.Compute/Network/Storage` **NotRegistered**; cuotas de vCPU **desconocidas** (`docs/diagnostico-entorno.md`). `infra/azure` tiene ahora Terraform modular preparado y validado (sin plan ni apply).
 
 ## Bloqueos
 1. **AWS:** hoy las credenciales del perfil `nexoeventos-lab` están bloqueadas por la política `voc-cancel-cred` (explicit deny en EC2, RDS, S3, Secrets…): el laboratorio fue cancelado/expiró; hace falta **Start Lab** y renovar credenciales. No se pudo releer la infraestructura viva; los CIDR/SG de arriba salen del estado local y de evidencias.

@@ -276,3 +276,9 @@ Alcance de esta fase: **inicio, catálogo y página de evento**. Registro, compr
 
 - `docs/multicloud/` (diagnóstico, arquitectura e inventario, costos y riesgos, plan por etapas) y `docs/evidencias/multicloud/` (estructura de evidencias). AWS = producción, OCI = recuperación, Azure = observabilidad. Sin recursos nuevos; AWS V1/V2, RDS, S3, respaldos, AMI, certificado y secretos intactos.
 - Bloqueos: credenciales AWS denegadas por la política `voc-cancel-cred` (hay que iniciar el laboratorio), cuenta OCI sin crear, Azure con crédito/cuotas/proveedores por verificar.
+
+## 25. Preparación local multicloud (Terraform OCI/Azure, transferencia y restauración)
+
+- `infra/oci` (iam, network, storage, recovery) e `infra/azure` (network, vm, budget, monitor): estados independientes, variables de ejemplo y VM/NAT/pruebas desactivados por defecto; `fmt`/`validate` correctos. Sin cuenta ni recursos.
+- `scripts/multicloud/`: coherencia de CIDR/estados, seguridad estática de IaC, clave de recuperación OCI independiente (fuera del repo), transferencia con SHA-256 y simulacro de restauración con criterios (`docs/multicloud/05-06`); prueba local de extremo a extremo con claves desechables: 16/16.
+- Evidencia: `docs/evidencias/multicloud/automatizacion/20261022-preparacion-local/`.

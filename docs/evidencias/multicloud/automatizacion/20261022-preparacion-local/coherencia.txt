@@ -1,0 +1,26 @@
+OK    AWS vpc: estado Terraform = variables (10.20.0.0/16)
+OK    AWS public_a: estado Terraform = variables (10.20.1.0/24)
+OK    AWS db_a: estado Terraform = variables (10.20.21.0/24)
+OK    AWS db_b: estado Terraform = variables (10.20.22.0/24)
+OK    AWS: subredes dentro de 10.20.0.0/16
+OK    OCI: subredes dentro de 10.30.0.0/16
+OK    Azure: subredes dentro de 10.40.0.0/16
+OK    AWS: subredes sin solape (incluida public-b de V2)
+OK    Sin solape entre nubes: {'AWS': '10.20.0.0/16', 'OCI': '10.30.0.0/16', 'Azure': '10.40.0.0/16'}
+OK    docs/multicloud cita 10.20.0.0/16
+OK    docs/multicloud cita 10.20.1.0/24
+OK    docs/multicloud cita 10.20.21.0/24
+OK    docs/multicloud cita 10.20.22.0/24
+OK    docs/multicloud cita 10.20.2.0/24
+OK    docs/multicloud cita 10.30.0.0/16
+OK    docs/multicloud cita 10.30.1.0/24
+OK    docs/multicloud cita 10.40.0.0/16
+OK    docs/multicloud cita 10.40.1.0/24
+OK    Todos los CIDR citados existen en Terraform/variables (sin inventados): sobran []
+OK    Raíz Terraform citada y existente: infra/aws
+OK    Raíz Terraform citada y existente: infra/aws-v2
+OK    Raíz Terraform citada y existente: infra/aws-recovery
+OK    Raíz Terraform citada y existente: infra/oci
+OK    Raíz Terraform citada y existente: infra/azure
+OK    Plan: etapas 0–11 contiguas (12)
+OK    Región por defecto de Azure dentro de la directiva documentada

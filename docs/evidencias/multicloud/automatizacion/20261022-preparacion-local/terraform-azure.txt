@@ -1,0 +1,8 @@
+# terraform fmt -check -recursive
+formato correcto
+# terraform validate
+Success! The configuration is valid.
+
+# proveedores bloqueados
+provider "registry.terraform.io/hashicorp/azurerm" {
+  version     = "5.10.0"

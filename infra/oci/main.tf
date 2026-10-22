@@ -1,0 +1,36 @@
+module "iam" {
+  source              = "./modules/iam"
+  tenancy_ocid        = var.tenancy_ocid
+  compartment_name    = var.compartment_name
+  uploader_group_name = var.uploader_group_name
+  bucket_name         = var.bucket_name
+  freeform_tags       = local.common_tags
+}
+
+module "network" {
+  source             = "./modules/network"
+  compartment_id     = module.iam.compartment_id
+  vcn_cidr           = var.vcn_cidr
+  subnet_cidr        = var.private_subnet_cidr
+  enable_nat_gateway = var.enable_nat_gateway
+  freeform_tags      = local.common_tags
+}
+
+module "storage" {
+  source         = "./modules/storage"
+  compartment_id = module.iam.compartment_id
+  bucket_name    = var.bucket_name
+  freeform_tags  = local.common_tags
+}
+
+module "recovery" {
+  source              = "./modules/recovery"
+  create              = var.create_recovery_vm
+  compartment_id      = module.iam.compartment_id
+  subnet_id           = module.network.private_subnet_id
+  nsg_id              = module.network.nsg_id
+  shape               = var.recovery_shape
+  ssh_public_key      = var.ssh_public_key
+  bastion_client_cidr = var.bastion_client_cidr
+  freeform_tags       = local.common_tags
+}

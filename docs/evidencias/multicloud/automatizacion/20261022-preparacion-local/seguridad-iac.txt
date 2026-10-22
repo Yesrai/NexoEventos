@@ -1,0 +1,13 @@
+OK    OCI: bucket privado y versionado
+OK    OCI: VM y subred sin IP pública
+OK    OCI: sin Internet Gateway
+OK    OCI: ninguna regla de entrada abierta a Internet
+OK    OCI: VM y NAT desactivados por defecto
+OK    OCI: política de mínimo privilegio (sin borrar ni administrar)
+OK    Azure: NSG solo desde admin_cidr
+OK    Azure: admin_cidr no admite 0.0.0.0/0
+OK    Azure: VM solo con clave SSH
+OK    Azure: VM desactivada por defecto
+OK    Azure: regiones permitidas y sin registro automático de proveedores
+OK    Azure: presupuesto con alertas
+OK    Sin secretos ni claves en el código

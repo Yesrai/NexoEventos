@@ -28,6 +28,8 @@ Estados Terraform **separados**: `infra/aws` (V1), `infra/aws-v2`, `infra/aws-re
 | Azure | VM Linux 2 vCPU/4 GB (p. ej. B2s; **validar cuota/tamaño**) + disco SSD estándar 64 GiB + IP pública estática | Zabbix server + PostgreSQL + Grafana | PENDIENTE |
 | Azure | Log Analytics (nivel gratuito de ingesta), Azure Monitor (métricas de la VM), pruebas de disponibilidad HTTPS externas, presupuesto con alertas | | PENDIENTE |
 
+IaC preparada y **validada localmente** (`terraform fmt/validate`, comprobaciones estáticas de seguridad y coherencia de CIDR): `infra/oci` y `infra/azure`, con estados independientes y `create_*=false` por defecto. Ningún recurso OCI/Azure existe todavía.
+
 ## Conexiones y permisos
 - **AWS → OCI (respaldo):** la estación del operador descarga el CMS cifrado y su SHA-256 de S3 (verifica), lo sube a OCI por HTTPS (política de OCI de solo escritura para el usuario API) y verifica el hash en destino. **No se guardan credenciales de OCI en AWS ni de AWS en OCI/CI.** Cifrado de extremo a extremo con la clave pública de recuperación ya usada; la clave privada se aporta solo durante el simulacro (por Bastion, en memoria) — *decisión del usuario pendiente* (alternativa: segundo par de claves solo para OCI).
 - **Restauración OCI:** la VM (subred privada) lee el bucket por el Service Gateway; PostgreSQL local temporal; se compara la huella (conteos y hashes) con la línea base del respaldo del 19-oct (135 reservas, 135 entradas, 25 usuarios, Alembic 0008). Al terminar se destruye la VM.

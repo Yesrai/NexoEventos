@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "nota": "Valores OBSERVADOS (no calculados): línea base del respaldo previo del 19-oct-2026 (esquema 0005) y estado de la base tras el despliegue 0008 verificado el 22-oct-2026. Fuentes: recibo/baseline del respaldo y comprobaciones posteriores en docs/evidencias/. Se compara con scripts/multicloud/fingerprint.sql.",
+  "baselines": {
+    "0005-respaldo-20261019": {
+      "descripcion": "Respaldo lógico nexoeventos-preupdate-20261019t0628z.cms (antes de las migraciones 0006-0008)",
+      "fingerprint": {
+        "alembic": "0005", "users": "25", "events": "31", "reservations": "135", "tickets": "135", "operator_assignments": "2",
+        "access_logs": "9", "reserved_total": "135",
+        "inventory_md5": "2f006a96311da014adfccbe583d28c7e", "reservations_md5": "cbe0c1c26e4cee71ffac596dd24d3607"
+      }
+    },
+    "0008-estado-20261022": {
+      "descripcion": "Estado de la base de producción tras el despliegue 0008 (un respaldo nuevo debe coincidir mientras no haya datos nuevos)",
+      "fingerprint": {
+        "alembic": "0008", "users": "25", "events": "35", "reservations": "135", "tickets": "135", "operator_assignments": "2",
+        "access_logs": "9", "reserved_total": "135",
+        "inventory_md5": "a42d7ed0da5677359b91f70ac0d37b55", "reservations_md5": "cbe0c1c26e4cee71ffac596dd24d3607"
+      }
+    }
+  }
+}
