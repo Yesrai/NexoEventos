@@ -1,0 +1,174 @@
+#!/usr/bin/env python3
+"""Prueba controlada de tolerancia a fallos de AWS V2: con tráfico ligero y constante (solo lecturas: /api/events y /healthz, sin datos ni fixtures),
+detiene la API (`systemctl stop nexoeventos-api`) en UNA instancia —sin detenerla ni terminarla—, mide la detección del ALB, las instancias sanas, los 5xx,
+la continuidad del servicio y la recuperación, y vuelve a arrancar la API. Se aborta y restaura de inmediato si el ALB se queda sin destinos sanos o si el
+ASG marca la instancia como no sana (iría a reemplazarla). Requiere NEXO_ALLOW_CLOUD_CHANGES=YES. No usa k6 ni toca Terraform.
+Uso: python3 scripts/cloud/v2-failover-test.py --out docs/evidencias/tolerancia-fallos-v2-AAAAMMDD [--hold-after-detect 20]
+"""
+import argparse
+import importlib.util
+import json
+import os
+import socket
+import subprocess
+import sys
+import threading
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+import httpx
+
+ROOT = Path(__file__).resolve().parents[2]
+DOMAIN = "nexoeventos-demo.duckdns.org"
+
+
+def load(name: str, rel: str):
+    spec = importlib.util.spec_from_file_location(name, ROOT / rel)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+M = load("v2m", "scripts/cloud/v2-measure.py")
+T0 = time.time()
+now = lambda: round(time.time() - T0, 1)  # noqa: E731
+
+
+def iso(t: float) -> str:
+    return datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--hold-after-detect", type=int, default=20)
+    ap.add_argument("--rate", type=float, default=5.0)
+    args = ap.parse_args()
+    if os.environ.get("NEXO_ALLOW_CLOUD_CHANGES") != "YES":
+        sys.exit("Requiere NEXO_ALLOW_CLOUD_CHANGES=YES (detiene temporalmente la API de una instancia de V2).")
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    health0 = M.target_health()
+    assert len(health0) == 2 and all(s == "healthy" for s in health0.values()), f"V2 no tiene 2 instancias sanas: {health0}"
+    act0 = {a["ActivityId"] for a in M.aws("autoscaling", "describe-scaling-activities", "--auto-scaling-group-name", M.ASG_NAME, "--max-items", "20").get("Activities", [])}
+    victim = sorted(health0)[0]
+    other = next(i for i in health0 if i != victim)
+    alb = subprocess.check_output(["terraform", "output", "-raw", "alb_dns_name"], cwd=ROOT / "infra" / "aws-v2", text=True).strip()
+    ip = sorted({a[4][0] for a in socket.getaddrinfo(alb, 443, socket.AF_INET)})[0]
+    real = socket.getaddrinfo
+    socket.getaddrinfo = lambda host, *a, **k: real(ip if host == DOMAIN else host, *a, **k)
+
+    stop, abort = threading.Event(), {"reason": None}
+    requests_log: list[dict] = []
+    timeline: list[dict] = []
+
+    def traffic() -> None:
+        paths, i = ["/api/events", "/healthz"], 0
+        while not stop.is_set():
+            path, i = paths[i % 2], i + 1
+            t = time.time()
+            try:
+                with httpx.Client(headers={"Connection": "close"}, timeout=15) as c:
+                    code = c.get(f"https://{DOMAIN}{path}").status_code
+            except httpx.HTTPError as error:
+                code = -1
+            requests_log.append({"t": round(t - T0, 2), "path": path, "status": code, "ms": round((time.time() - t) * 1000)})
+            stop.wait(max(0.0, 1 / args.rate - (time.time() - t)))
+
+    def poll() -> None:
+        last = None
+        while not stop.is_set():
+            try:
+                health = M.target_health()
+                asg = M.aws("autoscaling", "describe-auto-scaling-groups", "--auto-scaling-group-names", M.ASG_NAME)["AutoScalingGroups"][0]
+                asg_state = {i["InstanceId"]: (i["LifecycleState"], i["HealthStatus"]) for i in asg["Instances"]}
+                snap = {"t": now(), "alb": {k[-6:]: v for k, v in health.items()}, "asg": {k[-6:]: list(v) for k, v in asg_state.items()}, "asg_desired": asg["DesiredCapacity"]}
+                key = json.dumps([snap["alb"], snap["asg"]], sort_keys=True)
+                if key != last:
+                    timeline.append(snap); last = key
+                if sum(1 for s in health.values() if s == "healthy") == 0:
+                    abort["reason"] = "el ALB se quedó sin destinos sanos"
+                if any(h != "Healthy" or s != "InService" for s, h in asg_state.values()) or len(asg_state) != 2:
+                    abort["reason"] = f"el ASG cambió el estado de una instancia: {asg_state}"
+            except Exception as error:  # noqa: BLE001
+                timeline.append({"t": now(), "error": str(error)[:120]})
+    # el ciclo de consulta ya tarda ~2 s por las dos llamadas
+
+    threads = [threading.Thread(target=traffic), threading.Thread(target=poll)]
+    [t.start() for t in threads]
+    events: dict = {"victim": victim[-6:], "other": other[-6:], "rate_req_per_s": args.rate}
+    stopped = False
+    try:
+        time.sleep(25)  # línea base sana
+        events["baseline_s"] = 25
+        events["stop_issued_at"] = now()
+        M.ssm_output(victim, "systemctl stop nexoeventos-api")
+        stopped = True
+        events["stop_confirmed_at"] = now()
+        deadline = time.time() + 120
+        detected = None
+        while time.time() < deadline and not abort["reason"]:
+            states = [x for x in timeline if x.get("alb", {}).get(victim[-6:]) in ("unhealthy", "draining", "unused")]
+            if states:
+                detected = states[0]["t"]; break
+            time.sleep(1)
+        events["alb_marked_unhealthy_at"] = detected
+        if detected is not None and not abort["reason"]:
+            time.sleep(args.hold_after_detect)
+        events["restore_issued_at"] = now()
+    finally:
+        if stopped:
+            M.ssm_output(victim, "systemctl start nexoeventos-api")
+            events["restore_confirmed_at"] = now()
+    recovered = None
+    deadline = time.time() + 180
+    while time.time() < deadline:
+        last = [x for x in timeline if "alb" in x][-1]
+        if all(v == "healthy" for v in last["alb"].values()) and len(last["alb"]) == 2 and last["t"] > events["restore_confirmed_at"]:
+            recovered = last["t"]; break
+        time.sleep(2)
+    events["both_healthy_again_at"] = recovered
+    time.sleep(15)  # tráfico posterior a la recuperación
+    stop.set()
+    [t.join() for t in threads]
+    end = time.time()
+    events["abort_reason"] = abort["reason"]
+
+    ok_lat = [r["ms"] for r in requests_log if r["status"] == 200]
+    errors = [r for r in requests_log if r["status"] != 200]
+    summary = {"requests": len(requests_log), "ok": len(ok_lat), "errors": len(errors), "error_statuses": {str(s): sum(1 for r in errors if r["status"] == s) for s in sorted({r["status"] for r in errors})},
+               "first_error_at": errors[0]["t"] if errors else None, "last_error_at": errors[-1]["t"] if errors else None, "p95_ok_ms": sorted(ok_lat)[int(0.95 * (len(ok_lat) - 1))] if ok_lat else None,
+               "availability_pct": round(100 * len(ok_lat) / max(1, len(requests_log)), 2)}
+    if events.get("alb_marked_unhealthy_at") is not None:
+        events["detection_after_stop_s"] = round(events["alb_marked_unhealthy_at"] - events["stop_issued_at"], 1)
+    if recovered is not None:
+        events["recovery_after_restore_s"] = round(recovered - events["restore_confirmed_at"], 1)
+    # 5xx en el log de Nginx de cada instancia durante la ventana
+    window = (iso(T0), iso(end + 2))
+    nginx = {}
+    for inst in (victim, other):
+        script = (f"awk -v a='{window[0].replace('Z', '+00:00')}' -v b='{window[1].replace('Z', '+00:00')}' '{{ if (match($0,/^[0-9T:+-]+/)) {{ t=substr($0,RSTART,RLENGTH); if (t>=a && t<b && $0 ~ /path=\\/api\\//) {{ n++; if ($0 ~ /status=5/) e++ }} }} }} END{{print n+0, e+0}}' /var/log/nginx/nexoeventos-access.log")
+        n, e = (M.ssm_output(inst, script).split() + ["0", "0"])[:2]
+        nginx[inst[-6:]] = {"api_requests": int(n), "api_5xx": int(e)}
+    time.sleep(120)  # métricas del ALB en CloudWatch tardan en aparecer
+    lb = M.aws("elbv2", "describe-load-balancers", "--names", M.LB_NAME)["LoadBalancers"][0]["LoadBalancerArn"].split("loadbalancer/")[1]
+    tg = M.aws("elbv2", "describe-target-groups", "--names", M.TG_NAME)["TargetGroups"][0]["TargetGroupArn"].split(":")[-1]
+    def stat(metric, dims, statistic):
+        pts = M.aws("cloudwatch", "get-metric-statistics", "--namespace", "AWS/ApplicationELB", "--metric-name", metric, "--dimensions", *[f"Name={k},Value={v}" for k, v in dims],
+                    "--start-time", iso(T0 - 60), "--end-time", iso(time.time()), "--period", "60", "--statistics", statistic)["Datapoints"]
+        return [int(p[statistic]) for p in sorted(pts, key=lambda p: p["Timestamp"])]
+    cloudwatch = {"healthy_hosts_min_per_minute": stat("HealthyHostCount", [("LoadBalancer", lb), ("TargetGroup", tg)], "Minimum"), "unhealthy_hosts_max_per_minute": stat("UnHealthyHostCount", [("LoadBalancer", lb), ("TargetGroup", tg)], "Maximum"),
+                  "target_5xx_per_minute": stat("HTTPCode_Target_5XX_Count", [("LoadBalancer", lb)], "Sum"), "elb_5xx_per_minute": stat("HTTPCode_ELB_5XX_Count", [("LoadBalancer", lb)], "Sum"), "requests_per_minute": stat("RequestCount", [("LoadBalancer", lb)], "Sum")}
+    final = M.target_health()
+    asg = M.aws("autoscaling", "describe-auto-scaling-groups", "--auto-scaling-group-names", M.ASG_NAME)["AutoScalingGroups"][0]
+    result = {"schema": 1, "events": events, "client": summary, "nginx": nginx, "cloudwatch": cloudwatch, "timeline": timeline,
+              "final": {"alb": {k[-6:]: v for k, v in final.items()}, "asg": [[i["LifecycleState"], i["HealthStatus"]] for i in asg["Instances"]], "asg_activities_new": [a["Description"][:60] for a in M.aws("autoscaling", "describe-scaling-activities", "--auto-scaling-group-name", M.ASG_NAME, "--max-items", "20").get("Activities", []) if a["ActivityId"] not in act0]}}
+    (out / "resultado.json").write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    (out / "solicitudes.json").write_text(json.dumps(requests_log) + "\n", encoding="utf-8")
+    print(json.dumps({"events": events, "client": summary, "nginx": nginx, "final": result["final"]}, indent=1, ensure_ascii=False))
+    sys.exit(0 if not abort["reason"] and recovered is not None else 1)
+
+
+if __name__ == "__main__":
+    main()

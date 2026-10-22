@@ -1,0 +1,140 @@
+{
+ "schema": 1,
+ "events": {
+  "victim": "9851a1",
+  "other": "16b726",
+  "rate_req_per_s": 5.0,
+  "baseline_s": 25,
+  "stop_issued_at": 28.8,
+  "stop_confirmed_at": 32.2,
+  "alb_marked_unhealthy_at": 48.8,
+  "restore_issued_at": 69.3,
+  "restore_confirmed_at": 72.6,
+  "both_healthy_again_at": 88.4,
+  "abort_reason": null,
+  "detection_after_stop_s": 20.0,
+  "recovery_after_restore_s": 15.8
+ },
+ "client": {
+  "requests": 275,
+  "ok": 250,
+  "errors": 25,
+  "error_statuses": {
+   "502": 25
+  },
+  "first_error_at": 30.11,
+  "last_error_at": 47.68,
+  "p95_ok_ms": 418,
+  "availability_pct": 90.91
+ },
+ "nginx": {
+  "9851a1": {
+   "api_requests": 0,
+   "api_5xx": 0
+  },
+  "16b726": {
+   "api_requests": 138,
+   "api_5xx": 0
+  }
+ },
+ "cloudwatch": {
+  "healthy_hosts_min_per_minute": [
+   2,
+   2,
+   1,
+   2,
+   2
+  ],
+  "unhealthy_hosts_max_per_minute": [
+   0,
+   0,
+   1,
+   0,
+   0
+  ],
+  "target_5xx_per_minute": [
+   25
+  ],
+  "elb_5xx_per_minute": [],
+  "requests_per_minute": [
+   0,
+   7,
+   163,
+   107,
+   0
+  ]
+ },
+ "timeline": [
+  {
+   "t": 6.0,
+   "alb": {
+    "9851a1": "healthy",
+    "16b726": "healthy"
+   },
+   "asg": {
+    "9851a1": [
+     "InService",
+     "Healthy"
+    ],
+    "16b726": [
+     "InService",
+     "Healthy"
+    ]
+   },
+   "asg_desired": 2
+  },
+  {
+   "t": 48.8,
+   "alb": {
+    "9851a1": "unhealthy",
+    "16b726": "healthy"
+   },
+   "asg": {
+    "9851a1": [
+     "InService",
+     "Healthy"
+    ],
+    "16b726": [
+     "InService",
+     "Healthy"
+    ]
+   },
+   "asg_desired": 2
+  },
+  {
+   "t": 88.4,
+   "alb": {
+    "9851a1": "healthy",
+    "16b726": "healthy"
+   },
+   "asg": {
+    "9851a1": [
+     "InService",
+     "Healthy"
+    ],
+    "16b726": [
+     "InService",
+     "Healthy"
+    ]
+   },
+   "asg_desired": 2
+  }
+ ],
+ "final": {
+  "alb": {
+   "9851a1": "healthy",
+   "16b726": "healthy"
+  },
+  "asg": [
+   [
+    "InService",
+    "Healthy"
+   ],
+   [
+    "InService",
+    "Healthy"
+   ]
+  ],
+  "asg_activities_new": []
+ }
+}
