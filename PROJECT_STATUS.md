@@ -271,3 +271,8 @@ Alcance de esta fase: **inicio, catálogo y página de evento**. Registro, compr
 - Nginx para ALB (`nexoeventos-nginx-alb.conf.j2`, `nexoeventos_edge: alb` en el rol): IP real solo desde la VPC con `real_ip_recursive`; probado en Docker (`scripts/v2/test-nginx-alb.sh`: X-Forwarded-For de red de confianza respetado, valor falsificado ignorado, descartado desde redes no confiables, `/healthz`→`/ready`).
 - Secretos compartidos por Secrets Manager (copiado dentro de AWS desde V1), certificado importado en ACM (DuckDNS no valida CNAME), pool de RDS acotado (`DB_POOL_SIZE`/`DB_MAX_OVERFLOW`, valores por defecto intactos), `--resolve-ip` en k6 y `scripts/cloud/v2-measure.py` (estado, métricas, reparto por instancia y caída de una instancia).
 - Pendiente (AWS, con autorización): permisos de ELB/ASG/ACM/Secrets Manager, secreto, AMI dorada, certificado, `plan`/`apply` solo de la raíz V2, medición V1 vs V2.
+
+## 24. Arquitectura multicloud: diagnóstico y plan (sin cambios en la nube)
+
+- `docs/multicloud/` (diagnóstico, arquitectura e inventario, costos y riesgos, plan por etapas) y `docs/evidencias/multicloud/` (estructura de evidencias). AWS = producción, OCI = recuperación, Azure = observabilidad. Sin recursos nuevos; AWS V1/V2, RDS, S3, respaldos, AMI, certificado y secretos intactos.
+- Bloqueos: credenciales AWS denegadas por la política `voc-cancel-cred` (hay que iniciar el laboratorio), cuenta OCI sin crear, Azure con crédito/cuotas/proveedores por verificar.
