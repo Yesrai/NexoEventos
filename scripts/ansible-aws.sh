@@ -13,8 +13,8 @@ export ANSIBLE_CONFIG="$ROOT/ansible/ansible.cfg"
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 export ANSIBLE_FORKS=1
 
-case "$ACTION" in preflight|deploy|rollback|observability) ;; *)
-  echo "Uso: $0 {preflight|deploy|rollback|observability}" >&2; exit 2 ;;
+case "$ACTION" in preflight|deploy|rollback|observability|bake) ;; *)
+  echo "Uso: $0 {preflight|deploy|rollback|observability|bake}" >&2; exit 2 ;;
 esac
 for command_name in aws ansible-playbook session-manager-plugin; do
   command -v "$command_name" >/dev/null 2>&1 || {
@@ -42,11 +42,14 @@ ACTIVE_ACCOUNT="$(aws sts get-caller-identity --query Account --output text 2>/d
   echo "La cuenta activa no coincide con el entorno; no se ejecutó Ansible." >&2; exit 1;
 }
 
+# bake: instancia TEMPORAL de construcción de la AMI de V2 (etiqueta distinta de la de V1, que no se toca).
+TARGET_TAG=nexoeventos-academy-app
+[[ "$ACTION" == bake ]] && TARGET_TAG=nexoeventos-academy-v2-bake
 INSTANCE_ID="$(aws ec2 describe-instances \
-  --filters Name=tag:Name,Values=nexoeventos-academy-app Name=instance-state-name,Values=running \
+  --filters Name=tag:Name,Values="$TARGET_TAG" Name=instance-state-name,Values=running \
   --query 'Reservations[].Instances[].InstanceId' --output text)"
 [[ "$(awk '{print NF}' <<<"$INSTANCE_ID")" == 1 ]] || {
-  echo "Se requiere exactamente una EC2 NexoEventos en ejecución." >&2; exit 1;
+  echo "Se requiere exactamente una EC2 '$TARGET_TAG' en ejecución." >&2; exit 1;
 }
 PING="$(aws ssm describe-instance-information \
   --filters Key=InstanceIds,Values="$INSTANCE_ID" \
@@ -89,6 +92,9 @@ if [[ "$ACTION" == deploy ]]; then
   printf 'migration_backup_receipt: %s\n' "$RECEIPT" >>"$RUNTIME"
   "$ROOT/scripts/build-release.sh"
   ansible-playbook -i "$INVENTORY" "$ROOT/ansible/playbooks/deploy.yml" --limit nexoeventos-academy-app
+elif [[ "$ACTION" == bake ]]; then
+  "$ROOT/scripts/build-release.sh"
+  ansible-playbook -i "$INVENTORY" "$ROOT/ansible/playbooks/bake-v2.yml" --limit nexoeventos-academy-app
 elif [[ "$ACTION" == rollback ]]; then
   ansible-playbook -i "$INVENTORY" "$ROOT/ansible/playbooks/rollback.yml" --limit nexoeventos-academy-app
 else

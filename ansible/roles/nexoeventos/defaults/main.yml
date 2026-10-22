@@ -7,3 +7,5 @@ nexoeventos_run_migrations: true
 nexoeventos_edge: direct
 # Red desde la que Nginx confía en X-Forwarded-For en modo "alb" (la VPC; el SG ya limita el origen al ALB).
 nexoeventos_alb_cidr: 10.20.0.0/16
+# Horneado de la AMI de V2: instala todo SIN secretos ni certificados, no migra y no arranca la API (los servicios quedan habilitados).
+nexoeventos_bake: false

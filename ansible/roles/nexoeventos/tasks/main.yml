@@ -19,6 +19,24 @@
       - nexoeventos_domain is match('^[a-z0-9.-]+\\.(duckdns\\.org|sslip\\.io)$')
     fail_msg: Plataforma, dominio o artefacto no válidos; no se modificó la aplicación.
 
+- name: Crear usuario y directorios base (solo horneado de AMI)
+  when: nexoeventos_bake
+  block:
+    - name: Crear el usuario de servicio
+      ansible.builtin.user:
+        name: nexoeventos
+        system: true
+        shell: /sbin/nologin
+        home: /opt/nexoeventos
+        create_home: false
+    - name: Crear /etc/nexoeventos vacío (los secretos se escriben al arrancar cada instancia)
+      ansible.builtin.file:
+        path: /etc/nexoeventos
+        state: directory
+        owner: root
+        group: root
+        mode: '0700'
+
 - name: Comprobar secretos y certificado existentes sin leer su contenido
   ansible.builtin.stat:
     path: "{{ item }}"
@@ -29,8 +47,10 @@
     - "{{ '/etc/letsencrypt/live/' ~ nexoeventos_domain ~ '/privkey.pem' if nexoeventos_edge == 'direct' else '/etc/nexoeventos/backend.env' }}"
   register: protected_files
   no_log: true
+  when: not nexoeventos_bake
 
 - name: Exigir secretos y TLS antes de actualizar
+  when: not nexoeventos_bake
   ansible.builtin.assert:
     that:
       - protected_files.results | map(attribute='stat.exists') | min
@@ -267,7 +287,16 @@
     validate: /usr/local/sbin/nexoeventos-validate-nginx %s
   notify: Recargar Nginx
 
+- name: Habilitar (sin arrancar) la API y Nginx en la AMI
+  when: nexoeventos_bake
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: true
+    daemon_reload: true
+  loop: [nexoeventos-api, nginx]
+
 - name: Arrancar explícitamente la API desde la versión publicada
+  when: not nexoeventos_bake
   ansible.builtin.systemd_service:
     name: nexoeventos-api
     state: restarted
@@ -275,6 +304,7 @@
     daemon_reload: true
 
 - name: Aplicar servicios y comprobar la nueva versión
+  when: not nexoeventos_bake
   block:
     - name: Ejecutar handlers antes de la prueba
       ansible.builtin.meta: flush_handlers

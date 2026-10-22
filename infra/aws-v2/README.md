@@ -14,3 +14,10 @@ Fuera de Terraform (con autorización y por Session Manager, el valor nunca sale
 Uso futuro: `terraform init` con estado en `work/terraform-state/academy-v2`, `terraform plan -var-file=…` (con `ami_id` y `certificate_arn`) y revisar antes de cualquier `apply`.
 
 Validación local realizada: `terraform fmt`, `terraform validate`, `python3 infra/aws-v2/tests/check_security.py`, `scripts/v2/test-nginx-alb.sh` (Nginx en Docker: sintaxis, health check, IP real), `scripts/v2/test_measure.py`, `ansible-playbook --syntax-check` y las pruebas del backend.
+
+## Secuencia de ejecución real (cada paso con autorización propia)
+1. **Plan de lectura (hecho):** `terraform plan` con valores provisionales de `ami_id` y `certificate_arn` → 21 recursos nuevos, 0 cambios, 0 destrucciones (`work/terraform-envs/academy-v2.plan-provisional.tfvars`, ignorado por Git; estado en `work/terraform-state/academy-v2`).
+2. **Certificado y secreto** (arranca solo la EC2 de V1, ~10 min): `scripts/cloud/v2-prepare.sh v1-ec2-start` → `import-cert` → `create-secret` → `v1-ec2-stop`.
+3. **AMI dorada** (instancia temporal, ~45 min): `v2-prepare.sh builder-launch` → `scripts/ansible-aws.sh bake` (rol `nexoeventos` en modo `nexoeventos_bake` + `nexoeventos_edge: alb`: sin secretos, sin migraciones, API sin arrancar) → `builder-image` → `builder-delete`.
+4. **Plan real** con `ami_id` (`work/operacion/v2-ami-id`) y `certificate_arn` (`work/operacion/v2-certificate-arn`) y revisión.
+5. **`terraform apply`** solo de esta raíz; después verificación funcional y medición.

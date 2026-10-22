@@ -33,11 +33,6 @@ data "aws_security_group" "database" {
   vpc_id = data.aws_vpc.v1.id
 }
 
-# Solo metadatos del secreto (ARN); el valor nunca pasa por Terraform ni por su estado.
-data "aws_secretsmanager_secret" "app_env" {
-  name = var.app_secret_name
-}
-
 data "aws_iam_instance_profile" "app" {
   name = var.instance_profile_name
 }
