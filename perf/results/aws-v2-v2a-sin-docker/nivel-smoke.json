@@ -1,0 +1,85 @@
+{
+ "label": "nivel-smoke",
+ "step": "smoke",
+ "run_id": "v2a0",
+ "rc": 1,
+ "stdout_tail": [
+  "Plan: smoke → 1 usuarios, meseta 60 s, escenarios ['mix'], ≈ 1 min 45 s máximos, destino nexoeventos-demo.duckdns.org",
+  "▶ mix"
+ ],
+ "stderr_tail": "k6 no produjo resumen (mix); revisa que el peldaño no haya abortado:\ndocker: Cannot connect to the Docker daemon at unix:///Users/yeseniaramirezmedina/.docker/run/docker.sock. Is the docker daemon running?\n\nRun 'docker run --help' for more information\n\n",
+ "elapsed_s": 3.1,
+ "instances": {
+  "9851a1": {
+   "samples": 2,
+   "cpu_avg_pct": 0.5,
+   "cpu_max_pct": 1.0,
+   "cpu_2min_max_avg_pct": 0.5,
+   "steal_max_pct": 0.0,
+   "mem_avail_min_mb": 1448,
+   "api_rss_max_mb": 222,
+   "nginx_rss_max_mb": 13,
+   "db_conns_max": -1
+  },
+  "16b726": {
+   "samples": 2,
+   "cpu_avg_pct": 1.0,
+   "cpu_max_pct": 2.0,
+   "cpu_2min_max_avg_pct": 1.0,
+   "steal_max_pct": 0.0,
+   "mem_avail_min_mb": 1441,
+   "api_rss_max_mb": 222,
+   "nginx_rss_max_mb": 13,
+   "db_conns_max": -1
+  }
+ },
+ "distribution": {
+  "9851a1": {
+   "requests": 0,
+   "errors_5xx": 0
+  },
+  "16b726": {
+   "requests": 0,
+   "errors_5xx": 0
+  }
+ },
+ "share_pct": {
+  "9851a1": 0,
+  "16b726": 0
+ },
+ "watchdog": {},
+ "integrity": {
+  "violations": {
+   "asiento_con_mas_de_una_entrada": 0,
+   "asiento_ocupado_sin_entrada": 0,
+   "entrada_con_asiento_no_marcado_ocupado": 0,
+   "reservas_con_cantidad_distinta_de_entradas": 0,
+   "reservas_sin_entradas": 0,
+   "entradas_sin_reserva_del_mismo_evento": 0,
+   "evento_con_contador_distinto_de_entradas": 0,
+   "evento_vendido_por_encima_del_aforo": 0,
+   "zona_con_contador_distinto_de_entradas": 0,
+   "zona_vendida_por_encima_del_aforo": 0,
+   "claves_de_idempotencia_duplicadas": 0
+  },
+  "total_violations": 0,
+  "totals": {
+   "reservations": 135,
+   "tickets": 135,
+   "seat_tickets": 0
+  },
+  "seat_unique_index_present": true
+ },
+ "surplus_credits_latest": 0.0,
+ "rds_recent": {
+  "cpu_pct_1min_max": 3.739,
+  "connections_max": 6.0,
+  "freeable_memory_mb_min": 190.5,
+  "write_iops_max": 9.017,
+  "cpu_credit_balance_min": 67.06
+ },
+ "ok": false,
+ "stop_reasons": [
+  "k6 terminó con error o umbral/abort (rc=1)"
+ ]
+}

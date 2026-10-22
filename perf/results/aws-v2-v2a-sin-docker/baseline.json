@@ -1,0 +1,400 @@
+{
+ "schema": 1,
+ "run": "v2a",
+ "target": "AWS V2 (ALB + 2 EC2 en 2 zonas)",
+ "started_utc": "2026-10-22T15:20:47+00:00",
+ "levels": [
+  {
+   "label": "nivel-smoke",
+   "step": "smoke",
+   "run_id": "v2a0",
+   "rc": 1,
+   "stdout_tail": [
+    "Plan: smoke → 1 usuarios, meseta 60 s, escenarios ['mix'], ≈ 1 min 45 s máximos, destino nexoeventos-demo.duckdns.org",
+    "▶ mix"
+   ],
+   "stderr_tail": "k6 no produjo resumen (mix); revisa que el peldaño no haya abortado:\ndocker: Cannot connect to the Docker daemon at unix:///Users/yeseniaramirezmedina/.docker/run/docker.sock. Is the docker daemon running?\n\nRun 'docker run --help' for more information\n\n",
+   "elapsed_s": 3.1,
+   "instances": {
+    "9851a1": {
+     "samples": 2,
+     "cpu_avg_pct": 0.5,
+     "cpu_max_pct": 1.0,
+     "cpu_2min_max_avg_pct": 0.5,
+     "steal_max_pct": 0.0,
+     "mem_avail_min_mb": 1448,
+     "api_rss_max_mb": 222,
+     "nginx_rss_max_mb": 13,
+     "db_conns_max": -1
+    },
+    "16b726": {
+     "samples": 2,
+     "cpu_avg_pct": 1.0,
+     "cpu_max_pct": 2.0,
+     "cpu_2min_max_avg_pct": 1.0,
+     "steal_max_pct": 0.0,
+     "mem_avail_min_mb": 1441,
+     "api_rss_max_mb": 222,
+     "nginx_rss_max_mb": 13,
+     "db_conns_max": -1
+    }
+   },
+   "distribution": {
+    "9851a1": {
+     "requests": 0,
+     "errors_5xx": 0
+    },
+    "16b726": {
+     "requests": 0,
+     "errors_5xx": 0
+    }
+   },
+   "share_pct": {
+    "9851a1": 0,
+    "16b726": 0
+   },
+   "watchdog": {},
+   "integrity": {
+    "violations": {
+     "asiento_con_mas_de_una_entrada": 0,
+     "asiento_ocupado_sin_entrada": 0,
+     "entrada_con_asiento_no_marcado_ocupado": 0,
+     "reservas_con_cantidad_distinta_de_entradas": 0,
+     "reservas_sin_entradas": 0,
+     "entradas_sin_reserva_del_mismo_evento": 0,
+     "evento_con_contador_distinto_de_entradas": 0,
+     "evento_vendido_por_encima_del_aforo": 0,
+     "zona_con_contador_distinto_de_entradas": 0,
+     "zona_vendida_por_encima_del_aforo": 0,
+     "claves_de_idempotencia_duplicadas": 0
+    },
+    "total_violations": 0,
+    "totals": {
+     "reservations": 135,
+     "tickets": 135,
+     "seat_tickets": 0
+    },
+    "seat_unique_index_present": true
+   },
+   "surplus_credits_latest": 0.0,
+   "rds_recent": {
+    "cpu_pct_1min_max": 3.739,
+    "connections_max": 6.0,
+    "freeable_memory_mb_min": 190.5,
+    "write_iops_max": 9.017,
+    "cpu_credit_balance_min": 67.06
+   },
+   "ok": false,
+   "stop_reasons": [
+    "k6 terminó con error o umbral/abort (rc=1)"
+   ]
+  }
+ ],
+ "stopped_reason": "nivel-smoke: k6 terminó con error o umbral/abort (rc=1)",
+ "fingerprint_before": [
+  "alembic=0008",
+  "reservations=135:cbe0c1c26e4cee71ffac596dd24d3607",
+  "tickets=135 usados=3",
+  "users=25:47c94f8b3ed4eb4ebe1960b42300601e",
+  "access_logs=9",
+  "events=35:0733e3db986c355aeaf0225cd403607f",
+  "event_seats=240 ocupados=0",
+  "zonas_reservadas=0",
+  "queue_entries=0",
+  ""
+ ],
+ "baseline_metrics": {
+  "window_utc": [
+   "2026-10-22T15:05:59+00:00",
+   "2026-10-22T15:20:59+00:00"
+  ],
+  "alb": {
+   "request_count": [
+    2.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    2.0,
+    0.0,
+    1.0,
+    0.0
+   ],
+   "target_response_p95_s": [
+    0.002,
+    0.002,
+    0.001
+   ],
+   "target_5xx": [],
+   "elb_5xx": [
+    1.0,
+    1.0
+   ],
+   "healthy_hosts_min": [
+    0.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ]
+  },
+  "ec2": {
+   "9851a1": {
+    "cpu_pct_5min_max": [
+     1.767,
+     0.575
+    ],
+    "cpu_credit_balance": [
+     1.527
+    ],
+    "cpu_surplus_credit_balance": [
+     0.0
+    ],
+    "network_out_mb": 0.2
+   },
+   "16b726": {
+    "cpu_pct_5min_max": [
+     22.501,
+     0.568
+    ],
+    "cpu_credit_balance": [
+     1.46
+    ],
+    "cpu_surplus_credit_balance": [
+     0.0
+    ],
+    "network_out_mb": 0.2
+   }
+  },
+  "rds": {
+   "cpu_pct_1min_max": [
+    3.995,
+    4.267,
+    3.775,
+    3.965,
+    4.227,
+    3.917,
+    4.871,
+    3.773,
+    4.043,
+    4.359,
+    4.095,
+    4.24,
+    3.658,
+    3.809,
+    4.177
+   ],
+   "connections_max": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    4.0,
+    4.0,
+    4.0,
+    4.0,
+    4.0,
+    4.0,
+    4.0,
+    4.0
+   ],
+   "freeable_memory_mb_min": [
+    203.4,
+    206.8,
+    204.5,
+    204.9,
+    203.8,
+    203.3,
+    202.5,
+    193.0,
+    192.8,
+    192.1,
+    192.3,
+    195.2,
+    192.7,
+    192.7,
+    193.2
+   ],
+   "write_iops_max": [
+    0.633,
+    0.383,
+    0.183,
+    9.285,
+    1.116,
+    0.467,
+    0.367,
+    0.183,
+    9.516,
+    0.85,
+    0.833,
+    0.2,
+    0.2,
+    9.048,
+    1.15
+   ],
+   "cpu_credit_balance_min": [
+    65.297,
+    65.886,
+    66.464
+   ]
+  }
+ },
+ "environment": {
+  "asg": "nexoeventos-academy-v2-asg",
+  "instances": 2,
+  "instance_type": "t3.small x2 (modo unlimited)",
+  "rds": "db.t3.micro",
+  "generator": "Mac del autor vía Internet; k6 2.3.0 en Docker; dominio resuelto a la IP del ALB"
+ },
+ "cleanup": {
+  "leftovers": [
+   "fixture_events=0",
+   "k6_users=0"
+  ],
+  "complete": true
+ },
+ "fingerprint_after": [
+  "alembic=0008",
+  "reservations=135:cbe0c1c26e4cee71ffac596dd24d3607",
+  "tickets=135 usados=3",
+  "users=25:47c94f8b3ed4eb4ebe1960b42300601e",
+  "access_logs=9",
+  "events=35:0733e3db986c355aeaf0225cd403607f",
+  "event_seats=240 ocupados=0",
+  "zonas_reservadas=0",
+  "queue_entries=0",
+  ""
+ ],
+ "fingerprint_identical": true,
+ "ended_utc": "2026-10-22T15:24:36+00:00",
+ "elapsed_s": 228.7,
+ "cloudwatch": {
+  "window_utc": [
+   "2026-10-22T15:18:47+00:00",
+   "2026-10-22T15:27:06+00:00"
+  ],
+  "alb": {
+   "request_count": [
+    1.0,
+    0.0,
+    1.0,
+    1.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0
+   ],
+   "target_response_p95_s": [
+    0.001,
+    0.005,
+    0.005,
+    0.0,
+    0.001
+   ],
+   "target_5xx": [],
+   "elb_5xx": [],
+   "healthy_hosts_min": [
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0,
+    2.0
+   ]
+  },
+  "ec2": {
+   "9851a1": {
+    "cpu_pct_5min_max": [
+     1.024,
+     0.567
+    ],
+    "cpu_credit_balance": [
+     3.474,
+     5.399
+    ],
+    "cpu_surplus_credit_balance": [
+     0.0,
+     0.0
+    ],
+    "network_out_mb": 0.1
+   },
+   "16b726": {
+    "cpu_pct_5min_max": [
+     1.034,
+     0.616
+    ],
+    "cpu_credit_balance": [
+     3.408,
+     5.33
+    ],
+    "cpu_surplus_credit_balance": [
+     0.0,
+     0.0
+    ],
+    "network_out_mb": 0.2
+   }
+  },
+  "rds": {
+   "cpu_pct_1min_max": [
+    3.809,
+    4.177,
+    4.207,
+    4.608,
+    3.739,
+    5.615,
+    4.483,
+    4.562,
+    3.803
+   ],
+   "connections_max": [
+    4.0,
+    4.0,
+    4.0,
+    5.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0,
+    6.0
+   ],
+   "freeable_memory_mb_min": [
+    192.7,
+    193.2,
+    194.2,
+    193.5,
+    190.8,
+    190.5,
+    188.7,
+    192.0,
+    189.5
+   ],
+   "write_iops_max": [
+    9.048,
+    1.15,
+    0.567,
+    0.583,
+    0.6,
+    9.017,
+    1.5,
+    1.0,
+    0.567
+   ],
+   "cpu_credit_balance_min": [
+    67.06,
+    67.613
+   ]
+  }
+ }
+}
