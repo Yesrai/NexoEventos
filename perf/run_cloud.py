@@ -25,9 +25,9 @@ from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
 K6_IMAGE = "grafana/k6:2.3.0"
-STEPS = {"smoke": (1, 60), "10": (10, 120), "20": (20, 150), "40": (40, 150), "50": (50, 120)}  # (usuarios, segundos de meseta)
+STEPS = {"scale": (50, 720), "smoke": (1, 60), "10": (10, 120), "20": (20, 150), "40": (40, 150), "50": (50, 120)}  # (usuarios, segundos de meseta)
 ALL = ["catalog", "detail", "availability", "reserve", "same_seat"]
-CHOICES = ALL + ["mix"]  # mix: perfil mixto (30 % catálogo, 25 % detalle, 20 % disponibilidad, 25 % reserva) con exactamente N usuarios
+CHOICES = ALL + ["mix", "login_rate"]  # mix: perfil mixto (30 % catálogo, 25 % detalle, 20 % disponibilidad, 25 % reserva) con exactamente N usuarios
 MAX_TOTAL_SECONDS = 30 * 60
 DISPUTE_SEATS = 20
 HOST_RE = re.compile(r"^[a-z0-9-]+\.duckdns\.org$")
@@ -36,6 +36,8 @@ HOST_RE = re.compile(r"^[a-z0-9-]+\.duckdns\.org$")
 def scenario_seconds(scenario: str, hold: int, vus: int = 10) -> int:
     if scenario == "same_seat":
         return 180
+    if scenario == "login_rate":
+        return hold + 30 + 40  # carga + calentamiento + registro de 50 usuarios ficticios
     setup = 10 + int(vus * 0.6) if scenario in {"reserve", "mix"} else 5  # registro de usuarios ficticios (Argon2)
     return 30 + hold + 5 + setup  # rampa + meseta + bajada + preparación
 
@@ -68,7 +70,7 @@ def _ssl_context():
 
 def precheck_fixture(host_url: str, scenario: str) -> None:
     """Lectura previa: el fixture existe y, para la disputa, sus 20 asientos siguen libres (se consumen en cada ejecución)."""
-    if scenario not in {"reserve", "same_seat", "mix"}:
+    if scenario not in {"reserve", "same_seat", "mix"}:  # login_rate no usa el fixture
         return
     for event_id in (90001, 90002, 90003, 90004):
         try:
@@ -87,7 +89,7 @@ def run_one(scenario: str, vus: int, hold: int, k6_base: str, origin: str, run_i
     cmd = ["docker", "run", "--rm", "-i", "--name", f"k6-{run_id}-{scenario.replace('_', '-')}", "--add-host=host.docker.internal:host-gateway",
            *([f"--add-host={urlparse(k6_base).hostname}:{resolve_ip}"] if resolve_ip else []), K6_IMAGE, "run", "--quiet",
            "-e", f"BASE_URL={k6_base}", "-e", f"ORIGIN={origin}", "-e", f"SCENARIO={scenario}", "-e", "PROFILE=step",
-           "-e", f"STEP_VUS={vus}", "-e", f"STEP_SECONDS={hold}", "-e", f"RUN_ID={run_id}-{scenario.replace('_', '-')}", "-"]  # un conjunto de usuarios por escenario
+           "-e", f"STEP_VUS={vus}", "-e", f"STEP_SECONDS={hold}", "-e", f"LOGIN_SECONDS={hold}", "-e", "LOGIN_RATE=8", "-e", f"RUN_ID={run_id}-{scenario.replace('_', '-')}", "-"]  # un conjunto de usuarios por escenario
     proc = subprocess.run(cmd, input=script, capture_output=True, text=True)
     ended = datetime.now(timezone.utc)
     line = next((l for l in proc.stdout.splitlines() if l.startswith("K6SUMMARY ")), None)

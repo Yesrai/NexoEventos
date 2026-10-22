@@ -32,10 +32,15 @@ const stages = (peak) => step
   ? [{ duration: '5s', target: 2 }, { duration: '10s', target: 2 }, { duration: '2s', target: 0 }]
   : [{ duration: '20s', target: Math.round(peak / 5) }, { duration: '30s', target: Math.round(peak / 2) }, { duration: '30s', target: peak }, { duration: '40s', target: peak }, { duration: '5s', target: 0 }]
 const PEAK = step ? { catalog: STEP_VUS, detail: STEP_VUS, availability: STEP_VUS, reserve: STEP_VUS, mix: STEP_VUS } : { catalog: 50, detail: 50, availability: 50, reserve: 40 }
+// Escenario de escalado (solo nube): inicios de sesión a ritmo constante (Argon2 = mucha CPU por solicitud) para provocar el Auto Scaling. Tope: 8/s y 50 usuarios.
+const SCALE = SCENARIO === 'login_rate'
+const LOGIN_RATE = Math.min(Number(__ENV.LOGIN_RATE || 8), 8)
+const LOGIN_SECONDS = Math.min(Number(__ENV.LOGIN_SECONDS || 720), 720)
 const DISPUTE_SEATS = smoke ? 3 : 20
 const DISPUTE_VUS = smoke ? 5 : step ? Math.max(5, STEP_VUS) : MAX_VUS
 
 function scenarioConfig() {
+  if (SCALE) return { executor: 'constant-arrival-rate', rate: LOGIN_RATE, timeUnit: '1s', duration: `${LOGIN_SECONDS}s`, preAllocatedVUs: 25, maxVUs: MAX_VUS, exec: 'login_rate' }
   if (SCENARIO === 'same_seat') return { executor: 'per-vu-iterations', vus: DISPUTE_VUS, iterations: DISPUTE_SEATS, maxDuration: '3m', exec: 'same_seat' }
   if (!(SCENARIO in PEAK)) throw new Error(`SCENARIO desconocido: ${SCENARIO}`)
   return { executor: 'ramping-vus', startVUs: 0, stages: stages(PEAK[SCENARIO]), gracefulRampDown: '5s', exec: SCENARIO }
@@ -68,6 +73,15 @@ export const options = {
   },
 }
 
+if (SCALE) {
+  options.thresholds = {
+    http_req_failed: [{ threshold: 'rate<0.01', abortOnFail: true, delayAbortEval: '30s' }],
+    http_req_duration: [{ threshold: 'p(95)<3000', abortOnFail: true, delayAbortEval: '60s' }], // criterio de parada de la prueba de escalado
+    errores_inesperados: ['count==0'],
+    'http_req_duration{op:login}': ['p(95)<3600000'],
+  }
+}
+
 const expected = http.expectedStatuses({ min: 200, max: 299 }, 409)
 const rand = (n) => Math.floor(Math.random() * n)
 const pick = (list) => list[rand(list.length)]
@@ -79,15 +93,15 @@ export function setup() {
   const catalog = http.get(`${BASE}/api/events`)
   const ids = (jsonOf(catalog) || []).map((item) => item.id).filter((id) => id < 90000)
   const data = { ids, users: [], seatIds: {}, startAt: 0 }
-  if (SCENARIO === 'reserve' || SCENARIO === 'same_seat' || SCENARIO === 'mix') {
-    const total = SCENARIO === 'same_seat' ? DISPUTE_VUS : SCENARIO === 'mix' ? PEAK.mix : PEAK.reserve
+  if (SCENARIO === 'reserve' || SCENARIO === 'same_seat' || SCENARIO === 'mix' || SCALE) {
+    const total = SCALE ? MAX_VUS : SCENARIO === 'same_seat' ? DISPUTE_VUS : SCENARIO === 'mix' ? PEAK.mix : PEAK.reserve
     for (let i = 0; i < total; i += 1) {
       const user = { email: `k6-${RUN}-${i}@example.com`, password: secret(), display_name: `Usuario K6 ${i}` }
       const response = http.post(`${BASE}/api/auth/register`, JSON.stringify(user), { headers: JSON_HEADERS })
       if (response.status !== 201) throw new Error(`No se pudo registrar el usuario ficticio ${i}: ${response.status}`)
       data.users.push(user)
     }
-    for (const [name, id] of [['seats', FIX.seats], ['dispute', FIX.dispute]]) {
+    for (const [name, id] of SCALE ? [] : [['seats', FIX.seats], ['dispute', FIX.dispute]]) {
       const detail = jsonOf(http.get(`${BASE}/api/events/${id}`))
       if (!detail || !detail.seats) throw new Error(`Falta el fixture ${id}: ejecuta perf/fixture.py`)
       data.seatIds[name] = detail.seats.map((seat) => seat.id)
@@ -190,6 +204,13 @@ export function same_seat(data) {
   if (wait > 0) sleep(wait / 1000)
   intentosMismoAsiento.add(1)
   postReservation(FIX.dispute, { quantity: 1, zone_id: null, seat_ids: [seatId] }, `k6-${RUN}-${exec.vu.idInTest}-${wave}`)
+}
+
+export function login_rate(data) {
+  const user = data.users[exec.scenario.iterationInTest % data.users.length]
+  const response = http.post(`${BASE}/api/auth/login`, JSON.stringify({ email: user.email, password: user.password }), { headers: JSON_HEADERS, tags: { name: 'POST /api/auth/login', op: 'login' } })
+  check(response, { 'login 200': (r) => r.status === 200 })
+  if (response.status !== 200) erroresInesperados.add(1)
 }
 
 export function handleSummary(data) {
