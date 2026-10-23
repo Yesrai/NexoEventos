@@ -1,0 +1,4 @@
+  # aws_db_instance.postgres will be updated in-place
+      ~ multi_az                              = false -> true
+        # (74 unchanged attributes hidden)
+Plan: 0 to add, 1 to change, 0 to destroy.

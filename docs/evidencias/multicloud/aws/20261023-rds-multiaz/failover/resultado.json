@@ -1,0 +1,58 @@
+{
+  "comando_enviado": "2026-10-23T01:08:51.641Z",
+  "comando_retorno": "2026-10-23T01:08:52.531Z",
+  "recuperado_estable": "2026-10-23T01:12:38.013Z",
+  "rds_antes": {
+    "s": "available",
+    "m": true,
+    "p": "us-east-1b",
+    "q": "us-east-1a"
+  },
+  "rds_despues": {
+    "s": "available",
+    "m": true,
+    "p": "us-east-1a",
+    "q": "us-east-1b"
+  },
+  "healthz_total": 225,
+  "healthz_no200": 11,
+  "healthz_primer_fallo": "2026-10-23T01:08:57.698Z",
+  "healthz_ultimo_fallo": "2026-10-23T01:09:57.983Z",
+  "healthz_codigos": [
+    "000",
+    "200",
+    "503"
+  ],
+  "sonda_postgres_ec2": "muestras=241 fallos=12 primer_fallo=1792717737.342711137 ultimo_fallo=1792717750.477773568 primer_ok_despues=1792717751.487259683",
+  "huella_antes": [
+    "reservations=135:cbe0c1c26e4cee71ffac596dd24d3607",
+    "tickets=135",
+    "users=25",
+    "events=35:0733e3db986c355aeaf0225cd403607f",
+    "event_seats=240 ocupados=0",
+    "zonas_reservadas=0",
+    "queue_entries=0",
+    "access_logs=9",
+    "alembic=0008"
+  ],
+  "huella_despues": [
+    "reservations=135:cbe0c1c26e4cee71ffac596dd24d3607",
+    "tickets=135",
+    "users=25",
+    "events=35:0733e3db986c355aeaf0225cd403607f",
+    "event_seats=240 ocupados=0",
+    "zonas_reservadas=0",
+    "queue_entries=0",
+    "access_logs=9",
+    "alembic=0008"
+  ],
+  "huella_igual": true,
+  "eventos_rds": [
+    "2026-10-23T01:06:37.512000+00:00\tBacking up DB instance",
+    "2026-10-23T01:07:40.495000+00:00\tFinished DB Instance backup",
+    "2026-10-23T01:08:57.229000+00:00\tMulti-AZ instance failover started. ",
+    "2026-10-23T01:09:13.705000+00:00\tDB instance restarted",
+    "2026-10-23T01:09:37.036000+00:00\tMulti-AZ instance failover completed",
+    "2026-10-23T01:09:37.036000+00:00\tThe user requested a failover of the DB instance."
+  ]
+}

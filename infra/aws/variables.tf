@@ -109,17 +109,30 @@ variable "db_allocated_storage_gib" {
 }
 
 variable "db_max_allocated_storage_gib" {
-  description = "0 desactiva el autoescalado. Si se habilita, AWS exige al menos 10 % sobre allocated_storage; Academy limita el techo a 100 GiB."
+  description = "0 o igual a allocated_storage desactiva el autoescalado (el estado actual de la RDS usa el valor igual). Si se habilita, AWS exige al menos 10 % sobre allocated_storage; Academy limita el techo a 100 GiB."
   type        = number
   default     = 0
   validation {
     condition = (
       var.db_max_allocated_storage_gib == 0 ||
+      var.db_max_allocated_storage_gib == var.db_allocated_storage_gib ||
       (var.db_max_allocated_storage_gib >= ceil(var.db_allocated_storage_gib * 1.1) &&
       var.db_max_allocated_storage_gib <= 100)
     )
-    error_message = "db_max_allocated_storage_gib debe ser 0 o al menos 10 % mayor que el almacenamiento asignado, hasta 100 GiB."
+    error_message = "db_max_allocated_storage_gib debe ser 0, igual al almacenamiento asignado o al menos 10 % mayor que el almacenamiento asignado, hasta 100 GiB."
   }
+}
+
+variable "db_multi_az" {
+  type        = bool
+  default     = false
+  description = "Alta disponibilidad de PostgreSQL con réplica síncrona en otra AZ. Duplica el costo de instancia y almacenamiento."
+}
+
+variable "db_apply_immediately" {
+  type        = bool
+  default     = false
+  description = "Aplicar cambios de RDS ya, en vez de en la ventana de mantenimiento."
 }
 
 variable "backup_retention_days" {

@@ -1,0 +1,32 @@
+{
+  "hora": "2026-10-23T01:07:56.173Z",
+  "rds": {
+    "s": "available",
+    "m": true,
+    "p": "us-east-1b",
+    "q": "us-east-1a"
+  },
+  "healthz": [
+    "200",
+    "0.510580"
+  ],
+  "actividad": [
+    "sesiones_otras=1",
+    "activas=0",
+    "idle_in_transaction=0",
+    "transacciones_abiertas>5s=0",
+    "ultimo_acceso_registrado=2026-10-08 03:00:06.358471+00",
+    "ultima_reserva=2026-10-09 15:00:56.396092+00"
+  ],
+  "huella": [
+    "reservations=135:cbe0c1c26e4cee71ffac596dd24d3607",
+    "tickets=135",
+    "users=25",
+    "events=35:0733e3db986c355aeaf0225cd403607f",
+    "event_seats=240 ocupados=0",
+    "zonas_reservadas=0",
+    "queue_entries=0",
+    "access_logs=9",
+    "alembic=0008"
+  ]
+}

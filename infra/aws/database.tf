@@ -18,13 +18,13 @@ resource "aws_db_instance" "postgres" {
   db_subnet_group_name         = aws_db_subnet_group.main.name
   vpc_security_group_ids       = [aws_security_group.database.id]
   publicly_accessible          = false
-  multi_az                     = false
+  multi_az                     = var.db_multi_az
   backup_retention_period      = var.backup_retention_days
   copy_tags_to_snapshot        = true
   deletion_protection          = false
   skip_final_snapshot          = false
   final_snapshot_identifier    = var.final_snapshot_identifier
-  apply_immediately            = false
+  apply_immediately            = var.db_apply_immediately
   auto_minor_version_upgrade   = true
   monitoring_interval          = 0
   performance_insights_enabled = false
