@@ -23,6 +23,10 @@ Autorizado por la propietaria: se restablecieron únicamente los `password_hash`
 4. `GET /` → 403 (frontend construido con umask 077): `chmod` de lectura; servidor Nginx por defecto en el puerto 80 retirado.
 Correcciones guardadas en `scripts/multicloud/oci-drill/` para el próximo despliegue.
 
+## Alcance y limitaciones que deben constar
+- **`already_used` no equivale a una primera validación exitosa.** El ticket de la cuenta cliente ya estaba usado antes del respaldo; el 409 «Entrada ya utilizada» demuestra que el QR se descifró y que el token se verificó con las claves originales, pero **no se probó la aceptación de un ticket sin usar** (`accepted`), porque no existe en la copia ningún ticket sin usar de un evento con operador asignado (los 132 sin usar son fixtures de carga del evento 1800000000, sin operador). Esa prueba queda **pendiente** y exigiría modificar asignaciones o datos.
+- **Las dos contraseñas se restablecieron solo en la copia de contingencia de OCI** (base desechable, destruida con la VM); la producción de AWS y sus hashes no se tocaron. El login probado usa esas credenciales temporales, no las originales.
+
 ## Seguridad / higiene
 PostgreSQL solo por socket Unix (sin 5432), API en 127.0.0.1:8000, Nginx solo 443; sin IP pública; SELinux en modo Enforcing sin denegaciones; las dos claves de aplicación solo en tmpfs (0600), 0 archivos persistentes con la clave asignada; 0 errores en el registro de la API. Pendiente: destruir la VM y el Bastion con un plan revisado (los datos de producción y las claves desaparecen con el volumen y el tmpfs).
 
