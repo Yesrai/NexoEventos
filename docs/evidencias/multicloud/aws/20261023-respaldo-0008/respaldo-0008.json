@@ -1,0 +1,34 @@
+{
+  "archivo": "nexoeventos-alembic0008-20261023T150946Z.cms",
+  "bytes": 92063,
+  "sha256_local": "91c4ca41aca0b93eff81e52bc05680c454bdf2a50d6ed8523d81c7779f319c3e",
+  "sha256_ec2": "91c4ca41aca0b93eff81e52bc05680c454bdf2a50d6ed8523d81c7779f319c3e",
+  "sha256_coincide": true,
+  "plain_sha256": "67b6876f2c4381b12039e8408b7efad6866f0c11ca93a2d41e68fd6f0665669a",
+  "pg_dump": "pg_dump (PostgreSQL) 18.6",
+  "descifra_a_pgdmp": true,
+  "volcado_bytes": 91495,
+  "huella_previa": [
+    "reservations=135:cbe0c1c26e4cee71ffac596dd24d3607",
+    "tickets=135",
+    "users=25",
+    "events=35:0733e3db986c355aeaf0225cd403607f",
+    "event_seats=240 ocupados=0",
+    "zonas_reservadas=0",
+    "queue_entries=0",
+    "access_logs=9",
+    "alembic=0008"
+  ],
+  "huella_posterior": [
+    "reservations=135:cbe0c1c26e4cee71ffac596dd24d3607",
+    "tickets=135",
+    "users=25",
+    "events=35:0733e3db986c355aeaf0225cd403607f",
+    "event_seats=240 ocupados=0",
+    "zonas_reservadas=0",
+    "queue_entries=0",
+    "access_logs=9",
+    "alembic=0008"
+  ],
+  "huella_igual": true
+}

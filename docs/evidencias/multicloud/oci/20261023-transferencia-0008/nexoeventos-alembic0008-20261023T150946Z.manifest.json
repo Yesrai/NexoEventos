@@ -1,0 +1,12 @@
+{
+ "schema": 1,
+ "name": "nexoeventos-alembic0008-20261023T150946Z",
+ "created_utc": "2026-10-23T15:21:45+00:00",
+ "source_cms_sha256": "91c4ca41aca0b93eff81e52bc05680c454bdf2a50d6ed8523d81c7779f319c3e",
+ "source_cms_bytes": 92063,
+ "oci_cms_sha256": "ae87bb8708b75b683c4f70783cb1fc38b77cdfca2f16e663ab9943ac0171e2e9",
+ "oci_cms_bytes": 92060,
+ "plaintext_dump_sha256": "67b6876f2c4381b12039e8408b7efad6866f0c11ca93a2d41e68fd6f0665669a",
+ "encryption": "CMS/DER AES-256-CBC, certificado de recuperaci\u00f3n de OCI (clave independiente de la de AWS)",
+ "object_name": "backups/nexoeventos-alembic0008-20261023T150946Z.oci.cms"
+}
