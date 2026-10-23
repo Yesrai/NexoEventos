@@ -55,3 +55,21 @@ Plan Terraform (resumen y no-op de lo demás), capacidades consultadas, tabla de
 
 ## Plan Terraform (para revisión; no aplicado)
 `work/terraform-plans/oci-app-demo.tfplan` (fuera de Git): **3 a crear, 1 a modificar, 0 a destruir**: VM `E5.Flex` 1 OCPU/8 GB con volumen de 50 GB y sin IP pública; OCI Bastion (solo tu /32, sesiones de 1 h); regla NSG de entrada TCP/443 desde la subred; regla de salida TCP/443 hacia la subred en la lista de seguridad predeterminada (modificación en el sitio). Variables nuevas: `app_https_enabled` y `allow_trial_paid_shape` (ambas `false` por defecto).
+
+## Decisiones aprobadas (2026-10-23) y preparación
+- Secretos: **opción A** (claves originales `TICKET_ENCRYPTION_KEY` y `SECURITY_HASH_KEY`), solo en el entorno temporal. Forma: `VM.Standard.E5.Flex` 1 OCPU / 8 GB con créditos del Free Trial. Certificado TLS y clave privada efímeros generados en la VM (`/etc/nginx/demo-tls`, se destruyen con ella). Arquitectura privada aprobada.
+- **Costos confirmados con la lista de precios pública de Oracle (USD):** E5 OCPU 0,03/h; E5 memoria 0,002/GB·h; bloque 0,0255/GB·mes; unidades de rendimiento 0,0017/GB·mes por VPU. VM 1 OCPU + 8 GB = 0,046/h; volumen de 50 GB (10 VPU/GB) ≈ 0,0029/h; **total ≈ 0,049/h: ~0,20 USD en una ventana de 4 h y ~1,17 USD si queda 24 h**. Bastion y Service Gateway sin cargo; sin IP pública, NAT, balanceador ni salida a Internet. La API de uso no muestra consumo en octubre (todo ha sido gratuito hasta ahora). **El estado Free Trial y el saldo de créditos no se pueden leer con este perfil**: se confirman en la consola (Facturación → Suscripción).
+- Variables mínimas de la aplicación (inspección del código): `APP_ENV`, `DATABASE_URL`, `FRONTEND_ORIGINS`, `SESSION_COOKIE_SECURE`, `SESSION_HOURS`, `LOGIN_*`, `ARGON2_MAX_CONCURRENT`, `DB_POOL_SIZE`, `DB_MAX_OVERFLOW`, `TICKET_ENCRYPTION_KEY`, `SECURITY_HASH_KEY`. Solo las dos últimas son secretos de aplicación; la contraseña de BD se genera en la VM y no sale de ella.
+
+## Recuperación de secretos (cifrada, separada del código y de los datos)
+1. `scripts/multicloud/oci-drill/app-secrets-export.sh` (con el laboratorio AWS activo, solo lectura): lee `nexoeventos/academy/backend-env`, **filtra con lista blanca las dos claves** y las cifra en tubería (CMS AES-256) con el certificado público de recuperación; los valores no tocan disco, pantalla ni registros. Genera un paquete y un manifiesto (nombres de claves y SHA-256) en `work/`.
+2. Se sube con el perfil de carga a `secrets/` del bucket (objeto distinto del respaldo de datos).
+3. En la recuperación, `app-recovery.sh` descifra **en la Mac de la propietaria** (segunda frase de paso) y entrega las claves por SSH a `/run/nexoeventos/secrets.env` (tmpfs, 0600) mediante `install-app-secrets.sh`; el servicio las lee por `EnvironmentFile`. Nunca se registran, imprimen ni suben a Git; se pierden al reiniciar o destruir la VM.
+Prueba local con datos **ficticios** y el certificado real (sin descifrar): ninguna cadena en claro dentro del CMS, destinatario = serial del certificado, solo las dos claves admitidas, falla (código 3) si falta una.
+
+## Scripts preparados (sin ejecutar contra la nube)
+`app-secrets-export.sh`, `install-app-secrets.sh`, `install-app.sh` (etapas 1 y 2), `app-recovery.sh` (orquestador con marcas T0/T_datos/T_servicio/T_funcional) y `app-smoke.py` (pruebas funcionales por el túnel HTTPS; contraseñas por `getpass`, sin ventas; la validación de un ticket escribe una fila en `access_logs` de la copia desechable). Solo se validaron sintaxis y la transformación de la plantilla de Nginx con la plantilla real.
+
+## Ventana de despliegue propuesta (una sola)
+Antes: confirmar créditos, AWS lab activo (lectura del secreto), `app-secrets-export.sh` + subida, A1 sin capacidad (reintento del informe). Durante: `apply` del plan (3 altas, 1 modificación), dos sesiones de Bastion (SSH y 443), `app-recovery.sh`, evidencias. Después: plan de destrucción revisado.
+**Riesgos específicos:** SELinux en Oracle Linux (se aplican `httpd_can_network_connect` y etiquetas del frontend); `pip download` en la Mac necesita Internet; la cuenta de demostración debe tener tickets con QR para probar la validación; la IP /32 del Bastion puede cambiar.
