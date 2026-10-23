@@ -73,3 +73,6 @@ Prueba local con datos **ficticios** y el certificado real (sin descifrar): ning
 ## Ventana de despliegue propuesta (una sola)
 Antes: confirmar créditos, AWS lab activo (lectura del secreto), `app-secrets-export.sh` + subida, A1 sin capacidad (reintento del informe). Durante: `apply` del plan (3 altas, 1 modificación), dos sesiones de Bastion (SSH y 443), `app-recovery.sh`, evidencias. Después: plan de destrucción revisado.
 **Riesgos específicos:** SELinux en Oracle Linux (se aplican `httpd_can_network_connect` y etiquetas del frontend); `pip download` en la Mac necesita Internet; la cuenta de demostración debe tener tickets con QR para probar la validación; la IP /32 del Bastion puede cambiar.
+
+## Resultado (2026-10-23)
+Recuperación funcional **ejecutada** en E5.Flex 1 OCPU/8 GB: 14/14 pruebas correctas; datos con huella 10/10 idéntica; QR descifrado y ticket usado rechazado con las claves originales. **T_datos 23 min 27 s, T_servicio 24 min 53 s y T_funcional 32 min 42 s desde el `apply`** (incluyen los fallos corregidos). Detalle, fallos y correcciones: `docs/evidencias/multicloud/oci/20261023-recuperacion-aplicacion/resultado.md`. Pendiente: destruir la VM y el Bastion.

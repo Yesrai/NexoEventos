@@ -1,0 +1,15 @@
+2026-10-23T19:34:01Z T0 inicio de la recuperación de la aplicación
+2026-10-23T19:34:06Z paquetes de datos y de claves descargados y verificados
+2026-10-23T19:34:15Z paquete de la aplicación construido en la Mac (x86_64)
+2026-10-23T19:34:15Z+ FALLO (hora exacta no registrada; entre 19:34:15 y 19:36:23): 'install: invalid user postgres' al instalar herramientas antes de crear el usuario postgres con el RPM; archivos ya copiados y verificados; diagnóstico y corrección del orden/reanudación hasta ~19:41
+2026-10-23T19:45:35Z REANUDACIÓN desde la etapa 'postgres' (el T0 original no se reinicia)
+2026-10-23T19:45:46Z PostgreSQL 18 instalado
+2026-10-23T19:46:01Z etapa 1: Python, Nginx, entorno virtual (ruedas locales) y frontend
+2026-10-23T19:46:47Z T_datos: datos restaurados y huella verificada
+2026-10-23T19:46:51Z claves originales entregadas a tmpfs (valores no mostrados)
+2026-10-23T19:48:07Z REANUDACIÓN desde la etapa 'app2' (el T0 original no se reinicia)
+2026-10-23T19:48:13Z T_servicio: aplicación en marcha (healthz local correcto)
+2026-10-23T19:51:36Z REANUDACIÓN desde la etapa 'smoke' (el T0 original no se reinicia)
+2026-10-23T19:55:57Z REANUDACIÓN desde la etapa 'smoke' (el T0 original no se reinicia)
+2026-10-23T19:56:02Z T_funcional: pruebas funcionales terminadas
+2026-10-23T19:56:03Z fin; duración total desde T0: 1322 s

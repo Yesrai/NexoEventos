@@ -12,6 +12,7 @@ stage1)
   tar -xzf "$B/backend.tgz" -C "$APP/backend"; rm -rf "$APP/frontend/dist"; tar -xzf "$B/dist.tgz" -C "$APP/frontend"
   python3.12 -m venv "$APP/backend/.venv"
   "$APP/backend/.venv/bin/pip" install --no-index --find-links "$B/wheels" -r "$APP/backend/requirements-production.lock"
+  chmod -R u=rwX,go=rX "$APP/frontend/dist"      # el paquete se construye con umask 077: Nginx (otro usuario) no podía leerlo y devolvía 403
   chcon -R -t httpd_sys_content_t "$APP/frontend/dist" 2>/dev/null || true
   setsebool httpd_can_network_connect 1 || true
   echo "OK    stage1: $("$APP/backend/.venv/bin/python" -V), $(nginx -v 2>&1)"
@@ -64,9 +65,20 @@ b = '\n'.join(['server {' + blocks[-1]]).replace('${DOMAIN}', 'localhost')
 b = re.sub(r'ssl_certificate\s+[^;]+;', 'ssl_certificate /etc/nginx/demo-tls/cert.pem;', b)
 b = re.sub(r'ssl_certificate_key\s+[^;]+;', 'ssl_certificate_key /etc/nginx/demo-tls/key.pem;', b)
 b = re.sub(r'listen \[::\]:443 ssl;\n?', '', b)
+b = re.sub(r'(?m)^\s*http2 on;\n', '', b)                          # 'http2 on' exige Nginx >= 1.25.1; Oracle Linux 9 trae 1.20
+b = b.replace('listen 443 ssl;', 'listen 443 ssl http2;')
 print(b)
 PY
-  rm -f /etc/nginx/conf.d/default.conf; nginx -t
+  rm -f /etc/nginx/conf.d/default.conf
+  # El nginx.conf de Oracle Linux trae un servidor por defecto en el puerto 80: se retira (solo HTTPS, y solo desde el endpoint del Bastion).
+  python3 - <<'PY'
+import re
+p = "/etc/nginx/nginx.conf"; t = open(p).read()
+m = re.search(r'(?m)^    server \{\n(?:.*\n)*?^    \}\n', t)
+if m and "listen       80;" in m.group(0):
+    open(p + ".orig", "w").write(t); open(p, "w").write(t[:m.start()] + t[m.end():])
+PY
+  nginx -t
   systemctl daemon-reload; systemctl enable --now nexoeventos-api nginx
   firewall-cmd --add-service=https >/dev/null    # solo en tiempo de ejecución; la entrada llega solo desde el endpoint del Bastion (NSG)
   for _ in $(seq 30); do curl -fsS http://127.0.0.1:8000/health >/dev/null 2>&1 && break; sleep 2; done

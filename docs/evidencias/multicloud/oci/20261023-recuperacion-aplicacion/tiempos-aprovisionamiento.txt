@@ -1,0 +1,6 @@
+2026-10-23T19:23:20Z T0_apply: inicio de terraform apply (VM E5.Flex, Bastion, regla 443, lista de seguridad)
+2026-10-23T19:24:19Z fin apply (59 s)
+2026-10-23T19:24:50Z VM RUNNING; abriendo sesiones de Bastion
+2026-10-23T19:26:55Z SSH por Bastion disponible
+2026-10-23T19:30:02Z SSH por Bastion disponible (sesiones creadas tras corregir la consulta del Bastion)
+2026-10-23T19:30:15Z SSH por Bastion disponible

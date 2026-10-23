@@ -1,0 +1,94 @@
+{
+  "ejecutado_utc": "2026-10-23T19:56:02+00:00",
+  "duracion_s": 5.3,
+  "base": "https://localhost:8443 (túnel Bastion)",
+  "credenciales_restablecidas_solo_en_la_copia_de_contingencia": {
+    "cuentas": [
+      "operador.demo@example.com",
+      "smoke-1791073267-26124@example.com"
+    ],
+    "filas_actualizadas": 2,
+    "otras_cuentas": 23,
+    "hash_de_hashes_de_otras_cuentas_igual": true,
+    "aviso": "contraseñas aleatorias solo en memoria; hashes Argon2; producción de AWS no tocada"
+  },
+  "access_logs_por_resultado_tras_las_pruebas": [
+    "accepted=3",
+    "already_used=5",
+    "invalid_token=1",
+    "wrong_event=1"
+  ],
+  "resultados": [
+    {
+      "prueba": "contraseñas de 2 cuentas restablecidas SOLO en la copia de OCI (otras cuentas intactas)",
+      "ok": true,
+      "detalle": "{\"filas_actualizadas\": 2, \"otras_cuentas\": 23, \"hash_de_hashes_de_otras_cuentas_igual\": true}"
+    },
+    {
+      "prueba": "healthz (API + BD) = 200",
+      "ok": true,
+      "detalle": "HTTP 200"
+    },
+    {
+      "prueba": "frontend servido por Nginx con cabeceras de seguridad",
+      "ok": true,
+      "detalle": "HTTP 200"
+    },
+    {
+      "prueba": "inicio de sesión de cliente",
+      "ok": true,
+      "detalle": "HTTP 200"
+    },
+    {
+      "prueba": "cookie de sesión con Secure y HttpOnly",
+      "ok": true,
+      "detalle": "2 cookies"
+    },
+    {
+      "prueba": "sesión válida",
+      "ok": true,
+      "detalle": "HTTP 200"
+    },
+    {
+      "prueba": "catálogo de eventos",
+      "ok": true,
+      "detalle": "32 eventos publicados"
+    },
+    {
+      "prueba": "detalle de un evento",
+      "ok": true,
+      "detalle": "HTTP 200"
+    },
+    {
+      "prueba": "consulta de reservas del cliente (solo lectura)",
+      "ok": true,
+      "detalle": "1 reservas"
+    },
+    {
+      "prueba": "tickets del cliente con QR descifrado (TICKET_ENCRYPTION_KEY original)",
+      "ok": true,
+      "detalle": "1 tickets"
+    },
+    {
+      "prueba": "un cliente no puede validar entradas (403)",
+      "ok": true,
+      "detalle": "HTTP 403"
+    },
+    {
+      "prueba": "inicio de sesión de operador",
+      "ok": true,
+      "detalle": "HTTP 200"
+    },
+    {
+      "prueba": "el operador ve el evento del ticket",
+      "ok": true,
+      "detalle": "2 eventos asignados"
+    },
+    {
+      "prueba": "validación de un ticket ya usado → already_used (409 'Entrada ya utilizada'; token verificado con SECURITY_HASH_KEY original)",
+      "ok": true,
+      "detalle": "HTTP 409"
+    }
+  ],
+  "todo_ok": true
+}

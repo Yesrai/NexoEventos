@@ -1,0 +1,16 @@
+OK    contraseñas de 2 cuentas restablecidas SOLO en la copia de OCI (otras cuentas intactas) — {"filas_actualizadas": 2, "otras_cuentas": 23, "hash_de_hashes_de_otras_cuentas_igual": true}
+OK    healthz (API + BD) = 200 — HTTP 200
+OK    frontend servido por Nginx con cabeceras de seguridad — HTTP 200
+OK    inicio de sesión de cliente — HTTP 200
+OK    cookie de sesión con Secure y HttpOnly — 2 cookies
+OK    sesión válida — HTTP 200
+OK    catálogo de eventos — 32 eventos publicados
+OK    detalle de un evento — HTTP 200
+OK    consulta de reservas del cliente (solo lectura) — 1 reservas
+OK    tickets del cliente con QR descifrado (TICKET_ENCRYPTION_KEY original) — 1 tickets
+OK    un cliente no puede validar entradas (403) — HTTP 403
+OK    inicio de sesión de operador — HTTP 200
+OK    el operador ve el evento del ticket — 2 eventos asignados
+OK    validación de un ticket ya usado → already_used (409 'Entrada ya utilizada'; token verificado con SECURITY_HASH_KEY original) — HTTP 409
+
+14/14 correctas; duración 5.3 s

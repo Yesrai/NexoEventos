@@ -1,0 +1,12 @@
+OK    SHA-256 del volcado en claro coincide
+OK    restauración en base aislada
+access_logs=9
+alembic=0008
+events=35
+inventory_md5=a42d7ed0da5677359b91f70ac0d37b55
+operator_assignments=2
+reservations=135
+reservations_md5=cbe0c1c26e4cee71ffac596dd24d3607
+reserved_total=135
+tickets=135
+users=25
