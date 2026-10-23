@@ -2,6 +2,7 @@ variable "compartment_id" { type = string }
 variable "vcn_cidr" { type = string }
 variable "subnet_cidr" { type = string }
 variable "enable_nat_gateway" { type = bool }
+variable "app_https_enabled" { type = bool }
 variable "freeform_tags" { type = map(string) }
 
 data "oci_core_services" "all" {
@@ -36,6 +37,20 @@ resource "oci_core_default_security_list" "lockdown" {
     tcp_options {
       min = 22
       max = 22
+    }
+  }
+
+  dynamic "egress_security_rules" {
+    for_each = var.app_https_enabled ? [1] : []
+    content {
+      protocol    = "6"
+      destination = var.subnet_cidr
+      stateless   = false
+      description = "Bastion -> VM: HTTPS dentro de la subred privada"
+      tcp_options {
+        min = 443
+        max = 443
+      }
     }
   }
 }
@@ -110,6 +125,23 @@ resource "oci_core_network_security_group_security_rule" "ssh_from_subnet" {
     destination_port_range {
       min = 22
       max = 22
+    }
+  }
+}
+
+# Demostración de la aplicación: el acceso HTTPS llega solo por una sesión de reenvío de puerto de OCI Bastion (origen: la propia subred). Sin entrada pública.
+resource "oci_core_network_security_group_security_rule" "https_from_subnet" {
+  count                     = var.app_https_enabled ? 1 : 0
+  network_security_group_id = oci_core_network_security_group.recovery.id
+  direction                 = "INGRESS"
+  protocol                  = "6"
+  source                    = var.subnet_cidr
+  source_type               = "CIDR_BLOCK"
+  description               = "HTTPS (Nginx) desde OCI Bastion, misma subred"
+  tcp_options {
+    destination_port_range {
+      min = 443
+      max = 443
     }
   }
 }

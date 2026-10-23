@@ -90,6 +90,18 @@ variable "recovery_boot_volume_gb" {
   }
 }
 
+variable "app_https_enabled" {
+  type        = bool
+  default     = false
+  description = "Abre HTTPS (443) solo desde el endpoint del Bastion (misma subred) para la demostración de la aplicación. Sin acceso público."
+}
+
+variable "allow_trial_paid_shape" {
+  type        = bool
+  default     = false
+  description = "Permite VM.Standard.E5.Flex (no Always Free; se paga con créditos del Free Trial) cuando VM.Standard.A1.Flex no tiene capacidad. Exige aprobación explícita."
+}
+
 variable "recovery_flex_ocpus" {
   type    = number
   default = 1

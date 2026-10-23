@@ -7,6 +7,7 @@ variable "ssh_public_key" { type = string }
 variable "bastion_client_cidr" { type = string }
 variable "freeform_tags" { type = map(string) }
 variable "boot_volume_gb" { type = number }
+variable "allow_trial_paid_shape" { type = bool }
 variable "flex_ocpus" { type = number }
 variable "flex_memory_gb" { type = number }
 
@@ -66,8 +67,8 @@ resource "oci_core_instance" "recovery" {
 
   lifecycle {
     precondition {
-      condition     = contains(["VM.Standard.E2.1.Micro", "VM.Standard.A1.Flex"], var.shape)
-      error_message = "Solo se permiten formas Always Free (VM.Standard.E2.1.Micro o VM.Standard.A1.Flex)."
+      condition     = contains(["VM.Standard.E2.1.Micro", "VM.Standard.A1.Flex"], var.shape) || (var.allow_trial_paid_shape && var.shape == "VM.Standard.E5.Flex")
+      error_message = "Solo formas Always Free (E2.1.Micro, A1.Flex) o, con allow_trial_paid_shape=true, VM.Standard.E5.Flex (créditos del Free Trial)."
     }
     precondition {
       condition     = var.ssh_public_key != ""
