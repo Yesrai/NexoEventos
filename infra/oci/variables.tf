@@ -80,6 +80,26 @@ variable "create_recovery_vm" {
   default     = false
 }
 
+variable "recovery_boot_volume_gb" {
+  type        = number
+  default     = 50
+  description = "Volumen de arranque (Always Free: 200 GB de bloque en total). Mínimo de la imagen: 47 GB."
+  validation {
+    condition     = var.recovery_boot_volume_gb >= 47 && var.recovery_boot_volume_gb <= 100
+    error_message = "recovery_boot_volume_gb debe estar entre 47 y 100."
+  }
+}
+
+variable "recovery_flex_ocpus" {
+  type    = number
+  default = 1
+}
+
+variable "recovery_flex_memory_gb" {
+  type    = number
+  default = 6
+}
+
 variable "recovery_shape" {
   description = "Always Free: VM.Standard.E2.1.Micro (1/8 OCPU, 1 GB). La base es de unos KB; basta para el simulacro."
   type        = string
@@ -97,8 +117,8 @@ variable "bastion_client_cidr" {
   type        = string
   default     = ""
   validation {
-    condition     = var.bastion_client_cidr == "" || can(cidrhost(var.bastion_client_cidr, 0))
-    error_message = "bastion_client_cidr debe ser un CIDR (p. ej. un /32) o vacío."
+    condition     = var.bastion_client_cidr == "" || (can(cidrhost(var.bastion_client_cidr, 0)) && endswith(var.bastion_client_cidr, "/32"))
+    error_message = "bastion_client_cidr debe ser un único /32 (la IP del operador) o vacío."
   }
 }
 

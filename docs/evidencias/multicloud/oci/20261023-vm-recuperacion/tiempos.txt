@@ -1,0 +1,9 @@
+2026-10-23T16:06:30Z sesión bastion
+2026-10-23T17:19:53Z inicio diagnóstico
+2026-10-23T17:21:11Z soft reset autorizado (único)
+2026-10-23T17:31:04Z oci: apply regla egress TCP/22 en lista por defecto (autorizado)
+2026-10-23T17:31:40Z SSH por Bastion OK; preparación de memoria
+2026-10-23T17:32:05Z RPM y scripts copiados
+2026-10-23T17:32:13Z inicio instalación PostgreSQL 18.6
+2026-10-23T17:40:16Z marca de sondeo (NO es el fin real; la instalación estaba completa en la siguiente comprobación, 17:50)
+2026-10-23T17:50:28Z base drill creada y vacía; PostgreSQL verificado

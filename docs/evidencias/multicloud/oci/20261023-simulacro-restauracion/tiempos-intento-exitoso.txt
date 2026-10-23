@@ -1,0 +1,8 @@
+2026-10-23T18:14:23Z inicio (T0 del RTO de esta fase: vm ya creada)
+2026-10-23T18:14:25Z descargado desde OCI con el perfil de carga
+2026-10-23T18:14:26Z SHA-256 del cifrado = manifiesto
+2026-10-23T18:14:39Z RPM y scripts copiados a la VM
+2026-10-23T18:14:41Z PostgreSQL 18 instalado (solo socket Unix)
+2026-10-23T18:14:43Z comprobación remota correcta
+2026-10-23T18:14:46Z volcado descifrado localmente, transmitido por SSH y restaurado
+2026-10-23T18:14:47Z huella verificada; duración de la fase: 24 s

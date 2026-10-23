@@ -282,3 +282,9 @@ Alcance de esta fase: **inicio, catálogo y página de evento**. Registro, compr
 - `infra/oci` (iam, network, storage, recovery) e `infra/azure` (network, vm, budget, monitor): estados independientes, variables de ejemplo y VM/NAT/pruebas desactivados por defecto; `fmt`/`validate` correctos. Sin cuenta ni recursos.
 - `scripts/multicloud/`: coherencia de CIDR/estados, seguridad estática de IaC, clave de recuperación OCI independiente (fuera del repo), transferencia con SHA-256 y simulacro de restauración con criterios (`docs/multicloud/05-06`); prueba local de extremo a extremo con claves desechables: 16/16.
 - Evidencia: `docs/evidencias/multicloud/automatizacion/20261022-preparacion-local/`.
+
+## 26. Multicloud: AWS Multi-AZ y recuperación en OCI (octubre 2026)
+
+- **AWS:** RDS `nexoeventos-academy-postgres` en Multi-AZ (conversión ~8 min; un failover medido: PostgreSQL ~14 s, `/healthz` ~13 s; huella intacta). Respaldo lógico cifrado Alembic 0008 reproducible (`scripts/cloud/db-backup-cms.py`). EC2 V1 y RDS detenidas. Evidencias: `docs/evidencias/multicloud/aws/20261023-*`.
+- **OCI (São Paulo):** compartimento, VCN/subred privada, NSG, Service Gateway, bucket privado versionado, grupo/usuario de carga con clave API independiente y privilegio mínimo, respaldo recifrado con la clave de recuperación independiente de la propietaria y simulacro de restauración en PostgreSQL 18.6 con huella idéntica (fase de restauración 24 s; tiempo integral 2 h 15 min con diagnóstico, no es un RTO). Evidencias: `docs/evidencias/multicloud/oci/20261023-*`, `docs/multicloud/07-simulacro-oci.md`.
+- **Pendiente:** destruir la VM temporal y el Bastion (plan revisado), Azure (observabilidad), integración y cierre.

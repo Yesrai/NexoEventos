@@ -34,5 +34,8 @@ module "recovery" {
   shape               = var.recovery_shape
   ssh_public_key      = var.ssh_public_key
   bastion_client_cidr = var.bastion_client_cidr
+  boot_volume_gb      = var.recovery_boot_volume_gb
+  flex_ocpus          = var.recovery_flex_ocpus
+  flex_memory_gb      = var.recovery_flex_memory_gb
   freeform_tags       = local.common_tags
 }

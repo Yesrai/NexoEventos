@@ -1,0 +1,5 @@
+2026-10-23T18:10:24Z inicio (T0 del RTO de esta fase: vm ya creada)
+2026-10-23T18:10:28Z descargado desde OCI con el perfil de carga
+2026-10-23T18:10:28Z SHA-256 del cifrado = manifiesto
+2026-10-23T18:10:48Z RPM y scripts copiados a la VM
+2026-10-23T18:10:51Z PostgreSQL 18 instalado (solo socket Unix)

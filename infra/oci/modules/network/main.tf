@@ -21,6 +21,25 @@ resource "oci_core_vcn" "this" {
 }
 
 # Sin Internet Gateway: ningún recurso es alcanzable desde Internet. Object Storage se alcanza por el Service Gateway.
+# La lista de seguridad por defecto de la VCN trae SSH/ICMP desde 0.0.0.0/0 y salida total. Se vacía: el tráfico permitido lo definen solo las reglas del NSG.
+resource "oci_core_default_security_list" "lockdown" {
+  manage_default_resource_id = oci_core_vcn.this.default_security_list_id
+  display_name               = "nexoeventos-recovery-default-sl-sin-reglas"
+  freeform_tags              = var.freeform_tags
+
+  # Único hueco: el endpoint privado de OCI Bastion está en esta subred y su tráfico saliente hacia la VM pasa por esta lista. Sin entrada ni salida a Internet.
+  egress_security_rules {
+    protocol    = "6"
+    destination = var.subnet_cidr
+    stateless   = false
+    description = "Bastion -> VM: SSH dentro de la subred privada"
+    tcp_options {
+      min = 22
+      max = 22
+    }
+  }
+}
+
 resource "oci_core_service_gateway" "this" {
   compartment_id = var.compartment_id
   vcn_id         = oci_core_vcn.this.id

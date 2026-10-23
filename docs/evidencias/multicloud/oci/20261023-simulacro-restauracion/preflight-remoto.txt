@@ -1,0 +1,1 @@
+LISTO: PostgreSQL 18.6 en socket Unix; id=postgres; 249 MB libres en tmpfs

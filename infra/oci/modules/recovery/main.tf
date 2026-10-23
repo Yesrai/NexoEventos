@@ -6,6 +6,9 @@ variable "shape" { type = string }
 variable "ssh_public_key" { type = string }
 variable "bastion_client_cidr" { type = string }
 variable "freeform_tags" { type = map(string) }
+variable "boot_volume_gb" { type = number }
+variable "flex_ocpus" { type = number }
+variable "flex_memory_gb" { type = number }
 
 data "oci_identity_availability_domains" "this" {
   compartment_id = var.compartment_id
@@ -33,9 +36,22 @@ resource "oci_core_instance" "recovery" {
     assign_public_ip = false
     nsg_ids          = [var.nsg_id]
   }
+  # Formas Flex (A1): tamaño explícito dentro de Always Free (máx. 4 OCPU / 24 GB en total). E2.1.Micro no lleva shape_config.
+  dynamic "shape_config" {
+    for_each = endswith(var.shape, ".Flex") ? [1] : []
+    content {
+      ocpus         = var.flex_ocpus
+      memory_in_gbs = var.flex_memory_gb
+    }
+  }
   source_details {
-    source_type = "image"
-    source_id   = data.oci_core_images.ol9[0].images[0].id
+    source_type             = "image"
+    source_id               = data.oci_core_images.ol9[0].images[0].id
+    boot_volume_size_in_gbs = var.boot_volume_gb
+  }
+  preserve_boot_volume = false
+  instance_options {
+    are_legacy_imds_endpoints_disabled = true
   }
   metadata = {
     ssh_authorized_keys = var.ssh_public_key
@@ -49,6 +65,10 @@ resource "oci_core_instance" "recovery" {
   freeform_tags = var.freeform_tags
 
   lifecycle {
+    precondition {
+      condition     = contains(["VM.Standard.E2.1.Micro", "VM.Standard.A1.Flex"], var.shape)
+      error_message = "Solo se permiten formas Always Free (VM.Standard.E2.1.Micro o VM.Standard.A1.Flex)."
+    }
     precondition {
       condition     = var.ssh_public_key != ""
       error_message = "Se requiere la clave PÚBLICA SSH del operador para crear la VM de recuperación."
@@ -67,4 +87,5 @@ resource "oci_bastion_bastion" "this" {
   freeform_tags                = var.freeform_tags
 }
 
+output "instance_id" { value = var.create ? oci_core_instance.recovery[0].id : null }
 output "private_ip" { value = var.create ? oci_core_instance.recovery[0].private_ip : null }
