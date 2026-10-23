@@ -3,6 +3,8 @@ module "iam" {
   tenancy_ocid        = var.tenancy_ocid
   compartment_name    = var.compartment_name
   uploader_group_name = var.uploader_group_name
+  uploader_user_name  = var.uploader_user_name
+  uploader_user_email = var.uploader_user_email
   bucket_name         = var.bucket_name
   freeform_tags       = local.common_tags
 }

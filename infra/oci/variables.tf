@@ -56,6 +56,18 @@ variable "bucket_name" {
   default = "nexoeventos-recovery"
 }
 
+variable "uploader_user_name" {
+  type        = string
+  description = "Usuario de servicio que carga las copias; solo puede usar clave API."
+  default     = "nexoeventos-backup-uploader"
+}
+
+variable "uploader_user_email" {
+  type        = string
+  sensitive   = true
+  description = "Correo principal del usuario de servicio (el dominio de identidad lo exige). Solo en el tfvars local, nunca en Git."
+}
+
 variable "uploader_group_name" {
   description = "Grupo IAM (creado en la consola) con permiso de ESCRITURA/LECTURA solo en este bucket."
   type        = string

@@ -21,3 +21,7 @@ Uso futuro (con autorización): `terraform init -backend-config="path=$PWD/../..
 | Sin capacidad Always Free → VM pequeña de pago | centavos por hora (crédito de prueba) |
 
 Decisión pendiente de la usuaria: región de origen y tarjeta de verificación. Plan alterno si OCI no es viable: Azure Blob como destino de copia.
+
+## Identidad de carga (IAM)
+
+Terraform crea el grupo `nexoeventos-backup-uploaders` y el usuario de servicio `nexoeventos-backup-uploader` en el dominio *Default*, con la capacidad de usar solo clave API (sin contraseña de consola, tokens, SMTP ni claves de secreto). La política limita el grupo a leer el bucket `nexoeventos-recovery` y a OBJECT_CREATE/READ/INSPECT sobre sus objetos: sin OBJECT_DELETE ni OBJECT_OVERWRITE, sin administración de buckets. **La clave API del usuario no se crea con Terraform**: la genera la operadora fuera del repositorio (clave independiente de la de administración) y la registra en la consola; la clave privada nunca entra en Git ni en el estado.

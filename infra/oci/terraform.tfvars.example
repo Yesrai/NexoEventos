@@ -4,3 +4,4 @@ tenancy_ocid = "ocid1.tenancy.oc1..REEMPLAZAR"
 # create_recovery_vm  = false      # true solo durante un simulacro
 # ssh_public_key      = "ssh-ed25519 AAAA... operador"
 # bastion_client_cidr = "203.0.113.10/32"
+uploader_user_email = "correo-del-operador@example.com"   # exigido por el dominio de identidad; solo en el tfvars local
