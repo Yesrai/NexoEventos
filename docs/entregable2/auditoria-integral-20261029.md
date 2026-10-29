@@ -159,3 +159,8 @@ Commit/push (CI de los cambios locales); descarga del paquete de CA de RDS y ven
 
 ## 15. Quinta ronda (29-oct): separación liveness/readiness
 Corregido en código local el acoplamiento del health check del ALB con PostgreSQL (`/livez` → `/health` para el ALB; `/healthz` → `/ready` se conserva para monitoreo; `/health` asíncrono; errores de BD → 503 con `Retry-After`). 60 pruebas de backend, prueba de Nginx real en Docker local y comprobaciones de Terraform correctas. **Requiere AMI nueva, rotación de instancias y `apply` (en ese orden) y validación real contra un failover de RDS en V2**; si el ALB cambiara a `/livez` antes de renovar la AMI, el health check daría 200 con la API muerta. Detalle en `matriz-chaos-engineering.md` §3.
+
+## 16. Resultado real del CI en GitHub (PR #1 en borrador, rama `entregable2-auditoria`)
+- Run 1 (`1331a74`): backend y frontend correctos; **fallaron** el lockfile de producción y la imagen por vulnerabilidades nuevas con corrección (dnspython 2.8.0, CVE-2026-114605; libssl3/openssl, CVE-2026-84782). Corregidas en `37fb2c9`.
+- Run 2 (`37fb2c9`): **4 de 4 jobs correctos**; backend 60 pruebas, frontend 33 pruebas; Trivy: dependencias 0, secretos 0, lockfile 0, imagen 0; configuración **7 hallazgos** (5 AWS esperados + 2 de Azure no contados antes).
+- Sigue siendo **solo CI** (sin CD); nada desplegado ni aplicado en la nube.

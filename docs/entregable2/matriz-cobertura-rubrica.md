@@ -78,3 +78,11 @@ Rutas relativas a `docs/`. «Cap.» = `evidencias/capturas/aws/`.
 | C5 DevSecOps | VERIFICADO (CI) | `github/DEVOPS-01…03` + artefactos Trivy | Solo CI, sin CD |
 | Costos (control) | VERIFICADO (EC2 detenida 29-oct) / PENDIENTE (crédito restante) | `aws/A15`, `azure/B1` | Gasto real y crédito no confirmados |
 | Trivy: 8 hallazgos | Ver informe §19 | artefactos run #31 | 5 abiertos/decisión, 3 corregidos solo en local |
+
+## Actualización 29-oct (CI real)
+| Requisito | Estado | Evidencia |
+|---|---|---|
+| CI de los cambios locales | VERIFICADO | PR #1, run del commit `37fb2c9`: 4/4 jobs correctos, 60 + 33 pruebas |
+| Trivy: dependencias, lockfile, imagen, secretos | VERIFICADO (0 hallazgos) | artefactos del run; 2 vulnerabilidades nuevas halladas y corregidas |
+| Trivy: configuración | VERIFICADO (7: 5 AWS + 2 Azure) | AWS-0080 y AWS-0164 ya no aparecen; AWS-0104 ×3, AWS-0053, AWS-0132 y AZU-0051 ×2 abiertos con justificación |
+| Health check liveness/readiness | IMPLEMENTADO SIN VERIFICACIÓN COMPLETA | probado en CI/local; **no validado en AWS** |
