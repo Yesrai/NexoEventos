@@ -12,6 +12,11 @@ RUN python -m venv /opt/venv && /opt/venv/bin/pip install -r requirements-produc
 
 FROM ${PYTHON_IMAGE}
 ENV PATH=/opt/venv/bin:$PATH PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+# Parches de seguridad de OpenSSL de Debian posteriores a la imagen base fijada (CVE-2026-84782, corregida en 3.0.22-1~deb12u2). Solo estos dos paquetes;
+# cuando se actualice el digest de la base a uno que ya los incluya, este paso deja de hacer cambios.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends --only-upgrade libssl3 openssl \
+ && rm -rf /var/lib/apt/lists/*
 # Usuario sin privilegios, sin shell ni directorio personal.
 RUN groupadd --system --gid 10001 nexo \
  && useradd --system --uid 10001 --gid nexo --no-create-home --shell /usr/sbin/nologin nexo
