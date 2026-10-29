@@ -1,5 +1,7 @@
 # Alternativa V2: dos instancias y balanceador
 
+> **Actualización del 28-oct-2026:** este documento es el **diseño del 7-oct**. La V2 se implementó (`infra/aws-v2`, 21 recursos), se desplegó, se midió el 22-oct (validación 15/15, escalera V1 vs V2, escalado 2→3→2 y fallos) y se **destruyó**; la RDS de V1 pasó a Multi-AZ el 23-oct. Resultados y diagramas reales: [`entregable2/informe-entregable2.md`](entregable2/informe-entregable2.md).
+
 Diseño del **7 de octubre de 2026**; no desplegado ni incorporado a Terraform.
 
 ## Diseño mínimo útil

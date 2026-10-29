@@ -202,7 +202,12 @@ MASTER_PASSWORD_ESC="$(printf %s "$MASTER_PASSWORD" | urlencode)"
 MIGRATION_PASSWORD_ESC="$(printf %s "$MIGRATION_PASSWORD" | urlencode)"
 APP_PASSWORD_ESC="$(printf %s "$APP_PASSWORD" | urlencode)"
 
-ADMIN_URL="postgresql+psycopg://${MASTER_USER_ESC}:${MASTER_PASSWORD_ESC}@${DB_ENDPOINT}/nexoeventos?sslmode=require"
+# TLS con validación de CA y nombre (verify-full): el paquete de CA de RDS debe estar instalado (deploy/install-rds-ca-bundle.sh).
+RDS_CA_BUNDLE="${NEXO_RDS_CA_BUNDLE:-/etc/nexoeventos/rds-ca-bundle.pem}"
+[[ -s "$RDS_CA_BUNDLE" ]] || { echo "Falta el paquete de CA de RDS ($RDS_CA_BUNDLE). Ejecute deploy/install-rds-ca-bundle.sh." >&2; exit 1; }
+DB_SSL_QUERY="sslmode=verify-full&sslrootcert=${RDS_CA_BUNDLE}"
+
+ADMIN_URL="postgresql+psycopg://${MASTER_USER_ESC}:${MASTER_PASSWORD_ESC}@${DB_ENDPOINT}/nexoeventos?${DB_SSL_QUERY}"
 MIGRATION_DATABASE_URL="$ADMIN_URL" \
 NEXO_MIGRATION_DATABASE_PASSWORD="$MIGRATION_PASSWORD" \
 NEXO_APP_DATABASE_PASSWORD="$APP_PASSWORD" \
@@ -213,7 +218,7 @@ migration_tmp="$(mktemp /etc/nexoeventos/migration.env.XXXXXX)"
 duckdns_tmp=""
 cat >"$backend_tmp" <<EOF
 APP_ENV=production
-DATABASE_URL=postgresql+psycopg://nexoeventos_app:${APP_PASSWORD_ESC}@${DB_ENDPOINT}/nexoeventos?sslmode=require
+DATABASE_URL=postgresql+psycopg://nexoeventos_app:${APP_PASSWORD_ESC}@${DB_ENDPOINT}/nexoeventos?${DB_SSL_QUERY}
 FRONTEND_ORIGINS=https://${DOMAIN}
 SESSION_COOKIE_SECURE=true
 SESSION_HOURS=8
@@ -224,7 +229,7 @@ TICKET_ENCRYPTION_KEY=${TICKET_KEY}
 SECURITY_HASH_KEY=${HASH_KEY}
 EOF
 cat >"$migration_tmp" <<EOF
-MIGRATION_DATABASE_URL=postgresql+psycopg://nexoeventos_migrator:${MIGRATION_PASSWORD_ESC}@${DB_ENDPOINT}/nexoeventos?sslmode=require
+MIGRATION_DATABASE_URL=postgresql+psycopg://nexoeventos_migrator:${MIGRATION_PASSWORD_ESC}@${DB_ENDPOINT}/nexoeventos?${DB_SSL_QUERY}
 EOF
 if [[ "$USES_DUCKDNS" == YES ]]; then
   duckdns_tmp="$(mktemp /etc/nexoeventos/duckdns.env.XXXXXX)"

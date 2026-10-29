@@ -1,0 +1,5 @@
+OK  | require (sin validar certificado)                | CONECTA  | TLS=True
+OK  | verify-full + CA correcta                        | CONECTA  | TLS=True
+OK  | verify-full + OTRA CA                            | RECHAZA  | - host: 'localhost', port: '55433', hostaddr: '127.0.0.1': connection failed: connection t
+OK  | verify-full + nombre no incluido (127.0.0.1)     | RECHAZA  | connection failed: connection to server at "127.0.0.1", port 55433 failed: server certific
+OK  | disable (sin TLS; el servidor exige hostssl)     | RECHAZA  | - host: 'localhost', port: '55433', hostaddr: '127.0.0.1': connection failed: connection t

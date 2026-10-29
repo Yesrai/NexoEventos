@@ -1,0 +1,951 @@
+{
+  "uid": "nexo-aws-hist",
+  "title": "AWS — histórico real (CloudWatch y pruebas de carga) — NO es monitoreo en vivo",
+  "description": "Series reales importadas; no es monitoreo en vivo.",
+  "tags": [
+    "nexoeventos",
+    "aws",
+    "historico"
+  ],
+  "timezone": "utc",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": false,
+  "refresh": "",
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "text",
+      "title": "",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 3
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**Datos históricos reales** de las ventanas en que V1/V2 estuvieron encendidos (octubre de 2026), leídos de CloudWatch y de `perf/results` y cargados con su marca de tiempo original. Ajuste el rango de tiempo a la fecha de cada ventana."
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "CPU de la instancia y de la base de datos (%)",
+      "description": "",
+      "datasource": {
+        "type": "alexanderzobnin-zabbix-datasource",
+        "uid": "zabbix-nexo"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "always",
+            "spanNulls": false,
+            "pointSize": 4
+          },
+          "max": 100
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "alexanderzobnin-zabbix-datasource",
+            "uid": "zabbix-nexo"
+          },
+          "queryType": "0",
+          "group": {
+            "filter": "/.*/"
+          },
+          "host": {
+            "filter": "aws-historico"
+          },
+          "application": {
+            "filter": ""
+          },
+          "itemTag": {
+            "filter": ""
+          },
+          "item": {
+            "filter": "/CPU de la instancia/"
+          },
+          "functions": [
+            {
+              "def": {
+                "name": "setAlias",
+                "category": "Alias",
+                "params": [
+                  {
+                    "name": "alias",
+                    "type": "string"
+                  }
+                ],
+                "defaultParams": []
+              },
+              "params": [
+                "EC2"
+              ],
+              "text": "setAlias(EC2)"
+            }
+          ],
+          "mode": 0,
+          "refId": "A",
+          "options": {
+            "showDisabledItems": false,
+            "skipEmptyValues": false,
+            "disableDataAlignment": false,
+            "useZabbixValueMapping": true
+          }
+        },
+        {
+          "datasource": {
+            "type": "alexanderzobnin-zabbix-datasource",
+            "uid": "zabbix-nexo"
+          },
+          "queryType": "0",
+          "group": {
+            "filter": "/.*/"
+          },
+          "host": {
+            "filter": "aws-historico"
+          },
+          "application": {
+            "filter": ""
+          },
+          "itemTag": {
+            "filter": ""
+          },
+          "item": {
+            "filter": "/CPU de la base de datos/"
+          },
+          "functions": [
+            {
+              "def": {
+                "name": "setAlias",
+                "category": "Alias",
+                "params": [
+                  {
+                    "name": "alias",
+                    "type": "string"
+                  }
+                ],
+                "defaultParams": []
+              },
+              "params": [
+                "RDS"
+              ],
+              "text": "setAlias(RDS)"
+            }
+          ],
+          "mode": 0,
+          "refId": "B",
+          "options": {
+            "showDisabledItems": false,
+            "skipEmptyValues": false,
+            "disableDataAlignment": false,
+            "useZabbixValueMapping": true
+          }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Conexiones a la base de datos",
+      "description": "",
+      "datasource": {
+        "type": "alexanderzobnin-zabbix-datasource",
+        "uid": "zabbix-nexo"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 3,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "always",
+            "spanNulls": false,
+            "pointSize": 4
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "alexanderzobnin-zabbix-datasource",
+            "uid": "zabbix-nexo"
+          },
+          "queryType": "0",
+          "group": {
+            "filter": "/.*/"
+          },
+          "host": {
+            "filter": "aws-historico"
+          },
+          "application": {
+            "filter": ""
+          },
+          "itemTag": {
+            "filter": ""
+          },
+          "item": {
+            "filter": "/Conexiones a la base de datos/"
+          },
+          "functions": [
+            {
+              "def": {
+                "name": "setAlias",
+                "category": "Alias",
+                "params": [
+                  {
+                    "name": "alias",
+                    "type": "string"
+                  }
+                ],
+                "defaultParams": []
+              },
+              "params": [
+                "RDS conexiones"
+              ],
+              "text": "setAlias(RDS conexiones)"
+            }
+          ],
+          "mode": 0,
+          "refId": "A",
+          "options": {
+            "showDisabledItems": false,
+            "skipEmptyValues": false,
+            "disableDataAlignment": false,
+            "useZabbixValueMapping": true
+          }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Balanceador: peticiones y errores 5xx",
+      "description": "",
+      "datasource": {
+        "type": "alexanderzobnin-zabbix-datasource",
+        "uid": "zabbix-nexo"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 11,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "always",
+            "spanNulls": false,
+            "pointSize": 4
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "alexanderzobnin-zabbix-datasource",
+            "uid": "zabbix-nexo"
+          },
+          "queryType": "0",
+          "group": {
+            "filter": "/.*/"
+          },
+          "host": {
+            "filter": "aws-historico"
+          },
+          "application": {
+            "filter": ""
+          },
+          "itemTag": {
+            "filter": ""
+          },
+          "item": {
+            "filter": "/Peticiones por intervalo/"
+          },
+          "functions": [
+            {
+              "def": {
+                "name": "setAlias",
+                "category": "Alias",
+                "params": [
+                  {
+                    "name": "alias",
+                    "type": "string"
+                  }
+                ],
+                "defaultParams": []
+              },
+              "params": [
+                "peticiones"
+              ],
+              "text": "setAlias(peticiones)"
+            }
+          ],
+          "mode": 0,
+          "refId": "A",
+          "options": {
+            "showDisabledItems": false,
+            "skipEmptyValues": false,
+            "disableDataAlignment": false,
+            "useZabbixValueMapping": true
+          }
+        },
+        {
+          "datasource": {
+            "type": "alexanderzobnin-zabbix-datasource",
+            "uid": "zabbix-nexo"
+          },
+          "queryType": "0",
+          "group": {
+            "filter": "/.*/"
+          },
+          "host": {
+            "filter": "aws-historico"
+          },
+          "application": {
+            "filter": ""
+          },
+          "itemTag": {
+            "filter": ""
+          },
+          "item": {
+            "filter": "/Errores 5xx/"
+          },
+          "functions": [
+            {
+              "def": {
+                "name": "setAlias",
+                "category": "Alias",
+                "params": [
+                  {
+                    "name": "alias",
+                    "type": "string"
+                  }
+                ],
+                "defaultParams": []
+              },
+              "params": [
+                "5xx"
+              ],
+              "text": "setAlias(5xx)"
+            }
+          ],
+          "mode": 0,
+          "refId": "B",
+          "options": {
+            "showDisabledItems": false,
+            "skipEmptyValues": false,
+            "disableDataAlignment": false,
+            "useZabbixValueMapping": true
+          }
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Latencia de destino del ALB (s)",
+      "description": "",
+      "datasource": {
+        "type": "alexanderzobnin-zabbix-datasource",
+        "uid": "zabbix-nexo"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 11,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "always",
+            "spanNulls": false,
+            "pointSize": 4
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "alexanderzobnin-zabbix-datasource",
+            "uid": "zabbix-nexo"
+          },
+          "queryType": "0",
+          "group": {
+            "filter": "/.*/"
+          },
+          "host": {
+            "filter": "aws-historico"
+          },
+          "application": {
+            "filter": ""
+          },
+          "itemTag": {
+            "filter": ""
+          },
+          "item": {
+            "filter": "/Latencia de destino ALB/"
+          },
+          "functions": [
+            {
+              "def": {
+                "name": "setAlias",
+                "category": "Alias",
+                "params": [
+                  {
+                    "name": "alias",
+                    "type": "string"
+                  }
+                ],
+                "defaultParams": []
+              },
+              "params": [
+                "latencia ALB"
+              ],
+              "text": "setAlias(latencia ALB)"
+            }
+          ],
+          "mode": 0,
+          "refId": "A",
+          "options": {
+            "showDisabledItems": false,
+            "skipEmptyValues": false,
+            "disableDataAlignment": false,
+            "useZabbixValueMapping": true
+          }
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Auto Scaling: instancias en servicio",
+      "description": "",
+      "datasource": {
+        "type": "alexanderzobnin-zabbix-datasource",
+        "uid": "zabbix-nexo"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 11,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "always",
+            "spanNulls": false,
+            "pointSize": 4
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "alexanderzobnin-zabbix-datasource",
+            "uid": "zabbix-nexo"
+          },
+          "queryType": "0",
+          "group": {
+            "filter": "/.*/"
+          },
+          "host": {
+            "filter": "aws-historico"
+          },
+          "application": {
+            "filter": ""
+          },
+          "itemTag": {
+            "filter": ""
+          },
+          "item": {
+            "filter": "/Instancias en servicio/"
+          },
+          "functions": [
+            {
+              "def": {
+                "name": "setAlias",
+                "category": "Alias",
+                "params": [
+                  {
+                    "name": "alias",
+                    "type": "string"
+                  }
+                ],
+                "defaultParams": []
+              },
+              "params": [
+                "instancias ASG"
+              ],
+              "text": "setAlias(instancias ASG)"
+            }
+          ],
+          "mode": 0,
+          "refId": "A",
+          "options": {
+            "showDisabledItems": false,
+            "skipEmptyValues": false,
+            "disableDataAlignment": false,
+            "useZabbixValueMapping": true
+          }
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Pruebas de carga k6: latencia p95 (ms)",
+      "description": "",
+      "datasource": {
+        "type": "alexanderzobnin-zabbix-datasource",
+        "uid": "zabbix-nexo"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "always",
+            "spanNulls": false,
+            "pointSize": 4
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "alexanderzobnin-zabbix-datasource",
+            "uid": "zabbix-nexo"
+          },
+          "queryType": "0",
+          "group": {
+            "filter": "/.*/"
+          },
+          "host": {
+            "filter": "aws-historico"
+          },
+          "application": {
+            "filter": ""
+          },
+          "itemTag": {
+            "filter": ""
+          },
+          "item": {
+            "filter": "/Carga k6: latencia p95/"
+          },
+          "functions": [
+            {
+              "def": {
+                "name": "setAlias",
+                "category": "Alias",
+                "params": [
+                  {
+                    "name": "alias",
+                    "type": "string"
+                  }
+                ],
+                "defaultParams": []
+              },
+              "params": [
+                "p95"
+              ],
+              "text": "setAlias(p95)"
+            }
+          ],
+          "mode": 0,
+          "refId": "A",
+          "options": {
+            "showDisabledItems": false,
+            "skipEmptyValues": false,
+            "disableDataAlignment": false,
+            "useZabbixValueMapping": true
+          }
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Pruebas de carga k6: peticiones por segundo",
+      "description": "",
+      "datasource": {
+        "type": "alexanderzobnin-zabbix-datasource",
+        "uid": "zabbix-nexo"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 19,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "always",
+            "spanNulls": false,
+            "pointSize": 4
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "alexanderzobnin-zabbix-datasource",
+            "uid": "zabbix-nexo"
+          },
+          "queryType": "0",
+          "group": {
+            "filter": "/.*/"
+          },
+          "host": {
+            "filter": "aws-historico"
+          },
+          "application": {
+            "filter": ""
+          },
+          "itemTag": {
+            "filter": ""
+          },
+          "item": {
+            "filter": "/Carga k6: peticiones por segundo/"
+          },
+          "functions": [
+            {
+              "def": {
+                "name": "setAlias",
+                "category": "Alias",
+                "params": [
+                  {
+                    "name": "alias",
+                    "type": "string"
+                  }
+                ],
+                "defaultParams": []
+              },
+              "params": [
+                "rps"
+              ],
+              "text": "setAlias(rps)"
+            }
+          ],
+          "mode": 0,
+          "refId": "A",
+          "options": {
+            "showDisabledItems": false,
+            "skipEmptyValues": false,
+            "disableDataAlignment": false,
+            "useZabbixValueMapping": true
+          }
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Failover Multi-AZ de la RDS: código HTTP de /healthz (23-oct-2026, sondeo de 1 s)",
+      "description": "Interrupción medida ≈ 13 s; ver docs/evidencias/multicloud/aws/20261023-rds-multiaz/failover.",
+      "datasource": {
+        "type": "alexanderzobnin-zabbix-datasource",
+        "uid": "zabbix-nexo"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 27,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "always",
+            "spanNulls": false,
+            "pointSize": 4
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "alexanderzobnin-zabbix-datasource",
+            "uid": "zabbix-nexo"
+          },
+          "queryType": "0",
+          "group": {
+            "filter": "/.*/"
+          },
+          "host": {
+            "filter": "aws-historico"
+          },
+          "application": {
+            "filter": ""
+          },
+          "itemTag": {
+            "filter": ""
+          },
+          "item": {
+            "filter": "/Failover Multi-AZ: código HTTP/"
+          },
+          "functions": [
+            {
+              "def": {
+                "name": "setAlias",
+                "category": "Alias",
+                "params": [
+                  {
+                    "name": "alias",
+                    "type": "string"
+                  }
+                ],
+                "defaultParams": []
+              },
+              "params": [
+                "healthz (0 = sin respuesta)"
+              ],
+              "text": "setAlias(healthz (0 = sin respuesta))"
+            }
+          ],
+          "mode": 0,
+          "refId": "A",
+          "options": {
+            "showDisabledItems": false,
+            "skipEmptyValues": false,
+            "disableDataAlignment": false,
+            "useZabbixValueMapping": true
+          }
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Pruebas de carga k6: errores inesperados por peldaño",
+      "description": "",
+      "datasource": {
+        "type": "alexanderzobnin-zabbix-datasource",
+        "uid": "zabbix-nexo"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 19,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "always",
+            "spanNulls": false,
+            "pointSize": 4
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "alexanderzobnin-zabbix-datasource",
+            "uid": "zabbix-nexo"
+          },
+          "queryType": "0",
+          "group": {
+            "filter": "/.*/"
+          },
+          "host": {
+            "filter": "aws-historico"
+          },
+          "application": {
+            "filter": ""
+          },
+          "itemTag": {
+            "filter": ""
+          },
+          "item": {
+            "filter": "/Carga k6: errores inesperados/"
+          },
+          "functions": [
+            {
+              "def": {
+                "name": "setAlias",
+                "category": "Alias",
+                "params": [
+                  {
+                    "name": "alias",
+                    "type": "string"
+                  }
+                ],
+                "defaultParams": []
+              },
+              "params": [
+                "errores"
+              ],
+              "text": "setAlias(errores)"
+            }
+          ],
+          "mode": 0,
+          "refId": "A",
+          "options": {
+            "showDisabledItems": false,
+            "skipEmptyValues": false,
+            "disableDataAlignment": false,
+            "useZabbixValueMapping": true
+          }
+        }
+      ]
+    }
+  ],
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  }
+}

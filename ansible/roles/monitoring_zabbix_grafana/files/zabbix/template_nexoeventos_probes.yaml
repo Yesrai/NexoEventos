@@ -1,0 +1,171 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 55da4a5c1f104eca8d864f24ac72730b
+      name: Templates/NexoEventos
+  templates:
+    - uuid: 82d7c3175d1643ee9d2d727c244f7ee7
+      template: 'NexoEventos HTTP Probes'
+      name: 'NexoEventos HTTP Probes (monitoreo en vivo)'
+      description: |
+        Sondas externas e independientes de AWS para NexoEventos: disponibilidad (/healthz = API + base de datos), catálogo (/api/events), latencia y vencimiento del certificado TLS.
+        Se ejecutan desde la VM de Azure (Zabbix server y su agente local). Macros: {$NEXO.HOST} (nombre DNS) y {$NEXO.PORT}.
+      groups:
+        - name: Templates/NexoEventos
+      items:
+        - uuid: 16c06c14231745fb90674f8bf2bbcdfb
+          name: 'healthz: código HTTP (0 = sin respuesta)'
+          type: HTTP_AGENT
+          key: nexo.http.healthz.code
+          delay: 1m
+          history: 30d
+          trends: 365d
+          value_type: UNSIGNED
+          description: 'GET https://host/healthz. 200 = API lista y base de datos accesible. 0 = error de conexión/TLS/tiempo de espera.'
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '0'
+                - '.*'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: REGEX
+              parameters:
+                - 'HTTP/\S+\s+(\d{3})'
+                - '\1'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          timeout: 10s
+          url: 'https://{$NEXO.HOST}:{$NEXO.PORT}/healthz'
+          retrieve_mode: HEADERS
+          follow_redirects: 'NO'
+          status_codes: ''
+          tags:
+            - tag: component
+              value: availability
+          triggers:
+            - uuid: 89151db1c1c6468ea6c8b99b64a70cd2
+              expression: 'count(/NexoEventos HTTP Probes/nexo.http.healthz.code,#3,"ne",200)=3'
+              name: 'NexoEventos no disponible: /healthz falla 3 comprobaciones seguidas en {$NEXO.HOST}'
+              priority: HIGH
+              description: 'Respuesta distinta de 200 en 3 sondas consecutivas (≈3 min). Acción: ver docs/multicloud/09-azure-observabilidad.md (runbook).'
+              tags:
+                - tag: scope
+                  value: availability
+        - uuid: a72c8c57ef5e4646aa19757f27001815
+          name: 'catálogo: código HTTP de /api/events (0 = sin respuesta)'
+          type: HTTP_AGENT
+          key: nexo.http.events.code
+          delay: 1m
+          history: 30d
+          trends: 365d
+          value_type: UNSIGNED
+          preprocessing:
+            - type: CHECK_NOT_SUPPORTED
+              parameters:
+                - '0'
+                - '.*'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+            - type: REGEX
+              parameters:
+                - 'HTTP/\S+\s+(\d{3})'
+                - '\1'
+              error_handler: CUSTOM_VALUE
+              error_handler_params: '0'
+          timeout: 10s
+          url: 'https://{$NEXO.HOST}:{$NEXO.PORT}/api/events'
+          retrieve_mode: HEADERS
+          follow_redirects: 'NO'
+          tags:
+            - tag: component
+              value: catalog
+          triggers:
+            - uuid: 6ffc9da24cb1460ea021be96b2a9d387
+              expression: 'count(/NexoEventos HTTP Probes/nexo.http.events.code,#3,"ne",200)=3'
+              name: 'Catálogo /api/events no responde 200 (3 comprobaciones) en {$NEXO.HOST}'
+              priority: AVERAGE
+        - uuid: 4f33307da40f412fad0479c8c748dbaf
+          name: 'healthz: latencia total'
+          type: ZABBIX_PASSIVE
+          key: 'web.page.perf["https://{$NEXO.HOST}:{$NEXO.PORT}/healthz"]'
+          delay: 1m
+          history: 30d
+          trends: 365d
+          value_type: FLOAT
+          units: s
+          description: 'Tiempo de carga medido por el agente local (0 si falla).'
+          tags:
+            - tag: component
+              value: latency
+          triggers:
+            - uuid: 23e62e8578954ae7a1deb95eed434ceb
+              expression: 'avg(/NexoEventos HTTP Probes/web.page.perf["https://{$NEXO.HOST}:{$NEXO.PORT}/healthz"],5m)>{$NEXO.LATENCY.WARN}'
+              name: 'Latencia alta de /healthz (> {$NEXO.LATENCY.WARN} s de media en 5 min) en {$NEXO.HOST}'
+              priority: WARNING
+        - uuid: 36830f3d3dec4a37aba40dcf633d24be
+          name: 'TLS: datos del certificado'
+          type: ZABBIX_PASSIVE
+          key: 'web.certificate.get[{$NEXO.HOST},{$NEXO.PORT}]'
+          delay: 5m
+          history: '0'
+          trends: '0'
+          value_type: TEXT
+          description: 'JSON del certificado presentado por el servidor (agente local).'
+          tags:
+            - tag: component
+              value: tls
+        - uuid: eb2e09359b1d47d09ad5a617a0c30f84
+          name: 'TLS: fecha de vencimiento'
+          type: DEPENDENT
+          key: nexo.tls.not_after
+          delay: '0'
+          history: 365d
+          trends: 365d
+          value_type: UNSIGNED
+          units: unixtime
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.x509.not_after.timestamp
+          master_item:
+            key: 'web.certificate.get[{$NEXO.HOST},{$NEXO.PORT}]'
+          tags:
+            - tag: component
+              value: tls
+        - uuid: a143518d90f949a09667b588c8820ca3
+          name: 'TLS: días hasta el vencimiento'
+          type: DEPENDENT
+          key: nexo.tls.days_left
+          delay: '0'
+          history: 365d
+          trends: 365d
+          value_type: FLOAT
+          units: d
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.x509.not_after.timestamp
+            - type: JAVASCRIPT
+              parameters:
+                - 'return Math.floor((value - Math.floor(Date.now() / 1000)) / 86400);'
+          master_item:
+            key: 'web.certificate.get[{$NEXO.HOST},{$NEXO.PORT}]'
+          tags:
+            - tag: component
+              value: tls
+          triggers:
+            - uuid: 5a382b29f3504ba9b0df2c92fe9733ba
+              expression: 'last(/NexoEventos HTTP Probes/nexo.tls.days_left)<{$NEXO.TLS.DAYS}'
+              name: 'El certificado TLS de {$NEXO.HOST} vence en menos de {$NEXO.TLS.DAYS} días'
+              priority: WARNING
+      macros:
+        - macro: '{$NEXO.HOST}'
+          value: example.invalid
+          description: 'Nombre DNS del servicio a vigilar (se define en cada host).'
+        - macro: '{$NEXO.PORT}'
+          value: '443'
+        - macro: '{$NEXO.LATENCY.WARN}'
+          value: '1.5'
+        - macro: '{$NEXO.TLS.DAYS}'
+          value: '14'

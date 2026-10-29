@@ -1,0 +1,10 @@
+{
+  "GiB": 64,
+  "disco": "StandardSSD_LRS",
+  "identidad": "SystemAssigned",
+  "imagen": "server",
+  "secureBoot": true,
+  "seguridad": "TrustedLaunch",
+  "tamano": "Standard_D2s_v4",
+  "vtpm": true
+}

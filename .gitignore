@@ -36,3 +36,7 @@ crash.log
 *.dump
 *.backup
 work/
+
+# Observabilidad (Azure): caché de ansible-lint, inventario real y estados locales
+ansible/.ansible/
+ansible/monitoring-inventory.yml

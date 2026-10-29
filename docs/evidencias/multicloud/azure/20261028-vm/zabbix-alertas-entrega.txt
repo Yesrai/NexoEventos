@@ -1,0 +1,20 @@
+Cadena de alertas de Zabbix en Azure — 2026-10-28T15:03:53Z
+PROBLEMA DETECTADO = evento del trigger; ALERTA GENERADA = fila en la tabla de alertas de la acción; MENSAJE ENTREGADO = el medio (script) terminó bien (estado 1) y escribió la línea en el registro local.
+NO hubo correo desde Zabbix (sin SMTP configurado); el correo lo envía el grupo de acción de Azure Monitor.
+
+== Problemas (eventos del trigger)
+ 14:23:29Z sev2 [azure-obs] Linux: sda: Disk read/write request responses are too high (read > 20 ms fo -> recuperado 14:24:29Z
+ 14:23:31Z sev4 [aws-nexoeventos-v1] NexoEventos no disponible: /healthz falla 3 comprobaciones seguidas en nexo
+ 14:23:32Z sev3 [aws-nexoeventos-v1] Catálogo /api/events no responde 200 (3 comprobaciones) en nexoeventos-demo
+ 14:28:24Z sev2 [Zabbix server] Linux: High CPU utilization (over 90% for 5m) -> recuperado 14:45:24Z
+ 14:29:41Z sev2 [azure-obs] Linux: High CPU utilization (over 90% for 5m) -> recuperado 14:45:41Z
+
+== Alertas generadas; estado 1 = entregada, 2 = fallida
+ 14:23:29Z estado=2 (sin asunto) | No message defined for media type.
+ 14:23:31Z estado=2 (sin asunto) | No message defined for media type.
+ 14:23:32Z estado=2 (sin asunto) | No message defined for media type.
+ 14:24:29Z estado=2 (sin asunto) | No message defined for media type.
+ 14:28:24Z estado=2 (sin asunto) | No message defined for media type.
+ 14:29:41Z estado=1 PROBLEMA: Linux: High CPU utilization (over 90% for 5m) 
+ 14:45:24Z estado=1 RESUELTO: Linux: High CPU utilization (over 90% for 5m) 
+ 14:45:41Z estado=1 RESUELTO: Linux: High CPU utilization (over 90% for 5m) 

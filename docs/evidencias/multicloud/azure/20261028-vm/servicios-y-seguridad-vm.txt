@@ -1,0 +1,59 @@
+Evidencia tomada DENTRO de la VM de Azure por SSH (StrictHostKeyChecking=yes) — 2026-10-28T14:21:06Z. IPs, nombre público y correos enmascarados.
+== SO
+Ubuntu 24.04.5 LTS | kernel 7.0.0-1017-azure | 2 vCPU | 7881 MB RAM | disco raíz 61G usado 12%
+== servicios (systemctl is-active / is-enabled)
+postgresql       active   enabled
+zabbix-server    active   enabled
+zabbix-agent2    active   enabled
+grafana-server   active   enabled
+nginx            active   enabled
+php8.3-fpm       active   enabled
+ufw              active   enabled
+ssh              active   disabled
+== versiones
+PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gn
+zabbix_server (Zabbix) 7.0.32
+zabbix_agent2 (Zabbix) 7.0.32
+nginx version: nginx/1.24.0 (Ubuntu)
+Deprecation warning: 'grafana-server' is deprecated and will be removed in a future release. Use the 'grafana server' subcommand instead.
+PHP 8.3.6 (cli) (built: Oct 19 2026 15:16:58) (NTS)
+== PostgreSQL: escucha y base
+localhost
+on
+postgres
+zabbix
+== puertos en escucha (proceso)
+<ip>%lo:53 systemd-resolve
+IPv4:10051 zabbix_server
+IPv4:22 sshd
+IPv4:3000 grafana
+IPv4:443 nginx
+IPv4:53 systemd-resolve
+IPv4:5432 postgres
+IPv6:10051 zabbix_server
+IPv6:22 sshd
+todas:10050 zabbix_agent2
+== UFW
+Status: active
+Logging: on (low)
+Default: deny (incoming), allow (outgoing), disabled (routed)
+New profiles: skip
+
+To                         Action      From
+--                         ------      ----
+22/tcp                     ALLOW IN    <ip-operador>            
+443/tcp                    ALLOW IN    <ip-operador>            
+
+== SSH endurecido
+maxauthtries 3
+permitrootlogin no
+pubkeyauthentication yes
+passwordauthentication no
+kbdinteractiveauthentication no
+x11forwarding no
+== sondas Zabbix: usuarios del SO de los servicios
+grafana  grafana
+postgres postgres
+root     nginx
+www-data nginx
+zabbix   zabbix_server

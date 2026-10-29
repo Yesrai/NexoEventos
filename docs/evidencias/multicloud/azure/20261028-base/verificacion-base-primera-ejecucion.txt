@@ -1,0 +1,12 @@
+Primera ejecución de azure-verify-deploy.sh --stage base (2026-10-28T05:45:22Z) — 3 FALSOS FALLOS por errores del propio script (la infraestructura estaba bien). Salida resumida y sin datos sensibles:
+
+FALLÓ  subred: prefijo y NSG asociado: esperado «10.40.1.0/24 True», obtenido «None / true»
+FALLÓ  Log Analytics: retención (días) y tope diario (GB): esperado «30 0.2», obtenido «30 / 0.2»
+       presupuesto: Traceback ... KeyError: 'thresholdType'   (la comprobación del presupuesto no llegó a evaluarse)
+Resultado: HAY COMPROBACIONES FALLIDAS (el resto, 15 comprobaciones, correctas)
+
+Causas y correcciones (script corregido; la infraestructura no se modificó; después se repitió la verificación completa: 18/18 correctas, ver verificacion-base.txt):
+1) La subred expone `addressPrefixes` (lista) y `addressPrefix` es null; el booleano se imprime en minúsculas → se lee `addressPrefixes[0]` y se compara con «true».
+2) `-o tsv` con una lista devuelve un valor por línea → se unen las líneas con espacios antes de comparar.
+3) El CLI de presupuestos no trae `thresholdType`; el tipo va en la clave de cada aviso (`actual_…`/`forecasted_…`) y el importe llega como «60.0» → se deduce el tipo de la clave y se compara el importe numéricamente.
+Defecto anterior (antes del despliegue, en azure-verify-clean.sh): `az disk list` exige --resource-group y fallaba en silencio devolviendo 0 → se sustituyó por conteos de `az resource list --resource-type` en toda la suscripción y un resultado «?» no se da por válido.

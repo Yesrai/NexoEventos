@@ -1,5 +1,7 @@
 # Matriz de trazabilidad y evidencias
 
+> **Nota del 28-oct-2026:** esta matriz refleja el estado del **10-oct** y quedó superada. La matriz vigente, con V2, multicloud y Azure, es [`../entregable2/matriz-requisitos-evidencias.md`](../entregable2/matriz-requisitos-evidencias.md). En particular EV12 (V2) ya **no** es «diseñada, no desplegada»: se desplegó, midió y destruyó el 22-oct (ver `validacion-v2-20261022/`, `medicion-v2-20261022/`, `escalado-v2-20261022/`).
+
 No se acepta como evidencia una pantalla de configuración sin resultado. Las capturas deben mostrar fecha/contexto, ocultar identificadores innecesarios y nunca incluir contraseñas, cookies, secretos, tokens QR completos ni datos personales. Las cifras del caso y metas se etiquetan como objetivos; solo una ejecución registrada es resultado medido.
 
 Lectura API consolidada y sanitizada de inventario: [9 de octubre de 2026](lectura-aws-2026-10-09.md). Recepción real de logs: [10 de octubre de 2026](EV08/recepcion-real-2026-10-10.md).

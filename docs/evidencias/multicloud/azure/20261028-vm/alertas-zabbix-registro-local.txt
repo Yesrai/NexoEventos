@@ -1,0 +1,4 @@
+Registro local de alertas (/var/log/zabbix/alertas-nexoeventos.log) tomado de la VM — 2026-10-28T15:03:42Z
+{"utc":"2026-10-28T14:29:41Z","destino":"registro-local","asunto":"PROBLEMA: Linux: High CPU utilization (over 90% for 5m)","mensaje":"2026.10.28 14:29:41 | azure-obs | severidad Warning | Linux: High CPU utilization (over 90% for 5m) | id 79"}
+{"utc":"2026-10-28T14:45:24Z","destino":"registro-local","asunto":"RESUELTO: Linux: High CPU utilization (over 90% for 5m)","mensaje":"2026.10.28 14:28:24 | Zabbix server | severidad Warning | Linux: High CPU utilization (over 90% for 5m) | id 78"}
+{"utc":"2026-10-28T14:45:41Z","destino":"registro-local","asunto":"RESUELTO: Linux: High CPU utilization (over 90% for 5m)","mensaje":"2026.10.28 14:29:41 | azure-obs | severidad Warning | Linux: High CPU utilization (over 90% for 5m) | id 79"}

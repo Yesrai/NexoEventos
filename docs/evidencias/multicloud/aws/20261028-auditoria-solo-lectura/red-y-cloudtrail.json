@@ -1,0 +1,77 @@
+{
+ "vpcs": [
+  {
+   "id": "0409",
+   "cidr": "10.20.0.0/16"
+  }
+ ],
+ "subredes": [
+  {
+   "cidr": "10.20.22.0/24",
+   "az": "us-east-1b",
+   "ruta_0.0.0.0/0_a_IGW": false,
+   "ip_publica_auto": false
+  },
+  {
+   "cidr": "10.20.1.0/24",
+   "az": "us-east-1a",
+   "ruta_0.0.0.0/0_a_IGW": true,
+   "ip_publica_auto": true
+  },
+  {
+   "cidr": "10.20.21.0/24",
+   "az": "us-east-1a",
+   "ruta_0.0.0.0/0_a_IGW": false,
+   "ip_publica_auto": false
+  }
+ ],
+ "grupos_seguridad": [
+  {
+   "sg": "nexoeventos-academy-web-sg",
+   "id": "2919",
+   "entrada": [
+    "tcp 80-80 <- 0.0.0.0/0",
+    "tcp 443-443 <- 0.0.0.0/0"
+   ],
+   "salida": [
+    "tcp 5432-5432 <- SG:7647",
+    "udp 53-53 <- 10.20.0.0/16",
+    "tcp 53-53 <- 10.20.0.0/16",
+    "tcp 443-443 <- 0.0.0.0/0"
+   ]
+  },
+  {
+   "sg": "nexoeventos-academy-db-sg",
+   "id": "7647",
+   "entrada": [
+    "tcp 5432-5432 <- SG:2919"
+   ],
+   "salida": []
+  }
+ ],
+ "cloudtrail_event_history": {
+  "consulta": "ok",
+  "eventos_recientes": [
+   {
+    "hora": "2026-10-28T16:07:36",
+    "evento": "AssumeRole"
+   },
+   {
+    "hora": "2026-10-28T16:03:15",
+    "evento": "DescribeDBInstances"
+   },
+   {
+    "hora": "2026-10-28T16:03:14",
+    "evento": "DescribeInstances"
+   },
+   {
+    "hora": "2026-10-28T16:03:12",
+    "evento": "DescribeInstances"
+   },
+   {
+    "hora": "2026-10-28T16:03:10",
+    "evento": "RetireGrant"
+   }
+  ]
+ }
+}

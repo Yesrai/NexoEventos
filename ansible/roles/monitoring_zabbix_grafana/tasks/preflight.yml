@@ -1,0 +1,40 @@
+---
+- name: ¿Existe cloud-init? (VM recién creada)
+  ansible.builtin.stat:
+    path: /usr/bin/cloud-init
+  register: _cloud_init
+
+- name: Esperar a que cloud-init termine el primer arranque (evita bloqueos de apt/dpkg)
+  ansible.builtin.command: cloud-init status --wait
+  register: _ci_status
+  changed_when: false
+  failed_when: _ci_status.rc not in [0, 2]   # 2 = terminó con avisos recuperables
+  timeout: 900
+  when: _cloud_init.stat.exists
+
+- name: Comprobar sistema, memoria y variables obligatorias
+  ansible.builtin.assert:
+    that:
+      - ansible_distribution == 'Ubuntu' and ansible_distribution_version == '24.04'
+      - ansible_memtotal_mb >= monitoring_min_memory_mb
+      - monitoring_fqdn | length > 0
+      - monitoring_admin_cidr is match('^[0-9.]+/32$')
+      - monitoring_admin_cidr != '0.0.0.0/0'
+    fail_msg: "Requisitos no cumplidos: Ubuntu 24.04, ≥ {{ monitoring_min_memory_mb }} MB de RAM, monitoring_fqdn y monitoring_admin_cidr (/32)."
+
+- name: Directorio de secretos en la estación de control (0700, fuera de Git)
+  ansible.builtin.file:
+    path: "{{ monitoring_secrets_dir }}"
+    state: directory
+    mode: "0700"
+  delegate_to: localhost
+  become: false
+  run_once: true
+
+- name: Generar o leer las contraseñas (en la estación de control; nunca se imprimen)
+  ansible.builtin.set_fact:
+    _pw_db: "{{ lookup('ansible.builtin.password', monitoring_secrets_dir ~ '/zabbix_db length=32 chars=ascii_letters,digits') }}"
+    _pw_zbx_admin: "{{ lookup('ansible.builtin.password', monitoring_secrets_dir ~ '/zabbix_admin length=32 chars=ascii_letters,digits') }}"
+    _pw_grafana_admin: "{{ lookup('ansible.builtin.password', monitoring_secrets_dir ~ '/grafana_admin length=32 chars=ascii_letters,digits') }}"
+    _pw_grafana_ro: "{{ lookup('ansible.builtin.password', monitoring_secrets_dir ~ '/grafana_zabbix_ro length=32 chars=ascii_letters,digits') }}"
+  no_log: true

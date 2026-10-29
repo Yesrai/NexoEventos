@@ -290,3 +290,16 @@ Alcance de esta fase: **inicio, catálogo y página de evento**. Registro, compr
 - **Cierre OCI:** VM temporal y Bastion destruidos (volumen de arranque no conservado); red, IAM y bucket con los dos objetos del respaldo intactos (`docs/evidencias/multicloud/oci/20261023-cierre-recuperacion/`).
 - **Recuperación de la aplicación en OCI:** NexoEventos (PostgreSQL 18.6 + FastAPI + Nginx + React) recuperada en una VM temporal E5.Flex con las claves originales entregadas cifradas; 14/14 pruebas funcionales; T_funcional 32 min 42 s desde el `apply` (`docs/evidencias/multicloud/oci/20261023-recuperacion-aplicacion/`). **VM temporal y Bastion destruidos** (volumen de arranque `TERMINATED`), reglas HTTPS temporales retiradas y base OCI intacta (VCN, subred, Service Gateway, IAM, bucket y los 4 objetos cifrados): `docs/evidencias/multicloud/oci/20261023-cierre-recuperacion-aplicacion/`. Límites: `already_used` ≠ primera validación `accepted` (pendiente); las 2 contraseñas de demostración se restablecieron solo en la copia ya destruida.
 - **Pendiente:** Azure (observabilidad), integración y cierre.
+
+## 27. Azure: observabilidad con Zabbix + Grafana + Azure Monitor (28-oct-2026)
+
+- **Base (9 recursos) + VM (8 recursos, con apagado automático DevTest Labs)** desplegadas con `terraform apply` de planes guardados. VM `Standard_D2s_v4` (la B2s está restringida en Azure for Students), Trusted Launch, SSD E6 64 GiB, IP estática, NSG 22/443 solo desde la IP /32 del operador. Estado: **VM desasignada** (`PowerState/deallocated`); persistente ≈ 0,30 USD/día.
+- **Ventana de 1,4 h:** huella SSH verificada por dos canales (consola serie = red), Ansible (3 intentos; 2 fallidos por handlers de Nginx sin ejecutar), Zabbix 7.0.32, PostgreSQL 16.15, Grafana 13.2.4; identidad administrada de solo lectura; **alerta de CPU de Azure Monitor disparada a los 17 min 54 s de iniciar la carga y resuelta**; Zabbix detectó AWS V1 apagado; 1 202 puntos históricos de AWS/OCI cargados (etiquetados como históricos). Incidentes y correcciones: `docs/multicloud/09-azure-observabilidad.md` §19.
+- **Límite:** la **entrega real de un correo de alerta no está comprobada** (receptor verificado; la prueba de notificación no existe en suscripciones gratuitas). Capturas de Grafana/Zabbix pendientes (requieren otra ventana). Evidencias: `docs/evidencias/multicloud/azure/20261028-vm/`.
+
+## 28. Preparación local del Entregable 2 (28-oct-2026, sin tocar nubes)
+
+- `docs/entregable2/`: informe de las 20 secciones oficiales (solo hechos con evidencia; `[PENDIENTE]` donde falta), diagramas V1/V2/multicloud (SVG), matriz requisito → evidencia, procedimientos pendientes de autorización y prioridad de CloudWatch. Verificador local: `python3 scripts/docs/verificar-entregable2.py` (enlaces, anclas, datos sensibles, cifras ↔ evidencias).
+- Verificaciones locales del 28-oct: backend 44/44, frontend 33/33, `check-iac-security.py` 29/29, SVG válidos.
+- **Urgencias:** series de 1 min de CloudWatch del 19-oct vencen ≈ 3-nov; la RDS detenida se reiniciaría sola ≈ 30-oct (verificar).
+

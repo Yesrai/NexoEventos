@@ -1,0 +1,294 @@
+[WARNING]: Deprecation warnings can be disabled by setting `deprecation_warnings=False` in ansible.cfg.
+[DEPRECATION WARNING]: ansible.builtin.apt_repository has been deprecated. Use deb822_repository instead. This feature will be removed from ansible-core version 2.25.
+Origin: /Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/ansible/roles/monitoring_zabbix_grafana/tasks/grafana.yml:15:3
+
+13
+14 - name: Repositorio APT de Grafana
+15   ansible.builtin.apt_repository:
+     ^ column 3
+
+
+PLAY [Monitoreo multicloud (Zabbix + Grafana)] *********************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : ¿Existe cloud-init? (VM recién creada)] ******
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Esperar a que cloud-init termine el primer arranque (evita bloqueos de apt/dpkg)] ***
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Comprobar sistema, memoria y variables obligatorias] ***
+[DEPRECATION WARNING]: INJECT_FACTS_AS_VARS default to `True` is deprecated, top-level facts will not be auto injected after the change. This feature will be removed from ansible-core version 2.24.
+Origin: /Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/ansible/roles/monitoring_zabbix_grafana/tasks/preflight.yml:18:9
+
+16   ansible.builtin.assert:
+17     that:
+18       - ansible_distribution == 'Ubuntu' and ansible_distribution_version == '24.04'
+           ^ column 9
+
+Use `ansible_facts["fact_name"]` (no `ansible_` prefix) instead.
+
+[DEPRECATION WARNING]: INJECT_FACTS_AS_VARS default to `True` is deprecated, top-level facts will not be auto injected after the change. This feature will be removed from ansible-core version 2.24.
+Origin: /Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/ansible/roles/monitoring_zabbix_grafana/tasks/preflight.yml:19:9
+
+17     that:
+18       - ansible_distribution == 'Ubuntu' and ansible_distribution_version == '24.04'
+19       - ansible_memtotal_mb >= monitoring_min_memory_mb
+           ^ column 9
+
+Use `ansible_facts["fact_name"]` (no `ansible_` prefix) instead.
+
+ok: [azure-obs] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [monitoring_zabbix_grafana : Directorio de secretos en la estación de control (0700, fuera de Git)] ***
+ok: [azure-obs -> localhost]
+
+TASK [monitoring_zabbix_grafana : Generar o leer las contraseñas (en la estación de control; nunca se imprimen)] ***
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Paquetes base] *******************************
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Actualizaciones de seguridad automáticas] ****
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Archivo de swap] *****************************
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Montar swap] *********************************
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Activar swap] ********************************
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Parámetros sysctl (poca presión sobre el disco)] ***
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : SSH solo con clave, sin root] ****************
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Validar la configuración de SSH antes de recargarla] ***
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : UFW instalado] *******************************
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : UFW — SSH y HTTPS solo desde la IP del operador (antes de activar; idempotente)] ***
+ok: [azure-obs] => (item=22)
+ok: [azure-obs] => (item=443)
+
+TASK [monitoring_zabbix_grafana : UFW — entrada denegada por defecto y salida permitida (el NSG de Azure restringe la salida)] ***
+ok: [azure-obs] => (item=deny incoming)
+ok: [azure-obs] => (item=allow outgoing)
+
+TASK [monitoring_zabbix_grafana : UFW activo] **********************************
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : PostgreSQL (paquete de Ubuntu 24.04)] ********
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Ajustes de rendimiento y solo escucha local] ***
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Servicio PostgreSQL activo] ******************
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : ¿Existe el rol de Zabbix?] *******************
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Crear o actualizar el rol de Zabbix (la contraseña va por variable de psql; nunca se registra)] ***
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : ¿Existe la base de datos de Zabbix?] *********
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Crear la base de datos de Zabbix (UTF-8)] ****
+skipping: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Paquete de repositorio de Zabbix (verificado por SHA-256)] ***
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Instalar el repositorio de Zabbix] ***********
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : En arm64 el repositorio de Zabbix usa otra ruta (solo pruebas locales; la VM de Azure es amd64)] ***
+[DEPRECATION WARNING]: INJECT_FACTS_AS_VARS default to `True` is deprecated, top-level facts will not be auto injected after the change. This feature will be removed from ansible-core version 2.24.
+Origin: /Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/ansible/roles/monitoring_zabbix_grafana/tasks/zabbix.yml:17:9
+
+15     regexp: '^(URIs: https://repo\.zabbix\.com/zabbix/[0-9.]+/ubuntu)$'
+16     replace: '\1-arm64'
+17   when: ansible_architecture == 'aarch64'
+           ^ column 9
+
+Use `ansible_facts["fact_name"]` (no `ansible_` prefix) instead.
+
+skipping: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Paquetes de Zabbix (versión fijada) y agente 2] ***
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : ¿Está importado el esquema de Zabbix?] *******
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Importar el esquema inicial (una sola vez)] ***
+skipping: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Configuración del servidor Zabbix] ***********
+ok: [azure-obs] => (item=(censored due to no_log))
+ok: [azure-obs] => (item=(censored due to no_log))
+ok: [azure-obs] => (item=(censored due to no_log))
+ok: [azure-obs] => (item=(censored due to no_log))
+ok: [azure-obs] => (item=(censored due to no_log))
+
+TASK [monitoring_zabbix_grafana : Ajustes de memoria y procesos del servidor (D2s_v4 de 8 GiB)] ***
+ok: [azure-obs] => (item=CacheSize)
+ok: [azure-obs] => (item=HistoryCacheSize)
+ok: [azure-obs] => (item=HistoryIndexCacheSize)
+ok: [azure-obs] => (item=TrendCacheSize)
+ok: [azure-obs] => (item=ValueCacheSize)
+ok: [azure-obs] => (item=StartPollers)
+ok: [azure-obs] => (item=StartTrappers)
+ok: [azure-obs] => (item=StartHTTPPollers)
+ok: [azure-obs] => (item=StartPingers)
+ok: [azure-obs] => (item=StartDBSyncers)
+ok: [azure-obs] => (item=StartPreprocessors)
+ok: [azure-obs] => (item=Timeout)
+
+TASK [monitoring_zabbix_grafana : Agente 2 local (las sondas HTTP/TLS usan web.page.perf y web.certificate.get)] ***
+ok: [azure-obs] => (item=Server)
+ok: [azure-obs] => (item=ServerActive)
+ok: [azure-obs] => (item=Hostname)
+ok: [azure-obs] => (item=ListenIP)
+
+TASK [monitoring_zabbix_grafana : Registro local de alertas — script del tipo de medio (sin red, sin secretos)] ***
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Archivo de registro de alertas] **************
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Servicios de Zabbix] *************************
+ok: [azure-obs] => (item=zabbix-server)
+ok: [azure-obs] => (item=zabbix-agent2)
+
+TASK [monitoring_zabbix_grafana : Retirar los sitios por defecto de Nginx (solo se sirve HTTPS)] ***
+ok: [azure-obs] => (item=/etc/nginx/sites-enabled/default)
+ok: [azure-obs] => (item=/etc/nginx/conf.d/zabbix.conf)
+
+TASK [monitoring_zabbix_grafana : Directorio del certificado TLS] **************
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Certificado autofirmado y clave privada (se generan EN la VM y no salen de ella)] ***
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Permisos de la clave privada] ****************
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Zona horaria UTC en PHP (Zabbix)] ************
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Configuración del frontend de Zabbix (contiene la clave de BD; modo 0640, grupo www-data)] ***
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Sitio HTTPS (Grafana en /grafana/, Zabbix en /zabbix/)] ***
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Directiva server_tokens desactivada] *********
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Validar la configuración de Nginx] ***********
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Servicios web] *******************************
+ok: [azure-obs] => (item=php8.3-fpm)
+ok: [azure-obs] => (item=nginx)
+
+TASK [monitoring_zabbix_grafana : Aplicar ya los reinicios pendientes (Nginx/PHP-FPM) antes de usar la API de Zabbix] ***
+
+TASK [monitoring_zabbix_grafana : Comprobar que Nginx escucha de verdad en HTTPS (443) antes de usar la API] ***
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Clave pública del repositorio de Grafana (incluida en el rol; huella comprobada)] ***
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : La clave coincide con la verificada] *********
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Repositorio APT de Grafana] ******************
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Instalar Grafana OSS] ************************
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Contraseña del administrador de Grafana (archivo 0640 root:grafana; nunca en grafana.ini)] ***
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Contraseña del usuario de solo lectura de Zabbix para Grafana] ***
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Archivo grafana.ini] *************************
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Plugins (descarga firmada desde grafana.com)] ***
+ok: [azure-obs] => (item=alexanderzobnin-zabbix-app)
+
+TASK [monitoring_zabbix_grafana : Directorios de aprovisionamiento] ************
+ok: [azure-obs] => (item=/etc/grafana/provisioning/datasources)
+ok: [azure-obs] => (item=/etc/grafana/provisioning/plugins)
+ok: [azure-obs] => (item=/etc/grafana/provisioning/dashboards)
+ok: [azure-obs] => (item=/var/lib/grafana/dashboards)
+
+TASK [monitoring_zabbix_grafana : Orígenes de datos, plugin y proveedor de paneles] ***
+ok: [azure-obs] => (item=/etc/grafana/provisioning/datasources/nexo.yml)
+ok: [azure-obs] => (item=/etc/grafana/provisioning/plugins/apps.yml)
+ok: [azure-obs] => (item=/etc/grafana/provisioning/dashboards/nexo.yml)
+
+TASK [monitoring_zabbix_grafana : Paneles (JSON versionado en el repositorio)] ***
+ok: [azure-obs] => (item=/Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/ansible/roles/monitoring_zabbix_grafana/files/grafana/dashboards/10-aws-historico.json)
+ok: [azure-obs] => (item=/Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/ansible/roles/monitoring_zabbix_grafana/files/grafana/dashboards/00-multicloud-resumen.json)
+ok: [azure-obs] => (item=/Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/ansible/roles/monitoring_zabbix_grafana/files/grafana/dashboards/20-oci-historico.json)
+
+TASK [monitoring_zabbix_grafana : Panel de Azure (requiere el ID de la suscripción para Azure Monitor)] ***
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Servicio Grafana] ****************************
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Directorio de scripts] ***********************
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Scripts de configuración de Zabbix (cliente de API + configuración idempotente)] ***
+ok: [azure-obs] => (item=zbx.py)
+ok: [azure-obs] => (item=zabbix_configure.py)
+
+TASK [monitoring_zabbix_grafana : Plantillas de NexoEventos (Zabbix)] **********
+ok: [azure-obs] => (item=template_nexoeventos_probes.yaml)
+ok: [azure-obs] => (item=template_nexoeventos_historical.yaml)
+
+TASK [monitoring_zabbix_grafana : Contraseñas para el script (archivos 0600 en /root; se borran al terminar)] ***
+ok: [azure-obs] => (item=(censored due to no_log))
+ok: [azure-obs] => (item=(censored due to no_log))
+
+TASK [monitoring_zabbix_grafana : Configurar Zabbix por API (hosts, usuarios de mínimo privilegio, medios y acción de alertas)] ***
+changed: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Traer el token de carga histórica a la estación de control (0600; no se imprime)] ***
+changed: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Quitar los archivos de contraseñas temporales de la VM] ***
+changed: [azure-obs] => (item=admin)
+changed: [azure-obs] => (item=grafana)
+
+TASK [monitoring_zabbix_grafana : Versiones instaladas (evidencia; sin secretos)] ***
+ok: [azure-obs]
+
+TASK [monitoring_zabbix_grafana : Guardar las versiones en la estación de control] ***
+changed: [azure-obs -> localhost]
+
+PLAY RECAP *********************************************************************
+azure-obs                  : ok=67   changed=4    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
+

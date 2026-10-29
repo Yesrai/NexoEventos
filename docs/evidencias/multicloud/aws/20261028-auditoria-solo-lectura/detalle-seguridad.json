@@ -1,0 +1,163 @@
+{
+  "labrole": {
+    "max_sesion_s": 3600,
+    "limite_de_permisos": false,
+    "confianza": [
+      "Principal AWS: el propio LabRole; Service: 52 servicios de AWS (ec2, rds, lambda, ssm, s3, elasticloadbalancing, autoscaling, kms, cloudtrail, etc.)"
+    ]
+  },
+  "inline": [],
+  "politicas": [
+    {
+      "nombre": "VocLabPolicy1",
+      "gestionada_por_aws": false,
+      "_error": "documento no legible"
+    },
+    {
+      "nombre": "VocLabPolicy3",
+      "gestionada_por_aws": false,
+      "_error": "documento no legible"
+    },
+    {
+      "nombre": "VocLabPolicy2",
+      "gestionada_por_aws": false,
+      "_error": "documento no legible"
+    },
+    {
+      "nombre": "AmazonSSMManagedInstanceCore",
+      "gestionada_por_aws": true,
+      "sentencias": 3,
+      "allow": 3,
+      "deny": 0,
+      "accion_comodin_total": false,
+      "recurso_comodin": true,
+      "servicios": [
+        "ec2messages",
+        "ssm",
+        "ssmmessages"
+      ],
+      "n_acciones": 25
+    },
+    {
+      "nombre": "AmazonEKSClusterPolicy",
+      "gestionada_por_aws": true,
+      "sentencias": 3,
+      "allow": 3,
+      "deny": 0,
+      "accion_comodin_total": false,
+      "recurso_comodin": true,
+      "servicios": [
+        "autoscaling",
+        "ec2",
+        "elasticloadbalancing",
+        "iam",
+        "kms"
+      ],
+      "n_acciones": 63
+    },
+    {
+      "nombre": "AmazonEC2ContainerRegistryReadOnly",
+      "gestionada_por_aws": true,
+      "sentencias": 1,
+      "allow": 1,
+      "deny": 0,
+      "accion_comodin_total": false,
+      "recurso_comodin": true,
+      "servicios": [
+        "ecr"
+      ],
+      "n_acciones": 12
+    },
+    {
+      "nombre": "AmazonEKSWorkerNodePolicy",
+      "gestionada_por_aws": true,
+      "sentencias": 1,
+      "allow": 1,
+      "deny": 0,
+      "accion_comodin_total": false,
+      "recurso_comodin": true,
+      "servicios": [
+        "ec2",
+        "eks",
+        "eks-auth"
+      ],
+      "n_acciones": 10
+    }
+  ],
+  "usuarios_iam": {
+    "consulta": 0
+  },
+  "grupos_iam": {
+    "consulta": 0
+  },
+  "rds": {
+    "StorageEncrypted": true,
+    "PubliclyAccessible": false,
+    "MultiAZ": true,
+    "BackupRetentionPeriod": 7,
+    "PreferredBackupWindow": "07:44-08:14",
+    "PreferredMaintenanceWindow": "tue:04:54-tue:05:24",
+    "DeletionProtection": false,
+    "IAMDatabaseAuthenticationEnabled": false,
+    "PerformanceInsightsEnabled": false,
+    "MonitoringInterval": 0,
+    "AutoMinorVersionUpgrade": true,
+    "CACertificateIdentifier": "rds-ca-rsa2048-g1",
+    "CopyTagsToSnapshot": true,
+    "StorageType": "gp2",
+    "MaxAllocatedStorage": 20,
+    "AllocatedStorage": 20,
+    "kms": "clave presente",
+    "grupo_parametros": [
+      "default.postgres18"
+    ],
+    "subredes_del_grupo": 2,
+    "rds.force_ssl": [
+      [
+        "rds.force_ssl",
+        "1",
+        "system"
+      ]
+    ]
+  },
+  "ec2": {
+    "estado": "stopped",
+    "metadatos": {
+      "State": "applied",
+      "HttpTokens": "required",
+      "HttpPutResponseHopLimit": 2,
+      "HttpEndpoint": "enabled",
+      "HttpProtocolIpv6": "disabled",
+      "InstanceMetadataTags": "disabled"
+    },
+    "monitoreo_detallado": "disabled",
+    "perfil_de_instancia": true,
+    "ip_publica_asignada": false,
+    "sg_adjuntos": 1
+  },
+  "ebs_cifrado_por_defecto": false,
+  "s3": {
+    "politica_de_bucket": "ausente",
+    "ciclo_de_vida": [
+      {
+        "estado": "Enabled",
+        "expira_dias": 7,
+        "prefijo": "database-backups/"
+      }
+    ]
+  },
+  "alarmas": [
+    {
+      "nombre": "nexoeventos-academy-ec2-cpu-high",
+      "metrica": "CPUUtilization",
+      "estadistico": "Average",
+      "periodo_s": 300,
+      "periodos_eval": 2,
+      "umbral": 80.0,
+      "comparacion": "GreaterThanThreshold",
+      "estado": "OK",
+      "acciones_alarma": 0,
+      "tratamiento_datos_faltantes": "missing"
+    }
+  ]
+}

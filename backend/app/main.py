@@ -1,11 +1,14 @@
 import hashlib
+import logging
 from decimal import Decimal
 from uuid import UUID
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy import select, text
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, InterfaceError, OperationalError
+from sqlalchemy.exc import TimeoutError as PoolTimeoutError
 from sqlalchemy.orm import Session
 
 from app.access_control import (
@@ -83,6 +86,9 @@ def _user_view(context: AuthContext) -> UserView:
     )
 
 
+logger = logging.getLogger("nexoeventos.api")
+
+
 def create_app(database_url: str | None = None) -> FastAPI:
     validate_production_config()
     application = FastAPI(title="NexoEventos API", version="0.3.0")
@@ -97,10 +103,25 @@ def create_app(database_url: str | None = None) -> FastAPI:
         allow_headers=["Content-Type", "Idempotency-Key", "X-CSRF-Token"],
     )
 
+    # Base de datos caída o saturada (failover de RDS, red, pool agotado): respuesta 503 reintentable en lugar de un 500 opaco.
+    # Solo se registra el tipo de excepción: el mensaje puede contener la URL o parámetros de la consulta.
+    @application.exception_handler(OperationalError)
+    @application.exception_handler(InterfaceError)
+    @application.exception_handler(PoolTimeoutError)
+    async def database_unavailable(request: Request, exc: Exception) -> JSONResponse:
+        logger.warning("Base de datos no disponible (%s) en %s", type(exc).__name__, request.url.path)
+        return JSONResponse(status_code=503, content={"detail": "Servicio no disponible temporalmente"}, headers={"Retry-After": "5"})
+
+    # LIVENESS: el proceso está vivo y responde. NO toca PostgreSQL a propósito: el health check del ALB (y con él el reemplazo de
+    # instancias por el Auto Scaling) no debe depender de la base de datos; si ésta falla, cambiar de instancia no la arregla.
+    # `async def` a propósito: se ejecuta en el bucle de eventos y no consume un hilo del pool (los endpoints `def` usan un pool de hilos
+    # que una base de datos bloqueada puede agotar); así la liveness responde aunque todas las peticiones esperen a PostgreSQL.
     @application.get("/health", response_model=HealthResponse)
-    def health() -> HealthResponse:
+    async def health() -> HealthResponse:
         return HealthResponse(status="ok", service="nexoeventos-api")
 
+    # READINESS: puede atender operaciones que requieren PostgreSQL. Es para monitoreo externo (Zabbix, `/healthz`), no para
+    # decidir el reemplazo de instancias.
     @application.get("/ready")
     def ready(session: Session = Depends(get_session)) -> dict[str, str]:
         try:

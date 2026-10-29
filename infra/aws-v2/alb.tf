@@ -20,7 +20,7 @@ resource "aws_lb_target_group" "web" {
 
   health_check {
     protocol            = "HTTP"
-    path                = "/healthz" # Nginx -> FastAPI /ready (comprueba PostgreSQL)
+    path                = "/livez" # Nginx -> FastAPI /health (liveness, SIN PostgreSQL); /healthz (readiness con BD) queda para monitoreo externo
     matcher             = "200"
     interval            = 10
     timeout             = 5

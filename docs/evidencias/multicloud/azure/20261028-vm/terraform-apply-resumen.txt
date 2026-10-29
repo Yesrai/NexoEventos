@@ -1,0 +1,10 @@
+terraform apply del plan guardado (sin -auto-approve) — 2026-10-28 13:38:53Z a 13:42:09Z
+module.vm.azurerm_public_ip.this[0]: Creation complete after 8s
+module.vm.azurerm_network_interface.this[0]: Creation complete after 4s
+module.vm.azurerm_linux_virtual_machine.this[0]: Creation complete after 17s
+azurerm_dev_test_global_vm_shutdown_schedule.vm[0]: Creation complete after 2s
+azurerm_role_assignment.grafana_monitoring_reader[0]: Creation complete after 33s
+module.monitor.azurerm_monitor_metric_alert.vm["cpu"]: Creation complete after 2m43s
+module.monitor.azurerm_monitor_metric_alert.vm["up"]: Creation complete after 2m43s
+module.monitor.azurerm_monitor_metric_alert.vm["mem"]: Creation complete after 2m44s
+Apply complete! Resources: 8 added, 0 changed, 0 destroyed.

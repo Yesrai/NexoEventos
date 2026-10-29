@@ -163,6 +163,25 @@ jobs:
           trivyignores: .trivyignore
           format: table
           output: trivy-repo.txt
+      # Trivy solo reconoce `requirements.txt`; el archivo que llega a producción es `requirements-production.lock` (con las transitivas).
+      # Se copia con ese nombre a un directorio aparte para analizar exactamente lo que se instala en producción.
+      - name: Preparar el lockfile de producción para Trivy
+        run: |
+          mkdir -p "$RUNNER_TEMP/lock-prod"
+          cp backend/requirements-production.lock "$RUNNER_TEMP/lock-prod/requirements.txt"
+      - name: Lockfile de producción (bloquea HIGH/CRITICAL con corrección)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.76.0
+          scan-type: fs
+          scan-ref: ${{ runner.temp }}/lock-prod
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          trivyignores: .trivyignore
+          format: table
+          output: trivy-lock.txt
       - name: "Configuración (Dockerfile, Compose, Terraform), informe sin bloquear"
         if: always()
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
@@ -179,14 +198,16 @@ jobs:
         run: |
           {
             echo '### Trivy · dependencias y secretos'; echo '```'; cat trivy-repo.txt 2>/dev/null || echo 'Sin salida.'; echo '```'
+            echo '### Trivy · lockfile de producción'; echo '```'; cat trivy-lock.txt 2>/dev/null || echo 'Sin salida.'; echo '```'
             echo '### Trivy · configuración (informativo)'; echo '```'; cat trivy-config.txt 2>/dev/null || echo 'Sin salida.'; echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-          cat trivy-repo.txt trivy-config.txt 2>/dev/null || true
+          cat trivy-repo.txt trivy-lock.txt trivy-config.txt 2>/dev/null || true
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: trivy-repositorio
           path: |
             trivy-repo.txt
+            trivy-lock.txt
             trivy-config.txt
           if-no-files-found: ignore

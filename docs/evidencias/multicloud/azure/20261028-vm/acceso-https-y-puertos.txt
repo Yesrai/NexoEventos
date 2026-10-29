@@ -1,0 +1,32 @@
+Pruebas de acceso desde la estación del operador (IP autorizada) y bloqueo de puertos — 2026-10-28T14:21:26Z
+== HTTPS: Zabbix (/zabbix/) y Grafana (/)
+/zabbix/         HTTP 200
+/grafana/login   HTTP 200
+/                HTTP 302
+== cabeceras de seguridad (/zabbix/)
+HTTP/2 200 
+server: nginx
+x-content-type-options: nosniff
+x-frame-options: SAMEORIGIN
+strict-transport-security: max-age=31536000
+x-content-type-options: nosniff
+x-frame-options: SAMEORIGIN
+== TLS negociado
+New, TLSv1/SSLv3, Cipher is AEAD-AES256-GCM-SHA384
+    Protocol  : TLSv1.3
+    Verify return code: 18 (self signed certificate)
+== certificado: huella vista desde fuera = huella del archivo en la VM
+coinciden (SHA256 25:5A:EA:0A:6A:FA:7A:15:84:1E:CA:B2:A5:E2:F3:6F:EF:00:25:5C:DC:B1:02:C2:A6:26:02:9A:F8:10:93:C3)
+== certificado: sujeto/emisor/vigencia
+subject= /CN=<fqdn>
+issuer= /CN=<fqdn>
+notBefore=Oct 28 14:00:06 2026 GMT
+notAfter=Jan 26 14:00:06 2027 GMT
+== puertos que NO deben ser alcanzables desde Internet/operador (NSG + UFW)
+puerto 80: cerrado/filtrado
+puerto 3000: cerrado/filtrado
+puerto 5432: cerrado/filtrado
+puerto 10050: cerrado/filtrado
+puerto 10051: cerrado/filtrado
+puerto 22: abierto (solo para la IP del operador)
+puerto 443: abierto (solo para la IP del operador)

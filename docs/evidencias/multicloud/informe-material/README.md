@@ -1,3 +1,3 @@
 # informe-material
 
-PENDIENTE: aún no hay evidencia ejecutada. Ver `../README.md` y `docs/multicloud/04-plan-implementacion.md`.
+El informe del Entregable 2 y sus diagramas están en [`docs/entregable2/`](../../../entregable2/README.md). Esta carpeta se conserva solo como referencia de la estructura original.

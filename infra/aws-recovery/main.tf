@@ -101,10 +101,12 @@ resource "aws_vpc_security_group_egress_rule" "postgres" {
   referenced_security_group_id = aws_security_group.database.id
 }
 
+# Cifrado: la restauración hereda el de la RDS de origen (storage_encrypted = true en infra/aws/database.tf); se declara explícito (AWS-0080).
 resource "aws_db_instance" "recovery" {
   identifier                   = "${local.recovery_prefix}-postgres"
   instance_class               = var.db_instance_class
   storage_type                 = "gp2"
+  storage_encrypted            = true
   db_subnet_group_name         = data.aws_db_subnet_group.source.name
   vpc_security_group_ids       = [aws_security_group.database.id]
   publicly_accessible          = false

@@ -1,0 +1,18 @@
+salud:
+  {'database': 'ok', 'version': '13.2.4'}
+orígenes de datos:
+   Azure Monitor | grafana-azure-monitor-datasource | uid azure-monitor
+   Zabbix | alexanderzobnin-zabbix-datasource | uid zabbix-nexo
+plugins instalados (zabbix):
+   alexanderzobnin-zabbix-app 6.10.1 habilitado
+paneles:
+   AWS — histórico real (CloudWatch y pruebas de carga) — NO es monitoreo en vivo
+   Azure — VM de monitoreo (Azure Monitor y agente de Zabbix)
+   NexoEventos — observabilidad multicloud (resumen)
+   OCI — histórico real (OCI Monitoring) de la recuperación — NO es monitoreo en vivo
+salud del origen azure-monitor: OK - Successfully connected to all Azure Monitor endpoints.
+salud del origen zabbix-nexo: OK - Zabbix API version 7.0.32
+Grafana → Azure Monitor (identidad administrada): Percentage CPU
+  puntos: 30 | último valor: 29.83 | mín/máx: (0.23, 31.75)
+Grafana → Azure Monitor (identidad administrada): Available Memory Bytes
+  puntos: 30 | último valor: 7126122496 | mín/máx: (7122452480, 7724859392)

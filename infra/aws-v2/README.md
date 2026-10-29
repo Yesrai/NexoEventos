@@ -5,7 +5,7 @@ Raíz Terraform **separada** de V1 (`infra/aws`): estado propio y solo recursos 
 | Archivo | Contenido |
 |---|---|
 | `network.tf` | subred pública b (otra zona), SG del ALB (80/443 públicos) y SG de las instancias (80 **solo desde el SG del ALB**, sin SSH), regla aditiva 5432 hacia la RDS |
-| `alb.tf` | ALB, target group (`least_outstanding_requests`, health check `/healthz`, sin afinidad), listener 443 (TLS 1.2/1.3) y 80→443 |
+| `alb.tf` | ALB, target group (`least_outstanding_requests`, health check `/livez` (liveness sin base de datos), sin afinidad), listener 443 (TLS 1.2/1.3) y 80→443 |
 | `compute.tf` | launch template (AMI dorada, IMDSv2, EBS cifrado, `LabInstanceProfile`), ASG 2–3 en dos zonas con health check ELB y política de seguimiento de CPU (opcional: solicitudes por instancia) |
 | `observability.tf` | panel de CloudWatch (instancias sanas, solicitudes/latencia/5xx, CPU, RDS) |
 | `tests/check_security.py` | comprobaciones estáticas de las reglas de seguridad |
