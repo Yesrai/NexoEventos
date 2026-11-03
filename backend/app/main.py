@@ -1,5 +1,6 @@
 import hashlib
 import logging
+from contextlib import asynccontextmanager
 from decimal import Decimal
 from uuid import UUID
 
@@ -91,8 +92,15 @@ logger = logging.getLogger("nexoeventos.api")
 
 def create_app(database_url: str | None = None) -> FastAPI:
     validate_production_config()
-    application = FastAPI(title="NexoEventos API", version="0.3.0")
     engine = build_engine(database_url)
+
+    # Apagado ordenado (reemplazo de instancias, reinicio del servicio): se cierran las conexiones del pool para no dejar sesiones colgadas en RDS.
+    @asynccontextmanager
+    async def lifespan(_: FastAPI):
+        yield
+        engine.dispose()
+
+    application = FastAPI(title="NexoEventos API", version="0.3.0", lifespan=lifespan)
     application.state.engine = engine
     application.state.session_factory = build_session_factory(engine)
     application.add_middleware(

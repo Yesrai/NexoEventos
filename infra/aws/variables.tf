@@ -136,8 +136,19 @@ variable "db_apply_immediately" {
 }
 
 variable "backup_retention_days" {
-  type    = number
-  default = 7
+  description = "Retención de las copias automáticas de RDS (días). NO controla la caducidad de los respaldos cifrados en S3 (ver s3_backup_retention_days)."
+  type        = number
+  default     = 7
+}
+
+variable "s3_backup_retention_days" {
+  description = "Días que se conservan en S3 los respaldos cifrados de `backups/database/` y sus versiones no vigentes. Antes se reutilizaba backup_retention_days (7): alinear el prefijo del lifecycle con ese valor habría borrado los respaldos reales. Mínimo 30."
+  type        = number
+  default     = 90
+  validation {
+    condition     = var.s3_backup_retention_days >= 30 && var.s3_backup_retention_days <= 3650
+    error_message = "s3_backup_retention_days debe estar entre 30 y 3650 días."
+  }
 }
 variable "log_retention_days" {
   type    = number

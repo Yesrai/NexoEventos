@@ -19,7 +19,9 @@ Distinción central: **«diseñamos el sistema para resistir fallos»** (Terrafo
 ## 2. Mejoras de resiliencia realizadas en esta ronda (código local, validado en local; sin desplegar)
 1. **`backend/app/database.py`:** conexión remota con `connect_timeout` de 5 s, keepalives TCP (idle 30 s, intervalo 10 s, 3 intentos), `pool_recycle` de 1800 s y `pool_timeout` configurable (30 s por defecto, sin cambio de comportamiento); `pool_pre_ping` ya existía. Variables: `DB_CONNECT_TIMEOUT`, `DB_POOL_TIMEOUT`, `DB_POOL_RECYCLE`. **Sin reintentos automáticos** a propósito: no se duplican operaciones ni se agrava una sobrecarga; el fallo sale como 503 y el cliente decide. Base de la decisión: el failover observado duró ≈ 14 s y una conexión nueva sin tiempo límite puede esperar el de TCP del sistema.
 2. **Pruebas:** `backend/tests/test_database_resilience.py` (3 nuevas): parámetros en bases remotas, ausencia en socket/localhost, límites por entorno. Backend: **55 pruebas correctas** (antes 52). Comprobado sin red que libpq acepta los parámetros y que `connect_timeout` corta una conexión hacia una dirección sin respuesta.
-3. **CI:** análisis de Trivy del lockfile de producción (ver §4 de `auditoria-integral-20261029.md`).
+3. **Cierre ordenado (CI nuevo):** `--timeout-graceful-shutdown 25` (< `TimeoutStopSec=30`) y cierre del pool en el apagado; 2 pruebas.
+3b. **Script de experimentos:** `v2-failover-test.py` guarda `resultado-parcial.json` antes de las consultas frágiles y tolera instancias terminadas (la repetición del 22-oct perdió su medición por `InvalidInstanceId`).
+3c. **CI:** análisis de Trivy del lockfile de producción (ver §4 de `auditoria-integral-20261029.md`).
 Límite: no se ha probado contra RDS real (apagada); el efecto sobre un failover real queda como hipótesis hasta la próxima ventana autorizada.
 
 ## 3. Hallazgo de diseño y su corrección local (liveness frente a readiness)

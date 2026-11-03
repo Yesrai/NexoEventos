@@ -34,8 +34,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "private" {
     id     = "expire-demo-backups"
     status = "Enabled"
     filter { prefix = "backups/database/" }
-    expiration { days = var.backup_retention_days }
-    noncurrent_version_expiration { noncurrent_days = var.backup_retention_days }
+    expiration { days = var.s3_backup_retention_days }
+    noncurrent_version_expiration { noncurrent_days = var.s3_backup_retention_days }
   }
 }
 

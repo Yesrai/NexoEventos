@@ -150,13 +150,20 @@ def main() -> None:
         events["detection_after_stop_s"] = round(events["alb_marked_unhealthy_at"] - events["stop_issued_at"], 1)
     if recovered is not None:
         events["recovery_after_restore_s"] = round(recovered - events["restore_confirmed_at"], 1)
+    # Se guarda YA lo medido por el cliente: las consultas posteriores (Nginx de una instancia que el ASG pudo terminar, CloudWatch) pueden fallar
+    # y antes eso hacía perder toda la medición (repetición del 22-oct, `InvalidInstanceId`).
+    (out / "resultado-parcial.json").write_text(json.dumps({"schema": 1, "events": events, "client": summary, "timeline": timeline}, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    (out / "solicitudes.json").write_text(json.dumps(requests_log) + "\n", encoding="utf-8")
     # 5xx en el log de Nginx de cada instancia durante la ventana
     window = (iso(T0), iso(end + 2))
     nginx = {}
     for inst in (victim, other):
         script = (f"awk -v a='{window[0].replace('Z', '+00:00')}' -v b='{window[1].replace('Z', '+00:00')}' '{{ if (match($0,/^[0-9T:+-]+/)) {{ t=substr($0,RSTART,RLENGTH); if (t>=a && t<b && $0 ~ /path=\\/api\\//) {{ n++; if ($0 ~ /status=5/) e++ }} }} }} END{{print n+0, e+0}}' /var/log/nginx/nexoeventos-access.log")
-        n, e = (M.ssm_output(inst, script).split() + ["0", "0"])[:2]
-        nginx[inst[-6:]] = {"api_requests": int(n), "api_5xx": int(e)}
+        try:
+            n, e = (M.ssm_output(inst, script).split() + ["0", "0"])[:2]
+            nginx[inst[-6:]] = {"api_requests": int(n), "api_5xx": int(e)}
+        except Exception as exc:  # p. ej. la instancia ya fue terminada por el ASG: se registra y se continúa
+            nginx[inst[-6:]] = {"error": type(exc).__name__}
     time.sleep(120)  # métricas del ALB en CloudWatch tardan en aparecer
     lb = M.aws("elbv2", "describe-load-balancers", "--names", M.LB_NAME)["LoadBalancers"][0]["LoadBalancerArn"].split("loadbalancer/")[1]
     tg = M.aws("elbv2", "describe-target-groups", "--names", M.TG_NAME)["TargetGroups"][0]["TargetGroupArn"].split(":")[-1]

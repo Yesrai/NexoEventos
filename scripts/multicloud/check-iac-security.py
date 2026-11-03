@@ -38,12 +38,29 @@ check("azurerm_consumption_budget_subscription" in az, "Azure: presupuesto con a
 # --- Azure: NSG, identidad y VM (observabilidad) ---
 net = (ROOT / "infra/azure/modules/network/main.tf").read_text(); vm = (ROOT / "infra/azure/modules/vm/main.tf").read_text(); root_az = (ROOT / "infra/azure/main.tf").read_text()
 check('name                       = "deny-all-inbound"' in net and 'access                     = "Deny"' in net, "Azure: denegación explícita de toda la entrada")
-check('name                       = "deny-internet-out"' in net and 'destination_address_prefix = "Internet"' in net, "Azure: salida a Internet denegada salvo 80/443/53/123 (mínimo privilegio)")
+check('name                       = "deny-internet-out"' in net and 'destination_address_prefix = "Internet"' in net, "Azure: salida a Internet denegada salvo 80/443 y NTP (mínimo privilegio)")
 check(not re.search(r'direction\s*=\s*"Inbound"\s*\n\s*access\s*=\s*"Allow"[^}]*source_address_prefix\s*=\s*"(\*|Internet|0\.0\.0\.0/0)"', net), "Azure: ninguna regla de entrada permite origen abierto")
 check("zabbix_agent_source_cidrs" in net and 'destination_port_range     = "10051"' in net and "length(var.zabbix_agent_source_cidrs) == 0 ? []" in net, "Azure: puerto 10051 solo si se autorizan IPs de agentes")
 check('type = "SystemAssigned"' in vm and "secure_boot_enabled             = true" in vm and "vtpm_enabled                    = true" in vm and "allow_extension_operations      = false" in vm, "Azure: VM con Trusted Launch, identidad administrada y sin extensiones")
 check('role_definition_name             = "Monitoring Reader"' in root_az and not re.search(r'role_definition_name\s*=\s*"(Owner|Contributor)', root_az), "Azure: identidad de la VM solo con «Monitoring Reader»")
 check("azurerm_monitor_action_group" in az and "azurerm_monitor_metric_alert" in az, "Azure: grupo de acción y alertas de Azure Monitor")
+# --- Azure: la salida a Internet se limita a 80/443 (TCP) y NTP (UDP/123); el DNS sale por el resolvedor de Azure (168.63.129.16) ---
+check('name                       = "allow-ntp-out"' in net and 'protocol                   = "Udp"' in net and 'destination_port_ranges    = ["123"]' in net and '"53"' not in net,
+      "Azure: la regla de salida de NTP es solo UDP/123 y no abre el puerto 53 a Internet")
+check('destination_address_prefix = "168.63.129.16/32"' in net, "Azure: DNS y agente por la dirección de plataforma de Azure")
+aws_vars = (ROOT / "infra/aws/variables.tf").read_text(); aws_s3 = (ROOT / "infra/aws/storage_observability.tf").read_text()
+check('expiration { days = var.s3_backup_retention_days }' in aws_s3 and "var.backup_retention_days" not in aws_s3 and "s3_backup_retention_days >= 30" in aws_vars,
+      "AWS: la caducidad de los respaldos en S3 no depende de la retención de RDS (7 días) y es de al menos 30 días")
+# --- AWS: CloudTrail opcional (desactivado por defecto) y guardia de la AMI con /livez ---
+ct = (ROOT / "infra/aws/cloudtrail.tf").read_text()
+check(re.search(r'variable "enable_cloudtrail" \{.*?default\s*=\s*false', ct, re.S) is not None, "AWS: enable_cloudtrail es false por defecto (no se crea ningún trail sin decidirlo)")
+ct_resources = re.findall(r'^(?:resource|data) "[^"]+" "[^"]+" \{\n\s+count\s*=\s*var\.enable_cloudtrail', ct, re.M)
+check(len(ct_resources) == len(re.findall(r'^(?:resource|data) "', ct, re.M)) and len(ct_resources) >= 6, "AWS: todos los recursos de CloudTrail dependen de enable_cloudtrail (con false no se crea nada)")
+check("enable_log_file_validation    = true" in ct and "block_public_policy     = true" in ct and "aws:SecureTransport" in ct and "AES256" in ct and "expiration" in ct,
+      "AWS: trail con validación de integridad, bucket sin acceso público, solo TLS, cifrado y caducidad")
+check("force_destroy = false" in ct, "AWS: el bucket de CloudTrail no se vacía automáticamente al destruir")
+v2v = (ROOT / "infra/aws-v2/variables.tf").read_text()
+check(re.search(r'variable "ami_includes_livez" \{.*?default\s*=\s*false', v2v, re.S) is not None, "AWS V2: ami_includes_livez es false por defecto (una AMI antigua no recibe /livez)")
 # --- Ansible: rol de Zabbix + Grafana ---
 role = ROOT / "ansible/roles/monitoring_zabbix_grafana"
 rtxt = "\n".join(p.read_text() for p in sorted(role.rglob("*")) if p.is_file() and p.suffix in (".yml", ".j2", ".sh", ".php", ".yaml"))

@@ -69,3 +69,22 @@ def test_pool_exhaustion_returns_503_and_liveness_stays_up(monkeypatch) -> None:
             live = client.get("/health")
     assert busy.status_code == 503 and busy.headers["Retry-After"] == "5"
     assert live.status_code == 200
+
+
+def test_shutdown_disposes_the_connection_pool() -> None:
+    app = create_app(TEST_APP_URL)
+    with TestClient(app) as client:
+        assert client.get("/api/events").status_code == 200
+        assert app.state.engine.pool.checkedin() >= 1
+    # Tras el apagado el pool se reinició: no quedan conexiones abiertas hacia PostgreSQL.
+    assert app.state.engine.pool.checkedin() == 0
+
+
+def test_service_units_stop_gracefully_before_systemd_kills_them() -> None:
+    import re
+
+    for unit in ("deploy/systemd/nexoeventos-api.service", "ansible/roles/nexoeventos/templates/nexoeventos-api.service.j2"):
+        text = (ROOT / unit).read_text()
+        graceful = int(re.search(r"--timeout-graceful-shutdown (\d+)", text).group(1))
+        stop = int(re.search(r"TimeoutStopSec=(\d+)", text).group(1))
+        assert graceful < stop, unit

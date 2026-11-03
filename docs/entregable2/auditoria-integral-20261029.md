@@ -188,3 +188,75 @@ Ningún hallazgo se ocultó ni se ignoró; `.trivyignore` sigue vacío.
 **IAM y CloudTrail**
 - `LabRole` (captura A13: 7 políticas, 4 administradas por AWS —incluidas EKS/ECR que no usamos— y 3 del laboratorio, sin límite de permisos; A14: `iam:GetPolicy` denegado). Academy impone el rol: **no se puede estrechar desde Terraform** ni leer el detalle de las políticas. Limitación no corregible; se documenta, no se afirma mínimo privilegio en AWS.
 - Auditoría: solo existe el «Historial de eventos» de 90 días (A8/A9). Se añadió `infra/aws/cloudtrail.tf` **desactivado por defecto** (`enable_cloudtrail = false`): trail de eventos de gestión con validación de integridad y bucket S3 privado, cifrado AES-256, bloqueo de acceso público, política solo-TLS y caducidad de 90 días. Coste esperado: el primer trail de gestión es gratuito; solo almacenamiento S3 (centavos). `terraform validate` correcto; **no aplicado**: requiere comprobar que `cloudtrail:CreateTrail` esté permitido por Academy.
+
+## 18. Resumen de pendientes (3-nov-2026) tras el CI del commit `610bcb0` (run 41691549609: 4/4 jobs correctos)
+**Verificado en CI:** backend 62 pruebas, frontend 33; Trivy: dependencias 0, secretos 0, lockfile 0, imagen 0; configuración **7** (AWS-0104 ×3, AWS-0053, AWS-0132, AZU-0051 ×2; sin cambio respecto al run anterior).
+| Prioridad | Pendiente | Requiere |
+|---|---|---|
+| Crítico | Reinicio automático de la RDS (4-nov 16:51, UTC−5): decidir y, si arranca, volver a detenerla | Sesión de Academy y autorización sobre la RDS |
+| Alto | Leer `FreeStorageSpace` de la ventana del 28-oct (solo lectura, sin iniciar la RDS) | Sesión de Academy |
+| Alto | Copia externa cifrada de `work/`, `~/.oci/` y la clave de recuperación | Decisión de la propietaria |
+| Alto | Desplegar y validar: AMI con `/livez` → rotar → `ami_includes_livez = true`; TLS `verify-full` con el paquete de CA; lifecycle de S3 (`backups/database/`); `subnet` sin IP pública automática | `plan`/`apply` autorizados y ventana con RDS |
+| Medio | Verificar `resolvectl` en la VM de Azure antes de aplicar la regla NTP-only; entrega real del correo de alerta | Ventana de Azure (≈ 0,11 USD/h) |
+| Medio | Decidir si se activa CloudTrail (`enable_cloudtrail`) | Comprobar permisos de Academy |
+| Medio | Informe, presentación y portada finales (31-oct pasado: nueva fecha por definir) | Propietaria |
+| Bajo | AWS-0104, AWS-0132, AZU-0051 (aceptados con justificación); FIS y caída de zona (no ejecutados) | Presupuesto y autorización |
+
+## 19. Ronda final integral (3-nov-2026): problemas, correcciones y estado real
+Leyenda de estado: **L** corregido y probado localmente · **CI** validado en GitHub Actions (último run correcto: commit `610bcb0`, 62 + 33 pruebas) · **D** desplegado en la nube · **E** validado con un experimento real · **P** pendiente o riesgo aceptado. «CI nuevo» = cambio posterior a `610bcb0`, aún sin pasar por el CI.
+
+### 19.1 Problemas identificados y correcciones (esta ronda y las anteriores)
+| # | Problema | Corrección (archivos) | L | CI | D | E |
+|---|---|---|---|---|---|---|
+| 1 | TLS al RDS con `sslmode=require` (cifra, no valida certificado) | `backend/app/database.py`, `deploy/bootstrap-rds-secrets.sh`, `deploy/install-rds-ca-bundle.sh`; 8 pruebas + `scripts/test-db-tls-verification.sh` (5/5) | sí | sí (pruebas) | no | no |
+| 2 | AWS-0080 y AWS-0164 ×2 (Trivy) | `infra/aws-recovery/main.tf`, `infra/aws/network.tf`, `infra/aws-v2/{network,compute}.tf` | sí | sí (ya no aparecen) | no | no |
+| 3 | Health check del ALB dependía de PostgreSQL (riesgo de reemplazar instancias sanas) | `/health` asíncrono, `/livez` en Nginx, `alb.tf`; **guardia `ami_includes_livez` (false por defecto)** | sí (+ Nginx real en Docker) | sí | no | no |
+| 4 | Errores de BD → 500 opaco; conexiones sin límite de espera | `connect_timeout`, keepalives, `pool_recycle`, manejador 503 + `Retry-After`; pruebas (BD caída, pool agotado) | sí | sí | no | no |
+| 5 | Lockfile de producción sin analizar (dnspython 2.8.0; OpenSSL de Debian) | `requirements-production.lock`, `Dockerfile`, `.github/workflows/ci.yml` | sí | sí (0 hallazgos) | no | — |
+| 6 | **Nuevo:** alinear el lifecycle de S3 con `backups/database/` reutilizando `backup_retention_days` (7) **habría empezado a borrar los respaldos reales** (los `.cms` de 19 y 23-oct ya superan 7 días); hoy se conservan solo porque la regla desplegada apunta a un prefijo equivocado | `infra/aws/variables.tf` (`s3_backup_retention_days`, 90 por defecto, mínimo 30), `storage_observability.tf`; comprobación en `check-iac-security.py` | sí | CI nuevo | no | — |
+| 7 | **Nuevo:** el script de la prueba de autohealing perdió toda la medición al fallar una consulta (instancia terminada por el ASG) | `scripts/cloud/v2-failover-test.py`: guarda `resultado-parcial.json` y `solicitudes.json` antes de las consultas frágiles; tolera instancias terminadas | compila; no se ejecuta (cloud) | — | — | no |
+| 8 | **Nuevo:** apagado desordenado (sin tiempo de gracia de uvicorn ni cierre del pool) | `--timeout-graceful-shutdown 25` (< `TimeoutStopSec=30`) en ambos `nexoeventos-api.service`; `lifespan` que cierra el pool; 2 pruebas | sí | CI nuevo | no (requiere AMI) | no |
+| 9 | **Nuevo:** posible deriva entre `requirements.txt` y el lock de producción | `backend/tests/test_requirements_lock.py` (2 pruebas) | sí | CI nuevo | — | — |
+| 10 | **Nuevo:** sin pruebas estáticas de las reglas de Azure, de CloudTrail y de la guardia de la AMI | `scripts/multicloud/check-iac-security.py` (37 comprobaciones, 0 fallos) | sí | CI nuevo (el CI no ejecuta este script) | — | — |
+| 11 | AZU-0051 ×2 | NTP reducido a UDP/123 (`allow-ntp-out`); 80/443 se mantienen | sí | sí (sigue contando 2) | no | no |
+| 12 | Sin trail persistente de CloudTrail | `infra/aws/cloudtrail.tf` opcional, `enable_cloudtrail = false` | `validate` | sí (sin hallazgos nuevos) | no | no |
+
+### 19.2 Auditoría del módulo opcional de CloudTrail
+- **Permisos:** crear el trail y su bucket exige `cloudtrail:CreateTrail/StartLogging` y `s3:CreateBucket/PutBucketPolicy`; `LabRole` no se puede inspeccionar (A14: `iam:GetPolicy` denegado), así que **no se sabe si Academy lo permite**. Comprobarlo antes con una sesión.
+- **Coste:** el primer trail de eventos de gestión es gratuito; el almacenamiento S3 de unos MB es de centavos. No incluye CloudWatch Logs ni KMS (se evitan costes).
+- **Seguridad del bucket:** privado, sin acceso público, cifrado AES-256, política con solo `cloudtrail.amazonaws.com` condicionada por `aws:SourceArn`, solo TLS, `force_destroy = false`.
+- **Retención e integridad:** caducidad de 90 días (30–365); validación de integridad de los archivos activada.
+- **Límites/riesgos:** una sola región (`is_multi_region_trail = false`; la cuenta solo usa us-east-1); sin eventos de datos; si Academy reinicia o elimina la cuenta, el trail y los registros se pierden con ella (no es copia externa); no se crea nada con el valor por defecto.
+
+### 19.3 Estado de los 7 hallazgos de Trivy (CI del commit `610bcb0`) y de los demás controles
+AWS-0104 ×3 (**P**, riesgo aceptado, sin corrección gratuita segura), AWS-0053 (**P**, decisión arquitectónica), AWS-0132 (**P**, SSE-S3 sí cifra; KMS propio opcional), AZU-0051 ×2 (**P**; reducción parcial **L**). Dependencias, secretos, lockfile e imagen: 0 (**CI**). **Pendiente:** otra ejecución del CI para confirmar que los cambios posteriores a `610bcb0` no alteran el conteo.
+
+### 19.4 Chaos Engineering y alta disponibilidad (resumen; detalle en `matriz-chaos-engineering.md`)
+**Validado con experimento real (E):** caída de la API con retirada del destino (20,0 s / 15,8 s), autohealing por el ASG (≈ 2,5 min), escalado 2→3→2, failover de RDS (≈ 14 s PostgreSQL / ≈ 13 s `/healthz`, sobre V1), recuperación manual en OCI (32 min 42 s). **Corregido y probado solo en local (L/CI):** separación liveness/readiness, 503 con `Retry-After`, timeouts y keepalives, cierre ordenado. **No ejecutado:** AWS FIS, caída de zona, restauración en AWS, comportamiento de V2 ante un failover de RDS. **Orden de despliegue seguro:** (1) AMI nueva con `/livez`; (2) nueva versión del launch template; (3) rotación de instancias (el ASG con `$Latest` no renueva las existentes); (4) validar `/livez` en las instancias nuevas; (5) solo entonces `ami_includes_livez = true` y `apply`. Con el valor por defecto `false` el ALB usa `/healthz`, que existe en toda AMI: es seguro.
+
+### 19.5 Riesgos por nube
+- **AWS:** reinicio automático de la RDS el **4-nov 16:51 (UTC−5)**; sin trail persistente; `LabRole` amplio e impuesto; salida 443 abierta; despliegues de las correcciones pendientes; lifecycle de S3 desplegado con el prefijo equivocado (conserva los respaldos hoy, pero no es lo previsto; **corregirlo exige antes el cambio nº 6**); sin medición de `FreeStorageSpace` (el aviso de 20 GiB es de configuración).
+- **Azure:** correo de alerta sin demostrar; el NSG desplegado aún tiene la regla DNS/NTP antigua; coste residual de IP estática y disco con la VM desasignada.
+- **OCI:** recuperación manual (no automática); claves API en `~/.oci/` sin copia externa; bucket cifrado con clave de Oracle.
+
+### 19.6 Qué requiere despliegue, coste o autorización
+Sesión de Academy y autorización para: parar la RDS si se reinicia y leer `FreeStorageSpace`; `plan`/`apply` (subred sin IP automática, S3 con el nuevo retención, TLS, AMI, CloudTrail); ventana de Azure (≈ 0,11 USD/h) para `resolvectl`, paneles y correo; copia externa cifrada de `work/` y `~/.oci/`; commit y push para el CI.
+
+### 19.7 Lo que no se puede corregir ahora y por qué
+AWS-0104/AZU-0051 (80/443): sin prefijo fijo de destino; las alternativas son de pago o rompen la conectividad. Mínimo privilegio de `LabRole`: lo impone Academy. Entrega del correo de Azure: la prueba manual está bloqueada por la suscripción gratuita. FIS y caída de zona: exigen permisos que Academy probablemente no concede y gasto.
+
+### 19.8 Cobertura de los cinco criterios (orientativa, sin garantía de nota)
+| Criterio | Respaldo | Debilidad |
+|---|---|---|
+| 1 Evolución V1→V2 | Mediciones reales (p95 288→190 ms, CPU 39,4→20 %), capturas, Terraform | V2 destruida: solo evidencia histórica |
+| 2 Amenazas | Matriz de amenazas, 8 hallazgos reales clasificados, 2 vulnerabilidades halladas y corregidas por CI | Correcciones de infraestructura sin desplegar |
+| 3 Controles | SG, cifrado, TLS 1.3, IAM OCI, MI de Azure, Trivy en CI, TLS `verify-full` en código | `LabRole`, sin trail, `verify-full` sin probar con RDS real |
+| 4 Escalabilidad/HA/fallos | Cuatro experimentos reales con límites | FIS, zona, V2 ante failover y restauración en AWS no ejecutados |
+| 5 Evidencias | 41 capturas redactadas (AWS 21, Azure 11, OCI 6, GitHub 3), CI real con artefactos, matrices | Costos y crédito sin capturar; informe final y portada pendientes |
+
+### 19.9 Tareas pendientes para el Entregable 2
+1. **Crítico:** reinicio de la RDS (4-nov 16:51 UTC−5) y lectura de `FreeStorageSpace` (sesión + autorización).
+2. **Alto:** commit/push de esta ronda y nuevo CI; copia externa cifrada de claves y `work/`; captura de costos y crédito.
+3. **Alto/Medio:** informe final, presentación y portada (fecha por definir); desplegar y validar (AMI, `/livez`, TLS, S3).
+4. **Medio:** `resolvectl` y correo en Azure; decidir CloudTrail.
+5. **Bajo:** KMS propio, endpoints, FIS y caída de zona (opcionales).

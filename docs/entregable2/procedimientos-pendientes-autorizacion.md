@@ -90,3 +90,6 @@ El 29-oct 01:37Z el rol del laboratorio dejó de autorizar consultas (`AccessDen
 | Despliegue de `verify-full` en una RDS real (P11) | Opcional | Cierra la mejora de TLS; el diseño ya está probado en local | Ver P11 |
 | Carga ≥ 100 usuarios, caída de AZ, **AWS FIS** | **No** | **Siguen NO EJECUTADOS**; se declaran como proyección/diseño | Plan en `plan-caos-fis.md` (redespliegue de V2, ≈ 0,5 USD, 3 h, reversión con `destroy` + `stop-db-instance`) |
 | Recuperación completa en AWS (DNS + HTTPS) | No | Está acreditada en OCI; en AWS se declara incompleta | — |
+
+## Advertencia sobre P12 (lifecycle de S3), 3-nov
+Alinear el prefijo del lifecycle con `backups/database/` **con una retención de 7 días habría borrado los respaldos reales**. El código ya separa la retención de S3 (`s3_backup_retention_days`, 90 por defecto, mínimo 30) de la de RDS. Antes de aplicar P12: `terraform plan` y comprobar que la regla resultante es de ≥ 30 días sobre `backups/database/`.
