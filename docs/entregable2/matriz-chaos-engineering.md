@@ -40,7 +40,8 @@ Por qué esta opción y no otras: (a) cambiar `/healthz` a liveness alteraría e
 **Qué requiere AWS (no hecho, no verificable hoy):**
 1. **Reconstruir la AMI dorada** (`ansible/playbooks/bake-v2.yml`): Nginx y la API vienen horneados; sin ella `/livez` no existe en las instancias.
 2. **Orden obligatorio:** primero AMI nueva y nueva versión del launch template, y las instancias ya renovadas; **después** cambiar el path del ALB. **Si el ALB apunta a `/livez` sobre una AMI antigua, Nginx lo resuelve con `try_files … /index.html` y devuelve 200 aunque la API esté muerta: falsa salud.**
-3. `terraform plan` (cambio *in situ* del target group) y `apply` dirigido, con autorización. El ASG con `$Latest` **no** renueva instancias existentes: hay que rotarlas (instance refresh o redespliegue).
+3. **Protección en el código (3-nov):** la variable `ami_includes_livez` (por defecto `false`) hace que el ALB use `/healthz` hasta que se declare que la AMI ya trae `/livez`; poner `true` solo después de rotar las instancias. Pruebas: `test_health_separation.py` (62 pruebas de backend en total, incluido el agotamiento del pool → 503 con `/health` en 200).
+3b. `terraform plan` (cambio *in situ* del target group) y `apply` dirigido, con autorización. El ASG con `$Latest` **no** renueva instancias existentes: hay que rotarlas (instance refresh o redespliegue).
 4. Validación real pendiente: repetir con V2 el failover de RDS o una caída de PostgreSQL y comprobar que `HealthyHostCount` se mantiene y el ASG no lanza actividades. **Estado: corregido en código y probado en local; NO validado en AWS.**
 
 ## 4. Experimentos pendientes (diseño; **ninguno se ejecutará sin autorización**)

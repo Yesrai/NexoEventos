@@ -86,3 +86,12 @@ Rutas relativas a `docs/`. «Cap.» = `evidencias/capturas/aws/`.
 | Trivy: dependencias, lockfile, imagen, secretos | VERIFICADO (0 hallazgos) | artefactos del run; 2 vulnerabilidades nuevas halladas y corregidas |
 | Trivy: configuración | VERIFICADO (7: 5 AWS + 2 Azure) | AWS-0080 y AWS-0164 ya no aparecen; AWS-0104 ×3, AWS-0053, AWS-0132 y AZU-0051 ×2 abiertos con justificación |
 | Health check liveness/readiness | IMPLEMENTADO SIN VERIFICACIÓN COMPLETA | probado en CI/local; **no validado en AWS** |
+
+## Actualización 3-nov
+| Requisito | Estado | Nota |
+|---|---|---|
+| Orden AMI → ASG → ALB del health check | IMPLEMENTADO SIN VERIFICACIÓN COMPLETA | `ami_includes_livez` (false por defecto) evita la falsa salud; no desplegado |
+| Resiliencia ante pool agotado | VERIFICADO (prueba local) | 503 + `Retry-After`; `/health` sigue 200 |
+| CloudTrail persistente | DOCUMENTADO SIN IMPLEMENTACIÓN (código opcional, desactivado) | `infra/aws/cloudtrail.tf`; no aplicado; Academy puede denegarlo |
+| Aviso de almacenamiento RDS | VERIFICADO como aviso de configuración / medición de espacio libre PENDIENTE | captura A16; `FreeStorageSpace` sin exportar |
+| AZU-0051 | Reducción local (solo NTP UDP/123), sin verificar en la VM ni aplicar | 2 hallazgos siguen en Trivy |

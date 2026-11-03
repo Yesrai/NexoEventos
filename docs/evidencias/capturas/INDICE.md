@@ -35,3 +35,8 @@ Origen: `~/Pictures/Capturas/` (originales intactos). Cuenta, usuario, correo, I
 Captura de la EC2 detenida: origen `~/Pictures/Capturas/AWS-EC2-Instancia-Detenida-29Oct2026.png` (guardada a las 13:49, hora del equipo).
 Limitaciones clave: B9 muestra el grupo de acciones desencadenado, **no** la recepción del correo; OCI-06 trunca la lista de permisos; A5 indica que la última hora restaurable es el 22-oct 20:49 (UTC−5).
 Sin redactar y no usadas: capturas genéricas «Captura de pantalla …» y 3 grabaciones de pantalla del mismo directorio (no se tocaron).
+
+## Tercera tanda (3-nov)
+| Archivo | Demuestra | Limitación |
+|---|---|---|
+| aws/A16-RDS-Eventos-Detencion-28oct-verificado-03nov.png | RDS → Eventos: detención 28-oct 16:51 (UTC−5); inicio 16:39, copia 16:41–16:43; aviso de almacenamiento 16:45 («20 GiB … umbral máximo 20 GiB»); 23-oct y 22-oct (failover 20:09) | No muestra el estado actual; el aviso es de configuración, no mide espacio libre. Cuenta y usuario ocultos. Origen: `~/Pictures/Capturas/AWS-RDS-Eventos-Detencion-28Oct-Verificado-03Nov2026.png` |

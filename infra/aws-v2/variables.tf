@@ -134,3 +134,9 @@ locals {
     ManagedBy   = "Terraform"
   }
 }
+
+variable "ami_includes_livez" {
+  description = "true SOLO cuando la AMI de las instancias ya trae la ruta /livez de Nginx (AMI reconstruida con ansible/playbooks/bake-v2.yml e instancias rotadas). Con false el ALB usa /healthz (readiness con PostgreSQL), que existe en todas las AMI. Con una AMI antigua, /livez caería en try_files -> index.html y devolvería 200 aunque la API estuviera muerta (falsa salud)."
+  type        = bool
+  default     = false
+}

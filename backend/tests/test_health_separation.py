@@ -39,7 +39,7 @@ def test_alb_health_check_uses_liveness_and_monitoring_keeps_readiness() -> None
     assert "location = /livez {" in nginx and "proxy_pass http://127.0.0.1:8000/health;" in nginx
     assert "location = /healthz {" in nginx and "proxy_pass http://127.0.0.1:8000/ready;" in nginx
     alb = (ROOT / "infra/aws-v2/alb.tf").read_text()
-    assert 'path                = "/livez"' in alb
+    assert 'var.ami_includes_livez ? "/livez" : "/healthz"' in alb
     assert 'health_check_type         = "ELB"' in (ROOT / "infra/aws-v2/compute.tf").read_text()
 
 
@@ -49,3 +49,23 @@ def test_liveness_handler_runs_on_the_event_loop_not_the_thread_pool() -> None:
     app = create_app(UNREACHABLE_DB)
     route = next(r for r in app.routes if getattr(r, "path", None) == "/health")
     assert inspect.iscoroutinefunction(route.endpoint)
+
+
+def test_default_keeps_old_amis_safe_from_false_health() -> None:
+    variables = (ROOT / "infra/aws-v2/variables.tf").read_text()
+    block = variables[variables.index('variable "ami_includes_livez"'):]
+    assert "default     = false" in block.split("}")[0]
+
+
+def test_pool_exhaustion_returns_503_and_liveness_stays_up(monkeypatch) -> None:
+    # Pool de 1 conexión sin desborde y 1 s de espera: con la conexión ocupada, una petición de datos falla con 503 (no 500) y /health sigue en 200.
+    monkeypatch.setenv("DB_POOL_SIZE", "1")
+    monkeypatch.setenv("DB_MAX_OVERFLOW", "0")
+    monkeypatch.setenv("DB_POOL_TIMEOUT", "1")
+    app = create_app(TEST_APP_URL)
+    with TestClient(app, raise_server_exceptions=False) as client:
+        with app.state.engine.connect():
+            busy = client.get("/api/events")
+            live = client.get("/health")
+    assert busy.status_code == 503 and busy.headers["Retry-After"] == "5"
+    assert live.status_code == 200

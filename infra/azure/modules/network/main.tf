@@ -101,13 +101,14 @@ resource "azurerm_network_security_group" "monitoring" {
     destination_address_prefix = "Internet"
   }
   security_rule {
-    name                       = "allow-dns-ntp-out"
+    # Solo NTP (UDP/123). El DNS de la VM sale por el resolvedor de Azure (168.63.129.16, regla 100), por lo que ya no se abre el 53 a Internet.
+    name                       = "allow-ntp-out"
     priority                   = 210
     direction                  = "Outbound"
     access                     = "Allow"
-    protocol                   = "*"
+    protocol                   = "Udp"
     source_port_range          = "*"
-    destination_port_ranges    = ["53", "123"]
+    destination_port_ranges    = ["123"]
     source_address_prefix      = "*"
     destination_address_prefix = "Internet"
   }

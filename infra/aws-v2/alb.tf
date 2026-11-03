@@ -20,7 +20,7 @@ resource "aws_lb_target_group" "web" {
 
   health_check {
     protocol            = "HTTP"
-    path                = "/livez" # Nginx -> FastAPI /health (liveness, SIN PostgreSQL); /healthz (readiness con BD) queda para monitoreo externo
+    path                = var.ami_includes_livez ? "/livez" : "/healthz" # /livez: Nginx -> FastAPI /health (liveness, SIN PostgreSQL), solo con AMI que la incluye; /healthz (readiness con BD) en AMI antiguas y para monitoreo
     matcher             = "200"
     interval            = 10
     timeout             = 5

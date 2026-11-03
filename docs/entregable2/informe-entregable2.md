@@ -205,7 +205,7 @@ Estado de la VPC comprobado por API el 28-oct ([datos](../evidencias/multicloud/
 | SG base | Entrada | TCP | 5432 | SG web | Solo la aplicación (**verificado 28-oct**; sin reglas de salida) |
 | NSG Azure | Entrada | TCP | 22 y 443 | IP /32 del operador | Administración y Grafana/Zabbix |
 | NSG Azure | Entrada | * | * | Cualquiera | **Denegada** |
-| NSG Azure | Salida | TCP/UDP | 80, 443, 53, 123 | Internet y plataforma de Azure | Paquetes, DNS, hora; resto denegado |
+| NSG Azure | Salida | TCP/UDP | 80, 443, 123 (UDP); en la configuración desplegada hoy también 53 | Internet y plataforma de Azure (DNS por `168.63.129.16`) | Paquetes y hora; resto denegado. El cierre del puerto 53 está solo en el código |
 
 ### 10.3 Servicios expuestos
 | Servicio | Puerto | Expuesto a | Justificación |
@@ -249,7 +249,7 @@ Las 40 series originales recuperadas el 28-oct confirman, con datos de CloudWatc
 Las métricas de CPU de las EC2 solo existen a 300 s (monitoreo básico), por lo que no sirven para ver picos de menos de 5 minutos. Detalle de periodos, unidades y límites: [resultado.md](../evidencias/multicloud/aws/20261028-cloudwatch/resultado.md).
 
 ## 12 · Alta disponibilidad y tolerancia a fallos
-*Corrección local de alta disponibilidad (liveness sin base de datos para el ALB; readiness para monitoreo): **corregida en código y probada en local, no desplegada ni validada en AWS** (ver §3 de la matriz). Matriz completa de experimentos (hipótesis, medición, evidencia y límites), mejoras de resiliencia y experimentos pendientes: [matriz-chaos-engineering.md](matriz-chaos-engineering.md).*
+*Orden de despliegue protegido en código (`ami_includes_livez`, por defecto false) y detalle de la sexta ronda en [auditoria-integral-20261029.md](auditoria-integral-20261029.md) §17. Corrección local de alta disponibilidad (liveness sin base de datos para el ALB; readiness para monitoreo): **corregida en código y probada en local, no desplegada ni validada en AWS** (ver §3 de la matriz). Matriz completa de experimentos (hipótesis, medición, evidencia y límites), mejoras de resiliencia y experimentos pendientes: [matriz-chaos-engineering.md](matriz-chaos-engineering.md).*
 | Pregunta | Respuesta (V2) | Evidencia |
 |---|---|---|
 | **¿Qué sucede si falla una VM?** | El ALB marca el destino `unhealthy` tras 20,0 s (2 comprobaciones de 10 s) y deja de enviarle tráfico; los destinos sanos pasan de 2 a 1 pero nunca a 0. El Auto Scaling, con health check de tipo ELB, retira la instancia y lanza otra: volvió a haber 2 instancias sanas en ≈ 2,5 min. Durante la detección hubo respuestas 502 (25 de 275 solicitudes en la primera prueba). | [prueba 1](../evidencias/tolerancia-fallos-v2-20261022/resultado.md), [autohealing](../evidencias/tolerancia-fallos-v2-20261022-b/resultado.md) |
@@ -480,7 +480,7 @@ Fuente: [artefactos del run #31](../evidencias/ci-github-actions-20261029/artefa
 | AWS-0164 (×2) | HIGH | `infra/aws/network.tf`, `infra/aws-v2/network.tf` | **Corregido en el código local** (la IP pública se pide por instancia; la subred no la asigna); no aplicado; las instancias siguen con IP pública |
 | AWS-0053 | HIGH | `infra/aws-v2/alb.tf` | **Decisión arquitectónica**: el ALB público es el único punto de entrada; las instancias solo aceptan el puerto 80 desde su grupo de seguridad |
 | AWS-0132 | HIGH | `infra/aws/storage_observability.tf` | **Abierto, mejora opcional**: SSE-S3 (AES-256) sí cifra; KMS propio añade coste y permisos |
-| AZU-0051 (×2) | CRITICAL | `infra/azure/modules/network/main.tf` | **Abierto, riesgo aceptado**: salida 80/443 y 53/123 hacia Internet (repositorios, Azure Monitor, ACME, NTP, DNS) y regla posterior que niega el resto; entrada solo desde una IP /32 |
+| AZU-0051 (×2) | CRITICAL | `infra/azure/modules/network/main.tf` | **Abierto, riesgo aceptado, con una reducción local**: 80/443 se mantienen (paquetes y repositorios); la regla de DNS/NTP pasa a solo UDP/123 (el DNS sale por el resolvedor de Azure); sin verificar en la VM ni aplicar; el resto de la salida está denegado; entrada solo desde una IP /32 |
 **Verificado en CI (run del PR #1, commit `37fb2c9`, 29-oct-2026):** 7 hallazgos de configuración = **5 de AWS** (AWS-0104 ×3, AWS-0053, AWS-0132) + **2 nuevos de Azure** (AZU-0051 ×2, CRITICAL: reglas de salida 80/443 y 53/123 hacia «Internet»; el código de Azure se subió por primera vez en este PR y va seguido de una regla que niega el resto de la salida). AWS-0080 y los dos AWS-0164 **ya no aparecen**. Dependencias y secretos: 0; **lockfile de producción: 0**; imagen: 0. Fuente: artefactos `trivy-repositorio` y `trivy-imagen` del run.
 Primer run del PR (`1331a74`): el nuevo análisis del lockfile y el de la imagen detectaron 2 vulnerabilidades HIGH **con corrección** que el 23-oct no existían (avisos nuevos): `dnspython` 2.8.0 (CVE-2026-114605, transitiva de `email-validator`; `requirements.txt` no la veía) y `libssl3`/`openssl` de Debian (CVE-2026-84782). Corregidas en `37fb2c9` (`dnspython` 2.9.0; actualización dirigida de OpenSSL en el Dockerfile) y verificadas en el run siguiente. No se ignoró ningún hallazgo.
 | Riesgo | Probabilidad | Impacto | Tratamiento |
