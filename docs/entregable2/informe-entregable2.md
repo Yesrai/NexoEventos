@@ -280,6 +280,7 @@ Las métricas de CPU de las EC2 solo existen a 300 s (monitoreo básico), por lo
 | Custodia de la clave de recuperación | Clave independiente y offline | **Mitigado**; sigue siendo dependencia humana |
 
 ## 14 · Monitoreo
+*Inventario completo de alarmas y monitoreo (definido / desplegado / con evidencia / probado con un evento real) de AWS, Azure y OCI: [matriz-alarmas-monitoreo.md](matriz-alarmas-monitoreo.md). La alarma de CPU de Azure se activó y resolvió; **la entrega del correo no está demostrada**; V1 y V2 no tenían alarmas de disponibilidad ni de espacio libre de la RDS (añadidas como código opcional, sin desplegar).*
 | Recurso | Métrica | Umbral | Herramienta | Acción / estado |
 |---|---|---|---|---|
 | EC2 de V1 | `CPUUtilization` | > 80 % | CloudWatch (alarma) | Cambia de estado; **sin acción de notificación configurada** en Terraform |

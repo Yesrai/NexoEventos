@@ -95,3 +95,16 @@ Rutas relativas a `docs/`. «Cap.» = `evidencias/capturas/aws/`.
 | CloudTrail persistente | DOCUMENTADO SIN IMPLEMENTACIÓN (código opcional, desactivado) | `infra/aws/cloudtrail.tf`; no aplicado; Academy puede denegarlo |
 | Aviso de almacenamiento RDS | VERIFICADO como aviso de configuración / medición de espacio libre PENDIENTE | captura A16; `FreeStorageSpace` sin exportar |
 | AZU-0051 | Reducción local (solo NTP UDP/123), sin verificar en la VM ni aplicar | 2 hallazgos siguen en Trivy |
+
+## Actualización 3-nov (alarmas, monitoreo y Chaos Engineering)
+| Requisito | Estado | Nota |
+|---|---|---|
+| Alarmas de AWS | **Parcial**: alarma de CPU de V1 sin acciones y nunca disparada; alarmas de escalado reales (22-oct); sin alarmas de 5xx/salud/latencia ni de `FreeStorageSpace` desplegadas | código opcional en `infra/aws/alarms.tf` e `infra/aws-v2/alarms.tf` (**no desplegado**) |
+| Alarma de Azure | VERIFICADO (activación y resolución) / PRUEBA PENDIENTE (correo) | receptor verificado después de la alerta |
+| Monitoreo de OCI | **No existe** monitoreo nativo; supervisión propia de la recuperación documentada | limitación declarada |
+| Cifras de Chaos Engineering | VERIFICADO (reproducidas desde datos crudos) | `validate-chaos-result.py` + 5 pruebas |
+| Experimento B (autohealing) | EJECUTADO CON EVIDENCIA PARCIAL | `resultado.json` inexistente; no repetido |
+| Restauración de datos en AWS (R01) | EJECUTADO (informe textual) | no es la restauración completa del servicio |
+
+## Actualización 3-nov (cierre): ver [matriz-cierre-observaciones.md](matriz-cierre-observaciones.md)
+Alarmas y avisos de AWS: **corregidos en local, abiertos hasta desplegar**; separación de disponibilidad funcional frente a sondeos de salud: **cerrada con límite declarado**; experimentos B y D sobre V2: **requieren nube** (plan en `plan-ejecucion-cloud.md`).

@@ -32,6 +32,7 @@ def load(name: str, rel: str):
 
 
 M = load("v2m", "scripts/cloud/v2-measure.py")
+V = load("chaos_validate", "scripts/cloud/validate-chaos-result.py")
 T0 = time.time()
 now = lambda: round(time.time() - T0, 1)  # noqa: E731
 
@@ -46,6 +47,9 @@ def main() -> None:
     ap.add_argument("--hold-after-detect", type=int, default=20)
     ap.add_argument("--rate", type=float, default=5.0)
     ap.add_argument("--clients", type=int, default=4, help="clientes independientes (conexiones distintas) que reparten el ritmo total")
+    ap.add_argument("--allow-replacement", action="store_true",
+                    help="experimento de AUTOHEALING: no aborta si el ASG marca la instancia como no sana (se espera su reemplazo) y no intenta restaurar una instancia ya terminada")
+    ap.add_argument("--max-seconds", type=int, default=600, help="criterio de parada: tiempo máximo del experimento; al superarlo se aborta y se restaura la API")
     args = ap.parse_args()
     if os.environ.get("NEXO_ALLOW_CLOUD_CHANGES") != "YES":
         sys.exit("Requiere NEXO_ALLOW_CLOUD_CHANGES=YES (detiene temporalmente la API de una instancia de V2).")
@@ -94,15 +98,17 @@ def main() -> None:
                     timeline.append(snap); last = key
                 if sum(1 for s in health.values() if s == "healthy") == 0:
                     abort["reason"] = "el ALB se quedó sin destinos sanos"
-                if any(h != "Healthy" or s != "InService" for s, h in asg_state.values()) or len(asg_state) != 2:
+                if not args.allow_replacement and (any(h != "Healthy" or s != "InService" for s, h in asg_state.values()) or len(asg_state) != 2):
                     abort["reason"] = f"el ASG cambió el estado de una instancia: {asg_state}"
+                if now() > args.max_seconds:
+                    abort["reason"] = f"tiempo máximo excedido ({args.max_seconds} s)"
             except Exception as error:  # noqa: BLE001
                 timeline.append({"t": now(), "error": str(error)[:120]})
     # el ciclo de consulta ya tarda ~2 s por las dos llamadas
 
     threads = [threading.Thread(target=traffic, args=(w,)) for w in range(args.clients)] + [threading.Thread(target=poll)]
     [t.start() for t in threads]
-    events: dict = {"victim": victim[-6:], "other": other[-6:], "rate_req_per_s": args.rate}
+    events: dict = {"victim": victim[-6:], "other": other[-6:], "rate_req_per_s": args.rate, "allow_replacement": args.allow_replacement, "max_seconds": args.max_seconds}
     stopped = False
     try:
         time.sleep(25)  # línea base sana
@@ -124,7 +130,10 @@ def main() -> None:
         events["restore_issued_at"] = now()
     finally:
         if stopped:
-            M.ssm_output(victim, "systemctl start nexoeventos-api")
+            try:
+                M.ssm_output(victim, "systemctl start nexoeventos-api")
+            except Exception as exc:  # noqa: BLE001  p. ej. el ASG ya terminó la instancia (autohealing): se registra y se conservan los resultados
+                events["restore_error"] = type(exc).__name__
             events["restore_confirmed_at"] = now()
     recovered = None
     deadline = time.time() + 180
@@ -146,6 +155,7 @@ def main() -> None:
                "by_path": {p: {"requests": sum(1 for r in requests_log if r["path"] == p), "errors": sum(1 for r in errors if r["path"] == p), "first_error_at": next((r["t"] for r in errors if r["path"] == p), None), "last_error_at": next((r["t"] for r in reversed(errors) if r["path"] == p), None)} for p in ("/api/events", "/healthz")},
                "first_error_at": errors[0]["t"] if errors else None, "last_error_at": errors[-1]["t"] if errors else None, "p95_ok_ms": sorted(ok_lat)[int(0.95 * (len(ok_lat) - 1))] if ok_lat else None,
                "availability_pct": round(100 * len(ok_lat) / max(1, len(requests_log)), 2)}
+    summary.update(V.split_availability(requests_log))  # disponibilidad del tráfico funcional (/api) separada de la de los sondeos de salud
     if events.get("alb_marked_unhealthy_at") is not None:
         events["detection_after_stop_s"] = round(events["alb_marked_unhealthy_at"] - events["stop_issued_at"], 1)
     if recovered is not None:

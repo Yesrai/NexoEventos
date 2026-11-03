@@ -51,6 +51,27 @@ check('destination_address_prefix = "168.63.129.16/32"' in net, "Azure: DNS y ag
 aws_vars = (ROOT / "infra/aws/variables.tf").read_text(); aws_s3 = (ROOT / "infra/aws/storage_observability.tf").read_text()
 check('expiration { days = var.s3_backup_retention_days }' in aws_s3 and "var.backup_retention_days" not in aws_s3 and "s3_backup_retention_days >= 30" in aws_vars,
       "AWS: la caducidad de los respaldos en S3 no depende de la retención de RDS (7 días) y es de al menos 30 días")
+# --- AWS: alarmas opcionales (desactivadas por defecto) ---
+for label, rel in (("V1/RDS", "infra/aws/alarms.tf"), ("V2/ALB", "infra/aws-v2/alarms.tf")):
+    alarms = (ROOT / rel).read_text()
+    check(re.search(r'variable "enable_alarms" \{.*?default\s*=\s*false', alarms, re.S) is not None, f"AWS {label}: enable_alarms es false por defecto (no se crea ninguna alarma sin decidirlo)")
+    blocks = re.findall(r'resource "aws_cloudwatch_metric_alarm" "\w+" \{(.*?)\n\}', alarms, re.S)
+    check(len(blocks) >= 2 and all("count               = var.enable_alarms" in b and "treat_missing_data" in b and "alarm_actions" in b for b in blocks),
+          f"AWS {label}: {len(blocks)} alarmas, todas condicionadas a enable_alarms, con tratamiento explícito de datos ausentes y acciones")
+v1_alarms = (ROOT / "infra/aws/alarms.tf").read_text()
+check('metric_name         = "FreeStorageSpace"' in v1_alarms and 'comparison_operator = "LessThanThreshold"' in v1_alarms and "rds_free_storage_alarm_bytes >= 536870912" in v1_alarms,
+      "AWS V1: alarma de espacio libre de la RDS (FreeStorageSpace) con umbral configurable y mínimo de 512 MiB")
+check("alarm_actions       = local.alarm_actions" in aws_s3 and re.search(r'variable "alarm_email" \{.*?sensitive\s*=\s*true', v1_alarms, re.S) is not None,
+      "AWS V1: la alarma de CPU de la EC2 usa las acciones de SNS (vacías por defecto) y el correo de alarmas es sensible")
+v2_alarms = (ROOT / "infra/aws-v2/alarms.tf").read_text()
+check(all(x in v2_alarms for x in ("HTTPCode_Target_5XX_Count", "UnHealthyHostCount", "HealthyHostCount", "TargetResponseTime")), "AWS V2: alarmas de 5xx, destinos no sanos, destinos sanos bajos y latencia p95")
+v2a = (ROOT / "infra/aws-v2/alarms.tf").read_text()
+check("IF(sanos < deseada, 1, 0)" in v2a and "IF(en_servicio < deseada, 1, 0)" in v2a and '"breaching"' not in v2a,
+      "AWS V2: las alarmas de capacidad comparan con la capacidad DESEADA y nunca tratan los datos ausentes como incumplimiento (no saltan con el grupo en 0 a propósito)")
+check("aws_autoscaling_notification" in v2a and 'alarm_topic_arn != ""' in v2a, "AWS V2: avisos del ASG (lanzamiento/terminación y errores) solo con un tema SNS existente")
+check("aws_db_event_subscription" in v1_alarms and '"low storage"' in v1_alarms and '"failover"' in v1_alarms and "aws_sns_topic_policy" in v1_alarms and "aws:SourceAccount" in v1_alarms,
+      "AWS V1: suscripción a eventos de la RDS (failover, fallos, espacio bajo) con política del tema limitada a la cuenta")
+check('metric_name         = "StatusCheckFailed"' in v1_alarms and 'treat_missing_data  = "notBreaching"' in v1_alarms, "AWS V1: alarma de comprobaciones de estado de la EC2 que no salta con la instancia detenida")
 # --- AWS: CloudTrail opcional (desactivado por defecto) y guardia de la AMI con /livez ---
 ct = (ROOT / "infra/aws/cloudtrail.tf").read_text()
 check(re.search(r'variable "enable_cloudtrail" \{.*?default\s*=\s*false', ct, re.S) is not None, "AWS: enable_cloudtrail es false por defecto (no se crea ningún trail sin decidirlo)")

@@ -260,3 +260,9 @@ AWS-0104/AZU-0051 (80/443): sin prefijo fijo de destino; las alternativas son de
 3. **Alto/Medio:** informe final, presentación y portada (fecha por definir); desplegar y validar (AMI, `/livez`, TLS, S3).
 4. **Medio:** `resolvectl` y correo en Azure; decidir CloudTrail.
 5. **Bajo:** KMS propio, endpoints, FIS y caída de zona (opcionales).
+
+## 20. Cuarta auditoría de alarmas y monitoreo (3-nov-2026)
+Inventario y clasificación completos en [matriz-alarmas-monitoreo.md](matriz-alarmas-monitoreo.md). Resumen: **solo existen alarmas reales de escalado (AWS, V2 destruida) y la de CPU de Azure**; la alarma de CPU de V1 no avisa a nadie y nunca saltó; V2 y la RDS no tenían alarmas de disponibilidad ni de espacio libre; OCI no tiene monitoreo nativo. Correcciones locales (opcionales, desactivadas por defecto, sin desplegar): `infra/aws/alarms.tf`, `infra/aws-v2/alarms.tf`, acciones SNS en la alarma de CPU, `scripts/cloud/validate-chaos-result.py`, `backend/tests/test_chaos_evidence.py`, 7 comprobaciones nuevas en `check-iac-security.py`. Corrección de mi inventario anterior: **R01 (10-oct) sí fue una restauración real de datos en AWS** (PITR a una RDS temporal), aunque no del servicio completo.
+
+## 21. Cierre de observaciones y plan cloud (3-nov-2026)
+Matriz de cierre de 22 observaciones: [matriz-cierre-observaciones.md](matriz-cierre-observaciones.md). Plan único de ejecución cloud con costes, riesgos, rollback y autorizaciones: [plan-ejecucion-cloud.md](plan-ejecucion-cloud.md) (**propuesta, no ejecutada**). Código nuevo (sin desplegar): alarmas de capacidad por expresión de métricas (no saltan con el grupo en 0), avisos del ASG, alarma de estado de la EC2, suscripción a eventos de la RDS, mejoras del script de experimentos, 12 pruebas estáticas y de evidencia nuevas (77 de backend) y 48 comprobaciones de IaC.

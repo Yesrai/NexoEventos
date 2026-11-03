@@ -2,6 +2,8 @@
 
 Distinción central: **«diseñamos el sistema para resistir fallos»** (Terraform, ASG, Multi-AZ) no es lo mismo que **«provocamos un fallo, observamos y medimos la recuperación»**. Solo lo segundo cuenta como experimento. Cifras contrastadas con los registros originales de `docs/evidencias/`; ningún valor se ha inventado.
 
+> Alarmas y monitoreo por nube, clasificación de experimentos pendientes y validación de cifras: [matriz-alarmas-monitoreo.md](matriz-alarmas-monitoreo.md). Las cifras de A, B, D y E se recalculan con `scripts/cloud/validate-chaos-result.py` (5 pruebas en `backend/tests/test_chaos_evidence.py`).
+
 ## 1. Experimentos y su clasificación
 | # | Experimento | Estado | Hipótesis | Fallo realmente provocado | Fecha (UTC) | Resultado medido | Recuperación | Evidencia | Limitaciones | Mejora |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -14,7 +16,7 @@ Distinción central: **«diseñamos el sistema para resistir fallos»** (Terrafo
 | 7 | Alerta de CPU en Azure | **Ejecutado con evidencia parcial** | Azure Monitor detecta y avisa | Prueba de carga de CPU controlada en la VM (`prueba-carga-cpu.txt`) | 28-oct | Alerta activada 94,9 % y resuelta (≈ 21 min); grupo de acciones desencadenado a las 9:41 y 10:02 | — | capturas azure/B3–B10 | **Entrega de correo no demostrada** | — |
 | 8 | AWS FIS | **No implementado ni ejecutado** | — | — | — | — | — | `plan-caos-fis.md` (diseño) | FIS necesita un rol de servicio que Academy probablemente no permite | — |
 | 9 | Caída de una zona de disponibilidad completa | **Preparado, no ejecutado** | V2 en 2 zonas mantiene ≥ 1 destino | — | — | — | — | `plan-caos-fis.md` | No se afirma | — |
-| 10 | Restauración de respaldo en AWS | **No ejecutado** (R01 restauró un punto concreto en una prueba anterior, no el sistema completo) | — | — | — | — | — | `EV07/` | — | — |
+| 10 | Restauración de datos en AWS (R01, 10-oct) | **Ejecutado (informe textual)**: PITR a una RDS temporal eliminada después; RPO 3 min 32 s, datos verificados a los 21 min 4 s, 135/135 QR | Una copia PITR se puede restaurar y verificar | PITR a RDS temporal | 10-oct | Ver estado | Manual | `EV07/resultado-restauracion-2026-10-10.md` | No se conmutó la aplicación: **no es la restauración completa del servicio**; sin datos crudos en el repositorio | — |
 
 ## 2. Mejoras de resiliencia realizadas en esta ronda (código local, validado en local; sin desplegar)
 1. **`backend/app/database.py`:** conexión remota con `connect_timeout` de 5 s, keepalives TCP (idle 30 s, intervalo 10 s, 3 intentos), `pool_recycle` de 1800 s y `pool_timeout` configurable (30 s por defecto, sin cambio de comportamiento); `pool_pre_ping` ya existía. Variables: `DB_CONNECT_TIMEOUT`, `DB_POOL_TIMEOUT`, `DB_POOL_RECYCLE`. **Sin reintentos automáticos** a propósito: no se duplican operaciones ni se agrava una sobrecarga; el fallo sale como 503 y el cliente decide. Base de la decisión: el failover observado duró ≈ 14 s y una conexión nueva sin tiempo límite puede esperar el de TCP del sistema.
@@ -45,6 +47,9 @@ Por qué esta opción y no otras: (a) cambiar `/healthz` a liveness alteraría e
 3. **Protección en el código (3-nov):** la variable `ami_includes_livez` (por defecto `false`) hace que el ALB use `/healthz` hasta que se declare que la AMI ya trae `/livez`; poner `true` solo después de rotar las instancias. Pruebas: `test_health_separation.py` (62 pruebas de backend en total, incluido el agotamiento del pool → 503 con `/health` en 200).
 3b. `terraform plan` (cambio *in situ* del target group) y `apply` dirigido, con autorización. El ASG con `$Latest` **no** renueva instancias existentes: hay que rotarlas (instance refresh o redespliegue).
 4. Validación real pendiente: repetir con V2 el failover de RDS o una caída de PostgreSQL y comprobar que `HealthyHostCount` se mantiene y el ASG no lanza actividades. **Estado: corregido en código y probado en local; NO validado en AWS.**
+
+## 3b. Mejoras del script de experimentos (3-nov, solo código; no se ejecutó)
+`scripts/cloud/v2-failover-test.py`: `--allow-replacement` (modo autohealing: no aborta cuando el ASG reemplaza y no intenta restaurar una instancia ya terminada), `--max-seconds` (criterio de parada, 600 s por defecto), restauración tolerante a `InvalidInstanceId`, `resultado-parcial.json` antes de las consultas frágiles y **disponibilidad del tráfico funcional (`/api`) separada de la de los sondeos de salud** (`split_availability`). Con los datos del 22-oct: `/api` 100 % (138 solicitudes, **sesgado**: el ALB envió todo a la instancia sana) frente a salud 81,8 % (137). Procedimientos, criterios de parada, rollback y presupuesto: [plan-ejecucion-cloud.md](plan-ejecucion-cloud.md) (Fase 5).
 
 ## 4. Experimentos pendientes (diseño; **ninguno se ejecutará sin autorización**)
 | Experimento | Objetivo | Riesgo | Requisitos | Coste potencial | Reversión | Evidencia que produciría | Autorización |
