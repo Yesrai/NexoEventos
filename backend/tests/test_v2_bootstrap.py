@@ -5,6 +5,7 @@ import hashlib
 import os
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -60,7 +61,7 @@ def _run(tmp_path: Path, bundle: bytes, pins: str, secret: str = SECRET_TEXT, cu
     script = tmp_path / "bootstrap.sh"
     script.write_text(_render(pins))
     env = {**os.environ, "PATH": f"{bin_dir}:{os.environ['PATH']}", "NEXO_ENV_DIR": str(etc), "NEXO_APP_DIR": str(ROOT / "backend"),
-           "NEXO_APP_PY": str(ROOT / "backend/.venv/bin/python"), "FAKE_SECRET": str(tmp_path / "secret.txt"), "FAKE_BUNDLE": str(tmp_path / "bundle.pem"),
+           "NEXO_APP_PY": sys.executable, "FAKE_SECRET": str(tmp_path / "secret.txt"), "FAKE_BUNDLE": str(tmp_path / "bundle.pem"),
            "FAKE_LOG": str(tmp_path / "systemctl.log"), "FAKE_CURL_FAIL": "1" if curl_fails else "0", "TMPDIR": str(tmp_path)}
     result = subprocess.run(["bash", str(script)], capture_output=True, text=True, env=env, timeout=120)
     return result, etc
