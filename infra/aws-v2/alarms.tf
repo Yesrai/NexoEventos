@@ -9,7 +9,7 @@ variable "enable_alarms" {
 }
 
 variable "alarm_topic_arn" {
-  description = "ARN del tema SNS (p. ej. el creado en infra/aws con enable_alarms y alarm_email). Vacío = alarmas sin notificación."
+  description = "ARN del tema SNS (p. ej. el creado en infra/aws con enable_alarms). Vacío = alarmas sin notificación."
   type        = string
   default     = ""
 }

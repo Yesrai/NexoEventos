@@ -41,3 +41,19 @@ def test_alarm_thresholds_are_justified_by_measurements() -> None:
     assert "threshold           = 1.5" in v2 and "extended_statistic  = \"p95\"" in v2
     v1 = (ROOT / "infra/aws/alarms.tf").read_text()
     assert "default     = 2147483648" in v1  # 2 GiB = 10 % de los 20 GiB asignados
+
+
+def test_v1_alarms_cover_cpu_status_storage_memory_and_events() -> None:
+    v1 = (ROOT / "infra/aws/alarms.tf").read_text()
+    for needle in ('"CPUUtilization"', '"StatusCheckFailed"', '"FreeStorageSpace"', '"FreeableMemory"', "aws_db_event_subscription", '"low storage"', "aws_sns_topic"):
+        assert needle in v1 or needle in (ROOT / "infra/aws/storage_observability.tf").read_text(), needle
+    assert "default     = 104857600" in v1  # 100 MiB frente al mínimo histórico de 166 MiB
+
+
+def test_public_subnet_switch_defaults_to_the_secure_value_and_no_email_is_stored_in_terraform() -> None:
+    variables = (ROOT / "infra/aws/variables.tf").read_text()
+    block = variables[variables.index('variable "public_subnet_auto_public_ip"'):]
+    assert "default     = false" in block.split("}")[0]
+    alarms = (ROOT / "infra/aws/alarms.tf").read_text()
+    # El correo no pasa por Terraform: ni variable, ni suscripción en el estado/plan (la crea scripts/cloud/suscribir-correo-alarmas.sh)
+    assert 'variable "alarm_email"' not in alarms and 'resource "aws_sns_topic_subscription"' not in alarms

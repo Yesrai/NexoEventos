@@ -40,3 +40,10 @@ Sin redactar y no usadas: capturas genéricas «Captura de pantalla …» y 3 gr
 | Archivo | Demuestra | Limitación |
 |---|---|---|
 | aws/A16-RDS-Eventos-Detencion-28oct-verificado-03nov.png | RDS → Eventos: detención 28-oct 16:51 (UTC−5); inicio 16:39, copia 16:41–16:43; aviso de almacenamiento 16:45 («20 GiB … umbral máximo 20 GiB»); 23-oct y 22-oct (failover 20:09) | No muestra el estado actual; el aviso es de configuración, no mide espacio libre. Cuenta y usuario ocultos. Origen: `~/Pictures/Capturas/AWS-RDS-Eventos-Detencion-28Oct-Verificado-03Nov2026.png` |
+
+## Cuarta tanda (5-nov): correos de alertas (recortes de Gmail por la usuaria; solo filas de correo)
+| Archivo | Demuestra | Limitación |
+|---|---|---|
+| ../20261104-fase-d-notificacion-v2/correos-alarm-ok.png | Correos de AWS Notifications de la alarma `nexoeventos-academy-v2-alb-destinos-no-sanos` (ALARM 12:01 y OK 12:03, hora de Perú), provocados con `set-alarm-state` | Solo asunto/hora; no es detección por métricas |
+| ../20261105-azure-ventana2/correos-azure-monitor.png | Correos de Azure Monitor: `alerta-vm-cpu` Fired 21:03 y Resolved 21:28 (CPU real), `alerta-vm-up` Resolved 20:48 y Fired 21:32 (más Fired 18:03 de `alerta-vm-up` y Resolved 18:15 de `alerta-vm-mem` de la ventana anterior) | Solo asunto/hora; no muestra el cuerpo; no incluye los correos de las 17:50 y 17:57 |
+| ../20261105-azure-ventana2/grafana-azure-vm-historico-20261104.png | Grafana «Azure — VM de monitoreo», rango 4-nov 20:45–21:30 (Perú): CPU de Azure Monitor ≈ 2 % → 100 % → 1 %, memoria 7,24–7,32 GB, red y CPU del agente de Zabbix (mismo comportamiento) | Recorte sin la barra del navegador (IP y pestañas); datos históricos recuperados; no incluye el resumen multicloud ni los paneles inferiores |

@@ -1,18 +1,14 @@
 # Alarmas de CloudWatch y notificaciones OPCIONALES para V1/RDS (desactivadas por defecto: con enable_alarms = false no se crea nada nuevo).
 # Hoy solo existe `ec2_cpu_high`, sin acciones (nadie recibe aviso) y nunca ha saltado; no hay alarma de espacio libre de la RDS (el aviso de
 # «20 GiB / umbral máximo 20 GiB» es de configuración y no mide espacio libre). Coste si se activa: CloudWatch cobra ≈ 0,10 USD/alarma/mes
-# (las primeras 10 entran en la capa gratuita) y SNS por correo es gratuito. La suscripción por correo exige confirmar el mensaje que envía AWS.
+# (las primeras 10 entran en la capa gratuita) y SNS por correo es gratuito.
+# EL CORREO NO ESTÁ EN TERRAFORM A PROPÓSITO: un `aws_sns_topic_subscription` guardaría la dirección en texto claro en el estado y en cualquier plan
+# guardado. La suscripción se crea con `scripts/cloud/suscribir-correo-alarmas.sh` (entrada oculta en la terminal, sin imprimir ni registrar la dirección)
+# y exige confirmar el mensaje que envía AWS.
 variable "enable_alarms" {
-  description = "Crea el tema SNS (si hay alarm_email) y las alarmas de la RDS y las acciones de la alarma de CPU de la EC2."
+  description = "Crea el tema SNS, las alarmas de la RDS y de la EC2, la suscripción a eventos de RDS y las acciones de la alarma de CPU de la EC2."
   type        = bool
   default     = false
-}
-
-variable "alarm_email" {
-  description = "Correo que recibe las alarmas por SNS. Solo en el tfvars local (ignorado por Git); vacío = alarmas sin notificación."
-  type        = string
-  default     = ""
-  sensitive   = true
 }
 
 variable "rds_free_storage_alarm_bytes" {
@@ -25,21 +21,24 @@ variable "rds_free_storage_alarm_bytes" {
   }
 }
 
+variable "rds_freeable_memory_alarm_bytes" {
+  description = "Umbral de FreeableMemory (bytes) por debajo del cual salta la alarma. Por defecto 100 MiB: el mínimo histórico por minuto fue 166 MiB (23-oct, durante el failover) y lo normal 186–275 MiB en una db.t3.micro de 1 GiB."
+  type        = number
+  default     = 104857600
+  validation {
+    condition     = var.rds_freeable_memory_alarm_bytes >= 33554432
+    error_message = "El umbral debe ser de al menos 32 MiB."
+  }
+}
+
 locals {
-  alarms_notify = var.enable_alarms && var.alarm_email != ""
+  alarms_notify = var.enable_alarms
   alarm_actions = local.alarms_notify ? [aws_sns_topic.alarms[0].arn] : []
 }
 
 resource "aws_sns_topic" "alarms" {
   count = local.alarms_notify ? 1 : 0
   name  = "${local.name_prefix}-alarmas"
-}
-
-resource "aws_sns_topic_subscription" "alarms_email" {
-  count     = local.alarms_notify ? 1 : 0
-  topic_arn = aws_sns_topic.alarms[0].arn
-  protocol  = "email"
-  endpoint  = var.alarm_email
 }
 
 resource "aws_cloudwatch_metric_alarm" "rds_free_storage_low" {
@@ -54,6 +53,25 @@ resource "aws_cloudwatch_metric_alarm" "rds_free_storage_low" {
   statistic           = "Minimum"
   threshold           = var.rds_free_storage_alarm_bytes
   treat_missing_data  = "missing" # con la RDS detenida no hay datos: no es una alarma
+  dimensions          = { DBInstanceIdentifier = aws_db_instance.postgres.identifier }
+  alarm_actions       = local.alarm_actions
+  ok_actions          = local.alarm_actions
+}
+
+# Memoria liberable de la RDS: es el recurso más ajustado (el disco tiene ≈ 85 % libre). Se usa el mínimo de cada periodo de 5 min y se exigen 3 periodos
+# seguidos (15 min) para no saltar con un pico puntual; con la RDS detenida no hay datos y no salta.
+resource "aws_cloudwatch_metric_alarm" "rds_freeable_memory_low" {
+  count               = var.enable_alarms ? 1 : 0
+  alarm_name          = "${local.name_prefix}-rds-memoria-liberable-baja"
+  alarm_description   = "FreeableMemory de la RDS por debajo del umbral (por defecto 100 MiB) durante 15 minutos; el mínimo histórico por minuto fue 166 MiB"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = 3
+  metric_name         = "FreeableMemory"
+  namespace           = "AWS/RDS"
+  period              = 300
+  statistic           = "Minimum"
+  threshold           = var.rds_freeable_memory_alarm_bytes
+  treat_missing_data  = "missing"
   dimensions          = { DBInstanceIdentifier = aws_db_instance.postgres.identifier }
   alarm_actions       = local.alarm_actions
   ok_actions          = local.alarm_actions

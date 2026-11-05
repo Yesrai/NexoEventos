@@ -61,6 +61,6 @@ resource "aws_cloudwatch_metric_alarm" "ec2_cpu_high" {
   threshold           = 80
   treat_missing_data  = "missing"
   dimensions          = { InstanceId = aws_instance.app.id }
-  alarm_actions       = local.alarm_actions # vacío (sin cambios) salvo enable_alarms = true con alarm_email
+  alarm_actions       = local.alarm_actions # vacío (sin cambios) salvo enable_alarms = true
   ok_actions          = local.alarm_actions
 }

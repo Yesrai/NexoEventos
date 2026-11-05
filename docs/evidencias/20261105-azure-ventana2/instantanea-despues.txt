@@ -1,0 +1,18 @@
+# Instantánea Azure 2026-11-05T02:34:16Z (suscripción y direcciones ocultas)
+## VM
+{"estado":"VMdeallocated","tamano":"Standard_D2s_v4"}
+## Reglas de alerta (nombre | habilitada | severidad | evaluación | ventana | métrica operador umbral)
+alerta-vm-cpu | habilitada True | sev 2 | cada PT5M ventana PT15M | Percentage CPU GreaterThan 80.0
+alerta-vm-mem | habilitada True | sev 2 | cada PT5M ventana PT15M | Available Memory Bytes LessThan 419430400.0
+alerta-vm-up | habilitada True | sev 1 | cada PT1M ventana PT5M | VmAvailabilityMetric LessThan 1.0
+## Grupo de acciones (receptores de correo: estado; sin direcciones)
+ag-nexoeventos-obs True Enabled
+## Alertas de los últimos 30 días (regla | severidad | condición | disparada | resuelta)
+alerta-vm-up Sev1 Fired 2026-11-05T02:32:11.1999225Z None
+alerta-vm-cpu Sev2 Resolved 2026-11-05T02:03:35.0449525Z 2026-11-05T02:28:33.9342862Z
+alerta-vm-up Sev1 Resolved 2026-11-04T23:03:09.7311811Z 2026-11-05T01:48:13.3822705Z
+alerta-vm-mem Sev2 Resolved 2026-11-04T22:50:41.6743832Z 2026-11-04T23:15:45.821778Z
+alerta-vm-up Sev1 Resolved 2026-10-28T15:08:34.6200588Z 2026-11-04T22:57:09.4887738Z
+alerta-vm-cpu Sev2 Resolved 2026-10-28T14:41:12.7830094Z 2026-10-28T15:02:59.8086308Z
+## NSG: ¿la IP pública actual del operador coincide con la regla admin-https? (sin mostrar IPs)
+coincide: SÍ

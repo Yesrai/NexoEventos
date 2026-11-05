@@ -139,7 +139,10 @@ def main() -> None:
     deadline = time.time() + 180
     while time.time() < deadline:
         last = [x for x in timeline if "alb" in x][-1]
-        if all(v == "healthy" for v in last["alb"].values()) and len(last["alb"]) == 2 and last["t"] > events["restore_confirmed_at"]:
+        # El historial solo guarda CAMBIOS de estado: en un autohealing el estado «2 sanos» se alcanza (y queda registrado) ANTES de la restauración manual,
+        # así que se compara con la inyección del fallo y no con la restauración (corregido el 4-nov-2026: antes daba `null` aunque el ASG ya hubiera repuesto la capacidad).
+        reference = events["stop_issued_at"] if args.allow_replacement else events["restore_confirmed_at"]
+        if all(v == "healthy" for v in last["alb"].values()) and len(last["alb"]) == 2 and last["t"] > reference:
             recovered = last["t"]; break
         time.sleep(2)
     events["both_healthy_again_at"] = recovered
@@ -158,7 +161,9 @@ def main() -> None:
     summary.update(V.split_availability(requests_log))  # disponibilidad del tráfico funcional (/api) separada de la de los sondeos de salud
     if events.get("alb_marked_unhealthy_at") is not None:
         events["detection_after_stop_s"] = round(events["alb_marked_unhealthy_at"] - events["stop_issued_at"], 1)
-    if recovered is not None:
+    if recovered is not None and args.allow_replacement:
+        events["capacity_restored_after_stop_s"] = round(recovered - events["stop_issued_at"], 1)  # autohealing: 2 destinos sanos de nuevo, medido desde el fallo
+    elif recovered is not None:
         events["recovery_after_restore_s"] = round(recovered - events["restore_confirmed_at"], 1)
     # Se guarda YA lo medido por el cliente: las consultas posteriores (Nginx de una instancia que el ASG pudo terminar, CloudWatch) pueden fallar
     # y antes eso hacía perder toda la medición (repetición del 22-oct, `InvalidInstanceId`).

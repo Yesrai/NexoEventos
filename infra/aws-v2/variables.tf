@@ -107,6 +107,16 @@ variable "scale_requests_per_target" {
   default     = 0
 }
 
+variable "rds_ca_sha256" {
+  description = "Huellas SHA-256 (públicas) de las CA de RDS que el arranque acepta del paquete regional. Por defecto: rds-ca-rsa2048-g1 de us-east-1, la CA de la RDS de V1. Se comprobó con `aws rds describe-certificates` (huella SHA-1 del API autenticado = la del certificado del paquete). Si RDS cambia de CA, el arranque FALLA a propósito hasta actualizar esta lista."
+  type        = list(string)
+  default     = ["e4ce41d069f4bdcdb714259058961ee42ed18cf2bf627a3d647aff25437d4b68"]
+  validation {
+    condition     = length(var.rds_ca_sha256) > 0 && alltrue([for p in var.rds_ca_sha256 : can(regex("^[0-9a-f]{64}$", p))])
+    error_message = "rds_ca_sha256 debe contener huellas SHA-256 en hexadecimal minúscula (64 caracteres)."
+  }
+}
+
 variable "db_pool_size" {
   description = "Conexiones permanentes del pool de cada worker (2 workers por instancia)."
   type        = number

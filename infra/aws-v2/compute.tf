@@ -39,6 +39,8 @@ resource "aws_launch_template" "web" {
     secret_name     = var.app_secret_name
     db_pool_size    = var.db_pool_size
     db_max_overflow = var.db_max_overflow
+    rds_ca_url      = "https://truststore.pki.rds.amazonaws.com/${var.aws_region}/${var.aws_region}-bundle.pem"
+    rds_ca_sha256   = join(",", var.rds_ca_sha256)
   }))
 
   tag_specifications {

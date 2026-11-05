@@ -1,31 +1,113 @@
 #!/bin/bash
-# user_data de las instancias de NexoEventos V2 (plantilla de Terraform). No contiene secretos: solo el NOMBRE del secreto compartido.
-# La AMI dorada ya trae Nginx (modo ALB), la API y la versión desplegada; aquí solo se instala la configuración secreta y se arranca.
+# user_data de las instancias de NexoEventos V2 (plantilla de Terraform). No contiene secretos: solo el NOMBRE del secreto compartido, la URL pública
+# del paquete de CA de RDS y las HUELLAS SHA-256 (públicas) de la CA que se acepta.
+# La AMI dorada ya trae Nginx (modo ALB), la API y la versión desplegada; aquí se instala la configuración secreta, la CA de RDS y se arranca.
+# Seguridad: falla (sin arrancar la API) si no se puede leer el secreto, descargar/validar la CA o dejar un DATABASE_URL compatible con
+# `sslmode=verify-full`. Nunca imprime el secreto ni el DATABASE_URL (no hay `set -x`; los errores son mensajes fijos).
 set -euo pipefail
 umask 077
 REGION="${region}"
 SECRET="${secret_name}"
-ENV_FILE=/etc/nexoeventos/backend.env
+CA_URL="${rds_ca_url}"
+CA_PINS="${rds_ca_sha256}"
+ENV_DIR="$${NEXO_ENV_DIR:-/etc/nexoeventos}"
+ENV_FILE="$ENV_DIR/backend.env"
+CA_FILE="$ENV_DIR/rds-ca-bundle.pem"
+APP_DIR="$${NEXO_APP_DIR:-/opt/nexoeventos-deploy/current/backend}"
+APP_PY="$${NEXO_APP_PY:-$APP_DIR/.venv/bin/python}"
 
-install -d -m 0755 /etc/nexoeventos
-tmp="$(mktemp)"
-trap 'shred -u "$tmp" 2>/dev/null || rm -f "$tmp"' EXIT
+fail() { echo "$1" >&2; exit 1; }
+
+install -d -m 0755 "$ENV_DIR"
+work="$(mktemp -d)"
+tmp="$work/secret"
+trap 'shred -u "$tmp" 2>/dev/null || true; rm -r -f -- "$work"' EXIT
 
 # Credenciales temporales del rol de la instancia (IMDSv2); el valor del secreto no se imprime.
 for attempt in 1 2 3 4 5 6; do
   if aws secretsmanager get-secret-value --region "$REGION" --secret-id "$SECRET" --query SecretString --output text >"$tmp" 2>/dev/null; then break; fi
-  [ "$attempt" = 6 ] && { echo "No se pudo leer el secreto compartido; la instancia no arrancará la API." >&2; exit 1; }
+  [ "$attempt" = 6 ] && fail "No se pudo leer el secreto compartido; la instancia no arrancará la API."
   sleep 10
 done
 
 # Claves imprescindibles y IDÉNTICAS en todas las instancias (cifrado de QR, hash de seguridad, base de datos, orígenes).
 for key in DATABASE_URL TICKET_ENCRYPTION_KEY SECURITY_HASH_KEY FRONTEND_ORIGINS; do
-  grep -q "^$key=." "$tmp" || { echo "Falta $key en el secreto compartido." >&2; exit 1; }
+  grep -q "^$key=." "$tmp" || fail "Falta $key en el secreto compartido."
 done
 
-# Conexiones a RDS acotadas por proceso: 2 workers x (pool + desborde) por instancia.
-{ grep -vE '^(DB_POOL_SIZE|DB_MAX_OVERFLOW)=' "$tmp"; echo "DB_POOL_SIZE=${db_pool_size}"; echo "DB_MAX_OVERFLOW=${db_max_overflow}"; } >"$ENV_FILE.new"
+# --- CA de RDS: descarga por HTTPS y aceptación SOLO de los certificados cuyas huellas SHA-256 están fijadas en este archivo (fijadas al
+# comprobarlas contra `aws rds describe-certificates`, canal independiente del servidor de descarga). Cualquier otro certificado del archivo se descarta.
+curl --fail --silent --show-error --proto '=https' --tlsv1.2 --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 10 --max-time 30 \
+  --max-filesize 1000000 -o "$work/bundle.pem" "$CA_URL" || fail "No se pudo descargar el paquete de CA de RDS; la API no arrancará."
+python3 - "$work/bundle.pem" "$work/ca.pem" "$CA_PINS" <<'PYEOF' || fail "El paquete de CA de RDS no coincide con las huellas fijadas; la API no arrancará."
+import base64, hashlib, re, sys
+src, dst, pins_arg = sys.argv[1:4]
+pins = {p.strip().lower() for p in pins_arg.split(",") if p.strip()}
+if not pins or any(not re.fullmatch(r"[0-9a-f]{64}", p) for p in pins):
+    sys.exit(1)
+text = open(src, encoding="ascii", errors="strict").read()
+kept = {}
+for body in re.findall(r"-----BEGIN CERTIFICATE-----\s*([A-Za-z0-9+/=\s]+?)\s*-----END CERTIFICATE-----", text):
+    raw = base64.b64decode("".join(body.split()), validate=True)
+    digest = hashlib.sha256(raw).hexdigest()
+    if digest in pins:
+        kept[digest] = raw
+if set(kept) != pins:
+    sys.exit(1)
+with open(dst, "w", encoding="ascii") as out:
+    for raw in kept.values():
+        b64 = base64.b64encode(raw).decode("ascii")
+        out.write("-----BEGIN CERTIFICATE-----\n" + "\n".join(b64[i:i + 64] for i in range(0, len(b64), 64)) + "\n-----END CERTIFICATE-----\n")
+PYEOF
+install -m 0644 "$work/ca.pem" "$CA_FILE"
+
+# --- backend.env: DATABASE_URL con sslmode=verify-full y sslrootcert (se conservan el resto de la URL y de parámetros), pool acotado por proceso.
+python3 - "$tmp" "$ENV_FILE.new" "$CA_FILE" "${db_pool_size}" "${db_max_overflow}" <<'PYEOF' || fail "No se pudo preparar DATABASE_URL para verify-full; la API no arrancará."
+import sys
+from urllib.parse import parse_qsl, quote, urlencode, urlsplit, urlunsplit
+src, dst, ca, pool, overflow = sys.argv[1:6]
+try:
+    out, seen = [], 0
+    for line in open(src, encoding="utf-8").read().splitlines():
+        key = line.split("=", 1)[0] if "=" in line else ""
+        if key in ("DB_POOL_SIZE", "DB_MAX_OVERFLOW"):
+            continue
+        if key == "DATABASE_URL":
+            seen += 1
+            value = line.split("=", 1)[1]
+            parts = urlsplit(value)
+            if value[:1] in "\"'" or parts.scheme not in ("postgresql", "postgresql+psycopg"):
+                sys.exit(1)
+            if not (parts.hostname or "").endswith(".rds.amazonaws.com") or not parts.username or not parts.password:
+                sys.exit(1)
+            query = [(k, v) for k, v in parse_qsl(parts.query, keep_blank_values=True) if k not in ("sslmode", "sslrootcert")]
+            query += [("sslmode", "verify-full"), ("sslrootcert", ca)]
+            line = "DATABASE_URL=" + urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query, quote_via=quote, safe="/"), ""))
+        out.append(line)
+    if seen != 1:
+        sys.exit(1)
+    out += ["DB_POOL_SIZE=" + pool, "DB_MAX_OVERFLOW=" + overflow]
+    with open(dst, "w", encoding="utf-8") as f:
+        f.write("\n".join(out) + "\n")
+except SystemExit:
+    raise
+except Exception as exc:
+    print("error " + type(exc).__name__, file=sys.stderr)
+    sys.exit(1)
+PYEOF
 chmod 0600 "$ENV_FILE.new"
+
+# Comprobación con la propia aplicación y SQLAlchemy (sin mostrar la URL): la política de TLS de la API y el análisis de la URL deben aceptarla.
+( cd "$APP_DIR" && NEXO_CHECK_ENV="$ENV_FILE.new" PYTHONDONTWRITEBYTECODE=1 "$APP_PY" - <<'PYEOF' ) || { rm -f "$ENV_FILE.new"; fail "DATABASE_URL no es compatible con la API (verify-full); la API no arrancará."; }
+import os
+from sqlalchemy.engine import make_url
+from app.database import enforce_tls_policy
+url = next(l.split("=", 1)[1] for l in open(os.environ["NEXO_CHECK_ENV"]).read().splitlines() if l.startswith("DATABASE_URL="))
+enforce_tls_policy(url)
+query = make_url(url).query
+assert query.get("sslmode") == "verify-full" and query.get("sslrootcert") == os.environ["NEXO_CHECK_ENV"].rsplit("/", 1)[0] + "/rds-ca-bundle.pem"
+print("DATABASE_URL compatible con verify-full (valor no mostrado)")
+PYEOF
 mv -f "$ENV_FILE.new" "$ENV_FILE"
 
 # V2 termina TLS en el ALB: sin DuckDNS ni renovación de certificados en las instancias.

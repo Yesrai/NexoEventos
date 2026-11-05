@@ -142,9 +142,9 @@ variable "backup_retention_days" {
 }
 
 variable "s3_backup_retention_days" {
-  description = "Días que se conservan en S3 los respaldos cifrados de `backups/database/` y sus versiones no vigentes. Antes se reutilizaba backup_retention_days (7): alinear el prefijo del lifecycle con ese valor habría borrado los respaldos reales. Mínimo 30."
+  description = "Días que se conservan en S3 los respaldos cifrados de `backups/database/` y sus versiones no vigentes. Antes se reutilizaba backup_retention_days (7): alinear el prefijo del lifecycle con ese valor habría borrado los respaldos reales. Mínimo 30. Por defecto 365: los respaldos pesan KB (coste ≈ 0), así que caducarlos pronto solo añade riesgo de perder la única copia restaurable; subir/bajar solo con decisión expresa."
   type        = number
-  default     = 90
+  default     = 365
   validation {
     condition     = var.s3_backup_retention_days >= 30 && var.s3_backup_retention_days <= 3650
     error_message = "s3_backup_retention_days debe estar entre 30 y 3650 días."
@@ -186,4 +186,10 @@ check "v1_subnets_are_distinct_24s" {
     condition     = length(distinct(local.v1_subnet_cidrs)) == 3 && alltrue([for cidr in local.v1_subnet_cidrs : endswith(cidr, "/24")])
     error_message = "Las tres subredes V1 deben ser /24 distintas."
   }
+}
+
+variable "public_subnet_auto_public_ip" {
+  description = "Asigna IP pública automática a lo que se lance en la subred pública de V1 (AWS-0164). false (recomendado y por defecto): la EC2 ya la pide explícitamente. Solo existe para poder aplicar otros cambios (p. ej. alarmas) SIN tocar la subred: con un apply dirigido a una EC2 la subred entra como dependencia; pasar true mantiene el valor desplegado hasta decidir el cambio de red por separado."
+  type        = bool
+  default     = false
 }

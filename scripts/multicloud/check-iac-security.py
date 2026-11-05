@@ -61,8 +61,8 @@ for label, rel in (("V1/RDS", "infra/aws/alarms.tf"), ("V2/ALB", "infra/aws-v2/a
 v1_alarms = (ROOT / "infra/aws/alarms.tf").read_text()
 check('metric_name         = "FreeStorageSpace"' in v1_alarms and 'comparison_operator = "LessThanThreshold"' in v1_alarms and "rds_free_storage_alarm_bytes >= 536870912" in v1_alarms,
       "AWS V1: alarma de espacio libre de la RDS (FreeStorageSpace) con umbral configurable y mínimo de 512 MiB")
-check("alarm_actions       = local.alarm_actions" in aws_s3 and re.search(r'variable "alarm_email" \{.*?sensitive\s*=\s*true', v1_alarms, re.S) is not None,
-      "AWS V1: la alarma de CPU de la EC2 usa las acciones de SNS (vacías por defecto) y el correo de alarmas es sensible")
+check("alarm_actions       = local.alarm_actions" in aws_s3 and 'variable "alarm_email"' not in v1_alarms and 'resource "aws_sns_topic_subscription"' not in v1_alarms,
+      "AWS V1: la alarma de CPU de la EC2 usa las acciones de SNS (vacías por defecto) y el correo NO está en Terraform (ni variable ni suscripción: no entra en el estado ni en el plan)")
 v2_alarms = (ROOT / "infra/aws-v2/alarms.tf").read_text()
 check(all(x in v2_alarms for x in ("HTTPCode_Target_5XX_Count", "UnHealthyHostCount", "HealthyHostCount", "TargetResponseTime")), "AWS V2: alarmas de 5xx, destinos no sanos, destinos sanos bajos y latencia p95")
 v2a = (ROOT / "infra/aws-v2/alarms.tf").read_text()
@@ -72,6 +72,12 @@ check("aws_autoscaling_notification" in v2a and 'alarm_topic_arn != ""' in v2a, 
 check("aws_db_event_subscription" in v1_alarms and '"low storage"' in v1_alarms and '"failover"' in v1_alarms and "aws_sns_topic_policy" in v1_alarms and "aws:SourceAccount" in v1_alarms,
       "AWS V1: suscripción a eventos de la RDS (failover, fallos, espacio bajo) con política del tema limitada a la cuenta")
 check('metric_name         = "StatusCheckFailed"' in v1_alarms and 'treat_missing_data  = "notBreaching"' in v1_alarms, "AWS V1: alarma de comprobaciones de estado de la EC2 que no salta con la instancia detenida")
+aws_net = (ROOT / "infra/aws/network.tf").read_text()
+check(re.search(r'variable "public_subnet_auto_public_ip" \{.*?default\s*=\s*false', aws_vars, re.S) is not None and "map_public_ip_on_launch = var.public_subnet_auto_public_ip" in aws_net,
+      "AWS V1: la subred pública NO asigna IP automática por defecto (AWS-0164); el interruptor permite aplicar otros cambios sin tocar la red")
+check("rds_freeable_memory_low" in v1_alarms and 'metric_name         = "FreeableMemory"' in v1_alarms and "rds_freeable_memory_alarm_bytes >= 33554432" in v1_alarms,
+      "AWS V1: alarma de memoria liberable de la RDS con umbral configurable (por defecto 100 MiB; mínimo histórico 166 MiB)")
+check("aws_sns_topic_policy" in v1_alarms and (ROOT / "scripts/cloud/suscribir-correo-alarmas.sh").exists(), "AWS V1: la suscripción por correo se hace con un script de entrada oculta, no con Terraform")
 # --- AWS: CloudTrail opcional (desactivado por defecto) y guardia de la AMI con /livez ---
 ct = (ROOT / "infra/aws/cloudtrail.tf").read_text()
 check(re.search(r'variable "enable_cloudtrail" \{.*?default\s*=\s*false', ct, re.S) is not None, "AWS: enable_cloudtrail es false por defecto (no se crea ningún trail sin decidirlo)")

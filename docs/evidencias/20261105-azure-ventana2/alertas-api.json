@@ -1,0 +1,30 @@
+[
+ {
+  "regla": "alerta-vm-mem",
+  "severidad": "Sev2",
+  "condicion": "Resolved",
+  "disparada": "2026-11-04T22:50:41.6743832Z",
+  "resuelta": "2026-11-04T23:15:45.821778Z"
+ },
+ {
+  "regla": "alerta-vm-up",
+  "severidad": "Sev1",
+  "condicion": "Resolved",
+  "disparada": "2026-11-04T23:03:09.7311811Z",
+  "resuelta": "2026-11-05T01:48:13.3822705Z"
+ },
+ {
+  "regla": "alerta-vm-cpu",
+  "severidad": "Sev2",
+  "condicion": "Resolved",
+  "disparada": "2026-11-05T02:03:35.0449525Z",
+  "resuelta": "2026-11-05T02:28:33.9342862Z"
+ },
+ {
+  "regla": "alerta-vm-up",
+  "severidad": "Sev1",
+  "condicion": "Fired",
+  "disparada": "2026-11-05T02:32:11.1999225Z",
+  "resuelta": null
+ }
+]
