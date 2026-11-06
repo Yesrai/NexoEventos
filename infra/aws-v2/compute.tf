@@ -56,9 +56,9 @@ resource "aws_launch_template" "web" {
 
 resource "aws_autoscaling_group" "web" {
   name                = "${local.v2_prefix}-asg"
-  min_size            = var.asg_min
+  min_size            = var.asg_enabled ? var.asg_min : 0
   max_size            = var.asg_max
-  desired_capacity    = var.asg_desired
+  desired_capacity    = var.asg_enabled ? var.asg_desired : 0
   vpc_zone_identifier = [data.aws_subnet.public_a.id, aws_subnet.public_b.id]
   target_group_arns   = [aws_lb_target_group.web.arn]
   # El health check del ALB es de liveness (sin PostgreSQL): una caída de la base de datos no provoca el reemplazo de instancias sanas.
@@ -86,8 +86,9 @@ resource "aws_autoscaling_group" "web" {
 
   lifecycle {
     precondition {
-      condition     = var.asg_min <= var.asg_desired && var.asg_desired <= var.asg_max && var.asg_min >= 2
-      error_message = "Se requieren al menos 2 instancias (min <= deseado <= max) para repartir zonas y tolerar la caída de una."
+      # Con V2 encendida se exigen al menos 2 instancias; con V2 apagada (asg_enabled = false) la capacidad es 0 a propósito.
+      condition     = !var.asg_enabled || (var.asg_min <= var.asg_desired && var.asg_desired <= var.asg_max && var.asg_min >= 2)
+      error_message = "Con asg_enabled = true se requieren al menos 2 instancias (min <= deseado <= max) para repartir zonas y tolerar la caída de una."
     }
   }
 }

@@ -80,6 +80,11 @@ variable "app_secret_name" {
   default     = "nexoeventos/academy/backend-env"
 }
 
+variable "asg_enabled" {
+  description = "OBLIGATORIA, sin valor por defecto (a propósito, para que V2 no se encienda por accidente). true = V2 encendida (asg_min/asg_desired instancias, 2 por defecto); false = V2 apagada: el ASG queda con mínima=0 y deseada=0 (la máxima se conserva). Con false siguen existiendo y facturando el ALB y la RDS. Usar siempre scripts/v2-ops/v2-terraform.sh on|off (archivos academy-v2-on.tfvars / academy-v2-off.tfvars); ver docs/operacion/reencendido-v2.md."
+  type        = bool
+}
+
 variable "asg_min" {
   type    = number
   default = 2
