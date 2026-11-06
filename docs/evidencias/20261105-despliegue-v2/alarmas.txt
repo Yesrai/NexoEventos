@@ -1,0 +1,5 @@
+nexoeventos-academy-v2-alb-5xx-destino	OK
+nexoeventos-academy-v2-alb-destinos-no-sanos	OK
+nexoeventos-academy-v2-alb-latencia-p95	OK
+nexoeventos-academy-v2-alb-sanos-bajo-lo-deseado	OK
+nexoeventos-academy-v2-asg-en-servicio-bajo-lo-deseado	OK
