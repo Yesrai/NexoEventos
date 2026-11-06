@@ -28,7 +28,7 @@ El proyecto fija `hashicorp/aws = 6.67.0`. Para `aws_db_instance`, `max_allocate
 
 La variable `db_max_allocated_storage_gib`:
 
-- usa `0` por defecto para la V1 de costo acotado;
+- usa `0` por defecto (valor de la variable para una V1 nueva de costo acotado). **La RDS real de Academy ya no está en ese caso** (6-nov-2026): es Multi-AZ y su máximo es 40 GiB (se subió con la CLI desde 20). Por eso `work/terraform-envs/academy.tfvars` debe declarar `db_max_allocated_storage_gib = 40`, `db_multi_az = true` y `db_apply_immediately`; **omitir `db_multi_az` (valor por defecto false) o dejar el máximo en 0 propondría quitar Multi-AZ o el autoescalado**. `scripts/reconstruct-academy-tfvars.py` ya lee esos valores del estado y conserva el mayor máximo entre el estado y el archivo actual;
 - permite habilitarlo solo con al menos 10 % por encima de `db_allocated_storage_gib` y ≤ 100 GiB;
 - no promete que el cambio esté aplicado ni que el laboratorio permita `ModifyDBInstance`;
 - requiere RDS `available`, revisión del plan y aprobación propia antes de aplicar.
