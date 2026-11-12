@@ -9,13 +9,14 @@
 #   Para aplicar pide escribir exactamente «APLICAR ON» o «APLICAR OFF» y aplica solo el plan guardado. Nunca ejecuta destroy.
 #   --plan-only: genera y revisa el plan, pero no ofrece aplicar.
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; source "$HERE/lib.sh"
-ROOT="$(cd "$HERE/../.." && pwd)"
+ROOT="$(cd "$HERE/../.." && pwd -P)"           # ruta FÍSICA: no depende de enlaces simbólicos (p. ej. el de compatibilidad de Codex)
 TF_BIN="${TF_BIN:-terraform}"
 V2_TF_DIR="${V2_TF_DIR:-$ROOT/infra/aws-v2}"
 V2_TFVARS_DIR="${V2_TFVARS_DIR:-$ROOT/work/terraform-envs}"
 V2_PLAN_DIR="${V2_PLAN_DIR:-$ROOT/work/operacion/v2-plans}"
 MARKER="${V2_MARKER:-$ROOT/work/operacion/v2-estado-declarado}"
 ASG_ADDR="aws_autoscaling_group.web"
+guard_env      # variables TF_* que desvían el backend y overrides fuera del modo de pruebas: bloquea antes de cualquier otra cosa
 MODE="${1:-}"; PLAN_ONLY=0
 [[ "$MODE" == "on" || "$MODE" == "off" ]] || die "Uso: $0 on|off [--plan-only]   (el argumento es obligatorio: no hay valor por defecto)"
 shift
@@ -28,6 +29,7 @@ grep -q -E "^[[:space:]]*asg_enabled[[:space:]]*=" "$COMMON" && die "academy-v2-
 want="$([[ "$MODE" == on ]] && echo true || echo false)"
 grep -q -E "^[[:space:]]*asg_enabled[[:space:]]*=[[:space:]]*$want[[:space:]]*(#.*)?$" "$STATE_VARS" || die "$STATE_VARS no contiene asg_enabled = $want."
 [[ -d "$V2_TF_DIR/.terraform" ]] || die "infra/aws-v2 no está inicializada (.terraform). Este script no ejecuta 'terraform init'; hazlo a mano si procede."
+guard_state    # backend local → estado real de V2 (ruta física), existe, JSON válido, lineage esperado y aws_autoscaling_group.web; sin red
 
 # 1) Perfil, cuenta y región (sin imprimir el número de cuenta)
 check_identity
