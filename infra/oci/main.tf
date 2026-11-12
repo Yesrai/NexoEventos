@@ -41,3 +41,17 @@ module "recovery" {
   flex_memory_gb         = var.recovery_flex_memory_gb
   freeform_tags          = local.common_tags
 }
+
+# Autoprueba del lease (B-10): apagado por defecto; nada se crea con create_lease_test = false.
+module "lease" {
+  source           = "./modules/lease"
+  create           = var.create_lease_test
+  tenancy_ocid     = var.tenancy_ocid
+  compartment_id   = module.iam.compartment_id
+  compartment_name = var.compartment_name
+  bucket_name      = var.lease_bucket_name
+  group_name       = "nexoeventos-lease-writers"
+  user_name        = "nexoeventos-lease-svc"
+  user_email       = var.uploader_user_email
+  freeform_tags    = local.common_tags
+}

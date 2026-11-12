@@ -137,3 +137,14 @@ variable "bastion_client_cidr" {
 locals {
   common_tags = { Project = "NexoEventos", Role = "recuperacion", ManagedBy = "Terraform" }
 }
+
+variable "create_lease_test" {
+  description = "false por defecto. true crea el bucket de PRUEBAS sin versionado y la identidad mínima para la autoprueba del lease (B-10). Requiere revisar el plan y autorización explícita."
+  type        = bool
+  default     = false
+}
+
+variable "lease_bucket_name" {
+  type    = string
+  default = "nexoeventos-lease-test"
+}
