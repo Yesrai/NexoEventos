@@ -40,3 +40,17 @@ work/
 # Observabilidad (Azure): caché de ansible-lint, inventario real y estados locales
 ansible/.ansible/
 ansible/monitoring-inventory.yml
+
+# Material privado de recuperación y claves (añadido 12-nov-2026). Los ejemplos (*.example*) siguen versionables.
+# Copias cifradas (CMS) y claves de recuperación
+*.cms
+*.rsa
+# Claves SSH privadas (y sus .pub, que no se versionan)
+id_rsa*
+id_ed25519*
+# Archivo de clave local de laboratorios
+key.env
+# Variables e inventarios reales de Ansible si se copiaran junto a sus ejemplos (los reales viven en work/)
+ansible/runtime.yml
+ansible/recovery-runtime.yml
+ansible/recovery-inventory.yml
