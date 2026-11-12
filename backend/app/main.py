@@ -12,6 +12,7 @@ from sqlalchemy.exc import IntegrityError, InterfaceError, OperationalError
 from sqlalchemy.exc import TimeoutError as PoolTimeoutError
 from sqlalchemy.orm import Session
 
+from app.failover.gate import build_gate_from_env, install_write_gate
 from app.access_control import (
     EventNotAssignedError,
     TicketAlreadyUsedError,
@@ -90,19 +91,27 @@ def _user_view(context: AuthContext) -> UserView:
 logger = logging.getLogger("nexoeventos.api")
 
 
-def create_app(database_url: str | None = None) -> FastAPI:
+def create_app(database_url: str | None = None, write_gate=None) -> FastAPI:
     validate_production_config()
     engine = build_engine(database_url)
+    # Compuerta de escritura (B-11): DESACTIVADA por defecto (WRITE_GATE_MODE=off → gate = None, sin ningún cambio de comportamiento).
+    gate = write_gate if write_gate is not None else build_gate_from_env()
 
     # Apagado ordenado (reemplazo de instancias, reinicio del servicio): se cierran las conexiones del pool para no dejar sesiones colgadas en RDS.
     @asynccontextmanager
     async def lifespan(_: FastAPI):
+        if gate is not None:
+            gate.start()
         yield
+        if gate is not None:
+            gate.stop()
         engine.dispose()
 
     application = FastAPI(title="NexoEventos API", version="0.3.0", lifespan=lifespan)
     application.state.engine = engine
     application.state.session_factory = build_session_factory(engine)
+    if gate is not None:
+        install_write_gate(application, engine, application.state.session_factory, gate)   # antes de CORS: CORS envuelve la respuesta 503
     application.add_middleware(
         CORSMiddleware,
         allow_origins=sorted(ALLOWED_ORIGINS - {"http://testserver"}),
