@@ -1,0 +1,16 @@
+# T4 — Azure: centro de operaciones preparado para T5/T6 · **PASS (18/18)** (22-nov-2026, ventana 18:43–19:38 UTC)
+Expediente: `work/evidencias/T4-20261122T193829Z-8374/` (manifiesto SHA-256 verificado, 0 alterados). Registrado con `record-evidence T4 … PASS`; auditoría íntegra. Ventana única de 55 min (límite 3 h), coste estimado **≈ USD 0,21** (umbral 1,5).
+
+## Medido (real, desde la VM de Azure)
+- **Sondas:** 38 ciclos en 2315 s, hueco máx 67 s. AWS = ERROR real (el demo cae desde el 9-nov; Zabbix lo confirma), OCI = ADVERTENCIA «en espera» (solo alcanzabilidad del endpoint regional; **no** hay aplicación activa), Azure = OK. Nada simulado.
+- **Alerta real y correo:** el host de prueba falló → problema de Zabbix 19:01:25Z → la VM publicó la métrica con su identidad administrada 19:01:26Z → `alerta-nexo-sonda` Fired **19:03:19Z** (resuelta 19:10:19Z). Segunda activación **19:28:28Z** causada por el host de control positivo (su `/api/events` devolvía 0). Correo «Fired:Sev2 Azure Monitor Alert alerta-nexo-sonda on vm-nexoeventos-obs» confirmado por la propietaria; Gmail muestra 14:28 (UTC-5) = 19:28Z, coherente con la activación 2. **Cabecera del mensaje no verificada** (pendiente de la propietaria).
+- **Panel:** 18 pruebas, 0 fallos (anónimo/token inválido 401, viewer/requester 403, aprobador distinto, failover RECHAZADO, sin endpoints de ejecución, denegaciones auditadas, cadena íntegra); con AWS en ERROR real.
+- **Testigo:** auth/roles/firma 10/10; sin inicializar y sin dueño; reinicio conserva estado; 27 pruebas del perfil Azure en la VM (sin privilegios). Límite vigente: almacén en archivo local, un prefijo restaurado no se detecta localmente ⇒ no se declara «independencia validada».
+- **Grafana/Zabbix:** los «No data» de latencia/TLS = AWS apagado (ítems NO SOPORTADOS por *Timeout*), no consultas erróneas; **control positivo** (destino que responde): latencia 0,61 s, TLS 74 días, ítems soportados. 8 hosts: 2 deshabilitados previstos (`aws-nexoeventos-v2`, `oci-nexoeventos-recovery`).
+- **Seguridad:** huellas de Grafana, Zabbix y UFW idénticas antes/después; NSG de entrada idéntico (`9bdc6910…`); 0 OOM, mínimo 6690 MiB libres.
+
+## Incidentes resueltos dentro de T4
+Falta `python3-venv` (el instalador lo añade); include de Nginx fuera del `server` (restauración automática; ahora por conteo de llaves); prueba del testigo ejecutada como root (ahora sin privilegios; el resultado inicial se conserva en `work/t4/incidentes/`); `alerta-vm-mem` a las 18:46 por los ceros de arranque de la métrica; eventos `/etc/passwd` por los usuarios creados por el instalador.
+
+## Estado final de Azure
+VM **desasignada**; apagado automático restaurado **exactamente** (Enabled, 17:38 UTC, UTC, notificación Disabled, mismo destino); regla y rol de correo, host de prueba, control positivo y canal de Zabbix **retirados**; tokens en claro **destruidos** (la VM guarda solo hashes; la propietaria los tiene en su gestor); snapshot de T4 **borrado**; recursos = los previos (el snapshot y los 2 discos del 4-nov intactos). Permanece instalado (aditivo): usuarios `opscenter`/`nexowitness`, `/opt/nexoeventos`, centro + testigo + recolector (timer) y los 2 hosts de Zabbix deshabilitados. `REAL_EXECUTION_WIRED=False`; AWS, OCI, DNS y S14 sin cambios.

@@ -85,3 +85,10 @@ aws_writers_quiet() {   # $1 etiqueta para el mensaje
   [[ -n "$ec2" && -n "$rds" && "$ec2" =~ ^(stopped[[:space:]]*)+$ && "$rds" =~ ^(stopped[[:space:]]*)+$ ]] || fail "AWS NO está en reposo ($1): EC2=[$ec2] RDS=[$rds]; se detiene para evitar doble escritor" 13
   echo "OK    AWS en reposo ($1): EC2 V1 y RDS detenidas (sin escritor en AWS)"
 }
+
+
+# ---- Entrada pública de PRUEBA (T3): validadores estrictos de lo que se reenvía a la VM por SSH (evitan inyección en la línea de comandos remota). Devuelven 0/1 sin imprimir nada.
+valid_tls_san() { [[ "$1" =~ ^((DNS|IP):[A-Za-z0-9.:-]+)(,(DNS|IP):[A-Za-z0-9.:-]+)*$ ]]; }          # SAN adicionales del certificado efímero
+valid_origin() { [[ "$1" =~ ^https://[A-Za-z0-9.:-]+$ ]]; }                                              # origen permitido por la API (FRONTEND_ORIGINS); solo https, sin ruta
+valid_argon() { [[ "$1" =~ ^[1-4]$ ]]; }                                                                 # ARGON2_MAX_CONCURRENT (memoria por hash: 64 MiB; 1 en la VM de 1 GB)
+valid_public_base() { [[ "$1" =~ ^https://(([0-9]{1,3}\.){3}[0-9]{1,3}|[a-z0-9.-]+)$ ]]; }            # base HTTPS pública de las pruebas: IPv4 o nombre, sin puerto ni ruta

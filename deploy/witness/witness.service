@@ -1,0 +1,37 @@
+# Unidad systemd del TESTIGO (VM de Azure). NO instalada todavía. Escucha SOLO en 127.0.0.1:8760; el TLS lo termina Nginx (/witness/). No recibe credenciales de AWS ni de OCI: solo claves PÚBLICAS de los informantes.
+[Unit]
+Description=NexoEventos - Testigo de frescura independiente (atestaciones firmadas; no ejecuta nada)
+After=network.target
+
+[Service]
+User=nexowitness
+Group=nexowitness
+WorkingDirectory=/opt/nexoeventos
+Environment=PYTHONPATH=/opt/nexoeventos/backend:/opt/nexoeventos/scripts/multicloud/witness
+Environment=WITNESS_HOST=127.0.0.1
+Environment=PORT=8760
+Environment=WITNESS_STORE=file:/var/lib/witness/store.jsonl
+Environment=WITNESS_SIGNER=local-ecdsa:/var/lib/witness/signer.pem
+Environment=WITNESS_ALLOW_LOCAL_SIGNER=1
+Environment=WITNESS_REPORTERS_FILE=/etc/witness/reporters.json
+Environment=WITNESS_INVOKER_TOKENS_FILE=/etc/witness/invokers.json
+ExecStart=/opt/nexoeventos/venv/bin/python /opt/nexoeventos/scripts/multicloud/witness/witness_service.py
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/witness
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+CapabilityBoundingSet=
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

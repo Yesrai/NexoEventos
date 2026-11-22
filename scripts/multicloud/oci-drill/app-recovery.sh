@@ -42,7 +42,7 @@ STOP_BEFORE="${STOP_BEFORE:-}"   # opcional: detenerse antes de una etapa (p. ej
 want() { [[ $(idx "$1") -ge $(idx "$START_AT") ]] && { [[ -z "$STOP_BEFORE" ]] || [[ $(idx "$1") -lt $(idx "$STOP_BEFORE") ]]; }; }
 OUT="${OUT_DIR:-$ROOT/work/oci-drill/app-$(date -u +%Y%m%dT%H%M%SZ)}"; umask 077; mkdir -p "$OUT/bundle/wheels"; LOG="$OUT/tiempos.txt"; B="$OUT/bundle"
 # known_hosts POR EJECUCIÓN (en $OUT): cada VM nueva llega por el mismo 127.0.0.1:$LPORT con otra clave de host; con ~/.ssh/known_hosts la 2.ª ejecución fallaría («HOST IDENTIFICATION HAS CHANGED»).
-SSHOPTS=(-i "$SSH_KEY" -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="$OUT/known_hosts" -o IdentitiesOnly=yes)
+SSHOPTS=(-i "$SSH_KEY" -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="$OUT/known_hosts" -o IdentitiesOnly=yes)
 SSH=(ssh "${SSHOPTS[@]}" -p "$LPORT" opc@127.0.0.1); SCP=(scp "${SSHOPTS[@]}" -P "$LPORT")
 mark() { printf '%s %s\n' "$(date -u +%FT%TZ)" "$1" | tee -a "$LOG"; }; if [[ -s "$LOG" ]]; then T0=$(python3 -c "import sys,datetime as d;print(int(d.datetime.strptime(open(sys.argv[1]).readline().split()[0],'%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=d.timezone.utc).timestamp()))" "$LOG"); mark "REANUDACIÓN desde la etapa '$START_AT' (el T0 original no se reinicia)"; else T0=$(date +%s); mark "T0 inicio de la recuperación de la aplicación"; fi
 RUN_T0="$T0"; stages_init
@@ -53,10 +53,19 @@ ask_pw() {   # en el shell PRINCIPAL (las tuberías corren en subshells y no con
   [[ -t 0 ]] || fail "la clave está protegida: ejecute este script en una terminal interactiva" 7
   IFS= read -r -s -p "Frase de paso de la clave de recuperación (no se muestra): " KEYPW; echo
 }
+check_pw() {   # ¿abre la clave protegida? (sin descifrar nada ni tocar la VM); misma mecánica que decrypt_cms: fd 4, nunca variable de entorno
+  exec 4< <(printf '%s\n' "$KEYPW"); openssl pkey -in "$KEY" -passin fd:4 -noout 2>/dev/null
+}
+verify_pw_upfront() {   # T3 2.º intento: una frase mal escrita se descubría tras ≈ 10 min de instalación. Se pide y VERIFICA al PRINCIPIO (hasta 3 intentos) antes de tocar la VM.
+  grep -q -E 'ENCRYPTED' "$KEY" || return 0
+  local n; for n in 1 2 3; do ask_pw; if check_pw; then echo "OK    la frase abre la clave de recuperación (comprobado antes de tocar la VM)"; return 0; fi; KEYPW=""; echo "La frase NO abre la clave (intento $n de 3)." >&2; done
+  fail "la frase no abrió la clave tras 3 intentos; no se ha modificado nada" 7
+}
 decrypt_cms() {   # $1 = paquete CMS → volcado en claro por stdout
   if grep -q -E 'ENCRYPTED' "$KEY"; then exec 4< <(printf '%s\n' "$KEYPW"); openssl cms -decrypt -binary -inform DER -in "$1" -inkey "$KEY" -passin fd:4
   else openssl cms -decrypt -binary -inform DER -in "$1" -inkey "$KEY"; fi
 }
+[[ "$BACKUP_KIND" == c04 ]] && [[ $(idx data) -ge $(idx "$START_AT") ]] && verify_pw_upfront   # solo si esta ejecución descifrará
 RO_ARG=""; [[ "${READONLY:-0}" == 1 ]] && RO_ARG="--read-only"
 if [[ "$BACKUP_KIND" == c04 ]]; then CMS_DATA="$OUT/$BUNDLE.cms"; CMS_SEC="$OUT/$SECBUNDLE.cms"; [[ -s "$OUT/linea-base.json" ]] && BASELINE_FILE="$OUT/linea-base.json"
 else CMS_DATA="$OUT/$BUNDLE.oci.cms"; CMS_SEC="$OUT/$SECBUNDLE.oci.cms"; fi
@@ -159,13 +168,22 @@ if want app2; then
 stage_begin servicio
 "${SCP[@]}" "$HERE/oci-drill/install-app.sh" "$HERE/oci-drill/db-permissions.sh" "opc@127.0.0.1:app/"   # versión corregida (Nginx 1.20)
 # 6. Etapa 2: rol de BD, entorno, TLS efímero, systemd, Nginx
-"${SSH[@]}" "sudo env RECOVERY_READONLY=${READONLY:-0} bash ~/app/install-app.sh stage2 ~/app" | tee "$OUT/stage2.txt"; mark "T_servicio: aplicación en marcha (healthz local correcto)"
+ENVFWD=""
+[[ -z "${RECOVERY_TLS_SAN:-}" ]] || { valid_tls_san "$RECOVERY_TLS_SAN" || fail "RECOVERY_TLS_SAN inválido"; ENVFWD="$ENVFWD RECOVERY_TLS_SAN=$RECOVERY_TLS_SAN"; }
+[[ -z "${RECOVERY_ORIGIN:-}" ]] || { valid_origin "$RECOVERY_ORIGIN" || fail "RECOVERY_ORIGIN inválido"; ENVFWD="$ENVFWD RECOVERY_ORIGIN=$RECOVERY_ORIGIN"; }
+[[ -z "${RECOVERY_ARGON2:-}" ]] || { valid_argon "$RECOVERY_ARGON2" || fail "RECOVERY_ARGON2 inválido"; ENVFWD="$ENVFWD RECOVERY_ARGON2=$RECOVERY_ARGON2"; }
+"${SSH[@]}" "sudo env RECOVERY_READONLY=${READONLY:-0}$ENVFWD bash ~/app/install-app.sh stage2 ~/app" | tee "$OUT/stage2.txt"; mark "T_servicio: aplicación en marcha (healthz local correcto)"
 stage_end
 fi
 if want smoke; then
 stage_begin humo
 # 7. Pruebas funcionales por el túnel HTTPS (sin ventas)
-backend/.venv/bin/python "$HERE/oci-drill/app-smoke.py" --out "$OUT" --base "https://localhost:$HPORT" $RO_ARG ${RESET_CREDS:+--reset-creds --ssh-port "$LPORT" --ssh-key "$SSH_KEY"} | tee "$OUT/smoke.txt"; mark "T_funcional: pruebas funcionales terminadas"
+SMOKE_BASE="https://localhost:$HPORT"; CA_ARG=""
+if [[ -n "${PUBLIC_BASE:-}" ]]; then   # acceso público de PRUEBA: se fija el certificado efímero de la VM (público; se obtiene por SSH) y se exige que su SAN incluya el destino
+  valid_public_base "$PUBLIC_BASE" || fail "PUBLIC_BASE inválido"; SMOKE_BASE="$PUBLIC_BASE"; "${SSH[@]}" 'sudo cat /etc/nginx/demo-tls/cert.pem' > "$OUT/vm-cert.pem"
+  openssl x509 -in "$OUT/vm-cert.pem" -noout -text | grep -q "${PUBLIC_BASE#https://}" || fail "el SAN del certificado de la VM no incluye ${PUBLIC_BASE#https://}"; CA_ARG="--cafile $OUT/vm-cert.pem"
+fi
+backend/.venv/bin/python "$HERE/oci-drill/app-smoke.py" --out "$OUT" --base "$SMOKE_BASE" $CA_ARG $RO_ARG ${RESET_CREDS:+--reset-creds --ssh-port "$LPORT" --ssh-key "$SSH_KEY"} | tee "$OUT/smoke.txt"; mark "T_funcional: pruebas funcionales terminadas"
 "${SSH[@]}" "sudo -u postgres bash -c 'cd /var/lib/pgsql && /usr/pgsql-18/bin/psql -d nexoeventos -At -f /var/lib/pgsql/drill-tools/fingerprint.sql'" | sort > "$OUT/huella-final.txt"
 diff <(sort "$OUT/huella-restaurada.txt" | grep -E '^[a-z_0-9]+=') "$OUT/huella-final.txt" > "$OUT/huella-delta.txt" || true
 if [[ "${READONLY:-0}" == 1 ]]; then   # solo lectura: la base NO puede haber cambiado en absoluto (ni access_logs)

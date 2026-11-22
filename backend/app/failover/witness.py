@@ -12,6 +12,7 @@ Si el testigo no responde, está sin inicializar o la respuesta no verifica: BLO
 from __future__ import annotations
 
 import hashlib
+import threading
 import json
 import os
 import secrets
@@ -94,6 +95,7 @@ class Witness:
         self.store = path if hasattr(path, "lines") else FileAppendStore(path)
         self.path = getattr(self.store, "path", None); self.auth, self.reporters, self.now = witness_auth, reporters_verifier, now
         self.down = False
+        self._lock = threading.RLock()     # una instancia es SEGURA entre hilos: (entries, last_hash, wm) se leen y escriben siempre juntos (antes se podía leer «secuencia nueva + hash viejo» y romper la cadena)
         self.wm: dict | None = None; self.entries = 0; self.last_hash = GENESIS
         self._sync()
 
@@ -120,6 +122,9 @@ class Witness:
         raise StoreUnavailable("demasiada contención al informar")
 
     def _report_once(self, reporter: str, payload: dict, sig: str) -> tuple[bool, str]:
+        with self._lock: return self._report_once_locked(reporter, payload, sig)
+
+    def _report_once_locked(self, reporter: str, payload: dict, sig: str) -> tuple[bool, str]:
         self._sync()
         k = payload.get("kind")
         if k not in KINDS or reporter not in KINDS[k]: return False, "informante no autorizado para ese tipo de informe"
@@ -144,6 +149,9 @@ class Witness:
         self._apply(payload); self.entries += 1; self.last_hash = h; return True, "ok"
 
     def attest(self, nonce: str) -> dict:
+        with self._lock: return self._attest_locked(nonce)
+
+    def _attest_locked(self, nonce: str) -> dict:
         if self.down: raise StoreUnavailable("testigo caído")
         self._sync()                                                                                     # nunca atestar con un estado más viejo que el del almacén
         body = {"nonce": nonce, "watermark": self.wm, "issued_at": self.now(), "entries": self.entries, "head": self.last_hash}
@@ -151,10 +159,11 @@ class Witness:
 
     def report_with_receipt(self, reporter: str, payload: dict, sig: str) -> dict:
         """Como report(), pero devuelve un RECIBO firmado por el testigo {seq, hash}: prueba de que el informe quedó en su cadena (se puede volver a comprobar con entry(seq))."""
-        ok, why = self.report(reporter, payload, sig)
-        if not ok: return {"ok": False, "reason": why}
-        body = {"seq": self.entries, "hash": self.last_hash, "reporter": reporter}
-        return {"ok": True, "reason": why, **body, "sig": self.auth.sign("witness", _canon({"receipt": body}))}
+        with self._lock:     # el recibo describe EXACTAMENTE la entrada que este informe acaba de escribir
+            ok, why = self.report(reporter, payload, sig)
+            if not ok: return {"ok": False, "reason": why}
+            body = {"seq": self.entries, "hash": self.last_hash, "reporter": reporter}
+            return {"ok": True, "reason": why, **body, "sig": self.auth.sign("witness", _canon({"receipt": body}))}
 
     def entry(self, seq: int) -> dict | None:
         if self.down: raise StoreUnavailable("testigo caído")
@@ -294,10 +303,21 @@ class HttpWitnessClientBase:
 
 class HttpWitnessClient:
     """Cliente HTTPS del testigo: GET <url>?nonce=<n> → JSON de la atestación. La URL va en un archivo 0600; solo https (http a localhost solo en pruebas); sin redirecciones. NO hay todavía un servicio real."""
-    def __init__(self, url_file, timeout: float = 5.0, allow_http_localhost: bool = False):
+    def __init__(self, url_file, timeout: float = 5.0, allow_http_localhost: bool = False, token_file=None, ca_file=None):
+        import ssl
         import stat
         import urllib.parse
         import urllib.request
+        # token_file: token Bearer del INVOCADOR (archivo 0600; el servicio solo guarda su SHA-256). ca_file: certificado/CA que se FIJA para el servicio (p. ej. autofirmado de la VM de Azure):
+        # con él NO se aceptan otras CA; sin él, la verificación habitual del sistema. Ambos opcionales: sin ellos el comportamiento es el de siempre.
+        self._token = None
+        if token_file is not None:
+            tp = Path(token_file)
+            if tp.stat().st_mode & (stat.S_IRWXG | stat.S_IRWXO): raise StoreError("el archivo con el token del testigo debe tener permisos 0600")
+            self._token = tp.read_text().strip()
+            if not self._token: raise StoreError("token del testigo vacío")
+        from app.failover.tlsctx import verified_ssl_context
+        ctx = ssl.create_default_context(cafile=str(ca_file)) if ca_file is not None else verified_ssl_context()
         p = Path(url_file)
         if p.stat().st_mode & (stat.S_IRWXG | stat.S_IRWXO): raise StoreError("el archivo con la URL del testigo debe tener permisos 0600")
         u = p.read_text().strip(); pu = urllib.parse.urlparse(u); local = pu.hostname in ("127.0.0.1", "localhost", "::1")
@@ -306,14 +326,17 @@ class HttpWitnessClient:
         self._u, self.timeout = u, timeout
         class _NR(urllib.request.HTTPRedirectHandler):
             def redirect_request(self, *a, **k): return None
-        self._op = urllib.request.build_opener(_NR)
+        self._op = urllib.request.build_opener(_NR, urllib.request.HTTPSHandler(context=ctx))
+
+    def _auth(self) -> dict:
+        return {"Authorization": "Bearer " + self._token} if self._token else {}
 
     def attest(self, nonce: str) -> dict:
         import http.client
         import urllib.error
         import urllib.parse
         try:
-            with self._op.open(self._u + "?nonce=" + urllib.parse.quote(nonce, safe=""), timeout=self.timeout) as r:
+            with self._op.open(urllib.request.Request(self._u + "?nonce=" + urllib.parse.quote(nonce, safe=""), headers=self._auth()), timeout=self.timeout) as r:
                 return json.loads(r.read(65536))
         except (urllib.error.URLError, OSError, ValueError, http.client.HTTPException):
             raise StoreUnavailable("testigo inaccesible o respuesta ilegible")
@@ -325,7 +348,7 @@ class HttpWitnessClient:
         import urllib.request
         data = json.dumps({"reporter": reporter, "payload": payload, "sig": sig}).encode()
         try:
-            req = urllib.request.Request(self._u.rsplit("/", 1)[0] + "/report", data=data, method="POST", headers={"Content-Type": "application/json"})
+            req = urllib.request.Request(self._u.rsplit("/", 1)[0] + "/report", data=data, method="POST", headers={"Content-Type": "application/json", **self._auth()})
             with self._op.open(req, timeout=self.timeout) as r: return json.loads(r.read(65536))
         except urllib.error.HTTPError as e:
             try: return json.loads(e.read(65536))

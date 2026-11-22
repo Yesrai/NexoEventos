@@ -104,9 +104,10 @@ def parse_response(data: bytes, qid: int = 0x1234) -> tuple[list[str], int | Non
 
 
 def udp_resolver(name: str, server: str, timeout: float = 3.0) -> tuple[list[str], int | None]:
+    host, _, port = server.partition(":")          # «1.1.1.1» (puerto 53) o «127.0.0.1:5353» (solo pruebas locales con resolvedores simulados)
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM); s.settimeout(timeout)
     try:
-        s.sendto(build_query(name), (server, 53)); data, _ = s.recvfrom(2048)
+        s.sendto(build_query(name), (host, int(port) if port else 53)); data, _ = s.recvfrom(2048)
         return parse_response(data)
     finally:
         s.close()
@@ -159,10 +160,27 @@ def read_token(args) -> str:
     return tok
 
 
+def _verified_ctx():
+    """Contexto TLS verificado (copia de app.failover.tlsctx; este módulo solo usa la biblioteca estándar): almacén del sistema y, si no hay CA cargada, certifi. Nunca desactiva la verificación."""
+    import ssl
+    ctx = ssl.create_default_context()
+    if not ctx.get_ca_certs():
+        try:
+            import certifi
+            ctx = ssl.create_default_context(cafile=certifi.where())
+        except ImportError:
+            pass
+    return ctx
+
+
+def _default_urlopen(url, timeout=10):
+    return urllib.request.urlopen(url, timeout=timeout, context=_verified_ctx())
+
+
 def duckdns_update(domain: str, ip: str, token: str, api_base: str, opener=None, timeout=10) -> None:
     url = f"{api_base}/update?" + urllib.parse.urlencode({"domains": domain, "token": token, "ip": ip, "verbose": "true"})
     try:
-        with (opener or urllib.request.urlopen)(url, timeout=timeout) as r:
+        with (opener or _default_urlopen)(url, timeout=timeout) as r:
             body = r.read(200).decode("utf-8", "replace")
     except (urllib.error.URLError, OSError, ValueError) as e:
         raise Refused(f"DuckDNS no respondió ({type(e).__name__}); el estado NO cambió", 4)

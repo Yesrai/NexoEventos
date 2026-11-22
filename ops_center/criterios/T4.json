@@ -1,0 +1,97 @@
+{
+ "stage": "T4",
+ "title": "Azure: centro de operaciones preparado para supervisar T5 y T6 (sondas reales, panel, Grafana, Zabbix, alertas, testigo)",
+ "criteria": [
+  {
+   "id": "inventario_previo_solo_lectura",
+   "kind": "bool",
+   "desc": "inventario de solo lectura de la VM de Azure capturado ANTES de cambiar nada (versiones y huellas de Grafana, Zabbix, Nginx, UFW) y NSG/disco/IP registrados"
+  },
+  {
+   "id": "despliegue_aditivo_intacto",
+   "kind": "bool",
+   "desc": "instalación aditiva: huellas de Grafana, Zabbix y UFW idénticas antes y después, `nginx -t` correcto, copia de Nginx con SHA-256 y ningún servicio previo reiniciado"
+  },
+  {
+   "id": "servicios_activos",
+   "kind": "bool",
+   "desc": "tras instalar: ops-center, recolector (timer), testigo, Grafana, Zabbix, PostgreSQL, Nginx y SSH activos"
+  },
+  {
+   "id": "panel_con_aws_apagado",
+   "kind": "bool",
+   "desc": "el panel responde (/ops/healthz 200 y estado de las tres nubes legible) mientras las sondas de AWS fallan; sin dependencia de AWS"
+  },
+  {
+   "id": "tarjetas_tres_nubes_con_origen",
+   "kind": "bool",
+   "desc": "AWS, OCI y Azure aparecen con estado, origen (cloud_verificado/local) y hora; ninguna «No verificado» ni «sin_datos» en la última instantánea"
+  },
+  {
+   "id": "sondas_reales_continuas",
+   "kind": "bool",
+   "desc": "≥ 10 ciclos reales (origen cloud_verificado) en ≥ 10 min para AWS y OCI, hueco máximo ≤ 120 s, y las sondas de OCI en espera clasificadas como ADVERTENCIA (no OK)"
+  },
+  {
+   "id": "grafana_muestra_sondas",
+   "kind": "bool",
+   "desc": "Grafana (usuario de solo lectura) devuelve datos recientes de las sondas y muestra el panel multicloud"
+  },
+  {
+   "id": "alerta_real_disparada",
+   "kind": "bool",
+   "desc": "una sonda que falla (host de prueba) dispara una alerta REAL en Zabbix con marcas UTC de fallo y de aviso"
+  },
+  {
+   "id": "correo_recibido",
+   "kind": "bool",
+   "desc": "correo de la alerta recibido por la propietaria (confirmación humana con hora y asunto)"
+  },
+  {
+   "id": "testigo_autenticacion_y_roles",
+   "kind": "bool",
+   "desc": "testigo: anónimo → 401, token sin alcance → 403, token válido → 200; atestación con firma verificada con la clave pública; sin credenciales de AWS/OCI en la VM"
+  },
+  {
+   "id": "testigo_persistencia_y_firma",
+   "kind": "bool",
+   "desc": "testigo: tras reiniciar el servicio la secuencia y la cadena de hashes continúan; entrada alterada o cola truncada → falla cerrada"
+  },
+  {
+   "id": "auditoria_integra",
+   "kind": "bool",
+   "desc": "verify-audit del centro íntegro tras las pruebas (solicitud, validación, denegaciones, interruptor de emergencia)"
+  },
+  {
+   "id": "ejecucion_real_bloqueada",
+   "kind": "bool",
+   "desc": "REAL_EXECUTION_WIRED=False, `execute` denegado, ningún endpoint de ejecución, DuckDNS y failover sin cambios, B08–B11 en rojo"
+  },
+  {
+   "id": "nsg_sin_cambios_inbound",
+   "kind": "bool",
+   "desc": "reglas de entrada del NSG idénticas antes y después (solo la IP /32 del operador; sin puertos nuevos)"
+  },
+  {
+   "id": "sin_oom_ni_saturacion",
+   "kind": "bool",
+   "desc": "VM sin eventos OOM y con memoria disponible > 1 GiB durante toda la ventana"
+  },
+  {
+   "id": "reversion_sonda_prueba_retirada",
+   "kind": "bool",
+   "desc": "la sonda de prueba se elimina y el estado final del Zabbix (hosts) es el esperado"
+  },
+  {
+   "id": "costos_dentro_de_presupuesto",
+   "kind": "max",
+   "desc": "coste estimado de la ventana (USD, VM + discos + snapshot) ≤ umbral",
+   "threshold": 1.5
+  },
+  {
+   "id": "vm_desasignada_apagado_restaurado",
+   "kind": "bool",
+   "desc": "VM desasignada (sin cómputo) y apagado automático restaurado a su horario original"
+  }
+ ]
+}

@@ -20,9 +20,23 @@ def read(d: str) -> str:
 
 oci, az = read("infra/oci"), read("infra/azure")
 oci_vars = (ROOT / "infra/oci/variables.tf").read_text()
-check('access_type    = "NoPublicAccess"' in oci and 'versioning     = "Enabled"' in oci, "OCI: bucket privado y versionado")
-check("assign_public_ip = false" in oci and "prohibit_public_ip_on_vnic = true" in oci, "OCI: VM y subred sin IP pública")
-check("oci_core_internet_gateway" not in oci, "OCI: sin Internet Gateway")
+_st = (ROOT / "infra/oci/modules/storage/main.tf").read_text()
+_access = re.findall(r'access_type\s*=\s*"([^"]+)"', oci)
+# CADA bucket debe ser privado (no basta con que uno lo sea) y el de respaldos, el único versionado exigido, debe seguir versionado.
+check(len(_access) >= 2 and all(a == "NoPublicAccess" for a in _access) and re.search(r'access_type\s*=\s*"NoPublicAccess"', _st) is not None and re.search(r'versioning\s*=\s*"Enabled"', _st) is not None,
+      "OCI: todos los buckets privados y el de respaldos versionado")
+pe = (ROOT / "infra/oci/modules/public_entry/main.tf").read_text()
+rec = (ROOT / "infra/oci/modules/recovery/main.tf").read_text()
+off = lambda name: re.search(r'variable "' + name + r'".*?\n\}', oci_vars, re.S) is not None and "default     = false" in re.search(r'variable "' + name + r'".*?\n\}', oci_vars, re.S).group(0)
+# Por defecto (create_public_entry = false) NADA es público: la subred privada sigue sin IP pública y la VM sin IP pública; la subred pública y el IGW existen SOLO dentro del módulo opcional y con count/create.
+check("prohibit_public_ip_on_vnic = true" in oci and "assign_public_ip = var.assign_public_ip" in rec and re.search(r'variable "assign_public_ip" \{[^}]*default = false', rec, re.S) is not None
+      and off("create_public_entry") and "assign_public_ip       = var.create_public_entry" in oci, "OCI: VM y subred sin IP pública por defecto (la entrada pública es opcional y está apagada)")
+check(len(re.findall(r"resource \"oci_core_internet_gateway\"", oci)) == 1 and 'resource "oci_core_internet_gateway"' in pe and "count          = var.create ? 1 : 0" in pe.split('resource "oci_core_internet_gateway"')[1][:200],
+      "OCI: sin Internet Gateway salvo el del módulo opcional public_entry (count = create, apagado por defecto)")
+check("!contains(var.allowed_https_cidrs, \"0.0.0.0/0\")" in pe and "length(var.allowed_https_cidrs) > 0" in pe and 'c != "0.0.0.0/0"' in oci_vars,
+      "OCI: la entrada pública exige orígenes explícitos y prohíbe 0.0.0.0/0 (módulo y variable)")
+ingress_ports = set(re.findall(r'direction\s*=\s*"INGRESS".*?min = (\d+)', pe, re.S))
+check(ingress_ports <= {"443", "22"} and "5432" not in pe and 'source                    = var.bastion_source_cidr' in pe, "OCI: la entrada pública solo abre 443 (orígenes explícitos) y SSH desde la subred del Bastion; sin puertos de base de datos")
 check(not re.search(r'source\s*=\s*"0\.0\.0\.0/0"', oci), "OCI: ninguna regla de entrada abierta a Internet")
 check('default     = false' in re.search(r'variable "create_recovery_vm".*?\n\}', oci_vars, re.S).group(0) and 'default     = false' in re.search(r'variable "enable_nat_gateway".*?\n\}', oci_vars, re.S).group(0), "OCI: VM y NAT desactivados por defecto")
 check("manage objects" in oci and "OBJECT_CREATE" in oci and "OBJECT_DELETE" not in oci and "manage all-resources" not in oci, "OCI: política de mínimo privilegio (sin borrar ni administrar)")

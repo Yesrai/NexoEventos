@@ -90,6 +90,28 @@ jobs:
           python -m unittest discover -s scripts/multicloud/tests -p test_lease_http.py
           python -m unittest discover -s scripts/multicloud/tests -p test_failover_e2e.py
 
+  ops-center:
+    name: Centro de operaciones (pruebas locales, sin nube)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Instalar dependencias fijadas
+        run: python -m pip install -r backend/requirements-production.lock pytest==9.0.2 httpx==0.28.1
+      - name: Guardia de seguridad (la ejecución real NO puede quedar cableada sin una revisión explícita)
+        run: |
+          grep -qE '^REAL_EXECUTION_WIRED = False$' ops_center/barriers.py
+          grep -qE '^REAL_WIRING_ENABLED = False$' scripts/multicloud/failover/real_factory.py
+      - name: Probar el centro de operaciones (solicitud, aprobación, auditoría, barreras, evidencias; servidor solo en 127.0.0.1)
+        run: python -m pytest ops_center -q
+      - name: Probar la carrera de adquisición del lease, la limpieza del probe de PAR y el perfil Azure del testigo (servidores solo en 127.0.0.1)
+        run: python -m pytest scripts/multicloud/tests/test_lease_race.py scripts/multicloud/tests/test_par_probe_cleanup.py scripts/multicloud/tests/test_witness_azure_profile.py scripts/multicloud/tests/test_real_factory.py scripts/multicloud/tests/test_iac_security_guard.py scripts/multicloud/tests/test_tls_context.py scripts/multicloud/tests/test_witness_thread_safety.py -q -p no:cacheprovider
+
   frontend:
     name: Frontend (pruebas + build)
     runs-on: ubuntu-24.04

@@ -262,7 +262,8 @@ class ParHttpStore(ConditionalStore):
         class _NoRedirect(urllib.request.HTTPRedirectHandler):
             def redirect_request(self, *a, **k):
                 return None
-        self._opener = urllib.request.build_opener(_NoRedirect)
+        from app.failover.tlsctx import verified_ssl_context
+        self._opener = urllib.request.build_opener(_NoRedirect, urllib.request.HTTPSHandler(context=verified_ssl_context()))
 
     def __repr__(self):
         return "ParHttpStore(<url oculta>)"

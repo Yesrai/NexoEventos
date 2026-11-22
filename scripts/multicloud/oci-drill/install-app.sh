@@ -6,7 +6,7 @@ set -euo pipefail
 STAGE="${1:?stage1|stage2}"; B="${2:?directorio del paquete}"; APP=/opt/nexoeventos; PGB=/usr/pgsql-18/bin
 case "$STAGE" in
 stage1)
-  dnf -y install python3.12 nginx
+  bash "$B/safe-dnf.sh" -y install python3.12 nginx          # repos mínimos, tope de memoria y de tiempo (la E2.1.Micro se congeló con dnf sin límites)
   id nexoeventos >/dev/null 2>&1 || useradd --system --home-dir "$APP" --shell /sbin/nologin nexoeventos
   install -d -m 0755 "$APP/backend" "$APP/frontend" /var/log/nexoeventos; chown nexoeventos:nexoeventos /var/log/nexoeventos
   tar -xzf "$B/backend.tgz" -C "$APP/backend"; rm -rf "$APP/frontend/dist"; tar -xzf "$B/dist.tgz" -C "$APP/frontend"
@@ -31,17 +31,19 @@ SQL
   PGHBA="$(runuser -u postgres -- "$PGB/psql" -d postgres -Atc 'show hba_file')"
   grep -q nexoeventos_app "$PGHBA" || sed -i '0,/^local/s//local   nexoeventos   nexoeventos_app   scram-sha-256\nlocal/' "$PGHBA"
   runuser -u postgres -- "$PGB/psql" -d postgres -qAtc 'select pg_reload_conf()' >/dev/null
+  [[ "${RECOVERY_ORIGIN:-https://localhost:8443}" =~ ^https://[A-Za-z0-9.:-]+$ ]] || { echo "RECOVERY_ORIGIN inválido" >&2; exit 2; }   # origen permitido por la API (acceso público de prueba: https://<IP>)
+  [[ "${RECOVERY_ARGON2:-2}" =~ ^[1-4]$ ]] || { echo "RECOVERY_ARGON2 inválido" >&2; exit 2; }                 # 1 en la VM de 1 GB (Argon2id usa ~64 MiB por hash)
   umask 077
   { cat <<ENV
 APP_ENV=production
 DATABASE_URL=postgresql+psycopg://nexoeventos_app:$APPPW@/nexoeventos?host=/var/run/postgresql
-FRONTEND_ORIGINS=https://localhost:8443
+FRONTEND_ORIGINS=${RECOVERY_ORIGIN:-https://localhost:8443}
 SESSION_COOKIE_SECURE=true
 SESSION_HOURS=8
 LOGIN_MAX_FAILURES=5
 LOGIN_WINDOW_MINUTES=15
 LOGIN_BLOCK_MINUTES=15
-ARGON2_MAX_CONCURRENT=2
+ARGON2_MAX_CONCURRENT=${RECOVERY_ARGON2:-2}
 DB_POOL_SIZE=5
 DB_MAX_OVERFLOW=5
 ENV
@@ -52,7 +54,13 @@ ENV
   printf '[Service]\nEnvironmentFile=\nEnvironmentFile=/run/nexoeventos/backend.env\n' > /etc/systemd/system/nexoeventos-api.service.d/oci-demo.conf
   # Certificado autofirmado y clave privada EFÍMEROS: se crean aquí y desaparecen con la VM.
   install -d -m 0700 /etc/nginx/demo-tls
-  openssl req -x509 -newkey rsa:3072 -nodes -days 3 -subj "/CN=localhost" -addext "subjectAltName=DNS:localhost,IP:127.0.0.1" \
+  # RECOVERY_TLS_SAN (opcional): SAN adicionales del certificado efímero para la entrada pública de PRUEBA, p. ej. "IP:203.0.113.5,DNS:nexoeventos-test.duckdns.org". Formato estricto; sin él, solo localhost.
+  SAN="DNS:localhost,IP:127.0.0.1"
+  if [[ -n "${RECOVERY_TLS_SAN:-}" ]]; then
+    [[ "$RECOVERY_TLS_SAN" =~ ^((DNS|IP):[A-Za-z0-9.:-]+)(,(DNS|IP):[A-Za-z0-9.:-]+)*$ ]] || { echo "RECOVERY_TLS_SAN inválido" >&2; exit 2; }
+    SAN="$SAN,$RECOVERY_TLS_SAN"
+  fi
+  openssl req -x509 -newkey rsa:3072 -nodes -days 3 -subj "/CN=localhost" -addext "subjectAltName=$SAN" \
     -keyout /etc/nginx/demo-tls/key.pem -out /etc/nginx/demo-tls/cert.pem 2>/dev/null
   chmod 600 /etc/nginx/demo-tls/key.pem; restorecon -R /etc/nginx/demo-tls 2>/dev/null || true
   python3 - "$B/nexoeventos.conf.template" > /etc/nginx/conf.d/nexoeventos.conf <<'PY'
@@ -79,7 +87,7 @@ if m and "listen       80;" in m.group(0):
     open(p + ".orig", "w").write(t); open(p, "w").write(t[:m.start()] + t[m.end():])
 PY
   nginx -t
-  systemctl daemon-reload; systemctl enable --now nexoeventos-api nginx
+  systemctl daemon-reload; systemctl enable nexoeventos-api nginx; systemctl restart nexoeventos-api nginx   # restart (no solo --now): al pasar de la fase A a la B, Nginx YA corre y debe cargar el certificado y la configuración nuevos
   firewall-cmd --add-service=https >/dev/null    # solo en tiempo de ejecución; la entrada llega solo desde el endpoint del Bastion (NSG)
   for _ in $(seq 30); do curl -fsS http://127.0.0.1:8000/health >/dev/null 2>&1 && break; sleep 2; done
   echo "OK    stage2: /health local = $(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/health); HTTPS local: /livez = $(curl -sk -o /dev/null -w '%{http_code}' https://127.0.0.1/livez), /ready = $(curl -sk -o /dev/null -w '%{http_code}' https://127.0.0.1/ready), /healthz = $(curl -sk -o /dev/null -w '%{http_code}' https://127.0.0.1/healthz)"

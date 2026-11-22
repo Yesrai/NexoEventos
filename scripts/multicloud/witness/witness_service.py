@@ -68,7 +68,7 @@ def make_handler(witness: Witness, invokers: "Invokers | None" = None):
                     seq = int((q.get("seq") or ["0"])[0]); e = witness.entry(seq)
                     return self._send(200 if e else 404, e or {"error": "no existe"})
                 return self._send(404, {"error": "ruta"})
-            except (StoreUnavailable, StoreError): return self._send(503, {"error": "no disponible"})
+            except (StoreUnavailable, StoreError, OSError): return self._send(503, {"error": "no disponible"})
             except ValueError: return self._send(400, {"error": "petición inválida"})
         def do_POST(self):
             if not self.path.endswith("/report"): return self._send(404, {"error": "ruta"})
@@ -82,7 +82,7 @@ def make_handler(witness: Witness, invokers: "Invokers | None" = None):
                 if not isinstance(payload, dict): raise ValueError
                 with lock: r = witness.report_with_receipt(rep, payload, sig)
                 return self._send(200 if r["ok"] else 409, r)
-            except (StoreUnavailable, StoreError): return self._send(503, {"error": "no disponible"})
+            except (StoreUnavailable, StoreError, OSError): return self._send(503, {"error": "no disponible"})
             except (ValueError, KeyError, TypeError): return self._send(400, {"error": "informe ilegible"})
     return H
 
@@ -125,4 +125,4 @@ def invokers_from_env(env=None):
 
 
 if __name__ == "__main__":
-    w = build_from_env(); srv = http.server.ThreadingHTTPServer(("0.0.0.0", int(os.environ.get("PORT", "8080"))), make_handler(w, invokers_from_env())); srv.serve_forever()
+    w = build_from_env(); srv = http.server.ThreadingHTTPServer((os.environ.get("WITNESS_HOST", "0.0.0.0"), int(os.environ.get("PORT", "8080"))), make_handler(w, invokers_from_env())); srv.serve_forever()   # WITNESS_HOST=127.0.0.1 detrás de Nginx (VM de Azure)

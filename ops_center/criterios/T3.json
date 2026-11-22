@@ -1,0 +1,102 @@
+{
+ "stage": "T3",
+ "title": "Recuperación y funcionamiento real de NexoEventos en OCI (VM Always Free con entrada HTTPS de prueba)",
+ "criteria": [
+  {
+   "id": "lectura_previa_lista",
+   "kind": "bool",
+   "desc": "plan de solo lectura LISTO: inventario OCI en cero, plan de Terraform 11 altas/0 cambios/0 destrucciones validado por la guarda"
+  },
+  {
+   "id": "recuperacion_c04_sin_fallo",
+   "kind": "bool",
+   "desc": "la recuperación C-04 termina OK (firma del manifiesto, SHA-256 e identidad del certificado verificados antes de descifrar; sin etapa fallida)"
+  },
+  {
+   "id": "datos_restaurados_huella_ok",
+   "kind": "bool",
+   "desc": "datos restaurados y huella igual a la del manifiesto firmado (etapa «datos» OK)"
+  },
+  {
+   "id": "claves_de_aplicacion_originales",
+   "kind": "bool",
+   "desc": "las claves de aplicación entregadas tienen el SHA-256 del manifiesto firmado (etapa «secretos» OK)"
+  },
+  {
+   "id": "smoke_solo_lectura_todo_ok",
+   "kind": "bool",
+   "desc": "humo funcional de solo lectura (livez, ready, healthz, frontend, /api/events, detalle) con todas las comprobaciones correctas"
+  },
+  {
+   "id": "escrituras_rechazadas_403",
+   "kind": "bool",
+   "desc": "POST/PUT/DELETE/PATCH rechazados con 403 por Nginx en solo lectura (≥ 5 comprobaciones)"
+  },
+  {
+   "id": "ninguna_escritura_huella_final_identica",
+   "kind": "bool",
+   "desc": "huella final idéntica a la restaurada (ni siquiera access_logs cambió)"
+  },
+  {
+   "id": "https_publico_con_certificado_fijado",
+   "kind": "bool",
+   "desc": "el humo se ejecutó contra la IP pública de OCI con el certificado efímero de la VM FIJADO (TLS verificado, no verify=False)"
+  },
+  {
+   "id": "solo_443_alcanzable_desde_fuera",
+   "kind": "bool",
+   "desc": "desde un origen autorizado, 443 acepta TCP y 22, 80, 3000, 5432, 8000 y 8443 NO"
+  },
+  {
+   "id": "rto_recuperacion_total_s",
+   "kind": "max",
+   "threshold": 3600,
+   "desc": "tiempo total de la recuperación (aprovisionamiento a humo) ≤ 60 min (objetivo del proyecto, por confirmar)"
+  },
+  {
+   "id": "memoria_sin_oom",
+   "kind": "bool",
+   "desc": "sin eventos «Out of memory» en el kernel y con swap activa durante toda la recuperación"
+  },
+  {
+   "id": "recursos_destruidos_y_verificados",
+   "kind": "bool",
+   "desc": "VM, Bastion, IGW, subred, NSG y lista de seguridad temporales eliminados (plan de destrucción validado por la guarda y comprobado en solo lectura)"
+  },
+  {
+   "id": "inventario_final_igual_al_inicial",
+   "kind": "bool",
+   "desc": "el inventario de OCI tras T3 es idéntico al previo (mismos recursos y objetos)"
+  },
+  {
+   "id": "respaldo_c04_integro",
+   "kind": "bool",
+   "desc": "antes de empezar: firma del manifiesto, SHA-256, tamaño y destinatario del CMS verificados SIN descifrar, certificado con la huella fijada y vigente, y MD5 del bucket = copia verificada"
+  },
+  {
+   "id": "fase_escritura_humo_todo_ok",
+   "kind": "bool",
+   "desc": "fase 2 (copia desechable en lectura/escritura): todas las comprobaciones del humo funcional correctas (≥ 20)"
+  },
+  {
+   "id": "login_cliente_y_operador_ok",
+   "kind": "bool",
+   "desc": "inicio de sesión de cliente y de operador, cookie de sesión Secure+HttpOnly y sesión válida"
+  },
+  {
+   "id": "reservas_funcionales_ok",
+   "kind": "bool",
+   "desc": "7 comprobaciones de reservas: reserva nueva, idempotencia, conflicto de clave, cantidades inválidas, «mis reservas» + QR, 4 reservas concurrentes sin pérdidas y validación del QR nuevo (aceptada y luego rechazada)"
+  },
+  {
+   "id": "qr_con_claves_originales_y_ticket_usado_409",
+   "kind": "bool",
+   "desc": "los QR existentes se descifran con TICKET_ENCRYPTION_KEY original y un ticket ya usado se rechaza con SECURITY_HASH_KEY original (409)"
+  },
+  {
+   "id": "tiempos_de_reconstruccion_registrados",
+   "kind": "bool",
+   "desc": "duración de terraform apply, de la recuperación (por etapa) y de la destrucción registradas con marcas UTC: base medida para planificar la reconstrucción de OCI antes de T6"
+  }
+ ]
+}

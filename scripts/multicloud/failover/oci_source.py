@@ -98,7 +98,8 @@ class ParHttpReader:
         self._base = url if url.endswith("/") else url + "/"  # secreto: no se imprime nunca
         self.prefix, self.timeout, self.retries, self.backoff, self._sleep = prefix, timeout, retries, backoff, sleep
         self.max_listing_bytes, self.max_pages = max_listing_bytes, max_pages
-        self._opener = urllib.request.build_opener(_NoRedirect)
+        from app.failover.tlsctx import verified_ssl_context
+        self._opener = urllib.request.build_opener(_NoRedirect, urllib.request.HTTPSHandler(context=verified_ssl_context()))
 
     def __repr__(self):
         return "ParHttpReader(<url oculta>)"

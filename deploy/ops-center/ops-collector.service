@@ -1,0 +1,22 @@
+# Recolector de estado (T4): una pasada de sondas de solo lectura; lo lanza ops-collector.timer cada minuto. NO instalada todavía.
+[Unit]
+Description=NexoEventos - Recolector de estado (sondas HTTPS de solo lectura a AWS y OCI)
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=opscenter
+Group=opscenter
+WorkingDirectory=/opt/nexoeventos
+Environment=PYTHONPATH=/opt/nexoeventos:/opt/nexoeventos/backend
+Environment=OPS_CENTER_STATE_DIR=/var/lib/ops-center
+ExecStart=/opt/nexoeventos/venv/bin/python -m ops_center collect --targets /etc/ops-center/targets.json
+TimeoutStartSec=50
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/ops-center
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+UMask=0077

@@ -71,6 +71,7 @@ def pg(tmp_path_factory):
     assert run([str(ROOT / "backend/.venv/bin/alembic"), "upgrade", "head"], cwd=ROOT / "backend", env={**os.environ, "MIGRATION_DATABASE_URL": url("nexo_aws", "postgres")}).returncode == 0
     assert run([str(ROOT / "backend/.venv/bin/python"), str(ROOT / "scripts/seed-demo-catalog.py"), "--database-url", url("nexo_aws", "postgres")]).returncode == 0
     # un cliente con sesión REAL creado en «AWS» (sin vallado todavía) y luego copiado a «OCI» como lo haría la recuperación (dump → restore)
+    _saved_env = {k: os.environ.get(k) for k in ("DATABASE_URL", "WRITE_GATE_MODE", "WRITE_GATE_DB_FENCE")}   # se restauran al terminar: sin esto, otras pruebas del mismo proceso apuntan a este clúster ya borrado
     os.environ["DATABASE_URL"] = url("nexo_aws")
     for k in ("WRITE_GATE_MODE", "WRITE_GATE_DB_FENCE"): os.environ.pop(k, None)
     c = TestClient(create_app(url("nexo_aws")))
@@ -90,6 +91,9 @@ def pg(tmp_path_factory):
         assert psql(db, "GRANT USAGE ON SCHEMA public TO nexoeventos_app; GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO nexoeventos_app; GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO nexoeventos_app;").returncode == 0
         r = psql(db, install_sql(app_role="nexoeventos_app", keeper_role="nexo_fence_keeper")); assert r.returncode == 0, r.stderr
     yield ctx
+    for k, v in _saved_env.items():
+        if v is None: os.environ.pop(k, None)
+        else: os.environ[k] = v
     run([str(PGBIN / "pg_ctl"), "-D", str(t / "pg"), "-m", "immediate", "stop"], env=env)
     shutil.rmtree(sock, ignore_errors=True)
 

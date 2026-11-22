@@ -29,7 +29,20 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
-_OPENER = urllib.request.build_opener(_NoRedirect)
+def _verified_ctx():
+    """Contexto TLS verificado (copia de app.failover.tlsctx; este módulo solo usa la biblioteca estándar): almacén del sistema y, si no hay CA cargada, certifi. Nunca desactiva la verificación."""
+    import ssl
+    ctx = ssl.create_default_context()
+    if not ctx.get_ca_certs():
+        try:
+            import certifi
+            ctx = ssl.create_default_context(cafile=certifi.where())
+        except ImportError:
+            pass
+    return ctx
+
+
+_OPENER = urllib.request.build_opener(_NoRedirect, urllib.request.HTTPSHandler(context=_verified_ctx()))
 
 
 def _fetch(url: str, timeout: float, max_bytes: int = 65536):
