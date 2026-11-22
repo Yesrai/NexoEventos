@@ -1,0 +1,55 @@
+tests/test_lease.py::test_autoprueba_de_semantica_pasa_en_los_almacenes_de_referencia[<lambda>0] PASSED
+tests/test_lease.py::test_autoprueba_de_semantica_pasa_en_los_almacenes_de_referencia[<lambda>1] PASSED
+tests/test_lease.py::test_autoprueba_detecta_un_almacen_sin_cas_y_el_cliente_lo_rechaza PASSED
+tests/test_lease.py::test_create_exclusivo_con_200_hilos PASSED
+tests/test_lease.py::test_adquirir_expirar_y_toma_por_otro_con_epoca_nueva PASSED
+tests/test_lease.py::test_validez_se_mide_desde_el_envio_y_los_fallos_no_la_amplian PASSED
+tests/test_lease.py::test_no_se_resucita_un_lease_perdido_sin_volver_a_adquirir PASSED
+tests/test_lease.py::test_resultado_incierto_en_adquisicion_no_otorga_validez_y_se_resuelve_despues PASSED
+tests/test_lease.py::test_resultado_incierto_en_renovacion_se_adopta_sin_ampliar_el_plazo PASSED
+tests/test_lease.py::test_liberacion_deja_de_escribir_primero_y_otro_toma_sin_esperar PASSED
+tests/test_lease.py::test_carrera_de_tomas_concurrentes_solo_una_gana_con_hilos PASSED
+tests/test_lease.py::test_configuracion_insegura_se_rechaza_salvo_que_se_pida_expresamente PASSED
+tests/test_lease.py::test_registro_ilegible_se_rechaza_y_no_se_toma PASSED
+tests/test_lease.py::test_lease_no_inicializado_no_se_crea_en_el_camino_de_adquisicion PASSED
+tests/test_lease.py::test_toma_concurrente_entre_procesos_un_solo_ganador PASSED
+tests/test_lease.py::test_adaptador_oci_pasa_la_autoprueba_contra_la_cli_simulada_y_funciona_el_lease PASSED
+tests/test_lease.py::test_adaptador_oci_con_cli_sin_if_match_es_rechazado_por_la_autoprueba PASSED
+tests/test_lease.py::test_adaptador_oci_clasifica_errores PASSED
+tests/test_lease.py::test_simulacion_con_margen_suficiente_nunca_hay_dos_titulares_validos PASSED
+tests/test_lease.py::test_simulacion_deriva_aleatoria_con_margen_suficiente PASSED
+tests/test_lease.py::test_simulacion_con_deriva_del_20_por_ciento_y_margen_ge_rho_ttl_sigue_seguro PASSED
+tests/test_lease.py::test_simulacion_margen_menor_que_rho_ttl_si_produce_dos_titulares_validos PASSED
+tests/test_write_gate.py::test_apagada_por_defecto_no_cambia_el_comportamiento PASSED
+tests/test_write_gate.py::test_sin_lease_rechaza_escrituras_y_permite_lecturas_y_salud PASSED
+tests/test_write_gate.py::test_con_lease_permite_escribir_y_expira_cerrando PASSED
+tests/test_write_gate.py::test_perdida_del_lease_cierra_definitivamente_al_titular_anterior PASSED
+tests/test_write_gate.py::test_sentencia_de_escritura_sin_lease_se_rechaza_en_la_capa_de_bd_aunque_se_salte_http PASSED
+tests/test_write_gate.py::test_commit_se_aborta_si_el_lease_caduca_durante_la_peticion PASSED
+tests/test_write_gate.py::test_dos_instancias_misma_base_nunca_ambas_escriben_y_el_traspaso_es_limpio PASSED
+tests/test_write_gate.py::test_hueco_cuando_el_almacen_del_lease_cae_nadie_escribe_tras_la_expiracion PASSED
+tests/test_write_gate.py::test_standby_solo_escribe_con_archivo_de_promocion PASSED
+tests/test_write_gate.py::test_guardian_con_hilo_renueva_y_si_muere_el_lease_caduca_y_cierra PASSED
+tests/test_write_gate.py::test_configuracion_desde_entorno PASSED
+tests/test_write_gate.py::test_clasificacion_de_sentencias[SELECT 1-False] PASSED
+tests/test_write_gate.py::test_clasificacion_de_sentencias[select * from events where id = 1-False] PASSED
+tests/test_write_gate.py::test_clasificacion_de_sentencias[SHOW server_version-False] PASSED
+tests/test_write_gate.py::test_clasificacion_de_sentencias[SET statement_timeout = 5000-False] PASSED
+tests/test_write_gate.py::test_clasificacion_de_sentencias[SELECT * FROM t WHERE name = 'update me'-False] PASSED
+tests/test_write_gate.py::test_clasificacion_de_sentencias[SELECT 1 -- delete everything-False] PASSED
+tests/test_write_gate.py::test_clasificacion_de_sentencias[/* insert */ SELECT 1-False] PASSED
+tests/test_write_gate.py::test_clasificacion_de_sentencias[INSERT INTO t VALUES (1)-True] PASSED
+tests/test_write_gate.py::test_clasificacion_de_sentencias[update t set a = 1-True] PASSED
+tests/test_write_gate.py::test_clasificacion_de_sentencias[DELETE FROM t-True] PASSED
+tests/test_write_gate.py::test_clasificacion_de_sentencias[WITH x AS (UPDATE t SET a=1 RETURNING *) SELECT * FROM x-True] PASSED
+tests/test_write_gate.py::test_clasificacion_de_sentencias[SELECT * FROM t FOR UPDATE-True] PASSED
+tests/test_write_gate.py::test_clasificacion_de_sentencias[CREATE TABLE z (a int)-True] PASSED
+tests/test_write_gate.py::test_clasificacion_de_sentencias[TRUNCATE t-True] PASSED
+tests/test_write_gate.py::test_clasificacion_de_sentencias[INSERT INTO t VALUES ('a''b') ON CONFLICT DO UPDATE SET a=1-True] PASSED
+tests/test_failover_defaults.py::test_ningun_despliegue_ni_configuracion_activa_la_compuerta_ni_el_failover PASSED
+tests/test_failover_defaults.py::test_sin_variables_la_compuerta_esta_apagada_y_no_hay_ruta_ni_estado PASSED
+tests/test_failover_defaults.py::test_modo_off_explicito_equivale_a_apagado PASSED
+tests/test_failover_defaults.py::test_valor_invalido_de_modo_impide_arrancar_en_lugar_de_degradar_en_silencio PASSED
+tests/test_failover_defaults.py::test_el_modulo_de_failover_no_inicia_hilos_ni_red_al_importarse PASSED
+tests/test_failover_defaults.py::test_el_orquestador_y_el_cambio_de_dns_se_niegan_sin_autorizacion_explicita PASSED
+======================== 54 passed, 1 warning in 11.92s ========================

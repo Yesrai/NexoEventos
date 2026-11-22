@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Comprobaciones de SOLO LECTURA en OCI para la viabilidad de la integración AWS-OCI. NO SE HA EJECUTADO: requiere autorización explícita de la usuaria.
+# Usa la configuración local de la CLI de OCI (~/.oci/config; la clave API vive fuera del repositorio). No crea, modifica, inicia ni detiene nada.
+# La salida se enmascara (OCID, IP y correos). Uso:  NEXO_READONLY_VIABILIDAD=YES scripts/multicloud/viabilidad-readonly-oci.sh
+set -uo pipefail
+[[ "${NEXO_READONLY_VIABILIDAD:-}" == "YES" ]] || { echo "Solo lectura, pero requiere autorización: exporta NEXO_READONLY_VIABILIDAD=YES" >&2; exit 2; }
+command -v oci >/dev/null || { echo "Falta la CLI de OCI (oci). No se instala sin permiso." >&2; exit 2; }
+mask() { sed -E -e 's/ocid1\.[a-z0-9_.]+/<ocid>/g' -e 's/(^|[^0-9.])[0-9]{1,3}(\.[0-9]{1,3}){3}([^0-9.]|$)/\1<ip>\3/g' -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/<correo>/g'; }
+o() { oci "$@" 2>&1 | mask; }
+
+echo "== 1. Región de origen y suscripciones"
+o iam region-subscription list --query 'data[].{region:"region-name",estado:status,origen:"is-home-region"}' --output table
+echo "== 2. Compartment nexoeventos (el OCID se toma de la propia CLI; no se imprime)"
+CID="$(oci iam compartment list --all --compartment-id-in-subtree true --access-level ANY --name nexoeventos --query 'data[0].id' --raw-output 2>/dev/null)"
+[[ -n "${CID:-}" ]] || { echo "No se encontró el compartment nexoeventos (¿cuenta/región distinta?)"; exit 0; }
+echo "== 3. Red existente: VCN, subredes (¿prohíben IP pública?), puertas de enlace y rutas"
+o network vcn list --compartment-id "$CID" --query 'data[].{nombre:"display-name",cidr:"cidr-blocks"}' --output table
+o network subnet list --compartment-id "$CID" --query 'data[].{nombre:"display-name",cidr:"cidr-block",sinIPpublica:"prohibit-public-ip-on-vnic"}' --output table
+o network internet-gateway list --compartment-id "$CID" --query 'data[].{nombre:"display-name",habilitada:"is-enabled"}' --output table
+o network nat-gateway list --compartment-id "$CID" --query 'data[].{nombre:"display-name",estado:"lifecycle-state"}' --output table
+o network service-gateway list --compartment-id "$CID" --query 'data[].{nombre:"display-name",estado:"lifecycle-state"}' --output table
+echo "== 4. Instancias (¿queda alguna encendida?) y bucket"
+o compute instance list --compartment-id "$CID" --query 'data[].{nombre:"display-name",estado:"lifecycle-state",forma:shape}' --output table
+NS="$(oci os ns get --query data --raw-output 2>/dev/null)"
+o os bucket list --compartment-id "$CID" --namespace-name "${NS:-x}" --query 'data[].{nombre:name}' --output table
+echo "== 5. Capacidad y límites (¿hay forma Always Free o de prueba disponible?)"
+AD="$(oci iam availability-domain list --compartment-id "$CID" --query 'data[0].name' --raw-output 2>/dev/null)"
+for lim in standard-a1-core-count standard-e5-core-count standard-e2-micro-core-count; do
+  echo "-- $lim"; o limits resource-availability get --service-name compute --limit-name "$lim" --availability-domain "${AD:-x}" --compartment-id "$CID" --query 'data.{usado:used,disponible:available}' --output table
+done
+echo "== 6. Uso de Always Free / crédito de prueba (si la cuenta lo expone)"
+o limits quota list --compartment-id "$CID" --query 'data[].name' --output table
+echo "== fin (solo lectura; nada se creó, modificó, inició ni detuvo)"

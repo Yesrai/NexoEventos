@@ -1,0 +1,11 @@
+OK    éxito: termina con código 0
+OK    éxito: SHA-256, descifrado PGDMP y huella iguales
+OK    éxito: línea base compatible con restore-drill.sh (10 claves, reservations=135)
+OK    éxito: ningún archivo de clave ni texto plano en la salida
+OK    huella cambia durante el volcado: falla con código ≠ 0 y lo indica
+OK    volcado no PGDMP: falla
+OK    sin NEXO_ALLOW_CLOUD_CHANGES: no llama a ninguna CLI
+OK    la base no responde (huella vacía): se detiene antes de volcar
+OK    sin huella previa no se ejecutó el volcado (solo 1 send-command)
+
+Resultado: TODO CORRECTO

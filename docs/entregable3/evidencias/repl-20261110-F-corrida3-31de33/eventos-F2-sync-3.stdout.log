@@ -1,0 +1,24 @@
+{"t": 1794359049.868, "ev": "monitor_inicio", "auto": true, "pid": 84577}
+{"t": 1794359049.899, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 0.0, "prot": {"mode": "protected", "seq": 2, "primario": "pg-aws", "epoch": 1, "verified_age_s": 7.82}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794359055.247, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.85, "prot": {"mode": "protected", "seq": 2, "primario": "pg-aws", "epoch": 1, "verified_age_s": 0.51}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794359060.435, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.68, "prot": {"mode": "protected", "seq": 2, "primario": "pg-aws", "epoch": 1, "verified_age_s": 0.51}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794359060.858, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 1, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794359061.164, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 2, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794359061.628, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 3, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794359061.636, "ev": "proteccion", "modo": "promoting", "antes": "protected", "ok": true, "seq": 3, "primario": "pg-aws", "motivo": "reclamo exclusivo de la promoción"}
+{"t": 1794359061.637, "ev": "promote_inicio", "destino": "pg-oci", "origen": "pg-aws", "planificada": false, "epoca": 1}
+{"t": 1794359061.639, "ev": "lease_retirado", "epoca": 2}
+{"t": 1794359061.842, "ev": "fence", "nodo": "pg-aws", "detenido": true, "escritura_real_aceptada": false, "escritura_real_error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known", "resultado": "confirmado"}
+{"t": 1794359062.577, "ev": "secuencias_ajustadas", "cantidad": 6}
+{"t": 1794359063.41, "ev": "destino_abierto", "rol_sin_solo_lectura": true, "solo_lectura_global_apagado": true, "modo_abierto": {"modo": "open", "escribir_hba": true, "recargar": true, "efecto_en_conexion_nueva": true, "mensaje_de_la_conexion_nueva": ""}}
+{"t": 1794359063.568, "ev": "escritura_destino", "aceptada": true, "error": ""}
+{"t": 1794359063.577, "ev": "lease_otorgado", "escritor": "pg-oci", "epoca": 3, "t_desde_inicio_s": 1.94}
+{"t": 1794359063.584, "ev": "proteccion", "modo": "unprotected", "antes": "unknown", "ok": true, "seq": 6, "primario": "pg-oci", "motivo": "conmutación: aún no hay seguidor; las escrituras confirmadas hasta reconstruirlo NO tienen copia"}
+{"t": 1794359064.61, "ev": "haproxy_db_enruta", "nodo": "pg-oci", "t_desde_inicio_s": 2.97}
+{"t": 1794359064.745, "ev": "verificacion_final", "antiguo_escribe": false, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794359065.753, "ev": "latido", "witness": {"writer": "pg-oci", "epoch": 3, "lease_remaining_s": 5.65, "prot": {"mode": "unprotected", "seq": 6, "primario": "pg-oci", "epoch": 3, "verified_age_s": null}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794359071.388, "ev": "latido", "witness": {"writer": "pg-oci", "epoch": 3, "lease_remaining_s": 5.56, "prot": {"mode": "unprotected", "seq": 6, "primario": "pg-oci", "epoch": 3, "verified_age_s": null}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794359076.763, "ev": "latido", "witness": {"writer": "pg-oci", "epoch": 3, "lease_remaining_s": 5.65, "prot": {"mode": "unprotected", "seq": 6, "primario": "pg-oci", "epoch": 3, "verified_age_s": null}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794359081.776, "ev": "latido", "witness": {"writer": "pg-oci", "epoch": 3, "lease_remaining_s": 5.82, "prot": {"mode": "unprotected", "seq": 6, "primario": "pg-oci", "epoch": 3, "verified_age_s": null}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794359087.034, "ev": "latido", "witness": {"writer": "pg-oci", "epoch": 3, "lease_remaining_s": 5.36, "prot": {"mode": "unprotected", "seq": 6, "primario": "pg-oci", "epoch": 3, "verified_age_s": null}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794359087.159, "ev": "monitor_fin", "motivo": "SIGTERM"}

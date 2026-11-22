@@ -1,0 +1,46 @@
+{
+  "resumen": {
+    "tablas_con_huerfanas": {
+      "reservations": 1,
+      "tickets": 1
+    },
+    "duplicados_logicos_por_idempotency_key": [
+      {
+        "orfana": "dc489630-8d3f-4c7b-998f-7abb0a0aa793",
+        "idempotency_key": "5ba75be8bf754c108c978a87ee513014",
+        "reserva_en_nueva_primaria": "74f687ef-c31d-4cf4-9a31-5d237b181d43"
+      }
+    ]
+  },
+  "filas": {
+    "reservations": [
+      {
+        "id": "dc489630-8d3f-4c7b-998f-7abb0a0aa793",
+        "event_id": 990002,
+        "quantity": 1,
+        "buyer_alias": "Lab ficticio",
+        "idempotency_key": "5ba75be8bf754c108c978a87ee513014",
+        "request_hash": "1e673d39ecc2ac1873a138d943c1a45f9ae32c749f8a81590b1e6e07c7e54d4d",
+        "created_at": "2026-11-10T22:35:24.831879+00:00",
+        "user_id": "e180b446-7c69-44ef-9184-0e9d8e0054a7"
+      }
+    ],
+    "tickets": [
+      {
+        "id": "fa8d86aa-11d4-42c2-8037-e965a98480a7",
+        "reservation_id": "dc489630-8d3f-4c7b-998f-7abb0a0aa793",
+        "event_id": 990002,
+        "owner_user_id": "e180b446-7c69-44ef-9184-0e9d8e0054a7",
+        "token_hash": "8d51f03c9155d89e901754ba1007a7e6643b5836058991a9bdb615d8ef21ed2b",
+        "token_ciphertext": "gAAAAABq85wslm7bjVJ1lzeNtMUSpSSCL22ulWjaqK2wNjrEmGxu0945pnC652B4Syx9m-ihsvzx5qW1tm2XxBW6AH3uAiQm_yRGsVNm5INCTGFICS0FYmh25Nx00FE4GO7WNm8LDHQ_i1lv_9kw9VUBgn54ci3B3w==",
+        "created_at": "2026-11-10T22:35:24.831879+00:00",
+        "used_at": null,
+        "used_by_user_id": null,
+        "ticket_type": "general",
+        "zone_id": null,
+        "seat_id": null,
+        "unit_price": 30.0
+      }
+    ]
+  }
+}

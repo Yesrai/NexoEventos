@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 530" width="960" height="530" font-family="Helvetica, Arial, sans-serif">
+  <title>Flujo del respaldo cifrado AWS a OCI y restauración aislada</title>
+  <defs><marker id="a" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#333"/></marker></defs>
+  <rect width="960" height="530" fill="#ffffff"/>
+  <text x="30" y="36" font-size="20" font-weight="700" fill="#1a1a1a">Flujo del respaldo del 11-nov-2026 (ejecutado)</text>
+  <text x="30" y="58" font-size="13" fill="#444">SHA-256 (◆) comprobado en cada salto. Ningún texto plano en disco fuera del directorio temporal 0700 de la restauración.</text>
+
+  <!-- AWS zone -->
+  <rect x="30" y="80" width="420" height="190" rx="8" fill="#fff3e0" stroke="#ef6c00" stroke-width="1.5"/>
+  <text x="44" y="102" font-size="14" font-weight="700" fill="#bf360c">AWS Academy · us-east-1 (ventana de 12 min)</text>
+  <rect x="48" y="116" width="150" height="54" rx="6" fill="#ffffff" stroke="#ef6c00"/><text x="123" y="138" font-size="12" text-anchor="middle" fill="#222">RDS PostgreSQL 18</text><text x="123" y="156" font-size="11" text-anchor="middle" fill="#555">(detenida → start → stop)</text>
+  <rect x="270" y="116" width="164" height="54" rx="6" fill="#ffffff" stroke="#ef6c00"/><text x="352" y="138" font-size="12" text-anchor="middle" fill="#222">EC2 V1 (SSM)</text><text x="352" y="156" font-size="11" text-anchor="middle" fill="#555">pg_dump -Fc | openssl cms</text>
+  <rect x="150" y="196" width="170" height="50" rx="6" fill="#ffffff" stroke="#ef6c00"/><text x="235" y="218" font-size="12" text-anchor="middle" fill="#222">S3 privado (SSE AES256)</text><text x="235" y="234" font-size="11" text-anchor="middle" fill="#555">backups/database/*.cms</text>
+  <line x1="198" y1="143" x2="268" y2="143" stroke="#333" stroke-width="1.5" marker-end="url(#a)"/>
+  <line x1="352" y1="170" x2="280" y2="196" stroke="#333" stroke-width="1.5" marker-end="url(#a)"/>
+  <text x="336" y="214" font-size="10" fill="#333">◆ huella antes/después</text>
+
+  <!-- Mac zone -->
+  <rect x="30" y="300" width="900" height="108" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="44" y="400" font-size="14" font-weight="700" fill="#0d47a1">Estación local de la propietaria (descifrado y re-cifrado solo aquí)</text>
+  <rect x="48" y="312" width="250" height="54" rx="6" fill="#ffffff" stroke="#1565c0"/><text x="173" y="332" font-size="12" text-anchor="middle" fill="#222">◆ SHA-256 CMS = EC2</text><text x="173" y="350" font-size="11" text-anchor="middle" fill="#555">descifra (clave AWS) y re-cifra (cert. OCI)</text>
+  <rect x="330" y="312" width="250" height="54" rx="6" fill="#ffffff" stroke="#1565c0"/><text x="455" y="332" font-size="12" text-anchor="middle" fill="#222">manifiesto JSON</text><text x="455" y="350" font-size="11" text-anchor="middle" fill="#555">hash cifrado + hash volcado en claro</text>
+  <rect x="620" y="312" width="290" height="54" rx="6" fill="#ffffff" stroke="#1565c0"/><text x="765" y="332" font-size="12" text-anchor="middle" fill="#222">Docker postgres:18 desechable</text><text x="765" y="350" font-size="11" text-anchor="middle" fill="#555">◆ volcado · pg_restore · huella 10/10 · 8–9 s</text>
+  <line x1="298" y1="339" x2="328" y2="339" stroke="#333" stroke-width="1.5" marker-end="url(#a)"/>
+
+  <!-- OCI zone -->
+  <rect x="520" y="80" width="410" height="190" rx="8" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5"/>
+  <text x="534" y="102" font-size="14" font-weight="700" fill="#1b5e20">OCI · São Paulo (sa-saopaulo-1)</text>
+  <rect x="540" y="120" width="370" height="104" rx="6" fill="#ffffff" stroke="#2e7d32"/>
+  <text x="725" y="142" font-size="12" font-weight="700" text-anchor="middle" fill="#222">Bucket nexoeventos-recovery</text>
+  <text x="725" y="162" font-size="11" text-anchor="middle" fill="#555">privado · versionado · Standard · NoPublicAccess</text>
+  <text x="725" y="180" font-size="11" text-anchor="middle" fill="#555">usuario de carga: crear/leer, SIN sobrescribir ni borrar</text>
+  <text x="725" y="198" font-size="11" text-anchor="middle" fill="#555">backups/…oci.cms (92.908 B) + manifest.json (612 B)</text>
+  <text x="725" y="216" font-size="11" text-anchor="middle" fill="#555">◆ descargado de OCI y verificado</text>
+
+  <!-- arrows between zones -->
+  <path d="M235,246 L235,285 L173,285 L173,310" fill="none" stroke="#333" stroke-width="1.5" marker-end="url(#a)"/>
+  <text x="254" y="276" font-size="10" fill="#333">HTTPS (descarga de S3)</text>
+  <path d="M455,310 L455,292 L725,292 L725,226" fill="none" stroke="#333" stroke-width="1.5" marker-end="url(#a)"/>
+  <text x="480" y="286" font-size="10" fill="#333">HTTPS 443 (subida con --no-overwrite)</text>
+  <path d="M800,226 L800,262 L860,262 L860,310" fill="none" stroke="#333" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#a)"/>
+  <text x="808" y="252" font-size="10" fill="#333">descarga + descifrado</text>
+
+  <!-- notes -->
+  <text x="30" y="440" font-size="13" font-weight="700" fill="#1a1a1a">Qué claves intervienen</text>
+  <text x="30" y="460" font-size="12" fill="#222">• Certificado/clave de AWS (cifra el volcado en la EC2; la clave privada solo está en la estación local).</text>
+  <text x="30" y="478" font-size="12" fill="#222">• Certificado/clave de OCI, INDEPENDIENTE de la de AWS (la clave privada tiene frase de paso y solo la custodia la propietaria).</text>
+  <text x="30" y="496" font-size="12" fill="#222">• No hay red privada ni VPN entre nubes: la integración es por almacenamiento cifrado sobre HTTPS pasando por la estación local.</text>
+  <text x="30" y="514" font-size="12" fill="#222">• Límite: respaldo puntual; TICKET_ENCRYPTION_KEY y SECURITY_HASH_KEY se custodian aparte (no están en el volcado).</text>
+</svg>

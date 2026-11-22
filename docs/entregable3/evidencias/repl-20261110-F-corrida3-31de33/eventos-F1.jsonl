@@ -1,0 +1,11 @@
+{"t": 1794358834.477, "ev": "monitor_inicio", "auto": true, "pid": 81961}
+{"t": 1794358834.488, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 4.7, "prot": {"mode": "protected", "seq": 2, "primario": "pg-aws", "epoch": 1, "verified_age_s": 1.87}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794358839.85, "ev": "proteccion", "modo": "degraded", "antes": "protected", "ok": true, "seq": 3, "primario": "pg-aws", "motivo": "synchronous_standby_names cambió fuera del controlador: ''"}
+{"t": 1794358839.918, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 4.82, "prot": {"mode": "degraded", "seq": 3, "primario": "pg-aws", "epoch": 1, "verified_age_s": null}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794358844.118, "ev": "proteccion", "modo": "reprotecting", "antes": "degraded", "ok": true, "seq": 4, "primario": "pg-aws", "motivo": "reprotección desde degraded"}
+{"t": 1794358844.584, "ev": "sync_habilitada", "primario": "pg-aws", "estado_seguidor": "quorum"}
+{"t": 1794358844.77, "ev": "proteccion", "modo": "protected", "antes": "reprotecting", "ok": true, "seq": 5, "primario": "pg-aws", "seguidor": "pg-oci", "motivo": "síncrono activo, seguidor confirmando y al día (barrera de LSN)"}
+{"t": 1794358845.276, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.72, "prot": {"mode": "protected", "seq": 5, "primario": "pg-aws", "epoch": 1, "verified_age_s": 0.11}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794358850.285, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.66, "prot": {"mode": "protected", "seq": 5, "primario": "pg-aws", "epoch": 1, "verified_age_s": 0.0}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794358855.321, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.62, "prot": {"mode": "protected", "seq": 5, "primario": "pg-aws", "epoch": 1, "verified_age_s": 0.24}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794358857.293, "ev": "monitor_fin", "motivo": "SIGTERM"}

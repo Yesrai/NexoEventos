@@ -1,0 +1,15 @@
+{"t": 1794335815.474, "ev": "monitor_inicio", "auto": true, "pid": 23076}
+{"t": 1794335815.484, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 4.99}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794335817.175, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 1, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794335817.632, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 2, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794335818.104, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 3, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794335818.106, "ev": "promote_inicio", "destino": "pg-oci", "origen": "pg-aws", "planificada": false, "epoca": 1}
+{"t": 1794335818.108, "ev": "lease_retirado", "epoca": 2}
+{"t": 1794335818.108, "ev": "fence", "nodo": "pg-aws", "resultado": "inyectado: no se puede confirmar el aislamiento"}
+{"t": 1794335818.108, "ev": "estado_inseguro", "nodo": "pg-aws", "motivo": "aislamiento no confirmable (inyectado): NO se promueve a otro escritor"}
+{"t": 1794335818.205, "ev": "promote_abortada", "motivo": "aislamiento no confirmado y el escritor anterior no responde: SIN escritor (falla segura)", "epoca": 2}
+{"t": 1794335820.595, "ev": "latido", "witness": {"writer": null, "epoch": 2, "lease_remaining_s": 3.51}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794335826.086, "ev": "latido", "witness": {"writer": null, "epoch": 2, "lease_remaining_s": 0.0}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794335827.281, "ev": "lease_restaurado", "escritor": "pg-aws"}
+{"t": 1794335831.318, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 3, "lease_remaining_s": 5.63}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794335832.153, "ev": "monitor_fin", "motivo": "SIGTERM"}

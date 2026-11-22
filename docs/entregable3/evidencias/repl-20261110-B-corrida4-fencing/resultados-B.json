@@ -1,0 +1,186 @@
+{
+  "pruebas": [
+    {
+      "prueba": "B0 dos cambios de escritor concurrentes con la misma época: solo uno se acepta (200) y el otro se rechaza (409)",
+      "ok": true,
+      "detalle": "códigos [200, 409]"
+    },
+    {
+      "prueba": "B1 con el witness caído y el escritor caído NO se promueve: sin promote_inicio ni lease, el seguidor sigue rechazando escrituras y HAProxy-BD no enruta a nadie",
+      "ok": true,
+      "detalle": "{\"monitor_vivo_durante_la_caida_del_witness\": true, \"excepciones_registradas\": [[\"monitor._step\", \"RemoteDisconnected\"]], \"promociones\": 0, \"escritura_real_en_oci\": false, \"haproxy_db\": {\"pg-aws\": \"DOWN\", \"pg-oci\": \"DOWN\"}, \"registros_witness_no_disponible\": 1}"
+    },
+    {
+      "prueba": "B1 al volver el witness (con su época persistida) se promueve con aislamiento confirmado y la aplicación vuelve a escribir; nunca hubo dos escritores",
+      "ok": true,
+      "detalle": "{\"monitor_sigue_vivo_y_emite_latidos_tras_volver_el_witness\": true, \"epoca_antes\": 1, \"epoca_vista_tras_reiniciar_witness\": 1, \"promocion_tras_volver_el_witness_s\": 3.0, \"escritura_por_el_borde_ok_tras_s\": 0.9, \"sondeo\": {\"muestras\": 35, \"con_dos_escritores\": 0, \"sin_escritor\": 31, \"escribe_aws_alguna_vez\": true, \"escribe_oci_alguna_vez\": true}}"
+    },
+    {
+      "prueba": "B2 partición del escritor: se aísla y se COMPRUEBA con una escritura real que ya no escribe ANTES de abrir el destino; luego el destino escribe y el antiguo sigue sin poder",
+      "ok": true,
+      "detalle": "{\"rto_bd_hasta_lease_s\": 7.1, \"fence\": {\"t\": 1794335773.206, \"ev\": \"fence\", \"nodo\": \"pg-aws\", \"detenido\": true, \"escritura_real_aceptada\": false, \"escritura_real_error\": \"psql: error: could not translate host name \\\"pg-aws\\\" to address: Name or service not known\", \"resultado\": \"confirmado\"}, \"escritura_destino\": {\"t\": 1794335774.104, \"ev\": \"escritura_destino\", \"aceptada\": true, \"error\": \"\"}, \"verificacion_final\": {\"t\": 1794335774.976, \"ev\": \"verificacion_final\", \"antiguo_escribe\": false, \"error\": \"psql: error: could not translate host name \\\"pg-aws\\\" to address: Name or service not known\"}, \"orden_fence_antes_de_escribir_en_destino\": true, \"escritura_por_el_borde_ok\": true, \"escritura_real_directa_al_antiguo_con_OCI_ya_promovido\": false, \"escritura_real_por_pasarela_de_BD_de_app-aws_llega_a\": {\"ip_del_servidor_que_la_atendio\": \"172.29.241.3\", \"ip_de_pg-oci\": \"172.29.241.3\", \"atendida_por_pg-oci\": true}, \"antiguo_escritor_reiniciado_tras_sanar_la_red_SIN_monitor\": {\"arranque\": \"\", \"intentos_de_escritura_real\": 25, \"aceptadas\": 0, \"primeras_muestras\": [{\"t_s\": 0.25, \"escritura_nueva_conexion_aceptada\": false, \"escritura_con_anulacion_aceptada\": false, \"error\": \"psql: error: connection to server at \\\"pg-aws\\\" (172.29.241.2), port 5432 failed: FATAL:  pg_hba.conf rejects co\"}, {\"t_s\": 0.68, \"escritura_nueva_conexion_aceptada\": false, \"escritura_con_anulacion_aceptada\": false, \"error\": \"psql: error: connection to server at \\\"pg-aws\\\" (172.29.241.2), port 5432 failed: FATAL:  pg_hba.conf rejects co\"}, {\"t_s\": 1.16, \"escritura_nueva_conexion_aceptada\": false, \"escritura_con_anulacion_aceptada\": false, \"error\": \"psql: error: connection to server at \\\"pg-aws\\\" (172.29.241.2), port 5432 failed: FATAL:  pg_hba.conf rejects co\"}], \"ultima_muestra\": {\"t_s\": 11.51, \"escritura_nueva_conexion_aceptada\": false, \"escritura_con_anulacion_aceptada\": false, \"error\": \"psql: error: connection to server at \\\"pg-aws\\\" (172.29.241.2), port 5432 failed: FATAL:  pg_hba.conf rejects co\"}}}"
+    },
+    {
+      "prueba": "B2 el antiguo escritor que REAPARECE (contenedor reiniciado y red restablecida, con el monitor detenido) arranca cerrado y rechaza TODA escritura real directa, también con intento de anular el solo-lectura",
+      "ok": false,
+      "detalle": "{\"arranque\": \"\", \"intentos_de_escritura_real\": 25, \"aceptadas\": 0, \"primeras_muestras\": [{\"t_s\": 0.25, \"escritura_nueva_conexion_aceptada\": false, \"escritura_con_anulacion_aceptada\": false, \"error\": \"psql: error: connection to server at \\\"pg-aws\\\" (172.29.241.2), port 5432 failed: FATAL:  pg_hba.conf rejects co\"}, {\"t_s\": 0.68, \"escritura_nueva_conexion_aceptada\": false, \"escritura_con_anulacion_aceptada\": false, \"error\": \"psql: error: connection to server at \\\"pg-aws\\\" (172.29.241.2), port 5432 failed: FATAL:  pg_hba.conf rejects co\"}, {\"t_s\": 1.16, \"escritura_nueva_conexion_aceptada\": false, \"escritura_con_anulacion_aceptada\": false, \"error\": \"psql: error: connection to server at \\\"pg-aws\\\" (172.29.241.2), port 5432 failed: FATAL:  pg_hba.conf rejects co\"}], \"ultima_muestra\": {\"t_s\": 11.51, \"escritura_nueva_conexion_aceptada\": false, \"escritura_con_anulacion_aceptada\": false, \"error\": \"psql: error: connection to server at \\\"pg-aws\\\" (172.29.241.2), port 5432 failed: FATAL:  pg_hba.conf rejects co\"}}"
+    },
+    {
+      "prueba": "B2 el aislamiento EN LÍNEA del escritor particionado se verificó por efecto (pg_hba nuevo, sesiones terminadas, escritura real y escritura con anulación rechazadas) antes de detenerlo",
+      "ok": false,
+      "detalle": "{\"verificado\": false, \"modo_cerrado\": {\"modo\": \"fenced\", \"escribir_hba\": true, \"recargar\": true, \"efecto_en_conexion_nueva\": false, \"mensaje_de_la_conexion_nueva\": \"psql: error: could not translate host name \\\"pg-aws\\\" to address: Temporary failure in name resolution\"}, \"solo_lectura_global\": true, \"sesiones_app_terminadas\": true, \"rechazo_conexion_nueva\": \"psql: error: could not translate host name \\\"pg-aws\\\" to address: Temporary failure in name resolution\", \"rechazo_con_anulacion\": \"psql: error: could not translate host name \\\"pg-aws\\\" to address: Temporary failure in name resolution\"}"
+    },
+    {
+      "prueba": "B3 aislamiento no confirmable: NO se promueve, el seguidor sigue rechazando escrituras reales y la aplicación no puede escribir (falla segura: sin servicio, no dos escritores)",
+      "ok": true,
+      "detalle": "{\"motivo\": \"aislamiento no confirmado y el escritor anterior no responde: SIN escritor (falla segura)\", \"lease_a_pg-oci\": false, \"escritura_real_en_oci\": false, \"escritura_por_el_borde\": false, \"haproxy_db\": {\"pg-aws\": \"DOWN\", \"pg-oci\": \"DOWN\"}}"
+    },
+    {
+      "prueba": "B3 al sanar la partición el lease vuelve al escritor ORIGINAL (nunca al seguidor), el servicio se restablece y la replicación se reanuda",
+      "ok": true,
+      "detalle": "{\"sondeo\": {\"muestras\": 29, \"con_dos_escritores\": 0, \"sin_escritor\": 18, \"escribe_aws_alguna_vez\": true, \"escribe_oci_alguna_vez\": false}, \"servicio_restaurado_tras_sanar_s\": 1.1, \"lease_devuelto_a_pg-aws_s\": 0.8, \"replicacion_reanudada_y_conteos_iguales\": true}"
+    },
+    {
+      "prueba": "B3 muestreo con escrituras reales: nunca dos escritores y pg-oci nunca escribió",
+      "ok": true,
+      "detalle": "{\"muestras\": 29, \"con_dos_escritores\": 0, \"sin_escritor\": 18, \"escribe_aws_alguna_vez\": true, \"escribe_oci_alguna_vez\": false}"
+    },
+    {
+      "prueba": "B4 solo default_transaction_read_only NO basta: la aplicación lo anula desde su propia sesión y escribe; con el pg_hba cerrado la misma conexión nueva es rechazada",
+      "ok": false,
+      "detalle": "{\"solo_lectura_por_GUC_escritura_directa\": [false, \"ERROR:  cannot execute INSERT in a read-only transaction\"], \"solo_lectura_por_GUC_con_anulacion_desde_la_sesion\": [false, \"psql: error: connection to server at \\\"pg-oci\\\" (172.29.241.2), port 5432 failed: FATAL:  pg_hba.conf rejects connection for host \\\"172.29.241.2\\\", user \\\"nexoeventos_app\\\", database \\\"nexoeventos\\\", no encry\"], \"con_pg_hba_cerrado_escritura_directa\": [false, \"psql: error: connection to server at \\\"pg-oci\\\" (172.29.241.2), port 5432 failed: FATAL:  pg_hba.conf rejects connection for host \\\"172.29.241.2\\\", user \\\"nexoeventos_app\\\", database \\\"nexoeventos\\\", no encry\"], \"con_pg_hba_cerrado_con_anulacion\": [false, \"psql: error: connection to server at \\\"pg-oci\\\" (172.29.241.2), port 5432 failed: FATAL:  pg_hba.conf rejects connection for host \\\"172.29.241.2\\\", user \\\"nexoeventos_app\\\", database \\\"nexoeventos\\\", no encry\"]}"
+    },
+    {
+      "prueba": "B5 el escritor legítimo que reinicia con el witness caído arranca CERRADO (falla cerrada: sin escrituras); con el witness disponible y declarándolo escritor, abre",
+      "ok": true,
+      "detalle": "{\"con_witness_caido\": {\"arranque\": \"[lab-entry] pg-aws arranca en modo fenced: el witness no respondió (falla cerrada)\", \"escritura_real_aceptada\": false, \"error\": \"psql: error: connection to server at \\\"pg-aws\\\" (172.29.241.3), port 5432 failed: FATAL:  pg_hba.conf rejects connection for host \\\"172.29.241.2\\\", user \\\"nexoeventos_app\\\", database \\\"nexoeventos\\\", no encry\"}, \"con_witness_vivo_y_me_declara_escritor\": {\"arranque\": \"[lab-entry] pg-aws arranca en modo open: el witness me declara escritor\", \"escritura_real_aceptada\": true}}"
+    }
+  ],
+  "datos": {
+    "B1": {
+      "monitor_sigue_vivo_y_emite_latidos_tras_volver_el_witness": true,
+      "epoca_antes": 1,
+      "epoca_vista_tras_reiniciar_witness": 1,
+      "promocion_tras_volver_el_witness_s": 3.0,
+      "escritura_por_el_borde_ok_tras_s": 0.9,
+      "sondeo": {
+        "muestras": 35,
+        "con_dos_escritores": 0,
+        "sin_escritor": 31,
+        "escribe_aws_alguna_vez": true,
+        "escribe_oci_alguna_vez": true
+      }
+    },
+    "B2": {
+      "rto_bd_hasta_lease_s": 7.1,
+      "fence": {
+        "t": 1794335773.206,
+        "ev": "fence",
+        "nodo": "pg-aws",
+        "detenido": true,
+        "escritura_real_aceptada": false,
+        "escritura_real_error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+        "resultado": "confirmado"
+      },
+      "escritura_destino": {
+        "t": 1794335774.104,
+        "ev": "escritura_destino",
+        "aceptada": true,
+        "error": ""
+      },
+      "verificacion_final": {
+        "t": 1794335774.976,
+        "ev": "verificacion_final",
+        "antiguo_escribe": false,
+        "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"
+      },
+      "orden_fence_antes_de_escribir_en_destino": true,
+      "escritura_por_el_borde_ok": true,
+      "escritura_real_directa_al_antiguo_con_OCI_ya_promovido": false,
+      "escritura_real_por_pasarela_de_BD_de_app-aws_llega_a": {
+        "ip_del_servidor_que_la_atendio": "172.29.241.3",
+        "ip_de_pg-oci": "172.29.241.3",
+        "atendida_por_pg-oci": true
+      },
+      "antiguo_escritor_reiniciado_tras_sanar_la_red_SIN_monitor": {
+        "arranque": "",
+        "intentos_de_escritura_real": 25,
+        "aceptadas": 0,
+        "primeras_muestras": [
+          {
+            "t_s": 0.25,
+            "escritura_nueva_conexion_aceptada": false,
+            "escritura_con_anulacion_aceptada": false,
+            "error": "psql: error: connection to server at \"pg-aws\" (172.29.241.2), port 5432 failed: FATAL:  pg_hba.conf rejects co"
+          },
+          {
+            "t_s": 0.68,
+            "escritura_nueva_conexion_aceptada": false,
+            "escritura_con_anulacion_aceptada": false,
+            "error": "psql: error: connection to server at \"pg-aws\" (172.29.241.2), port 5432 failed: FATAL:  pg_hba.conf rejects co"
+          },
+          {
+            "t_s": 1.16,
+            "escritura_nueva_conexion_aceptada": false,
+            "escritura_con_anulacion_aceptada": false,
+            "error": "psql: error: connection to server at \"pg-aws\" (172.29.241.2), port 5432 failed: FATAL:  pg_hba.conf rejects co"
+          }
+        ],
+        "ultima_muestra": {
+          "t_s": 11.51,
+          "escritura_nueva_conexion_aceptada": false,
+          "escritura_con_anulacion_aceptada": false,
+          "error": "psql: error: connection to server at \"pg-aws\" (172.29.241.2), port 5432 failed: FATAL:  pg_hba.conf rejects co"
+        }
+      },
+      "sondeo": {
+        "muestras": 52,
+        "con_dos_escritores": 0,
+        "sin_escritor": 15,
+        "escribe_aws_alguna_vez": false,
+        "escribe_oci_alguna_vez": true
+      }
+    },
+    "B3": {
+      "sondeo": {
+        "muestras": 29,
+        "con_dos_escritores": 0,
+        "sin_escritor": 18,
+        "escribe_aws_alguna_vez": true,
+        "escribe_oci_alguna_vez": false
+      },
+      "servicio_restaurado_tras_sanar_s": 1.1,
+      "lease_devuelto_a_pg-aws_s": 0.8,
+      "replicacion_reanudada_y_conteos_iguales": true
+    },
+    "B4": {
+      "solo_lectura_por_GUC_escritura_directa": [
+        false,
+        "ERROR:  cannot execute INSERT in a read-only transaction"
+      ],
+      "solo_lectura_por_GUC_con_anulacion_desde_la_sesion": [
+        false,
+        "psql: error: connection to server at \"pg-oci\" (172.29.241.2), port 5432 failed: FATAL:  pg_hba.conf rejects connection for host \"172.29.241.2\", user \"nexoeventos_app\", database \"nexoeventos\", no encry"
+      ],
+      "con_pg_hba_cerrado_escritura_directa": [
+        false,
+        "psql: error: connection to server at \"pg-oci\" (172.29.241.2), port 5432 failed: FATAL:  pg_hba.conf rejects connection for host \"172.29.241.2\", user \"nexoeventos_app\", database \"nexoeventos\", no encry"
+      ],
+      "con_pg_hba_cerrado_con_anulacion": [
+        false,
+        "psql: error: connection to server at \"pg-oci\" (172.29.241.2), port 5432 failed: FATAL:  pg_hba.conf rejects connection for host \"172.29.241.2\", user \"nexoeventos_app\", database \"nexoeventos\", no encry"
+      ]
+    },
+    "B5": {
+      "con_witness_caido": {
+        "arranque": "[lab-entry] pg-aws arranca en modo fenced: el witness no respondió (falla cerrada)",
+        "escritura_real_aceptada": false,
+        "error": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg_hba.conf rejects connection for host \"172.29.241.2\", user \"nexoeventos_app\", database \"nexoeventos\", no encry"
+      },
+      "con_witness_vivo_y_me_declara_escritor": {
+        "arranque": "[lab-entry] pg-aws arranca en modo open: el witness me declara escritor",
+        "escritura_real_aceptada": true
+      }
+    }
+  }
+}

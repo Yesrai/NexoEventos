@@ -1,0 +1,15 @@
+test_bucket_con_versionado_o_publico_se_rechaza_antes_de_escribir (test_lease_selftest.Cases.test_bucket_con_versionado_o_publico_se_rechaza_antes_de_escribir) ... ok
+test_cli_que_no_ofrece_if_match_se_rechaza (test_lease_selftest.Cases.test_cli_que_no_ofrece_if_match_se_rechaza) ... ok
+test_cli_sin_if_match_falla_la_semantica_se_detiene_y_aun_asi_limpia (test_lease_selftest.Cases.test_cli_sin_if_match_falla_la_semantica_se_detiene_y_aun_asi_limpia) ... ok
+test_el_bucket_de_respaldos_jamas_se_acepta (test_lease_selftest.Cases.test_el_bucket_de_respaldos_jamas_se_acepta) ... ok
+test_exito_completo_y_limpieza_de_todo_lo_creado (test_lease_selftest.Cases.test_exito_completo_y_limpieza_de_todo_lo_creado) ... ok
+test_la_limpieza_solo_borra_objetos_selftest (test_lease_selftest.Cases.test_la_limpieza_solo_borra_objetos_selftest) ... ok
+test_tope_de_tiempo (test_lease_selftest.Cases.test_tope_de_tiempo) ... ok
+test_ejecucion_correcta_por_cli_y_salida_sin_secretos (test_lease_selftest.Cli.test_ejecucion_correcta_por_cli_y_salida_sin_secretos) ... ok
+test_ejecutar_exige_entorno_frase_exacta_y_parametros_minimos (test_lease_selftest.Cli.test_ejecutar_exige_entorno_frase_exacta_y_parametros_minimos) ... ok
+test_por_defecto_solo_planifica_y_no_llama_a_la_nube (test_lease_selftest.Cli.test_por_defecto_solo_planifica_y_no_llama_a_la_nube) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 19.361s
+
+OK

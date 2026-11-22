@@ -1,0 +1,14 @@
+--- work/install-postgres.sh.orig-20261111	2026-11-11 13:31:35
++++ scripts/multicloud/oci-drill/install-postgres.sh	2026-11-11 13:31:35
+@@ -2,7 +2,10 @@
+ # En la VM de recuperación (sin Internet): instala PostgreSQL 18 desde RPM PGDG ya copiados (verificados en la estación local) y deja el servidor SOLO en socket Unix.
+ # Las dependencias salen del espejo yum de Oracle por el Service Gateway. Uso (como root): install-postgres.sh <directorio-con-rpms>
+ set -euo pipefail
+-RPMS="${1:?directorio con los RPM}"
++RPMS="${1:?directorio con los RPM}"; HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
++# 1) RAM pequeña (E2.1.Micro): swap ANTES de instalar (el 23-oct dnf agotó la memoria sin swap). 2) Los RPM deben coincidir con la lista fijada de SHA-256 (cadena de suministro).
++bash "$HERE/ensure-swap.sh"
++bash "$HERE/verify-rpms.sh" "$RPMS" "$HERE/rpm-checksums.sha256" || { echo "FALLÓ: los RPM no coinciden con la lista fijada; no se instala nada." >&2; exit 5; }
+ # Idempotente: no reinstala ni reinicializa si ya está hecho.
+ rpm -q postgresql18-server >/dev/null 2>&1 || dnf -y install "$RPMS"/postgresql18-libs-*.rpm "$RPMS"/postgresql18-18.*.rpm "$RPMS"/postgresql18-server-*.rpm
+ if [[ ! -f /var/lib/pgsql/18/data/PG_VERSION ]]; then

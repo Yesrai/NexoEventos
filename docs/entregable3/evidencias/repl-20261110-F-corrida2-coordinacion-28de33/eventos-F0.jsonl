@@ -1,0 +1,7 @@
+{"t": 1794357346.147, "ev": "monitor_inicio", "auto": true, "pid": 63305}
+{"t": 1794357346.163, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 4.54, "prot": {"mode": "protected", "seq": 2, "primario": "pg-aws", "epoch": 1, "verified_age_s": 2.04}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794357351.188, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.74, "prot": {"mode": "protected", "seq": 2, "primario": "pg-aws", "epoch": 1, "verified_age_s": 0.1}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794357354.052, "ev": "proteccion", "modo": "degraded", "antes": "protected", "ok": true, "seq": 3, "primario": "pg-aws", "motivo": "synchronous_standby_names cambió fuera del controlador: ''"}
+{"t": 1794357356.87, "ev": "proteccion", "modo": "reprotecting", "antes": "degraded", "ok": true, "seq": 4, "primario": "pg-aws", "motivo": "reprotección desde degraded"}
+{"t": 1794357357.206, "ev": "sync_habilitada", "primario": "pg-aws", "estado_seguidor": "quorum"}
+{"t": 1794357357.435, "ev": "monitor_fin", "motivo": "SIGTERM"}

@@ -1,0 +1,549 @@
+data.aws_availability_zones.available: Reading...
+data.aws_vpc.v1: Reading...
+data.aws_availability_zones.available: Read complete after 0s [id=us-east-1]
+data.aws_vpc.v1: Read complete after 1s [id=<vpc-1>]
+data.aws_subnet.public_a: Reading...
+aws_security_group.alb: Refreshing state... [id=<sg-1>]
+data.aws_subnet.public_a: Read complete after 0s [id=<subnet-1>]
+aws_subnet.public_b: Refreshing state... [id=<subnet-2>]
+aws_lb.main: Refreshing state... [id=arn:aws:elasticloadbalancing:us-east-1:<cuenta>:loadbalancer/app/nexoeventos-academy-v2-alb/d772b4c6341b5ec8]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  - destroy
+
+Terraform will perform the following actions:
+
+  # aws_cloudwatch_dashboard.v2 will be destroyed
+  - resource "aws_cloudwatch_dashboard" "v2" {
+      - dashboard_arn  = "arn:aws:cloudwatch::<cuenta>:dashboard/nexoeventos-academy-v2-medicion" -> null
+      - dashboard_body = jsonencode(
+            {
+              - widgets = [
+                  - {
+                      - height     = 6
+                      - properties = {
+                          - metrics = [
+                              - [
+                                  - "AWS/ApplicationELB",
+                                  - "HealthyHostCount",
+                                  - "TargetGroup",
+                                  - "targetgroup/nexoeventos-academy-v2-tg/62ea872c083f554f",
+                                  - "LoadBalancer",
+                                  - "app/nexoeventos-academy-v2-alb/d772b4c6341b5ec8",
+                                ],
+                              - [
+                                  - ".",
+                                  - "UnHealthyHostCount",
+                                  - ".",
+                                  - ".",
+                                  - ".",
+                                  - ".",
+                                ],
+                              - [
+                                  - "AWS/AutoScaling",
+                                  - "GroupInServiceInstances",
+                                  - "AutoScalingGroupName",
+                                  - "nexoeventos-academy-v2-asg",
+                                ],
+                              - [
+                                  - ".",
+                                  - "GroupDesiredCapacity",
+                                  - ".",
+                                  - ".",
+                                ],
+                            ]
+                          - period  = 60
+                          - region  = "us-east-1"
+                          - stat    = "Average"
+                          - title   = "Instancias sanas y capacidad del grupo"
+                        }
+                      - type       = "metric"
+                      - width      = 12
+                      - x          = 0
+                      - y          = 0
+                    },
+                  - {
+                      - height     = 6
+                      - properties = {
+                          - metrics = [
+                              - [
+                                  - "AWS/ApplicationELB",
+                                  - "RequestCount",
+                                  - "LoadBalancer",
+                                  - "app/nexoeventos-academy-v2-alb/d772b4c6341b5ec8",
+                                  - {
+                                      - stat = "Sum"
+                                    },
+                                ],
+                              - [
+                                  - ".",
+                                  - "TargetResponseTime",
+                                  - ".",
+                                  - ".",
+                                  - {
+                                      - stat  = "p95"
+                                      - yAxis = "right"
+                                    },
+                                ],
+                              - [
+                                  - ".",
+                                  - "HTTPCode_Target_5XX_Count",
+                                  - ".",
+                                  - ".",
+                                  - {
+                                      - stat = "Sum"
+                                    },
+                                ],
+                              - [
+                                  - ".",
+                                  - "HTTPCode_ELB_5XX_Count",
+                                  - ".",
+                                  - ".",
+                                  - {
+                                      - stat = "Sum"
+                                    },
+                                ],
+                            ]
+                          - period  = 60
+                          - region  = "us-east-1"
+                          - title   = "Solicitudes, latencia y errores del ALB"
+                        }
+                      - type       = "metric"
+                      - width      = 12
+                      - x          = 12
+                      - y          = 0
+                    },
+                  - {
+                      - height     = 6
+                      - properties = {
+                          - metrics = [
+                              - [
+                                  - "AWS/EC2",
+                                  - "CPUUtilization",
+                                  - "AutoScalingGroupName",
+                                  - "nexoeventos-academy-v2-asg",
+                                  - {
+                                      - stat = "Average"
+                                    },
+                                ],
+                              - [
+                                  - ".",
+                                  - "CPUSurplusCreditBalance",
+                                  - ".",
+                                  - ".",
+                                  - {
+                                      - stat  = "Maximum"
+                                      - yAxis = "right"
+                                    },
+                                ],
+                            ]
+                          - period  = 60
+                          - region  = "us-east-1"
+                          - title   = "CPU media del grupo y créditos"
+                        }
+                      - type       = "metric"
+                      - width      = 12
+                      - x          = 0
+                      - y          = 6
+                    },
+                  - {
+                      - height     = 6
+                      - properties = {
+                          - metrics = [
+                              - [
+                                  - "AWS/RDS",
+                                  - "DatabaseConnections",
+                                  - "DBInstanceIdentifier",
+                                  - "nexoeventos-academy-postgres",
+                                  - {
+                                      - stat = "Maximum"
+                                    },
+                                ],
+                              - [
+                                  - ".",
+                                  - "CPUUtilization",
+                                  - ".",
+                                  - ".",
+                                  - {
+                                      - stat  = "Maximum"
+                                      - yAxis = "right"
+                                    },
+                                ],
+                              - [
+                                  - ".",
+                                  - "FreeableMemory",
+                                  - ".",
+                                  - ".",
+                                  - {
+                                      - stat  = "Minimum"
+                                      - yAxis = "right"
+                                    },
+                                ],
+                            ]
+                          - period  = 60
+                          - region  = "us-east-1"
+                          - title   = "RDS: conexiones, CPU y memoria liberable"
+                        }
+                      - type       = "metric"
+                      - width      = 12
+                      - x          = 12
+                      - y          = 6
+                    },
+                ]
+            }
+        ) -> null
+      - dashboard_name = "nexoeventos-academy-v2-medicion" -> null
+      - id             = "nexoeventos-academy-v2-medicion" -> null
+      - region         = "us-east-1" -> null
+    }
+
+  # aws_cloudwatch_metric_alarm.alb_healthy_below_desired[0] will be destroyed
+  - resource "aws_cloudwatch_metric_alarm" "alb_healthy_below_desired" {
+      - actions_enabled                       = true -> null
+      - alarm_actions                         = [
+          - "arn:aws:sns:us-east-1:<cuenta>:nexoeventos-academy-alarmas",
+        ] -> null
+      - alarm_description                     = "Destinos sanos del ALB menores que la capacidad deseada del ASG durante 3 minutos (instancia caída o en reemplazo)" -> null
+      - alarm_name                            = "nexoeventos-academy-v2-alb-sanos-bajo-lo-deseado" -> null
+      - arn                                   = "arn:aws:cloudwatch:us-east-1:<cuenta>:alarm:nexoeventos-academy-v2-alb-sanos-bajo-lo-deseado" -> null
+      - comparison_operator                   = "GreaterThanOrEqualToThreshold" -> null
+      - datapoints_to_alarm                   = 0 -> null
+      - dimensions                            = {} -> null
+      - evaluation_interval                   = 0 -> null
+      - evaluation_periods                    = 3 -> null
+      - id                                    = "nexoeventos-academy-v2-alb-sanos-bajo-lo-deseado" -> null
+      - insufficient_data_actions             = [] -> null
+      - ok_actions                            = [
+          - "arn:aws:sns:us-east-1:<cuenta>:nexoeventos-academy-alarmas",
+        ] -> null
+      - period                                = 0 -> null
+      - region                                = "us-east-1" -> null
+      - tags                                  = {} -> null
+      - tags_all                              = {
+          - "Environment" = "academy"
+          - "ManagedBy"   = "Terraform"
+          - "Project"     = "NexoEventos"
+          - "Stack"       = "v2"
+        } -> null
+      - threshold                             = 1 -> null
+      - treat_missing_data                    = "notBreaching" -> null
+        # (7 unchanged attributes hidden)
+
+      - metric_query {
+          - id          = "deseada" -> null
+          - period      = 0 -> null
+          - return_data = false -> null
+            # (3 unchanged attributes hidden)
+
+          - metric {
+              - dimensions  = {
+                  - "AutoScalingGroupName" = "nexoeventos-academy-v2-asg"
+                } -> null
+              - metric_name = "GroupDesiredCapacity" -> null
+              - namespace   = "AWS/AutoScaling" -> null
+              - period      = 60 -> null
+              - stat        = "Maximum" -> null
+                # (1 unchanged attribute hidden)
+            }
+        }
+      - metric_query {
+          - id          = "sanos" -> null
+          - period      = 0 -> null
+          - return_data = false -> null
+            # (3 unchanged attributes hidden)
+
+          - metric {
+              - dimensions  = {
+                  - "LoadBalancer" = "app/nexoeventos-academy-v2-alb/d772b4c6341b5ec8"
+                  - "TargetGroup"  = "targetgroup/nexoeventos-academy-v2-tg/62ea872c083f554f"
+                } -> null
+              - metric_name = "HealthyHostCount" -> null
+              - namespace   = "AWS/ApplicationELB" -> null
+              - period      = 60 -> null
+              - stat        = "Minimum" -> null
+                # (1 unchanged attribute hidden)
+            }
+        }
+      - metric_query {
+          - expression  = "IF(sanos < deseada, 1, 0)" -> null
+          - id          = "bajo" -> null
+          - label       = "Destinos sanos < capacidad deseada" -> null
+          - period      = 0 -> null
+          - return_data = true -> null
+            # (1 unchanged attribute hidden)
+        }
+    }
+
+  # aws_cloudwatch_metric_alarm.alb_latency_p95[0] will be destroyed
+  - resource "aws_cloudwatch_metric_alarm" "alb_latency_p95" {
+      - actions_enabled                       = true -> null
+      - alarm_actions                         = [
+          - "arn:aws:sns:us-east-1:<cuenta>:nexoeventos-academy-alarmas",
+        ] -> null
+      - alarm_description                     = "Latencia p95 de los destinos mayor a 1,5 s en 3 de 5 minutos (el login con Argon2 es lento: la medición de 50 usuarios dio p95 ≈ 0,2–0,4 s)" -> null
+      - alarm_name                            = "nexoeventos-academy-v2-alb-latencia-p95" -> null
+      - arn                                   = "arn:aws:cloudwatch:us-east-1:<cuenta>:alarm:nexoeventos-academy-v2-alb-latencia-p95" -> null
+      - comparison_operator                   = "GreaterThanThreshold" -> null
+      - datapoints_to_alarm                   = 3 -> null
+      - dimensions                            = {
+          - "LoadBalancer" = "app/nexoeventos-academy-v2-alb/d772b4c6341b5ec8"
+        } -> null
+      - evaluation_interval                   = 0 -> null
+      - evaluation_periods                    = 5 -> null
+      - extended_statistic                    = "p95" -> null
+      - id                                    = "nexoeventos-academy-v2-alb-latencia-p95" -> null
+      - insufficient_data_actions             = [] -> null
+      - metric_name                           = "TargetResponseTime" -> null
+      - namespace                             = "AWS/ApplicationELB" -> null
+      - ok_actions                            = [
+          - "arn:aws:sns:us-east-1:<cuenta>:nexoeventos-academy-alarmas",
+        ] -> null
+      - period                                = 60 -> null
+      - region                                = "us-east-1" -> null
+      - tags                                  = {} -> null
+      - tags_all                              = {
+          - "Environment" = "academy"
+          - "ManagedBy"   = "Terraform"
+          - "Project"     = "NexoEventos"
+          - "Stack"       = "v2"
+        } -> null
+      - threshold                             = 1.5 -> null
+      - treat_missing_data                    = "notBreaching" -> null
+        # (4 unchanged attributes hidden)
+    }
+
+  # aws_cloudwatch_metric_alarm.alb_target_5xx[0] will be destroyed
+  - resource "aws_cloudwatch_metric_alarm" "alb_target_5xx" {
+      - actions_enabled                       = true -> null
+      - alarm_actions                         = [
+          - "arn:aws:sns:us-east-1:<cuenta>:nexoeventos-academy-alarmas",
+        ] -> null
+      - alarm_description                     = "Al menos 5 respuestas 5xx de los destinos por minuto en 2 de 3 minutos (caída de la API o de la base de datos)" -> null
+      - alarm_name                            = "nexoeventos-academy-v2-alb-5xx-destino" -> null
+      - arn                                   = "arn:aws:cloudwatch:us-east-1:<cuenta>:alarm:nexoeventos-academy-v2-alb-5xx-destino" -> null
+      - comparison_operator                   = "GreaterThanOrEqualToThreshold" -> null
+      - datapoints_to_alarm                   = 2 -> null
+      - dimensions                            = {
+          - "LoadBalancer" = "app/nexoeventos-academy-v2-alb/d772b4c6341b5ec8"
+        } -> null
+      - evaluation_interval                   = 0 -> null
+      - evaluation_periods                    = 3 -> null
+      - id                                    = "nexoeventos-academy-v2-alb-5xx-destino" -> null
+      - insufficient_data_actions             = [] -> null
+      - metric_name                           = "HTTPCode_Target_5XX_Count" -> null
+      - namespace                             = "AWS/ApplicationELB" -> null
+      - ok_actions                            = [
+          - "arn:aws:sns:us-east-1:<cuenta>:nexoeventos-academy-alarmas",
+        ] -> null
+      - period                                = 60 -> null
+      - region                                = "us-east-1" -> null
+      - statistic                             = "Sum" -> null
+      - tags                                  = {} -> null
+      - tags_all                              = {
+          - "Environment" = "academy"
+          - "ManagedBy"   = "Terraform"
+          - "Project"     = "NexoEventos"
+          - "Stack"       = "v2"
+        } -> null
+      - threshold                             = 5 -> null
+      - treat_missing_data                    = "notBreaching" -> null
+        # (4 unchanged attributes hidden)
+    }
+
+  # aws_cloudwatch_metric_alarm.alb_unhealthy_hosts[0] will be destroyed
+  - resource "aws_cloudwatch_metric_alarm" "alb_unhealthy_hosts" {
+      - actions_enabled                       = true -> null
+      - alarm_actions                         = [
+          - "arn:aws:sns:us-east-1:<cuenta>:nexoeventos-academy-alarmas",
+        ] -> null
+      - alarm_description                     = "Algún destino no sano durante 3 minutos seguidos" -> null
+      - alarm_name                            = "nexoeventos-academy-v2-alb-destinos-no-sanos" -> null
+      - arn                                   = "arn:aws:cloudwatch:us-east-1:<cuenta>:alarm:nexoeventos-academy-v2-alb-destinos-no-sanos" -> null
+      - comparison_operator                   = "GreaterThanOrEqualToThreshold" -> null
+      - datapoints_to_alarm                   = 0 -> null
+      - dimensions                            = {
+          - "LoadBalancer" = "app/nexoeventos-academy-v2-alb/d772b4c6341b5ec8"
+          - "TargetGroup"  = "targetgroup/nexoeventos-academy-v2-tg/62ea872c083f554f"
+        } -> null
+      - evaluation_interval                   = 0 -> null
+      - evaluation_periods                    = 3 -> null
+      - id                                    = "nexoeventos-academy-v2-alb-destinos-no-sanos" -> null
+      - insufficient_data_actions             = [] -> null
+      - metric_name                           = "UnHealthyHostCount" -> null
+      - namespace                             = "AWS/ApplicationELB" -> null
+      - ok_actions                            = [
+          - "arn:aws:sns:us-east-1:<cuenta>:nexoeventos-academy-alarmas",
+        ] -> null
+      - period                                = 60 -> null
+      - region                                = "us-east-1" -> null
+      - statistic                             = "Maximum" -> null
+      - tags                                  = {} -> null
+      - tags_all                              = {
+          - "Environment" = "academy"
+          - "ManagedBy"   = "Terraform"
+          - "Project"     = "NexoEventos"
+          - "Stack"       = "v2"
+        } -> null
+      - threshold                             = 1 -> null
+      - treat_missing_data                    = "notBreaching" -> null
+        # (4 unchanged attributes hidden)
+    }
+
+  # aws_lb.main will be destroyed
+  - resource "aws_lb" "main" {
+      - arn                                                          = "arn:aws:elasticloadbalancing:us-east-1:<cuenta>:loadbalancer/app/nexoeventos-academy-v2-alb/d772b4c6341b5ec8" -> null
+      - arn_suffix                                                   = "app/nexoeventos-academy-v2-alb/d772b4c6341b5ec8" -> null
+      - client_keep_alive                                            = 3600 -> null
+      - desync_mitigation_mode                                       = "defensive" -> null
+      - dns_name                                                     = "<dns-alb-eliminado>" -> null
+      - drop_invalid_header_fields                                   = true -> null
+      - enable_cross_zone_load_balancing                             = true -> null
+      - enable_deletion_protection                                   = false -> null
+      - enable_http2                                                 = true -> null
+      - enable_prefix_for_ipv6_source_nat                            = "off" -> null
+      - enable_tls_version_and_cipher_suite_headers                  = false -> null
+      - enable_waf_fail_open                                         = false -> null
+      - enable_xff_client_port                                       = false -> null
+      - enable_zonal_shift                                           = false -> null
+      - id                                                           = "arn:aws:elasticloadbalancing:us-east-1:<cuenta>:loadbalancer/app/nexoeventos-academy-v2-alb/d772b4c6341b5ec8" -> null
+      - idle_timeout                                                 = 60 -> null
+      - internal                                                     = false -> null
+      - ip_address_type                                              = "ipv4" -> null
+      - load_balancer_type                                           = "application" -> null
+      - name                                                         = "nexoeventos-academy-v2-alb" -> null
+      - preserve_host_header                                         = false -> null
+      - region                                                       = "us-east-1" -> null
+      - security_groups                                              = [
+          - "<sg-1>",
+        ] -> null
+      - subnets                                                      = [
+          - "<subnet-2>",
+          - "<subnet-1>",
+        ] -> null
+      - tags                                                         = {
+          - "Name" = "nexoeventos-academy-v2-alb"
+        } -> null
+      - tags_all                                                     = {
+          - "Environment" = "academy"
+          - "ManagedBy"   = "Terraform"
+          - "Name"        = "nexoeventos-academy-v2-alb"
+          - "Project"     = "NexoEventos"
+          - "Stack"       = "v2"
+        } -> null
+      - vpc_id                                                       = "<vpc-1>" -> null
+      - xff_header_processing_mode                                   = "append" -> null
+      - zone_id                                                      = "Z35SXDOTRQ7X7K" -> null
+        # (3 unchanged attributes hidden)
+
+      - access_logs {
+          - enabled = false -> null
+            # (2 unchanged attributes hidden)
+        }
+
+      - connection_logs {
+          - enabled = false -> null
+            # (2 unchanged attributes hidden)
+        }
+
+      - health_check_logs {
+          - enabled = false -> null
+            # (2 unchanged attributes hidden)
+        }
+
+      - subnet_mapping {
+          - subnet_id            = "<subnet-2>" -> null
+            # (4 unchanged attributes hidden)
+        }
+      - subnet_mapping {
+          - subnet_id            = "<subnet-1>" -> null
+            # (4 unchanged attributes hidden)
+        }
+    }
+
+  # aws_lb_listener.http_redirect will be destroyed
+  - resource "aws_lb_listener" "http_redirect" {
+      - arn                                                                 = "arn:aws:elasticloadbalancing:us-east-1:<cuenta>:listener/app/nexoeventos-academy-v2-alb/d772b4c6341b5ec8/bc4e68cd560ee88b" -> null
+      - id                                                                  = "arn:aws:elasticloadbalancing:us-east-1:<cuenta>:listener/app/nexoeventos-academy-v2-alb/d772b4c6341b5ec8/bc4e68cd560ee88b" -> null
+      - load_balancer_arn                                                   = "arn:aws:elasticloadbalancing:us-east-1:<cuenta>:loadbalancer/app/nexoeventos-academy-v2-alb/d772b4c6341b5ec8" -> null
+      - port                                                                = 80 -> null
+      - protocol                                                            = "HTTP" -> null
+      - region                                                              = "us-east-1" -> null
+      - routing_http_response_server_enabled                                = true -> null
+      - tags                                                                = {} -> null
+      - tags_all                                                            = {
+          - "Environment" = "academy"
+          - "ManagedBy"   = "Terraform"
+          - "Project"     = "NexoEventos"
+          - "Stack"       = "v2"
+        } -> null
+        # (11 unchanged attributes hidden)
+
+      - default_action {
+          - order            = 1 -> null
+          - type             = "redirect" -> null
+            # (1 unchanged attribute hidden)
+
+          - redirect {
+              - host        = "#{host}" -> null
+              - path        = "/#{path}" -> null
+              - port        = "443" -> null
+              - protocol    = "HTTPS" -> null
+              - query       = "#{query}" -> null
+              - status_code = "HTTP_301" -> null
+            }
+        }
+    }
+
+  # aws_lb_listener.https will be destroyed
+  - resource "aws_lb_listener" "https" {
+      - arn                                                                   = "arn:aws:elasticloadbalancing:us-east-1:<cuenta>:listener/app/nexoeventos-academy-v2-alb/d772b4c6341b5ec8/290544bf64912b09" -> null
+      - certificate_arn                                                       = "arn:aws:acm:us-east-1:<cuenta>:certificate/b8f2c28e-2df8-4100-a9f8-7a04a437abaa" -> null
+      - id                                                                    = "arn:aws:elasticloadbalancing:us-east-1:<cuenta>:listener/app/nexoeventos-academy-v2-alb/d772b4c6341b5ec8/290544bf64912b09" -> null
+      - load_balancer_arn                                                     = "arn:aws:elasticloadbalancing:us-east-1:<cuenta>:loadbalancer/app/nexoeventos-academy-v2-alb/d772b4c6341b5ec8" -> null
+      - port                                                                  = 443 -> null
+      - protocol                                                              = "HTTPS" -> null
+      - region                                                                = "us-east-1" -> null
+      - routing_http_response_server_enabled                                  = true -> null
+      - ssl_policy                                                            = "ELBSecurityPolicy-TLS13-1-2-2021-06" -> null
+      - tags                                                                  = {} -> null
+      - tags_all                                                              = {
+          - "Environment" = "academy"
+          - "ManagedBy"   = "Terraform"
+          - "Project"     = "NexoEventos"
+          - "Stack"       = "v2"
+        } -> null
+        # (18 unchanged attributes hidden)
+
+      - default_action {
+          - order            = 1 -> null
+          - target_group_arn = "arn:aws:elasticloadbalancing:us-east-1:<cuenta>:targetgroup/nexoeventos-academy-v2-tg/62ea872c083f554f" -> null
+          - type             = "forward" -> null
+        }
+
+      - mutual_authentication {
+          - ignore_client_certificate_expiry = false -> null
+          - mode                             = "off" -> null
+            # (2 unchanged attributes hidden)
+        }
+    }
+
+Plan: 0 to add, 0 to change, 8 to destroy.
+
+Warning: Resource targeting is in effect
+
+You are creating a plan with the -target option, which means that the result
+of this plan may not represent all of the changes requested by the current
+configuration.
+
+The -target option is not for routine use, and is provided only for
+exceptional situations such as recovering from errors or mistakes, or when
+Terraform specifically suggests to use it as part of an error message.
+
+─────────────────────────────────────────────────────────────────────────────
+
+Saved the plan to:
+/Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/work/operacion/v2-plans/20261111T033846Z-destroy-alb-target.tfplan
+
+To perform exactly these actions, run the following command to apply:
+    terraform apply "/Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/work/operacion/v2-plans/20261111T033846Z-destroy-alb-target.tfplan"

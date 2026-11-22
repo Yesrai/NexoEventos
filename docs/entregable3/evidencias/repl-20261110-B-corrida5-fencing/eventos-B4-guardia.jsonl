@@ -1,0 +1,11 @@
+{"t": 1794336209.441, "ev": "monitor_inicio", "auto": true, "pid": 28278}
+{"t": 1794336209.45, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 4.8}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794336209.555, "ev": "nodo_no_escritor_expuesto", "nodo": "pg-oci", "accion": "aislar en línea y verificar con escrituras reales"}
+{"t": 1794336210.136, "ev": "nodo_no_escritor_aislado", "nodo": "pg-oci", "t_aislamiento_s": 0.58, "escritura_real_aceptada_despues": false, "modo_cerrado": {"modo": "fenced", "escribir_hba": true, "recargar": true, "efecto_en_conexion_nueva": true, "mensaje_de_la_conexion_nueva": "psql: error: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  pg_hba.conf rejects connection for host \"127.0.0.1\", user \"nexoeventos_app\", database \"nexoeventos\", no encryption"}, "sesiones_app_terminadas": true}
+{"t": 1794336214.497, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.7}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794336219.536, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.75}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794336224.577, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.66}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794336229.624, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.63}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794336234.661, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.7}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794336239.696, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.63}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794336241.145, "ev": "monitor_fin", "motivo": "SIGTERM"}

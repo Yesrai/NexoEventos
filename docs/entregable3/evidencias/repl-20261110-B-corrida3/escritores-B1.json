@@ -1,0 +1,282 @@
+[
+ {
+  "t": 1794335029.691,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335030.168,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335030.643,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335031.198,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335031.682,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335032.195,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335032.69,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335033.199,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335033.708,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335034.219,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335034.714,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335035.173,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335035.652,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335036.121,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335036.606,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335037.109,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335037.591,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335038.09,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335038.554,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335039.045,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335039.546,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335040.008,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335040.46,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335040.96,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335041.455,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335041.949,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335042.409,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335042.884,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335043.376,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335043.883,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335044.36,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335044.883,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335045.38,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335045.946,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335046.535,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335047.028,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335047.493,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335047.946,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335048.398,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335048.873,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": ""
+ }
+]

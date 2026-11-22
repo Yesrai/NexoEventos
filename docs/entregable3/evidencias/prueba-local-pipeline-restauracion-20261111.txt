@@ -1,0 +1,34 @@
+== 1) Base local con reservas de ensayo
+NOTICE:  database "nexoeventos_mctest" does not exist, skipping
+      seed OK: 3 reservas, 5 entradas
+scripts/multicloud/test-restore-pipeline.sh: line 19: 98616 Terminated: 15          DATABASE_URL="postgresql+psycopg://nexoeventos_app@/$DB" TICKET_ENCRYPTION_KEY="$KEY" FRONTEND_ORIGINS=http://localhost:5173 APP_ENV=development nohup .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port $PORT > /dev/null 2>&1
+OK    huella de origen calculada (10 claves; reservations=3)
+== 2) Respaldo cifrado «AWS» (clave de prueba) y transferencia preparada para «OCI» (clave independiente)
+OK    par de claves independiente de OCI generado fuera del repositorio
+OK    las claves de AWS y OCI son distintas
+OK    descifrado + re-cifrado en tubería y manifiesto
+OK    el manifiesto registra el SHA-256 del volcado en claro
+OK    no quedó ningún volcado en claro en la salida
+OK    verify-transfer: hash y tamaño correctos
+== 3) Simulacro de restauración aislado (PostgreSQL 18 desechable)
+NOTICE:  database "drill" does not exist, skipping
+      OK    SHA-256 del cifrado coincide con el manifiesto
+      OK    descifrado correcto
+      OK    hash del volcado en claro coincide
+      OK    catálogo de pg_restore válido (118 líneas)
+      OK    restauración en base aislada
+      OK    huella idéntica a la línea base (10 claves)
+      OK    simulacro completo en 6 s (RTO de la prueba); material temporal destruido al salir
+OK    restauración verificada con huella idéntica
+OK    contenedor y material temporal destruidos
+== 4) Casos negativos
+OK    archivo alterado: verify-transfer (falla como se espera)
+OK    archivo alterado: simulacro (falla como se espera)
+OK    clave equivocada (la de AWS) (falla como se espera)
+OK    línea base distinta (falla como se espera)
+OK    SHA-256 esperado del origen distinto (falla como se espera)
+OK    claves dentro del repositorio (falla como se espera)
+OK    salida de la transferencia dentro del repositorio (fuera de work/) (falla como se espera)
+
+Resultado: 16 correctas, 0 fallidas
+scripts/multicloud/test-restore-pipeline.sh  2.47s user 0.99s system 23% cpu 14.903 total

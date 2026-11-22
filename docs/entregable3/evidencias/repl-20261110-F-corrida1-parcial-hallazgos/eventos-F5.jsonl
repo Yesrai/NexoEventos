@@ -1,0 +1,33 @@
+{"t": 1794350301.308, "ev": "monitor_inicio", "auto": true, "pid": 43076}
+{"t": 1794350301.318, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 4.93}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794350306.345, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.69}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794350307.647, "ev": "seguidor_no_disponible", "estado": "", "politica": "degradar tras 4.0s"}
+{"t": 1794350311.396, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.63}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794350312.392, "ev": "sync_deshabilitada", "primario": "pg-aws", "motivo": "seguidor no disponible > 4.0s: se prefiere disponibilidad (RPO > 0 posible)", "ok": true}
+{"t": 1794350312.394, "ev": "proteccion", "modo": "degraded", "antes": "protected", "primario": "pg-aws", "motivo": "seguidor no disponible", "estado_seguidor": ""}
+{"t": 1794350316.534, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.64}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794350316.73, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 1, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794350317.201, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 2, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794350317.715, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 3, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794350317.717, "ev": "promocion_bloqueada", "modo": "degraded", "primario_registrado": "pg-aws", "escritor_que_cae": "pg-aws", "desde": 1794350312.3934348, "motivo": "no se puede comprobar que lo confirmado tenga copia síncrona (modo no protegido, registro ausente o que no corresponde al escritor): promover podría perder reservas; se requiere decisión explícita (LAB_UNSAFE_PROMOTE=1)"}
+{"t": 1794350318.236, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 4, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794350318.727, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 5, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794350319.181, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 6, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794350319.771, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 7, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794350320.199, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 8, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794350320.716, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 9, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794350321.354, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 10, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794350321.586, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 0.59}, "sondas_fallidas": {"pg-aws": 10, "pg-oci": 0}}
+{"t": 1794350321.704, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 11, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794350322.272, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 12, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794350322.818, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 13, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794350322.819, "ev": "promocion_bloqueada", "modo": "degraded", "primario_registrado": "pg-aws", "escritor_que_cae": "pg-aws", "desde": 1794350312.3934348, "motivo": "no se puede comprobar que lo confirmado tenga copia síncrona (modo no protegido, registro ausente o que no corresponde al escritor): promover podría perder reservas; se requiere decisión explícita (LAB_UNSAFE_PROMOTE=1)"}
+{"t": 1794350323.23, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 14, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794350323.737, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 15, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794350324.275, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 16, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794350324.751, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 17, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794350325.282, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 18, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794350325.868, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 19, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794350326.282, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 20, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794350326.624, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 0.0}, "sondas_fallidas": {"pg-aws": 20, "pg-oci": 0}}
+{"t": 1794350326.626, "ev": "monitor_fin", "motivo": "SIGTERM"}
