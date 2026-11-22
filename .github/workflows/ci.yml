@@ -66,6 +66,29 @@ jobs:
           alembic upgrade head
           pytest -q
 
+  respaldo-script:
+    name: Respaldo periódico cifrado (pruebas locales, sin nube)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Probar backup_cycle.py y backup_freshness.py (servidor HTTP falso en 127.0.0.1, claves desechables)
+        run: python scripts/multicloud/test_backup_cycle.py
+      - name: Probar el descifrado de respaldos con claves protegidas por contraseña (claves desechables, sin base de datos real)
+        run: python scripts/multicloud/test_cms_key_passin.py
+      - name: Probar el selector de respaldo restaurable del failover con el orquestador simulado (respaldos cifrados reales, PostgreSQL falso)
+        run: |
+          python -m pip install -r backend/requirements-production.lock
+          python -m unittest discover -s scripts/multicloud/tests -p test_backup_source.py
+          python -m unittest discover -s scripts/multicloud/tests -p test_oci_source.py
+          python -m unittest discover -s scripts/multicloud/tests -p test_lease_http.py
+          python -m unittest discover -s scripts/multicloud/tests -p test_failover_e2e.py
+
   frontend:
     name: Frontend (pruebas + build)
     runs-on: ubuntu-24.04
