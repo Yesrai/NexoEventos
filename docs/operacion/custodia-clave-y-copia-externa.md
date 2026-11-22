@@ -34,3 +34,27 @@ Nota: la copia en OCI/S3 **no** sirve como destino independiente (AWS Academy ca
 
 ## 5. Orden recomendado (cada paso requiere decisión de la propietaria)
 1. Generar un paquete **nuevo** con `scripts/ops/respaldo-reconstruccion.sh create` (el actual es anterior a 7 archivos) y verificarlo. 2. Proteger la clave (§2, pasos 1–3). 3. Copiar el paquete a los dos destinos y comprobar su SHA-256. 4. Guardar la clave protegida y la frase (§4). 5. Restaurar **desde la copia externa** una vez, en otra carpeta. Solo entonces el respaldo puede llamarse «recuperable ante la pérdida del Mac».
+
+## 6. Checklist final de custodia (22-nov-2026; la ejecuta la propietaria; sin secretos aquí)
+Estado verificado: el paquete `…T044516Z.tar.cms` existe en Mac, Google Drive y OneDrive con SHA-256 idéntico (ver `docs/evidencias/20261122-copia-externa-respaldo/resultado.md` §6). La clave protegida existe en `work/recovery-keys/preupdate-20261008t0113z/`. **Falta** que la clave y la frase vivan fuera del Mac.
+
+| # | Qué custodiar | Dónde está hoy | Destino A (gestor de contraseñas) | Destino B (USB cifrado, lugar físico distinto) |
+|---|---|---|---|---|
+| 1 | Clave privada protegida `recovery-private.protegida.pem` | `work/recovery-keys/preupdate-…/` | Adjunto cifrado | Copia |
+| 2 | Frase de descifrado | Solo la propietaria | Entrada propia (no en la misma que la clave) | Papel opcional, en otro sitio |
+| 3 | Certificado `recovery-public.crt` (no es secreto) | idem | Opcional | Copia |
+| 4 | Claves OCI: `~/.oci/config` y los 2 pares `nexoeventos_*_api_key*.pem` | `~/.oci/` (fuera del paquete) | Adjuntos cifrados | Copia |
+| 5 | SSH: `~/.ssh/nexoeventos_recovery`, `nexoeventos_azure` (+ `.pub`) | `~/.ssh/` | Adjuntos cifrados | Copia |
+| 6 | `terraform.tfvars` y estado de Terraform | Dentro del paquete (13 `.tfstate`; sensible) | Ya cubiertos por el paquete cifrado | — |
+No custodiar con el proyecto: `~/.ssh/s14-yesenia-*.pem`, `id_rsa`, `id_ed25519` (otros proyectos/uso personal; fuera del alcance de NexoEventos).
+
+### Comprobación de recuperación desde un dispositivo externo (prueba real, ~5 min)
+1. En otro equipo (o el Mac con una sesión limpia), obtener del gestor la clave protegida y, del USB, el `.tar.cms` descargado de Drive/OneDrive.
+2. Calcular `shasum -a 256 <archivo>.tar.cms` y comparar con `45b9facc…e66`.
+3. Descifrar a `/dev/null` (pide la frase en el terminal; no escribirla en comandos):
+```bash
+openssl cms -decrypt -binary -inform DER -in nexoeventos-reconstruccion-20261122T044516Z.tar.cms -inkey recovery-private.protegida.pem -out /dev/null
+```
+4. Si termina sin error, la custodia queda **demostrada**. Para la prueba completa: `scripts/ops/probar-restauracion-externa.sh --dir <carpeta> --key <clave> --expect-head a711929` (requiere versionar `--expect-head`; ver decisión de Git).
+5. Solo después de 4, la propietaria decide retirar la clave original sin frase (`recovery-private.pem`). No se borra sin su autorización.
+Reglas: no subir nada de esta lista a GitHub; ningún lugar guarda a la vez paquete + clave + frase.

@@ -51,3 +51,20 @@ Las dos copias son idénticas entre sí y al original. Cada proveedor aprobó po
 9. Repetir el failover de RDS con V2 con ventana mayor (hoy «no concluyente») y el autohealing con restauración corregida.
 **P3 (diseño y mejora)**
 10. Failover AWS→OCI con `automatic=false`, zona completa, FIS, entrega de correo de Azure, B3, lifecycle de S3 (copiar los `.cms` antes de aplicarlo).
+
+## 6. Verificación de integridad del paquete actualizado (22-nov-2026)
+Paquete: `nexoeventos-reconstruccion-20261122T044516Z.tar.cms` (reemplaza al de §2, que correspondía a HEAD `ab61a4b`; el actual corresponde a HEAD `a711929`, 147 commits). Restauración local completa del paquete actual ya demostrada en la sesión anterior (SHA-256, descifrado, bundle con 9 refs, 147 commits, manifiesto de 239 archivos). Esta sección **no repite el descifrado**: solo comprueba que las copias descargadas de los proveedores son idénticas.
+
+Método (solo lectura, sin descifrar, sin acceso a cuentas Cloud): `stat`, `shasum -a 256`, `cmp` byte a byte contra el original local.
+
+| Fecha | Origen | Carpeta en `~/Downloads` | Archivo | Tamaño (B) | SHA-256 | `cmp` vs. local | Veredicto |
+|---|---|---|---|---|---|---|---|
+| 22-nov-2026 | Mac (original) | `work/respaldo-cifrado/` | `…T044516Z.tar.cms` | 399426672 | `45b9faccdc2d3569f8a37942f0b594d2eb893c25a60898ff9f32d30da4d36e66` | — | Referencia |
+| 22-nov-2026 | Google Drive | `Verify-Drive` | `…T044516Z.tar.cms` | 399426672 | `45b9faccdc2d3569f8a37942f0b594d2eb893c25a60898ff9f32d30da4d36e66` | Idéntico | **ÍNTEGRO** |
+| 22-nov-2026 | OneDrive UPeU | `Verify-Ondrive` | `…T044516Z.tar.cms` | 399426672 | `45b9faccdc2d3569f8a37942f0b594d2eb893c25a60898ff9f32d30da4d36e66` | Idéntico | **ÍNTEGRO** |
+
+Observaciones:
+- Cada carpeta contiene exactamente 2 archivos (sin duplicados ni descargas parciales): el `.tar.cms` y `…T044516Z.paquete.sha256`. **No se descargó `…tar.cms.sha256`.** El `.paquete.sha256` (127 B, idéntico al local) contiene el hash del `paquete.tar` **en claro** (`383848e8…ee416`), por lo que no puede validarse sin descifrar; `shasum -c` sobre él falla únicamente porque `paquete.tar` no existe en la carpeta (comportamiento esperado, no un fallo de integridad). La integridad del cifrado queda probada por el SHA-256 del `.tar.cms` y el `cmp` con el original, y el hash coincide con el contenido del `.tar.cms.sha256` local.
+- Los originales de Descargas no se modificaron, movieron ni borraron.
+
+**Veredicto:** verificación de integridad de los respaldos externos actualizados **CERRADA** (Drive y OneDrive, cada uno de forma independiente). No se probó el descifrado desde cada origen; no es necesario, porque los bytes son idénticos a un paquete ya restaurado.
