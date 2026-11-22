@@ -1,0 +1,9 @@
+create aws_cloudwatch_dashboard.v2
+create aws_cloudwatch_metric_alarm.alb_healthy_below_desired[0]
+create aws_cloudwatch_metric_alarm.alb_latency_p95[0]
+create aws_cloudwatch_metric_alarm.alb_target_5xx[0]
+create aws_cloudwatch_metric_alarm.alb_unhealthy_hosts[0]
+create aws_lb.main
+create aws_lb_listener.http_redirect
+create aws_lb_listener.https
+update aws_autoscaling_group.web
