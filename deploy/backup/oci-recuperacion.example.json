@@ -1,0 +1,14 @@
+{
+  "env": "oci-recuperacion",
+  "cert": "/etc/nexoeventos/recovery-oci-public.crt",
+  "par_url_file": "/etc/nexoeventos/backup-par-oci.url",
+  "state_dir": "/var/lib/nexoeventos/backup/oci-recuperacion",
+  "prefix": "nexoeventos-oci",
+  "retries": 3,
+  "backoff": 5,
+  "timeout": 120,
+  "max_age_min": 90,
+  "sign_key_file": "/etc/nexoeventos/backup-sign.pem",
+  "fingerprint_cmd": "psql \"$DATABASE_URL\" -At -f /opt/nexoeventos/scripts/multicloud/fingerprint.sql",
+  "cert_sha256": "981c97b54a9ee253b8860e24eebacfc71871be55d941c1f2d09ddebed176e6ac"
+}

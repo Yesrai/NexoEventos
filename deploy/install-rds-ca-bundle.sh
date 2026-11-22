@@ -6,6 +6,7 @@ URL="${NEXO_RDS_CA_URL:-https://truststore.pki.rds.amazonaws.com/global/global-b
 DEST="${NEXO_RDS_CA_BUNDLE:-/etc/nexoeventos/rds-ca-bundle.pem}"
 EXPECTED="${NEXO_RDS_CA_SHA256:-}"
 [[ "$EXPECTED" =~ ^[0-9a-f]{64}$ ]] || { echo "Defina NEXO_RDS_CA_SHA256 (64 hex) con el hash revisado del paquete." >&2; exit 1; }
+[[ ! -e "$DEST" ]] || { echo "$DEST ya existe: no se sobrescribe (bórrelo a propósito si desea reinstalar)." >&2; exit 1; }
 tmp="$(mktemp)"; trap 'rm -f "$tmp"' EXIT
 curl --fail --silent --show-error --proto '=https' --tlsv1.2 "$URL" -o "$tmp"
 actual="$(sha256sum "$tmp" | cut -d' ' -f1)"

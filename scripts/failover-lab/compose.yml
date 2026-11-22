@@ -1,0 +1,111 @@
+# Laboratorio LOCAL de failover de aplicación (Entregable 3, fase local). Sin nubes, sin costos, datos ficticios.
+# Aislado: proyecto, red, volumen y puertos propios; no usa el compose de desarrollo ni toca contenedores de otros proyectos.
+# Una sola PostgreSQL compartida: esto prueba el failover de la APLICACIÓN, no el de la base (ver docs/entregable3/03-*.md).
+name: nexo-failover-lab
+
+x-app: &app
+  image: nexoeventos-dev-backend:latest   # imagen ya construida del backend actual (sin reconstruir)
+  environment: &appenv
+    APP_ENV: development
+    DATABASE_URL: postgresql+psycopg://nexoeventos_app:lab-local-only-app@db:5432/nexoeventos
+    FRONTEND_ORIGINS: http://127.0.0.1:18080,http://localhost:18080
+    TICKET_ENCRYPTION_KEY: "${TICKET_ENCRYPTION_KEY:?Usa scripts/failover-lab/lab.sh up}"
+  depends_on:
+    db: {condition: service_healthy}
+  read_only: true
+  tmpfs: [/tmp]
+  cap_drop: ["ALL"]
+  security_opt: ["no-new-privileges:true"]
+
+services:
+  db:
+    image: postgres:18
+    configs:
+      - {source: db_init, target: /docker-entrypoint-initdb.d/10-roles.sql, mode: 0444}
+    environment:
+      POSTGRES_PASSWORD: lab-local-only-admin
+    ports: ["127.0.0.1:55433:5432"]
+    volumes: ["lab-db:/var/lib/postgresql"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d nexoeventos"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    image: nexoeventos-dev-backend:latest
+    profiles: ["tools"]
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      MIGRATION_DATABASE_URL: postgresql+psycopg://postgres:lab-local-only-admin@db:5432/nexoeventos
+    depends_on:
+      db: {condition: service_healthy}
+
+  app-aws:
+    <<: *app
+    environment: {<<: *appenv, SITE_NAME: aws}
+    ports: ["127.0.0.1:18001:8000"]
+
+  app-oci:
+    <<: *app
+    environment: {<<: *appenv, SITE_NAME: oci}
+    ports: ["127.0.0.1:18002:8000"]
+
+  haproxy:
+    image: haproxy:lts-alpine
+    configs:
+      - {source: haproxy_cfg, target: /usr/local/etc/haproxy/haproxy.cfg, mode: 0444}
+    ports: ["127.0.0.1:18080:8080", "127.0.0.1:18404:8404"]
+    depends_on: [app-aws, app-oci]
+
+configs:
+  haproxy_cfg:
+    content: |
+      # HAProxy del laboratorio: "aws" es el principal y "oci" el respaldo (activo-pasivo).
+      # Salud: GET /health (liveness, no toca PostgreSQL). Detección: 1 s por comprobación, 2 fallos para marcar caído, 3 aciertos para volver.
+      global
+          log stdout format raw local0
+          maxconn 512
+
+      defaults
+          mode http
+          log global
+          option httplog
+          timeout connect 1s
+          timeout client 30s
+          timeout server 30s
+          retries 1
+          option redispatch
+
+      resolvers docker
+          nameserver dns 127.0.0.11:53
+          hold valid 1s
+
+      frontend web
+          bind *:8080
+          default_backend apps
+
+      backend apps
+          http-response set-header X-Served-By %[srv_name]
+          option httpchk
+          http-check send meth GET uri /health
+          http-check expect status 200
+          default-server inter 1s fastinter 500ms downinter 1s fall 2 rise 3 on-marked-down shutdown-sessions resolvers docker init-addr none
+          server aws app-aws:8000 check
+          server oci app-oci:8000 check backup
+
+      frontend stats
+          bind *:8404
+          stats enable
+          stats uri /
+          stats refresh 1s
+  db_init:
+    content: |
+      CREATE ROLE nexoeventos_owner NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+      CREATE ROLE nexoeventos_app LOGIN PASSWORD 'lab-local-only-app' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+      CREATE DATABASE nexoeventos OWNER nexoeventos_owner;
+      REVOKE ALL ON DATABASE nexoeventos FROM PUBLIC;
+      GRANT CONNECT ON DATABASE nexoeventos TO nexoeventos_app;
+
+volumes:
+  lab-db:

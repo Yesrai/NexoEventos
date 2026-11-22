@@ -11,7 +11,7 @@ import httpx
 
 CLIENT = "smoke-1791073267-26124@example.com"; OPERATOR = "operador.demo@example.com"
 ap = argparse.ArgumentParser(); ap.add_argument("--out", required=True); ap.add_argument("--base", default="https://localhost:8443")
-ap.add_argument("--reset-creds", action="store_true"); ap.add_argument("--ssh-port", default="2222"); ap.add_argument("--ssh-key", default=os.path.expanduser("~/.ssh/nexoeventos_recovery")); a = ap.parse_args()
+ap.add_argument("--reset-creds", action="store_true"); ap.add_argument("--read-only", action="store_true", help="recuperación aislada: solo lecturas; comprueba además que las escrituras son RECHAZADAS"); ap.add_argument("--ssh-port", default="2222"); ap.add_argument("--ssh-key", default=os.path.expanduser("~/.ssh/nexoeventos_recovery")); a = ap.parse_args()
 t0 = time.time(); res = []; BASE = a.base; extra = {}
 
 
@@ -28,6 +28,22 @@ def sql_read(q):
     return r.stdout.strip()
 
 
+if a.read_only:
+    # Modo de solo lectura (recuperación aislada, sin doble escritor): sin credenciales ni sesiones. Lecturas públicas + prueba de que NINGÚN verbo de escritura llega a la API.
+    cl = httpx.Client(base_url=BASE, verify=False, timeout=30, headers={"Origin": BASE})
+    r = cl.get("/livez"); check("livez (proceso de la API) = 200 con status ok", r.status_code == 200 and r.json().get("status") == "ok", f"HTTP {r.status_code}")
+    r = cl.get("/ready"); check("ready (API + PostgreSQL) = 200 con status ready", r.status_code == 200 and r.json().get("status") == "ready", f"HTTP {r.status_code}")
+    r = cl.get("/healthz"); check("healthz (API + BD) = 200", r.status_code == 200, f"HTTP {r.status_code}")
+    r = cl.get("/"); check("frontend servido por Nginx con cabeceras de seguridad", r.status_code == 200 and "content-security-policy" in {k.lower() for k in r.headers} and "<div id=" in r.text[:2000], f"HTTP {r.status_code}")
+    r = cl.get("/api/events"); ev = r.json() if r.status_code == 200 else []; check("petición real de lectura: /api/events devuelve el catálogo", r.status_code == 200 and len(ev) > 0, f"{len(ev)} eventos publicados")
+    if ev:
+        r = cl.get(f"/api/events/{ev[0]['id']}"); check("detalle de un evento", r.status_code == 200, f"HTTP {r.status_code}")
+    for verb, path in (("POST", "/api/auth/login"), ("POST", "/api/auth/register"), ("PUT", "/api/events/1"), ("DELETE", "/api/events/1"), ("PATCH", "/api/events/1")):
+        r = cl.request(verb, path, json={})
+        check(f"escritura rechazada: {verb} {path} → 403 (Nginx en solo lectura)", r.status_code == 403, f"HTTP {r.status_code}")
+    out = {"ejecutado_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"), "duracion_s": round(time.time() - t0, 1), "modo": "solo lectura", "resultados": res, "todo_ok": all(x["ok"] for x in res)}
+    os.makedirs(a.out, exist_ok=True); open(os.path.join(a.out, "smoke.json"), "w").write(json.dumps(out, indent=2, ensure_ascii=False) + "\n")
+    print(f"\n{sum(x['ok'] for x in res)}/{len(res)} correctas; duración {out['duracion_s']} s"); sys.exit(0 if out["todo_ok"] else 1)
 if a.reset_creds:
     from pwdlib import PasswordHash
     ph = PasswordHash.recommended()
@@ -60,6 +76,8 @@ def csrf(c):
 
 
 cl, op = client(), client()
+r = cl.get("/livez"); check("livez (proceso de la API) = 200 con status ok", r.status_code == 200 and r.json().get("status") == "ok", f"HTTP {r.status_code}")
+r = cl.get("/ready"); check("ready (API + PostgreSQL) = 200 con status ready", r.status_code == 200 and r.json().get("status") == "ready", f"HTTP {r.status_code}")
 r = cl.get("/healthz"); check("healthz (API + BD) = 200", r.status_code == 200, f"HTTP {r.status_code}")
 r = cl.get("/"); check("frontend servido por Nginx con cabeceras de seguridad", r.status_code == 200 and "content-security-policy" in {k.lower() for k in r.headers} and "<div id=" in r.text[:2000], f"HTTP {r.status_code}")
 r = cl.post("/api/auth/login", json={"email": CLIENT, "password": pw[CLIENT]}); check("inicio de sesión de cliente", r.status_code == 200, f"HTTP {r.status_code}")

@@ -10,6 +10,7 @@ stage1)
   id nexoeventos >/dev/null 2>&1 || useradd --system --home-dir "$APP" --shell /sbin/nologin nexoeventos
   install -d -m 0755 "$APP/backend" "$APP/frontend" /var/log/nexoeventos; chown nexoeventos:nexoeventos /var/log/nexoeventos
   tar -xzf "$B/backend.tgz" -C "$APP/backend"; rm -rf "$APP/frontend/dist"; tar -xzf "$B/dist.tgz" -C "$APP/frontend"
+  [[ -d "$B/wheels" ]] || tar -xzf "$B/wheels.tgz" -C "$B"        # ruedas empaquetadas en un solo archivo por app-recovery.sh (el scp de ~33 archivos tardaba 38 s)
   python3.12 -m venv "$APP/backend/.venv"
   "$APP/backend/.venv/bin/pip" install --no-index --find-links "$B/wheels" -r "$APP/backend/requirements-production.lock"
   chmod -R u=rwX,go=rX "$APP/frontend/dist"      # el paquete se construye con umask 077: Nginx (otro usuario) no podía leerlo y devolvía 403
@@ -25,11 +26,8 @@ DO \$\$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname='nexoeventos_app
 ALTER ROLE nexoeventos_app PASSWORD '$APPPW';
 GRANT CONNECT ON DATABASE nexoeventos TO nexoeventos_app;
 SQL
-  runuser -u postgres -- "$PGB/psql" -d nexoeventos -v ON_ERROR_STOP=1 -qAt >/dev/null <<'SQL'
-GRANT USAGE ON SCHEMA public TO nexoeventos_app;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO nexoeventos_app;
-GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO nexoeventos_app;
-SQL
+  # Permisos de la base restaurada (db-permissions.sh): GRANT primero, solo lectura después, comprobación en sesiones nuevas. NO invertir el orden: con el ajuste ya activo, el propio GRANT falla.
+  if [[ "${RECOVERY_READONLY:-0}" == 1 ]]; then bash "$B/db-permissions.sh" readonly; else bash "$B/db-permissions.sh" readwrite; fi
   PGHBA="$(runuser -u postgres -- "$PGB/psql" -d postgres -Atc 'show hba_file')"
   grep -q nexoeventos_app "$PGHBA" || sed -i '0,/^local/s//local   nexoeventos   nexoeventos_app   scram-sha-256\nlocal/' "$PGHBA"
   runuser -u postgres -- "$PGB/psql" -d postgres -qAtc 'select pg_reload_conf()' >/dev/null
@@ -58,7 +56,7 @@ ENV
     -keyout /etc/nginx/demo-tls/key.pem -out /etc/nginx/demo-tls/cert.pem 2>/dev/null
   chmod 600 /etc/nginx/demo-tls/key.pem; restorecon -R /etc/nginx/demo-tls 2>/dev/null || true
   python3 - "$B/nexoeventos.conf.template" > /etc/nginx/conf.d/nexoeventos.conf <<'PY'
-import re, sys
+import os, re, sys
 t = open(sys.argv[1]).read()
 blocks = re.split(r'(?m)^server \{', t)          # [prefijo, bloque HTTP:80, bloque HTTPS:443]
 b = '\n'.join(['server {' + blocks[-1]]).replace('${DOMAIN}', 'localhost')
@@ -67,6 +65,8 @@ b = re.sub(r'ssl_certificate_key\s+[^;]+;', 'ssl_certificate_key /etc/nginx/demo
 b = re.sub(r'listen \[::\]:443 ssl;\n?', '', b)
 b = re.sub(r'(?m)^\s*http2 on;\n', '', b)                          # 'http2 on' exige Nginx >= 1.25.1; Oracle Linux 9 trae 1.20
 b = b.replace('listen 443 ssl;', 'listen 443 ssl http2;')
+if os.environ.get("RECOVERY_READONLY") == "1":      # primera capa: ningún verbo que modifique datos llega a la API desde fuera (GET/HEAD/OPTIONS solamente)
+    b = b.replace("    location /api/ {\n", "    location /api/ {\n        limit_except GET HEAD OPTIONS { deny all; }\n", 1)
 print(b)
 PY
   rm -f /etc/nginx/conf.d/default.conf
@@ -82,7 +82,8 @@ PY
   systemctl daemon-reload; systemctl enable --now nexoeventos-api nginx
   firewall-cmd --add-service=https >/dev/null    # solo en tiempo de ejecución; la entrada llega solo desde el endpoint del Bastion (NSG)
   for _ in $(seq 30); do curl -fsS http://127.0.0.1:8000/health >/dev/null 2>&1 && break; sleep 2; done
-  echo "OK    stage2: /health local = $(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/health); HTTPS local = $(curl -sk -o /dev/null -w '%{http_code}' https://127.0.0.1/healthz)"
+  echo "OK    stage2: /health local = $(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/health); HTTPS local: /livez = $(curl -sk -o /dev/null -w '%{http_code}' https://127.0.0.1/livez), /ready = $(curl -sk -o /dev/null -w '%{http_code}' https://127.0.0.1/ready), /healthz = $(curl -sk -o /dev/null -w '%{http_code}' https://127.0.0.1/healthz)"
+  [[ "$(curl -sk -o /dev/null -w '%{http_code}' https://127.0.0.1/livez)$(curl -sk -o /dev/null -w '%{http_code}' https://127.0.0.1/ready)" == 200200 ]] || { echo "FALLÓ: /livez o /ready no responden 200 en la VM" >&2; exit 6; }
   ;;
 *) echo "etapa desconocida" >&2; exit 2;;
 esac

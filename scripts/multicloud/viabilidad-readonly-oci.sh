@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+# Comprobaciones de SOLO LECTURA en OCI para la viabilidad de la integración AWS-OCI (v4, auditada).
+# NO SE HA EJECUTADO. Requiere autorización explícita y exacta de la usuaria (cualquier cambio de este archivo invalida esa autorización: se compara su SHA-256).
+#
+# Garantías de diseño:
+#  - Solo llama a `oci` con acciones `list` y `get` (consulta). Nada de create/update/delete/launch/start/stop/terminate ni `oci setup`/`session`.
+#  - No instala ni repara nada: si falta la CLI, el archivo de configuración, las credenciales o un permiso, SE DETIENE y lo dice.
+#  - Lee de ~/.oci/config SOLO el OCID de la tenencia del perfil (no se imprime); no modifica ese archivo ni ningún otro.
+#  - Toda la salida (también los errores) pasa por un filtro que oculta OCID, huellas de clave, IP, correos, tokens, contraseñas, rutas de claves y bloques de claves privadas.
+#  - No lanza ninguna VM ni genera recursos facturables; no crea informes de capacidad (eso es una operación de creación y queda fuera).
+# Uso:  NEXO_READONLY_VIABILIDAD=YES scripts/multicloud/viabilidad-readonly-oci.sh
+set -uo pipefail
+[[ "${NEXO_READONLY_VIABILIDAD:-}" == "YES" ]] || { echo "Solo lectura, pero requiere autorización: exporta NEXO_READONLY_VIABILIDAD=YES" >&2; exit 2; }
+command -v oci >/dev/null 2>&1 || { echo "DETENIDO: falta la CLI de OCI (oci). No se instala nada." >&2; exit 2; }
+CFG="${OCI_CLI_CONFIG_FILE:-$HOME/.oci/config}"; PROFILE="${OCI_CLI_PROFILE:-DEFAULT}"
+[[ -r "$CFG" ]] || { echo "DETENIDO: no existe o no se puede leer el archivo de configuración de OCI. No se crea ni se repara nada." >&2; exit 2; }
+TENANCY="$(awk -v p="[$PROFILE]" '$0==p{f=1;next} /^\[/{f=0} f && $1 ~ /^tenancy/ {sub(/^[^=]*=[ \t]*/,""); print; exit}' "$CFG")"
+[[ "$TENANCY" == ocid1.tenancy.* ]] || { echo "DETENIDO: el perfil '$PROFILE' no tiene una tenencia legible en la configuración." >&2; exit 2; }
+
+mask() {
+  sed -E \
+    -e '/PRIVATE KEY/d' \
+    -e '/^[+][-+]*[+]$/b' \
+    -e 's/ocid1\.[a-z0-9_.-]+/<ocid>/g' \
+    -e 's#/[^ ]*\.oci[^ ]*#<ruta-local>#g' \
+    -e 's#located at [^ ]+#located at <ruta-local>#g' \
+    -e 's/([0-9a-fA-F]{2}:){15}[0-9a-fA-F]{2}/<huella>/g' \
+    -e 's/[Bb]earer +[^ ]+/Bearer <oculto>/g' \
+    -e 's/eyJ[A-Za-z0-9_.-]+/<token>/g' \
+    -e 's/([Bb]earer|[Ss]ignature|[Tt]oken|[Pp]assword|[Pp]ass_?[Pp]hrase|[Ss]ecret|key_file|[Pp]rivate|[Aa]ccess_?[Kk]ey)[^ ]*[:=][ ]*[^ ]+/\1=<oculto>/g' \
+    -e 's/[A-Za-z0-9+\/=_.-]{40,}/<largo-oculto>/g' \
+    -e 's/(^|[^0-9.])[0-9]{1,3}(\.[0-9]{1,3}){3}([^0-9.]|$)/\1<ip>\3/g' \
+    -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/<correo>/g'
+}
+OPTS=(--connection-timeout 10 --read-timeout 30 --max-retries 1)
+OCI_ENV=(env SUPPRESS_LABEL_WARNING=True PYTHONWARNINGS=ignore)   # solo silencian avisos del proceso hijo; no tocan la configuración
+abortar() { echo "DETENIDO: 'oci $1 $2 $3' falló (código $4). Causa probable: credenciales, permisos o red. El script NO intenta repararlo ni instalar nada." >&2; exit 3; }
+# run: ejecuta una consulta y muestra su salida filtrada; si falla, se detiene.  raw: devuelve el valor SIN imprimirlo (para OCID, espacio de nombres y dominios de disponibilidad).
+run() { local out rc; out="$("${OCI_ENV[@]}" oci "${OPTS[@]}" "$@" 2>&1)"; rc=$?; printf '%s\n' "$out" | mask; [[ $rc -eq 0 ]] || abortar "$1" "$2" "$3" "$rc"; }
+# raw/rawall: devuelven el valor SIN imprimirlo. La salida estándar y los avisos de la CLI llegan mezclados; el VALOR es siempre la última línea (raw) o los elementos con el formato esperado nombre:ámbito (rawall).
+raw() { local out rc; out="$("${OCI_ENV[@]}" oci "${OPTS[@]}" "$@" 2>&1)"; rc=$?; if [[ $rc -ne 0 ]]; then printf '%s\n' "$out" | mask >&2; abortar "$1" "$2" "$3" "$rc"; fi; printf '%s' "$out" | tail -n 1; }
+rawall() { local out rc; out="$("${OCI_ENV[@]}" oci "${OPTS[@]}" "$@" 2>&1)"; rc=$?; if [[ $rc -ne 0 ]]; then printf '%s\n' "$out" | mask >&2; abortar "$1" "$2" "$3" "$rc"; fi; printf '%s\n' "$out" | grep -oE '"[a-z0-9-]+:(AD|REGION|GLOBAL)"' | tr -d '"' || true; }
+
+echo "== 1. Región de origen y suscripciones de región"
+run iam region-subscription list --tenancy-id "$TENANCY" --query 'data[].{region:"region-name",estado:status,origen:"is-home-region"}' --output table
+
+echo "== 2. Compartment nexoeventos (su OCID no se imprime)"
+CID="$(raw iam compartment list --compartment-id "$TENANCY" --compartment-id-in-subtree true --access-level ANY --all --name nexoeventos --query 'data[0].id' --raw-output)" || exit 3
+if [[ -z "$CID" || "$CID" == "null" ]]; then echo "No se encontró el compartment nexoeventos en este perfil/región (nada más que consultar)."; exit 0; fi
+[[ "$CID" == ocid1.compartment.* ]] || { echo "DETENIDO: la consulta del compartment devolvió un valor inesperado (no se imprime)." >&2; exit 3; }
+
+echo "== 3. Red existente: VCN, subredes, Internet/NAT/Service Gateway"
+run network vcn list --compartment-id "$CID" --all --query 'data[].{nombre:"display-name",cidr:"cidr-blocks",estado:"lifecycle-state"}' --output table
+run network subnet list --compartment-id "$CID" --all --query 'data[].{nombre:"display-name",cidr:"cidr-block",sin_ip_publica:"prohibit-public-ip-on-vnic"}' --output table
+run network internet-gateway list --compartment-id "$CID" --all --query 'data[].{nombre:"display-name",habilitada:"is-enabled"}' --output table
+run network nat-gateway list --compartment-id "$CID" --all --query 'data[].{nombre:"display-name",estado:"lifecycle-state"}' --output table
+run network service-gateway list --compartment-id "$CID" --all --query 'data[].{nombre:"display-name",estado:"lifecycle-state"}' --output table
+
+echo "== 4. Instancias (¿queda alguna?) y buckets"
+run compute instance list --compartment-id "$CID" --all --query 'data[].{nombre:"display-name",estado:"lifecycle-state",forma:shape}' --output table
+NS="$(raw os ns get --query data --raw-output)" || exit 3
+[[ "$NS" =~ ^[a-z0-9]+$ ]] || { echo "DETENIDO: el espacio de nombres devuelto no tiene el formato esperado (no se imprime)." >&2; exit 3; }
+run os bucket list --compartment-id "$CID" --namespace-name "$NS" --all --query 'data[].{nombre:name}' --output table
+
+echo "== 5. Límites de cómputo (cuota disponible; NO es un informe de capacidad de hosts, que sería una operación de creación y queda fuera)"
+AD="$(raw iam availability-domain list --compartment-id "$TENANCY" --query 'data[0].name' --raw-output)" || exit 3
+[[ -n "$AD" && "$AD" != "null" ]] || { echo "DETENIDO: no se obtuvo un dominio de disponibilidad." >&2; exit 3; }
+DEFS="$(rawall limits definition list --compartment-id "$TENANCY" --service-name compute --all --query "data[?contains(name, 'a1') || contains(name, 'e5') || contains(name, 'micro')].join(':', [name, \"scope-type\"])" --output json)" || exit 3
+while IFS=: read -r lim scope; do
+  [[ -n "${lim:-}" ]] || continue
+  echo "-- $lim (ámbito: ${scope:-?})"
+  if [[ "$scope" == "AD" ]]; then
+    run limits resource-availability get --service-name compute --limit-name "$lim" --compartment-id "$TENANCY" --availability-domain "$AD" --query 'data.{usado:used,disponible:available}' --output table
+  else
+    run limits resource-availability get --service-name compute --limit-name "$lim" --compartment-id "$TENANCY" --query 'data.{usado:used,disponible:available}' --output table
+  fi
+done <<< "$DEFS"
+echo "== fin (solo consultas; nada se creó, modificó, inició ni detuvo; no se instaló nada)"
