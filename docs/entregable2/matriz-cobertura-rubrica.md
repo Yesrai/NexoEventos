@@ -108,3 +108,28 @@ Rutas relativas a `docs/`. «Cap.» = `evidencias/capturas/aws/`.
 
 ## Actualización 3-nov (cierre): ver [matriz-cierre-observaciones.md](matriz-cierre-observaciones.md)
 Alarmas y avisos de AWS: **corregidos en local, abiertos hasta desplegar**; separación de disponibilidad funcional frente a sondeos de salud: **cerrada con límite declarado**; experimentos B y D sobre V2: **requieren nube** (plan en `plan-ejecucion-cloud.md`).
+
+## Actualización 5-nov-2026 (despliegues y pruebas reales del 3 al 5-nov; detalle y límites en [matriz-cierre-observaciones.md](matriz-cierre-observaciones.md))
+Solo cambian los puntos con evidencia nueva archivada; el resto de la tabla anterior sigue vigente.
+| # | Punto | Estado nuevo | Evidencia (en `docs/evidencias/`) | Límite que se mantiene |
+|---|---|---|---|---|
+| 5 | Cifrado en tránsito | **`verify-full` validado en V2** (4-nov): conexión TLS 1.3 a la RDS con CA fijada por huella y rechazo de una CA ajena | `20261104-fase-c-prechequeo/`, `20261104-fase-c-d-v2/` | V1 no se migró ni se verificó su `sslmode` actual; el nombre de host no se probó por separado |
+| 7 | CloudWatch: alertas | **COMPLETO**: 5 alarmas en V1 con SNS; P1 (estado forzado) y P2 (CPU real ≈ 93,9 %) con correos recibidos; alarma de V2 probada con estado forzado | `20261104-fase2-apply-alarmas/`, `20261104-p1-notificacion/`, `20261104-p2-cpu-real/`, `20261104-fase-d-notificacion-v2/` | Las pruebas P1 y V2 son **manuales** (no detección); P2 usó un datapoint parcial; las alarmas de RDS y de V2 nunca se activaron por métricas reales |
+| 8 | Respaldos | Regla de ciclo de vida de S3 **corregida y desplegada** (`backups/database/`, 365 días); 4 respaldos intactos | `20261104-fase-a1-lifecycle-s3/` | Ningún `.cms` restaurado desde S3; sigue sin respaldo programado |
+| 9–11 | ALB/ASG/failover | **Repetidos sobre V2 desplegada el 4-nov**: autohealing en ≈ 110 s (ALB detecta a los 22,6 s), failover de RDS ≈ 39 s con destinos sanos y sin actividades del ASG | `20261104-b2-autohealing-v2/`, `20261104-d2-failover-rds-v2/` | 52 respuestas 502 en ≈ 20 s; en el failover **6 de 2 412 peticiones agotaron 15 s y NO se demostró el 503 con `Retry-After`** |
+| 12 | Chaos Engineering | A–D repetidos en V2 (B2 y D2) | ídem | E (caída de AZ) y F (FIS) **no ejecutados** |
+| 13 | DevOps | **CI 4/4 en verde** en `92f4b06` y `7755e48` (PR #1, borrador); un fallo intermedio (`a0f1703`: prueba con ruta fija y `apt` 2.6.1, CVE-2026-109518) corregido sin ocultar hallazgos | `20261105-ci-correccion/` | Sin CD; PR sin merge; `main` mantiene la coautoría de Claude en 71 de sus 117 commits (0 en la rama) |
+| 14 | Azure: monitor y alertas | **Alerta real de CPU disparada y resuelta con CPU real (≈ 99,5 %)**, correos recibidos y archivados; `alerta-vm-up` medida dos veces (se dispara con apagados planificados); Grafana con el rango histórico del 4-nov archivado | `20261104-azure-ventana/`, `20261105-azure-ventana2/` | Grafana histórico recuperado (no en vivo); no se capturaron el resumen multicloud ni los paneles inferiores |
+| 17 | Costes y estado de recursos | **Sigue PENDIENTE**: captura del crédito/costes de la consola | — | Sin Cost Explorer; costes estimados con tarifas públicas, no verificados |
+| 6, 3, 15, 18 | CloudTrail, IAM `LabRole`, OCI (capturas), documentación final | **Sin cambios**: EVIDENCIA PENDIENTE | — | Portada y retroalimentación docente pendientes |
+
+## Actualización 6–9 nov-2026 (V2 recreada y apagada, RDS, Tailscale; sin cambios en la nube por este documento)
+Fechas de última verificación: AWS 6-nov 16:56; Azure 9-nov 00:14. No se afirma el estado de hoy sin una consulta nueva.
+- **V2:** destruida el 4-nov; **recreada el 5-nov** (27 recursos creados) con validación funcional 15/15 en 4 ejecuciones; el 6-nov, 15/15 (49 %/51 %, 0 errores 5xx) y prueba real 15:38–15:40 con 2 instancias sanas en us-east-1a/b; **apagada el 6-nov 16:54–16:55** con el ASG en 0/0/3 (el ALB y el resto siguen existiendo). Autohealing y failover **solo se midieron el 4-nov**; no se repitieron el 5 ni el 6-nov.
+- **RDS:** máximo de autoescalado **20 → 40 GiB el 6-nov 14:29** (solo cambió `MaxAllocatedStorage`; sin interrupción observada; el aviso no reapareció en una observación posterior; costo potencial ≈ 4,6 USD/mes). El riesgo «RDS al límite» queda atendido; el crecimiento real no se ha medido.
+- **Terraform:** variable `asg_enabled` sin valor por defecto y envoltorio `scripts/v2-ops/v2-terraform.sh` que solo admite el cambio de capacidad del ASG; las variables de entorno quedan fuera de Git.
+- **Azure:** acceso privado a Grafana/Zabbix por **Tailscale** (solo TCP 443), verificado desde el Mac el 9-nov; VM desasignada después. **Prueba desde otra red: pendiente.** Sigue sin captura de la interfaz de Zabbix.
+- **Triggers de Zabbix:** 4 son propios de NexoEventos; los otros 8 de los 12 listados son de plantillas estándar (165 activos en total).
+- **Hallazgos de Trivy sobre IaC:** siete abiertos o aceptados (5 de AWS y 2 de Azure); AWS-0053 es decisión arquitectónica.
+- **Git:** 7 commits locales de esta etapa **no publicados ni validados por el CI**; el CI 4/4 corresponde a `7755e48` (PR #1, borrador). Coautoría de Claude: **71 de 117 commits de `main`** y 0 en la rama (verificado el 9-nov).
+- **Pendiente:** capturas de consola de V2 del 5 y 6-nov, prueba manual en el navegador del 6-nov, prueba desde otra red, captura de crédito/costes, código de estudiante en la portada.

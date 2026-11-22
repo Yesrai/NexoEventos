@@ -23,12 +23,19 @@ Alcance real de lo implementado y medido hasta el 28-oct-2026:
 | Capa | Qué existe | Estado actual |
 |---|---|---|
 | AWS V1 | EC2 + RDS + S3 + CloudWatch (`infra/aws`) | Desplegada el 3-oct; detenida entre sesiones |
-| AWS V2 | ALB + Auto Scaling (2–3 EC2, 2 zonas) (`infra/aws-v2`, 21 recursos) | Desplegada, medida el 22-oct y **destruida**; solo permanece como IaC y evidencias |
+| AWS V2 | ALB + Auto Scaling (2–3 EC2, 2 zonas) (`infra/aws-v2`, 21 recursos) | Desplegada y medida el 22-oct; destruida; **recreada el 5-nov y apagada el 6-nov (ASG en 0; última verificación 6-nov 16:56)**; estado posterior no verificado |
 | AWS RDS Multi-AZ | Conversión de la base de V1 (23-oct) y un failover medido | **Aplicada y conservada** (RDS detenida entre sesiones) |
 | OCI | Copia cifrada, simulacro de restauración y recuperación completa de la aplicación (23-oct) | Red, IAM y bucket conservados; VM de recuperación destruida |
 | Azure | VM con Zabbix + Grafana + Azure Monitor (28-oct) | Base de 9 recursos y VM con sus recursos asociados conservadas; VM **desasignada** tras 1,4 h de ventana |
 
 Las cifras de negocio (aforo, usuarios, volumen) del caso son **supuestos**; los objetivos (p95 < 2 s, errores < 1 %, RTO ≤ 60 min, RPO ≤ 24 h) son metas hasta que se miden (ver sección 16).
+
+**Actualización 5-nov-2026 (estado real posterior a la revisión del 28-oct).** Entre el 3 y el 5 de noviembre se desplegaron y probaron las correcciones pendientes, cada una con su evidencia en `docs/evidencias/` y sus límites declarados; el detalle por observación está en [`matriz-cierre-observaciones.md`](matriz-cierre-observaciones.md) (16 de 22 cerradas, 1 parcial, 1 pendiente de prueba, 2 técnicas pendientes y 2 limitaciones externas).
+- **AWS V1:** 5 alarmas de CloudWatch con notificación por SNS; notificación probada con estado forzado (P1) y detección real de CPU alta (P2), con correos recibidos; regla de ciclo de vida de S3 corregida (`backups/database/`, 365 días) y subred sin IP pública automática.
+- **AWS V2:** AMI nueva con `/livez`, certificado en ACM, **desplegada el 4-nov (27 recursos), validada y desmontada; recreada el 5-nov, validada 15/15 el 5 y el 6-nov y apagada el 6-nov (ASG en 0)** (TLS `verify-full` real contra la RDS, `/livez` en el ASG, autohealing ≈ 110 s, failover de RDS ≈ 39 s) y RDS detenida. **Límite:** en el failover 6 de 2 412 peticiones agotaron los 15 s del cliente y **no se demostró el `503` con `Retry-After`**.
+- **Azure:** alerta de CPU real disparada y resuelta con sus correos recibidos; `alerta-vm-up` medida dos veces; captura de Grafana con el rango histórico del 4-nov (datos recuperados, no en vivo).
+- **Código y CI:** cambios publicados en la rama `entregable2-auditoria` (PR #1, en borrador, sin merge a `main`) con **CI 4/4 en verde** (Backend, Frontend, Imagen Docker + Trivy, Trivy de dependencias/secretos/configuración). Los hashes anteriores a la reescritura de mensajes del 5-nov tienen equivalencia en `evidencias/20261105-ci-correccion/equivalencia-hashes.md`.
+- **Sigue pendiente:** captura de costes/crédito de Academy, copia externa cifrada de `work/` y secretos, CloudTrail persistente (opcional), código de estudiante en la portada y retroalimentación docente.
 
 ## 02 · Resumen del Entregable 1
 *(Fuente: Entregable 1, `work/docx-review/NexoEventos_Entregable1_Documentacion.pdf`; hechos de V1 verificados en `docs/arquitectura-inicial.md`.)*
@@ -92,7 +99,7 @@ Latencia y rendimiento con el mismo generador (perfil mixto k6, hasta 50 usuario
 - **Sesiones en PostgreSQL y frontend sin estado**: cualquier instancia atiende cualquier petición; el reparto medido fue 50 % / 50 %.
 - **RDS Multi-AZ**: dos EC2 no eliminan el SPOF de la base; se aplicó sobre la RDS de V1.
 - **Multicloud con roles distintos y sin duplicar herramientas**: AWS sirve; OCI conserva y restaura la copia (independencia de cuenta y proveedor); Azure observa desde fuera de AWS. Cada nube con su estado Terraform y sin credenciales cruzadas.
-- **Límite honesto**: la V2 se desplegó, midió y **destruyó**; hoy está definida como IaC reproducible (`infra/aws-v2`) con evidencias, no en ejecución. Nunca se midió V2 con RDS Multi-AZ **y** carga a la vez, ni un fallo de zona completa.
+- **Límite honesto**: la V2 se desplegó, midió y **destruyó** el 4-nov, se recreó el 5-nov y se apagó el 6-nov (ASG en 0; última verificación 6-nov 16:56); no se afirma que esté encendida hoy. Nunca se midió V2 con RDS Multi-AZ **y** carga a la vez, ni un fallo de zona completa.
 
 ## 07 · Seguridad
 | Dimensión | Control implementado | Servicio / herramienta | Evidencia / límite |
@@ -501,7 +508,7 @@ Primer run del PR (`1331a74`): el nuevo análisis del lockfile y el de la imagen
 | Sin *trail* de CloudTrail (solo historial de 90 días) — **confirmado 28-oct** | Media | Media | Crear un trail con destino S3 cifrado y validación de integridad (cambia infraestructura: requiere autorización) |
 | RDS sin protección contra borrado — **confirmado 28-oct** | Baja | Alta | Activar `deletion_protection` en la próxima ventana autorizada |
 | `LabRole` con 7 políticas, incluidas las de EKS/ECR que la aplicación no usa — **confirmado 28-oct** | Media | Media | No modificable en Academy; compensado con SG→SG, sin SSH y cifrado; rol propio de mínimo privilegio en otra cuenta |
-| Almacenamiento de la RDS al límite (20 GiB con máximo de autoescalado 20 GiB; aviso de AWS del 28-oct) — **confirmado** | Media | Media | Subir `max_allocated_storage` antes de cargas mayores (cambio: requiere autorización) |
+| Almacenamiento de la RDS al límite (20 GiB con máximo de autoescalado 20 GiB; aviso de AWS del 28-oct) — **confirmado; atendido el 6-nov** (máximo subido a 40 GiB) | Media | Media | Máximo 40 GiB desde el 6-nov (≈ 4,6 USD/mes potenciales); el crecimiento real no se ha medido |
 | Deriva conocida IaC ↔ cuenta: la regla de ciclo de vida de S3 de la cuenta filtra `database-backups/`, pero los respaldos reales están en `backups/database/` (**confirmado**: regla leída por API el 28-oct y rutas de los scripts); el Terraform local ya está alineado (propuesta 0003, sin aplicar), de modo que los volcados **no expiran** hoy | Alta (ya ocurre) | Baja | Aplicar la propuesta en una ventana autorizada o eliminar a mano los volcados obsoletos |
 | Cifrado en tránsito hacia RDS: el servidor exige TLS (`rds.force_ssl=1`) y las URL desplegadas usan `sslmode=require` (cifra, pero **no valida CA ni nombre**) | Baja | Media | **Corregido en local** (verify-full + política en la aplicación + pruebas 52/52 y prueba con CA propia); **no desplegado**: requiere instalar el paquete de CA de RDS y autorización |
 | Sin despliegue continuo; el CI no valida Terraform ni el código local aún sin commit | Media | Baja | CI con 31 ejecuciones reales (30 exitosas); el despliegue sigue siendo manual (Terraform/Ansible) |
@@ -538,4 +545,15 @@ Primer run del PR (`1331a74`): el nuevo análisis del lockfile y el de la imagen
 | 5 Evidencias, pruebas y documentación | 16–18, 20 | 40 series originales de CloudWatch, auditoría de solo lectura, pruebas 44/44 y 33/33, recuperación OCI 14/14, informe con enlaces a cada evidencia | Capturas de consola y de Grafana/Zabbix pendientes; entrega real de correo de alerta no comprobada |
 
 ---
-*Datos de portada y firma: `[PENDIENTE]` hasta recibir el identificador de equipo y los datos del docente. Ningún dato personal, IP, correo, identificador de cuenta ni secreto aparece en este documento.*
+*Datos de portada y firma: la portada del Word ya tiene integrante y docente; `[PENDIENTE]` el código de estudiante. Ningún dato personal, IP, correo, identificador de cuenta ni secreto aparece en este documento.*
+
+## Actualización 6–9 nov-2026 (V2 recreada y apagada, RDS, Tailscale; sin cambios en la nube por este documento)
+Fechas de última verificación: AWS 6-nov 16:56; Azure 9-nov 00:14. No se afirma el estado de hoy sin una consulta nueva.
+- **V2:** destruida el 4-nov; **recreada el 5-nov** (27 recursos creados) con validación funcional 15/15 en 4 ejecuciones; el 6-nov, 15/15 (49 %/51 %, 0 errores 5xx) y prueba real 15:38–15:40 con 2 instancias sanas en us-east-1a/b; **apagada el 6-nov 16:54–16:55** con el ASG en 0/0/3 (el ALB y el resto siguen existiendo). Autohealing y failover **solo se midieron el 4-nov**; no se repitieron el 5 ni el 6-nov.
+- **RDS:** máximo de autoescalado **20 → 40 GiB el 6-nov 14:29** (solo cambió `MaxAllocatedStorage`; sin interrupción observada; el aviso no reapareció en una observación posterior; costo potencial ≈ 4,6 USD/mes). El riesgo «RDS al límite» queda atendido; el crecimiento real no se ha medido.
+- **Terraform:** variable `asg_enabled` sin valor por defecto y envoltorio `scripts/v2-ops/v2-terraform.sh` que solo admite el cambio de capacidad del ASG; las variables de entorno quedan fuera de Git.
+- **Azure:** acceso privado a Grafana/Zabbix por **Tailscale** (solo TCP 443), verificado desde el Mac el 9-nov; VM desasignada después. **Prueba desde otra red: pendiente.** Sigue sin captura de la interfaz de Zabbix.
+- **Triggers de Zabbix:** 4 son propios de NexoEventos; los otros 8 de los 12 listados son de plantillas estándar (165 activos en total).
+- **Hallazgos de Trivy sobre IaC:** siete abiertos o aceptados (5 de AWS y 2 de Azure); AWS-0053 es decisión arquitectónica.
+- **Git:** 7 commits locales de esta etapa **no publicados ni validados por el CI**; el CI 4/4 corresponde a `7755e48` (PR #1, borrador). Coautoría de Claude: **71 de 117 commits de `main`** y 0 en la rama (verificado el 9-nov).
+- **Pendiente:** capturas de consola de V2 del 5 y 6-nov, prueba manual en el navegador del 6-nov, prueba desde otra red, captura de crédito/costes, código de estudiante en la portada.
