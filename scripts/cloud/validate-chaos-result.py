@@ -3,6 +3,8 @@
 reproduzcan a partir de los datos crudos. No ejecuta ni simula nada: lee `docs/evidencias/`.
 Uso: python3 scripts/cloud/validate-chaos-result.py            (valida los tres experimentos reales conservados)
 Cada validador devuelve {"estado": "completo"|"incompleto", "metricas": {...}, "advertencias": [...]}."""
+from __future__ import annotations
+
 import json
 import sys
 from datetime import datetime

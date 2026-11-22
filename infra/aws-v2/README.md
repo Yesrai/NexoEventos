@@ -21,3 +21,8 @@ Validación local realizada: `terraform fmt`, `terraform validate`, `python3 inf
 3. **AMI dorada** (instancia temporal, ~45 min): `v2-prepare.sh builder-launch` → `scripts/ansible-aws.sh bake` (rol `nexoeventos` en modo `nexoeventos_bake` + `nexoeventos_edge: alb`: sin secretos, sin migraciones, API sin arrancar) → `builder-image` → `builder-delete`.
 4. **Plan real** con `ami_id` (`work/operacion/v2-ami-id`) y `certificate_arn` (`work/operacion/v2-certificate-arn`) y revisión.
 5. **`terraform apply`** solo de esta raíz; después verificación funcional y medición.
+
+## Alta disponibilidad (preparación local, sin nube)
+- **Dos instancias, un solo lease de escritura:** `backend/app/failover/site_member.py` + `gate.py`. Al activarse la compuerta de escritura (autorización aparte; fuera de esta raíz de Terraform) solo la líder (bloqueo consultivo de PostgreSQL) compite por el lease entre nubes; la otra recibe la autoridad que la base ya tiene concedida. La seguridad no depende de la elección (lease CAS + vallado de la base). Pruebas: `scripts/multicloud/tests/test_aws_v2_site.py` (PostgreSQL 18 real).
+- **ALB + ASG simulados con instancias reales de la API:** `scripts/v2/ha_sim.py`; pruebas en `backend/tests/test_v2_alb_asg_local.py` (reparto, sesión sin afinidad, reservas concurrentes, caída/colgado de una instancia, sustitución, reintentos idempotentes).
+- **Despliegue y reversión en Academy:** [RUNBOOK-academy.md](RUNBOOK-academy.md).

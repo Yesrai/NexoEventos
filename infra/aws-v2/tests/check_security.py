@@ -47,4 +47,5 @@ check(re.search(r'variable "ami_includes_livez" \{.*?default\s*=\s*false', tf["v
 check('"/livez"' in tf["alb.tf"] and 'type    = "lb_cookie"' in tf["alb.tf"] and "enabled = false" in tf["alb.tf"], "Health check /livez y sin afinidad de sesión")
 check("ASGAverageCPUUtilization" in tf["compute.tf"], "Política de escalado medible por CPU")
 check("drop_invalid_header_fields = true" in tf["alb.tf"] and "TLS13-1-2" in tf["alb.tf"], "ALB con política TLS 1.2/1.3 y cabeceras inválidas descartadas")
+check(not re.search(r"^\s*default\s*=", re.search(r'variable "asg_enabled" \{(.*?)\n\}', tf["variables.tf"], re.S).group(1), re.M), "asg_enabled no tiene valor por defecto: V2 no se enciende por accidente")
 sys.exit(1 if errors else 0)

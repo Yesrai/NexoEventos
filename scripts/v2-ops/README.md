@@ -33,3 +33,6 @@ Mientras no exista la variable `asg_enabled`, un `terraform plan` de `infra/aws-
 
 ## Pruebas locales (sin AWS)
 `./tests/test-mock.sh` usa un `aws` simulado y comprueba 16 casos: solo lectura en status; cero cambios con confirmación incorrecta, `--dry-run`, RDS no disponible, 2 ASG o nombre inesperado; y exactamente una llamada de escritura (sobre el ASG de V2) cuando se confirma.
+
+## rds-window.sh y la revisión del plan (B1+B2)
+`rds-window.sh` controla la ventana de la RDS y el despliegue de V2 con el watchdog (`check`, `watchdog`, `start`, `chain`, `beat`, `cancel`, `stop-now`, `abort`). `chain --scenario first|resume` regenera el plan y lo pasa por `review-plan.py` (revisión **por recurso y por atributo**; escenarios y reglas en [aws-v2-reconciliacion-terraform.md](../../docs/operacion/aws-v2-reconciliacion-terraform.md)). Las horas `--not-after` y `--creds-until` aceptan `HH:MMZ` o `AAAA-MM-DDTHH:MMZ`. Guía completa de despliegue, validación y apagado: [aws-v2-reconstruccion.md](../../docs/operacion/aws-v2-reconstruccion.md). Pruebas simuladas (no tocan la nube): `bash scripts/v2-ops/tests/test-rds-window.sh`.
