@@ -222,6 +222,98 @@ class OciCliStore(ConditionalStore):
         return self._put(["--if-match", etag, "--force"], data)
 
 
+class ParHttpStore(ConditionalStore):
+    """Almacén del lease por HTTP sobre un PAR de lectura/escritura de UN objeto (OCI Object Storage u otro servicio con If-Match / If-None-Match). Solo biblioteca estándar.
+
+    - La URL del PAR es un secreto: se lee de un archivo 0600, nunca se imprime ni aparece en excepciones; solo https (http solo a localhost en pruebas); sin redirecciones.
+    - read(): GET -> (cuerpo, ETag); 404 -> None; cuerpo ≤ 64 KiB; sin ETag -> StoreUnavailable (no se puede hacer CAS sin versión).
+    - create(): PUT con `If-None-Match: *` (412/409 -> PreconditionFailed).  replace(): PUT con `If-Match: <etag>` (412/409 -> PreconditionFailed).
+    - Cualquier fallo de red, tiempo o 5xx en una ESCRITURA es StoreUnavailable (resultado incierto: el lease lo trata como pérdida segura).
+    - NO verificado contra OCI real: se usa solo tras verify_store_semantics() contra el servicio real (autoprueba preparada en lease_selftest.py, que requiere autorización cloud).
+    """
+    MAX_BODY = 65536
+
+    def __init__(self, par_url_file, timeout: float = 10.0, allow_http_localhost: bool = False, allowed_host_suffixes=("oraclecloud.com",), object_name: str | None = None):
+        import stat
+        import urllib.parse
+        import urllib.request
+        p = Path(par_url_file)
+        try:
+            if p.stat().st_mode & (stat.S_IRWXG | stat.S_IRWXO):
+                raise StoreError("el archivo con la URL del PAR debe tener permisos 0600")
+            url = p.read_text().strip()
+        except OSError:
+            raise StoreError("no se pudo leer el archivo con la URL del PAR")
+        u = urllib.parse.urlparse(url)
+        local = u.hostname in ("127.0.0.1", "localhost", "::1")
+        if u.scheme != "https" and not (allow_http_localhost and u.scheme == "http" and local):
+            raise StoreError("la URL del PAR debe ser HTTPS")
+        if not u.hostname or u.username or u.password or u.query or u.fragment:
+            raise StoreError("URL del PAR inválida")
+        if not local and not any(u.hostname == x or u.hostname.endswith("." + x) for x in allowed_host_suffixes):
+            raise StoreError("el host del PAR no está en la lista permitida")
+        if object_name is not None:                      # PAR de bucket/prefijo: la URL acaba en «/o/» y el objeto se añade (nombre estricto; sirve para los objetos de autoprueba)
+            import re
+            if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,199}", object_name) or ".." in object_name or not url.endswith("/"):
+                raise StoreError("nombre de objeto inválido o URL de PAR que no acaba en «/»")
+            url = url + urllib.parse.quote(object_name)
+        self._url, self.timeout = url, timeout
+
+        class _NoRedirect(urllib.request.HTTPRedirectHandler):
+            def redirect_request(self, *a, **k):
+                return None
+        self._opener = urllib.request.build_opener(_NoRedirect)
+
+    def __repr__(self):
+        return "ParHttpStore(<url oculta>)"
+
+    def _do(self, method: str, data: bytes | None = None, headers: dict | None = None, url: str | None = None):
+        import http.client
+        import urllib.error
+        import urllib.request
+        req = urllib.request.Request(url or self._url, data=data, method=method, headers=headers or {})
+        try:
+            with self._opener.open(req, timeout=self.timeout) as r:
+                body = r.read(self.MAX_BODY + 1)
+                if len(body) > self.MAX_BODY:
+                    raise StoreError("respuesta demasiado grande")
+                return r.status, body, r.headers.get("ETag")
+        except urllib.error.HTTPError as e:
+            return e.code, b"", None
+        except (urllib.error.URLError, OSError, TimeoutError, http.client.HTTPException):
+            raise StoreUnavailable("fallo de red o de conexión con el almacén")
+
+    def read(self):
+        code, body, etag = self._do("GET")
+        if code == 404:
+            return None
+        if code == 200:
+            if not etag:
+                raise StoreUnavailable("la respuesta no trae ETag: no se puede hacer CAS")
+            return ObjectVersion(body, etag)
+        if code >= 500 or code in (408, 429):
+            raise StoreUnavailable(f"el almacén respondió HTTP {code}")
+        raise StoreError(f"respuesta inesperada del almacén (HTTP {code})")
+
+    def _put(self, data: bytes, cond: dict):
+        code, _, etag = self._do("PUT", data, {"Content-Type": "application/octet-stream", **cond})
+        if code in (200, 201):
+            if not etag:
+                raise StoreUnavailable("escritura sin ETag en la respuesta (resultado incierto)")
+            return etag
+        if code in (412, 409):
+            raise PreconditionFailed("precondición no cumplida")
+        if code >= 500 or code in (408, 429):
+            raise StoreUnavailable(f"el almacén respondió HTTP {code} (resultado incierto)")
+        raise StoreError(f"escritura rechazada (HTTP {code})")
+
+    def create(self, data):
+        return self._put(data, {"If-None-Match": "*"})
+
+    def replace(self, etag, data):
+        return self._put(data, {"If-Match": etag})
+
+
 def verify_store_semantics(make_store, writers: int = 16) -> dict:
     """Autoprueba de las operaciones condicionales. `make_store()` devuelve un almacén NUEVO (objeto vacío). Devuelve {prueba: bool}; marca `verified` solo si TODAS pasan.
     Para un almacén real usar un nombre de objeto de prueba exclusivo (p. ej. lease-selftest-<uuid>) y borrarlo después."""
@@ -261,6 +353,21 @@ def verify_store_semantics(make_store, writers: int = 16) -> dict:
     rep["carrera_exactamente_un_ganador"] = len(wins) == 1
     s.verified = all(rep.values())
     return rep
+
+
+def build_verified_par_store(par_url_file, object_name: str = "writer-lease.json", *, selftest: bool = True, **kw) -> tuple["ParHttpStore", dict]:
+    """Almacén de lease por PAR VERIFICADO: antes de marcarlo `verified` ejecuta verify_store_semantics contra objetos de prueba exclusivos (`<objeto>.selftest-<uuid>`).
+    Si el servicio no respeta If-Match / If-None-Match (o no responde) el informe trae algún False y `verified` queda False: el LeaseClient rechaza el almacén (falla cerrado).
+    Los objetos de prueba no se pueden borrar con un PAR de lectura/escritura: quedan en el bucket (limpiar a mano)."""
+    store = ParHttpStore(par_url_file, object_name=object_name, **kw)
+    if not selftest:
+        return store, {"autoprueba_omitida": False}
+    try:
+        rep = verify_store_semantics(lambda: ParHttpStore(par_url_file, object_name=f"{object_name}.selftest-{uuid.uuid4().hex[:8]}", **kw))
+    except StoreError as e:                                   # cualquier error del servicio durante la autoprueba = no verificado
+        return store, {"autoprueba_error": False}
+    store.verified = all(rep.values())
+    return store, rep
 
 
 def _ok(fn) -> bool:

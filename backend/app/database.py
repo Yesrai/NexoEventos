@@ -36,7 +36,7 @@ def build_engine(database_url: str | None = None) -> Engine:
     # de TCP del sistema; el keepalive detecta antes un par que ya no responde; el reciclado fuerza a resolver de nuevo el DNS de RDS.
     # No hay reintentos automáticos: las peticiones fallan con 503 y el cliente decide (no se duplican operaciones).
     # connect_timeout/keepalives solo existen para conexiones TCP: se omiten en sockets Unix y localhost de pruebas.
-    connect_args: dict[str, int] = {}
+    connect_args: dict[str, object] = {}
     if make_url(url).host not in _LOCAL_HOSTS and not (make_url(url).host or "").startswith("/"):
         connect_args = {
             "connect_timeout": int(os.getenv("DB_CONNECT_TIMEOUT", "5")),
@@ -45,6 +45,10 @@ def build_engine(database_url: str | None = None) -> Engine:
             "keepalives_interval": 10,
             "keepalives_count": 3,
         }
+    if os.getenv("WRITE_GATE_MODE", "off").strip().lower() == "enforce":
+        # Con la compuerta activa las conexiones de la API se etiquetan: el detector de escritores externos (failover/external_writers.py) distingue así la API
+        # (protegida por la compuerta) de psql, scripts o migraciones que usen el mismo rol. Con `off` (valor por defecto) nada cambia.
+        connect_args["application_name"] = "nexoeventos-api"
     return create_engine(
         url,
         pool_pre_ping=True,

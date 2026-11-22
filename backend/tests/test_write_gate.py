@@ -168,7 +168,8 @@ def test_standby_solo_escribe_con_archivo_de_promocion(tmp_path):
     promo.write_text("ok"); gate.keeper_step(); assert register(c, "s1@example.com").status_code == 201
     promo.unlink(); gate.keeper_step()
     assert register(c, "s2@example.com").status_code == 503                                    # sin promoción: libera y deja de escribir
-    other = gate_for(store, clk, "P"); other.keeper_step(); assert other.allows_writes()       # liberado: otro toma sin esperar
+    other = gate_for(store, clk, "P"); other.keeper_step(); assert not other.allows_writes()   # una liberación SIN firma no da atajo (pudo escribirla cualquiera): se observa ttl+margen
+    clk.advance(30); other.keeper_step(); assert other.allows_writes()
 
 
 def test_guardian_con_hilo_renueva_y_si_muere_el_lease_caduca_y_cierra():

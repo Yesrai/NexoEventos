@@ -36,6 +36,7 @@ from app.auth import (
 )
 from app.queue import QueueRequiredError, SalesNotOpenError
 from app.sales import router as sales_router
+from app.ops import router as ops_router
 from app.catalog import event_detail, event_summary, zone_pricing
 from app.organizer import router as organizer_router
 from app.config import ALLOWED_ORIGINS, validate_production_config
@@ -353,6 +354,7 @@ def create_app(database_url: str | None = None, write_gate=None) -> FastAPI:
 
     application.include_router(organizer_router)
     application.include_router(sales_router)
+    application.include_router(ops_router)
     return application
 
 

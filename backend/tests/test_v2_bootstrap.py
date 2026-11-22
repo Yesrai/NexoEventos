@@ -125,3 +125,4 @@ def test_bootstrap_template_has_no_secret_values_and_pins_come_from_terraform_va
     variables = (ROOT / "infra/aws-v2/variables.tf").read_text()
     assert "rds_ca_sha256" in compute and 'variable "rds_ca_sha256"' in variables
     assert re.search(r'default\s*=\s*\["[0-9a-f]{64}"\]', variables.split('variable "rds_ca_sha256"')[1].split("\n}\n")[0])
+

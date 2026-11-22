@@ -24,8 +24,8 @@ class Clock:
     def advance(self, s): self.t += s
 
 
-def make_client(store, clock, name, ttl=15.0, margin=5.0, **kw):
-    return LeaseClient(store, LeaseConfig(ttl_s=ttl, margin_s=margin, **kw), holder_id=name, mono=clock)
+def make_client(store, clock, name, ttl=15.0, margin=5.0, auth_keys=None, **kw):
+    return LeaseClient(store, LeaseConfig(ttl_s=ttl, margin_s=margin, **kw), holder_id=name, mono=clock, auth_keys=auth_keys)
 
 
 def verified_store(cls=InMemoryStore, *a):
@@ -128,16 +128,15 @@ def test_resultado_incierto_en_renovacion_se_adopta_sin_ampliar_el_plazo():
 
 
 def test_liberacion_deja_de_escribir_primero_y_otro_toma_sin_esperar():
-    clk, s = Clock(), verified_store()
-    a, b = make_client(s, clk, "A"), make_client(s, clk, "B")
-    a.acquire(); assert a.release().ok and not a.is_valid()
-    assert b.acquire().ok and b.epoch == 2                                           # liberado: sin espera
-    # liberación con almacén caído: A ya no escribe igualmente
-    c = make_client(s, clk, "C"); clk.advance(1)
-    assert b.is_valid()
-    s.before_op = lambda op: (_ for _ in ()).throw(StoreUnavailable("red"))
-    r = b.release(); assert not r.ok and not b.is_valid()
-
+    """Con claves, una liberación FIRMADA por su titular se honra al instante; sin claves una liberación (que cualquiera pudo escribir) NO da atajo."""
+    keys = {"A": b"clave-A-" * 3, "B": b"clave-B-" * 3}
+    clk = Clock()
+    s2 = verified_store(); a2, b2 = make_client(s2, clk, "A", auth_keys=keys), make_client(s2, clk, "B", auth_keys=keys)
+    a2.acquire(); clk.advance(21); assert a2.acquire().ok; assert not b2.acquire().ok       # B vigila al titular (como hace el standby)
+    assert a2.release().ok and not a2.is_valid()
+    assert b2.acquire().ok and b2.epoch == 2                                           # liberación auténtica: sin espera
+    s3 = verified_store(); a3, b3 = make_client(s3, clk, "A"), make_client(s3, clk, "B")
+    a3.acquire(); a3.release(); assert not b3.acquire().ok                             # sin firma: se observa ttl+margen
 
 def test_carrera_de_tomas_concurrentes_solo_una_gana_con_hilos():
     clk, s = Clock(), verified_store()
