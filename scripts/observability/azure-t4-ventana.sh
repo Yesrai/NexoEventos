@@ -27,7 +27,7 @@ PY
 iniciar)
   [[ "$HOURS" =~ ^[1-8]$ ]] || { echo "H debe ser 1–8" >&2; exit 2; }
   [[ -s "$ORIG" ]] || { echo "Ejecute antes --check (guarda el estado original)" >&2; exit 2; }
-  target=$(( $(date -u +%s) / 60 * 60 + HOURS * 3600 )); hhmm="$(date -u -r "$target" +%H%M)"
+  hhmm="$(python3 -c "import sys,time;print(time.strftime('%H%M', time.gmtime((int(time.time()) // 60) * 60 + int(sys.argv[1]) * 3600)))" "$HOURS")"      # portable (macOS y Linux; `date -r` difiere)
   echo "Plan: az vm start; apagado automático → $hhmm UTC (ahora + ${HOURS} h). VM actual: $(power)"
   [[ "$FRASE" == "INICIAR VENTANA T4" ]] || { echo "Modo plan: no se cambió nada."; exit 0; }
   "$AZ" resource update -g "$RG" -n "$SCH" --resource-type Microsoft.DevTestLab/schedules --set properties.dailyRecurrence.time="$hhmm" >/dev/null
