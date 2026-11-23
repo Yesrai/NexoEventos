@@ -131,3 +131,28 @@ def test_instantanea_obsoleta_es_no_verificado(cfg, app):
 def test_estaticos_sin_secretos_y_pagina(client):
     assert client.get("/").status_code == 200
     assert client.get("/healthz").json() == {"ok": True}
+
+
+def test_check_integrations_sin_config_y_con_simulados(cfg):
+    from nexoops import checks
+    res = checks.run(cfg, Grafana(cfg), Zabbix(cfg), Aws(cfg))
+    assert {r["result"] for r in res["results"] if r["check"] != "correo.smtp"} == {"NOT_CONFIGURED"}
+    assert (cfg.data_dir / "integration-check.json").stat().st_mode & 0o077 == 0
+    cfg.zabbix_url, cfg.zabbix_token, cfg.zabbix_auth = "https://zbx.test/zabbix", "SECRETO-ZBX", "body"
+    seen = []
+    def fetch(url, **kw):
+        seen.append((url, kw)); m = kw["body"]["method"]
+        return {"result": "7.0.3" if m == "apiinfo.version" else []}
+    r = checks.run(cfg, Grafana(cfg), Zabbix(cfg, fetch), Aws(cfg), write=False)
+    z = [x for x in r["results"] if x["check"].startswith("zabbix")]
+    assert all(x["result"] == "PASS" for x in z) and "SECRETO-ZBX" not in json.dumps(r)
+    assert "auth" not in seen[0][1]["body"] and seen[1][1]["body"]["auth"] == "SECRETO-ZBX" and "Authorization" not in seen[1][1]["headers"]
+
+
+def test_grafana_subpath_sin_duplicar_y_cafile(cfg):
+    cfg.grafana_url, cfg.grafana_token, cfg.grafana_cafile = "https://vm.test/grafana", "T", "/etc/x.pem"
+    got = {}
+    def fetch(url, **kw):
+        got.update(kw); return [{"uid": "abc", "title": "A", "url": "/grafana/d/abc/a"}]
+    d = Grafana(cfg, fetch).dashboards()["data"]["dashboards"][0]
+    assert d["open_url"] == "https://vm.test/grafana/d/abc/a" and got["cafile"] == "/etc/x.pem"

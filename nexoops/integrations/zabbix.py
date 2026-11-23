@@ -27,8 +27,14 @@ class Zabbix:
     def _rpc(self, method, params):
         if method not in READ_ONLY:
             raise PermissionError("método Zabbix no permitido")
-        r = self.fetch(self.c.zabbix_url + "/api_jsonrpc.php", method="POST", headers={"Authorization": f"Bearer {self.c.zabbix_token}", "Content-Type": "application/json-rpc"},
-                       body={"jsonrpc": "2.0", "method": method, "params": params, "id": 1})
+        body = {"jsonrpc": "2.0", "method": method, "params": params, "id": 1}
+        headers = {"Content-Type": "application/json-rpc"}
+        if method != "apiinfo.version":                       # apiinfo.version no admite autenticación
+            if self.c.zabbix_auth == "body":
+                body["auth"] = self.c.zabbix_token
+            else:
+                headers["Authorization"] = f"Bearer {self.c.zabbix_token}"
+        r = self.fetch(self.c.zabbix_url + "/api_jsonrpc.php", method="POST", headers=headers, body=body, **({"cafile": self.c.zabbix_cafile} if self.c.zabbix_cafile else {}))
         if isinstance(r, dict) and r.get("error"):
             raise RuntimeError("error de la API de Zabbix")
         return r["result"]
@@ -40,6 +46,11 @@ class Zabbix:
             return envelope(SRC, "ok", fn())
         except Exception as e:  # noqa: BLE001
             return envelope(SRC, "unavailable", detail=f"Zabbix no respondió ({type(e).__name__})")
+
+    def version(self):
+        def f():
+            return {"version": str(self._rpc("apiinfo.version", {}))[:20]}
+        return self._wrap(f)
 
     def hosts(self):
         def f():

@@ -18,7 +18,22 @@ class Grafana:
         self.c, self.fetch = cfg, fetch
 
     def _get(self, path):
-        return self.fetch(self.c.grafana_url + path, headers={"Authorization": f"Bearer {self.c.grafana_token}"})
+        return self.fetch(self.c.grafana_url + path, headers={"Authorization": f"Bearer {self.c.grafana_token}"}, **({"cafile": self.c.grafana_cafile} if self.c.grafana_cafile else {}))
+
+    def _abs(self, url: str) -> str:
+        """Grafana detrás de un subpath (p. ej. /grafana): la URL de búsqueda ya lo incluye; no se duplica."""
+        pu = urllib.parse.urlparse(self.c.grafana_url)
+        origin = f"{pu.scheme}://{pu.netloc}"
+        return origin + url if url.startswith(pu.path.rstrip("/") + "/") or not pu.path.strip("/") else self.c.grafana_url + url
+
+    def health(self):
+        if not self.configured():
+            return envelope(SRC, "not_configured", detail="GRAFANA_URL / GRAFANA_TOKEN sin definir")
+        try:
+            h = self.fetch(self.c.grafana_url + "/api/health", **({"cafile": self.c.grafana_cafile} if self.c.grafana_cafile else {}))
+            return envelope(SRC, "ok", {"version": str(h.get("version", "?"))[:20], "database": str(h.get("database", "?"))[:10]})
+        except Exception as e:  # noqa: BLE001
+            return envelope(SRC, "unavailable", detail=f"Grafana no respondió ({type(e).__name__})")
 
     def configured(self):
         return bool(self.c.grafana_url and self.c.grafana_token)
@@ -30,7 +45,7 @@ class Grafana:
             rows = self._get("/api/search?type=dash-db&limit=100")
         except Exception as e:  # noqa: BLE001
             return envelope(SRC, "unavailable", detail=f"Grafana no respondió ({type(e).__name__})")
-        out = [{"uid": r["uid"], "title": str(r.get("title"))[:120], "folder": str(r.get("folderTitle", "General"))[:80], "tags": r.get("tags", [])[:6], "open_url": self.c.grafana_url + str(r.get("url", ""))}
+        out = [{"uid": r["uid"], "title": str(r.get("title"))[:120], "folder": str(r.get("folderTitle", "General"))[:80], "tags": r.get("tags", [])[:6], "open_url": self._abs(str(r.get("url", "")))}
                for r in rows if isinstance(r, dict) and UID.match(str(r.get("uid", "")))]
         return envelope(SRC, "ok", {"dashboards": out})
 

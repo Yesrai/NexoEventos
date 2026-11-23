@@ -27,6 +27,9 @@ class Config:
     grafana_url: str = ""
     grafana_token: str = ""
     grafana_embed: bool = False
+    grafana_cafile: str = ""
+    zabbix_cafile: str = ""
+    zabbix_auth: str = "bearer"            # bearer (Zabbix ≥ 7.0) | body (6.x: parámetro «auth»)
     zabbix_url: str = ""
     zabbix_token: str = ""
     aws_region: str = ""
@@ -45,7 +48,7 @@ class Config:
                    mail_mode=e.get("NEXOOPS_MAIL_MODE", "smtp"), smtp_host=e.get("NEXOOPS_SMTP_HOST", ""), smtp_port=int(e.get("NEXOOPS_SMTP_PORT", "587")),
                    smtp_user=e.get("NEXOOPS_SMTP_USER", ""), smtp_password=e.get("NEXOOPS_SMTP_PASSWORD", ""), smtp_from=e.get("NEXOOPS_SMTP_FROM", ""),
                    smtp_starttls=_b(e.get("NEXOOPS_SMTP_STARTTLS"), True),
-                   grafana_url=e.get("GRAFANA_URL", "").rstrip("/"), grafana_token=e.get("GRAFANA_TOKEN", ""), grafana_embed=_b(e.get("NEXOOPS_GRAFANA_EMBED")),
+                   grafana_url=e.get("GRAFANA_URL", "").rstrip("/"), grafana_token=e.get("GRAFANA_TOKEN", ""), grafana_embed=_b(e.get("NEXOOPS_GRAFANA_EMBED")), grafana_cafile=e.get("GRAFANA_CAFILE", ""), zabbix_cafile=e.get("ZABBIX_CAFILE", ""), zabbix_auth=e.get("ZABBIX_AUTH_MODE", "bearer"),
                    zabbix_url=e.get("ZABBIX_URL", "").rstrip("/"), zabbix_token=e.get("ZABBIX_TOKEN", ""),
                    aws_region=e.get("NEXOOPS_AWS_REGION", ""), aws_asg_names=[x for x in e.get("NEXOOPS_AWS_ASG_NAMES", "").split(",") if x.strip()],
                    llm_provider=e.get("NEXOOPS_LLM_PROVIDER", ""), env_raw=e)

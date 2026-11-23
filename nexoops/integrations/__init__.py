@@ -18,11 +18,11 @@ def envelope(source: str, status: str, data=None, detail: str = "", origin: str 
     return {"source": source, "status": status, "observed_at": utc(now) if status == "ok" else None, "checked_at": utc(now), "origin": origin if status == "ok" else "sin_datos", "detail": detail, "data": data}
 
 
-def http_json(url: str, *, method="GET", headers=None, body=None, timeout=8.0):
+def http_json(url: str, *, method="GET", headers=None, body=None, timeout=8.0, cafile=None):
     pu = urllib.parse.urlparse(url)
     if pu.scheme != "https" and not (pu.scheme == "http" and pu.hostname in ("127.0.0.1", "localhost", "::1")):
         raise ValueError("solo https (http únicamente a loopback)")
     data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(url, data=data, method=method, headers={"Accept": "application/json", **({"Content-Type": "application/json"} if data else {}), **(headers or {})})
-    with urllib.request.urlopen(req, timeout=timeout, context=ssl.create_default_context()) as r:    # noqa: S310 (esquema validado)
+    with urllib.request.urlopen(req, timeout=timeout, context=ssl.create_default_context(cafile=cafile)) as r:    # noqa: S310 (esquema validado; cafile = certificado FIJADO, la verificación nunca se desactiva)
         return json.loads(r.read(2_000_000) or b"null")
