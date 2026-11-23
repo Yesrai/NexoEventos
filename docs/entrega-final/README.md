@@ -68,7 +68,7 @@ Construido de nuevo **desde las evidencias originales** (no desde este paquete):
 
 | Archivo | Contenido |
 |---|---|
-| `NexoEventos_Informe_Academico_Final_Con_Evidencias.docx` | **informe académico definitivo** (64 páginas, 39 figuras, 14 criterios, capturas originales y recortadas, T7/A1 reconciliados con el cierre) |
+| `NexoEventos_Informe_Academico_Final_Con_Evidencias.docx` | **informe académico definitivo** (68 páginas, 39 figuras, 44 tablas, 14 criterios, caso empresarial y matriz problema–solución, capturas originales y recortadas, T7/A1 reconciliados con el cierre) |
 | `NexoEventos_Informe_Final_Completo_Con_Evidencias.docx` | versión anterior (51 páginas), conservada como respaldo |
 | `NexoEventos_Anexos_Evidencias.pdf` | 38 páginas: capturas auténticas redactadas, criterios de los 11 expedientes, criterios T6–T8, salidas de prueba |
 | `INVENTARIO-MAESTRO-EVIDENCIAS.xlsx` / `.md` | 497 evidencias (ID EV-Tn-NNN, ruta, fecha UTC, tipo, resultado, SHA-256, limitación), incluidos los FAIL y sus correcciones |
