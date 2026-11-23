@@ -11,9 +11,10 @@ function h(tag, attrs, ...kids) {
   for (const c of kids.flat()) if (c != null && c !== false) e.append(c.nodeType ? c : document.createTextNode(String(c)));
   return e;
 }
-const ic = (n, cls = "") => h("i", { class: "ic " + cls, style: `--i:url(/static/icons/${n}.svg)` });
+const BASE = (document.querySelector('meta[name="nexoops-base"]') || {}).content || "";
+const ic = (n, cls = "") => h("i", { class: "ic " + cls, style: `--i:url(${BASE}/static/icons/${n}.svg)` });
 async function api(path, opt = {}) {
-  const r = await fetch(path, { method: opt.method || "GET", headers: { "Content-Type": "application/json", ...(opt.method && opt.method !== "GET" ? { "X-CSRF-Token": CSRF } : {}) }, body: opt.body ? JSON.stringify(opt.body) : undefined, credentials: "same-origin" });
+  const r = await fetch(BASE + path, { method: opt.method || "GET", headers: { "Content-Type": "application/json", ...(opt.method && opt.method !== "GET" ? { "X-CSRF-Token": CSRF } : {}) }, body: opt.body ? JSON.stringify(opt.body) : undefined, credentials: "same-origin" });
   let j = null; try { j = await r.json(); } catch (_) {}
   if (r.status === 401 && !path.startsWith("/api/auth/")) { USER = null; route(); throw new Error("sesión expirada"); }
   if (!r.ok) { const e = new Error((j && j.detail) || r.statusText); e.status = r.status; throw e; }
@@ -107,7 +108,7 @@ VIEWS.overview = async () => {
   const ser = o.latency.series.filter((x) => x.ms != null);
   const spark = ser.length > 1 ? (() => { const mx = Math.max(...ser.map((x) => x.ms)), W = 300, H = 80; const pts = ser.map((x, i) => `${(i / (ser.length - 1)) * W},${H - (x.ms / mx) * (H - 8) - 4}`).join(" "); const ns = "http://www.w3.org/2000/svg"; const svg = document.createElementNS(ns, "svg"); svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("class", "spark"); svg.setAttribute("preserveAspectRatio", "none"); const p = document.createElementNS(ns, "polyline"); p.setAttribute("points", pts); p.setAttribute("fill", "none"); p.setAttribute("stroke", "#7cc83a"); p.setAttribute("stroke-width", "3"); p.setAttribute("stroke-linecap", "round"); svg.append(p); return svg; })() : h("div", { class: "empty" }, "Sin muestras de latencia del recolector.");
   const lat = card("s4", "activity", "Disponibilidad y latencia", null, h("div", { class: "mid" }, s.disponibilidad.value ?? "No verificado"), spark, h("div", { class: "src" }, `${o.latency.source} · ${o.latency.observed_at || "sin dato"}`));
-  const rec = card("s4", "life-buoy", "Recuperación y continuidad", h("span", { class: "chip err" }, h("i", { class: "ic", style: "--i:url(/static/icons/lock.svg);width:12px;height:12px" }), "Failover bloqueado"),
+  const rec = card("s4", "life-buoy", "Recuperación y continuidad", h("span", { class: "chip err" }, h("i", { class: "ic", style: `--i:url(${BASE}/static/icons/lock.svg);width:12px;height:12px` }), "Failover bloqueado"),
     h("div", { class: "rows" }, [["Fencing", (r.fencing || {}).veredicto || "UNKNOWN"], ["Epoch autorizado", String(r.epoch_autorizado)], ["Última copia", r.ultima_copia_validada.estado], ["RTO observado", typeof r.rto_observado_s === "number" ? r.rto_observado_s + " s" : r.rto_observado_s],
       ["Barreras cumplidas", `${r.barreras.barriers.filter((b) => b.ok).length}/${r.barreras.barriers.length}`]].map(([a, b]) => h("div", { class: "row" }, a, h("b", {}, b)))), h("div", { class: "src" }, r.source));
   const au = await api("/api/audit");

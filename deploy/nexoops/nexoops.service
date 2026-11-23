@@ -1,0 +1,38 @@
+# Unidad systemd de NexoOps (VM de Azure). NO instalada todavía: requiere autorización específica.
+[Unit]
+Description=NexoOps - Centro de operaciones multicloud (OTP, solo lectura + solicitudes; no ejecuta failover)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=nexoops
+Group=nexoops
+WorkingDirectory=/opt/nexoeventos
+Environment=PYTHONPATH=/opt/nexoeventos:/opt/nexoeventos/backend
+Environment=NEXOOPS_ENV=production
+Environment=NEXOOPS_BASE_PATH=/nexoops
+Environment=NEXOOPS_DATA_DIR=/var/lib/nexoops
+Environment=OPS_CENTER_STATE_DIR=/var/lib/ops-center
+# Secretos (OTP, SMTP, tokens Viewer/solo lectura de Grafana y Zabbix) SOLO en este archivo 0600 root:nexoops; nunca en el repositorio.
+EnvironmentFile=/etc/nexoops/nexoops.env
+ExecStart=/opt/nexoeventos/venv/bin/python -m nexoops serve --host 127.0.0.1 --port 8760
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/nexoops
+ReadOnlyPaths=/var/lib/ops-center
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+CapabilityBoundingSet=
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

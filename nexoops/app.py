@@ -7,7 +7,7 @@ import time
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -90,12 +90,16 @@ def create_app(cfg: Config, mailer=None, aws=None, grafana=None, zabbix=None, au
         return u
 
     def setc(resp: Response, name, val, max_age):
-        resp.set_cookie(name, val, max_age=max_age, httponly=True, secure=cfg.cookie_secure, samesite="strict", path="/")
+        resp.set_cookie(name, val, max_age=max_age, httponly=True, secure=cfg.cookie_secure, samesite="strict", path=cfg.base_path or "/")
 
     # ---- páginas ----
     @app.get("/")
     def index():
-        return FileResponse(STATIC / "index.html")
+        # Subruta detrás de Nginx: los recursos y la API se resuelven bajo NEXOOPS_BASE_PATH (validado en Config: solo [a-z0-9-]).
+        html = (STATIC / "index.html").read_text(encoding="utf-8")
+        if cfg.base_path:
+            html = html.replace('"/static/', f'"{cfg.base_path}/static/').replace("<head>", f'<head>\n<meta name="nexoops-base" content="{cfg.base_path}">', 1)
+        return HTMLResponse(html)
 
     @app.get("/healthz")
     def healthz():
@@ -122,7 +126,7 @@ def create_app(cfg: Config, mailer=None, aws=None, grafana=None, zabbix=None, au
     def verify(b: OtpBody, request: Request, response: Response):
         r = auth.verify_otp(request.cookies.get(CHALLENGE_COOKIE), b.code, ip(request))
         setc(response, SESSION_COOKIE, r["token"], 8 * 3600)
-        response.delete_cookie(CHALLENGE_COOKIE, path="/", httponly=True, secure=cfg.cookie_secure, samesite="strict")
+        response.delete_cookie(CHALLENGE_COOKIE, path=cfg.base_path or "/", httponly=True, secure=cfg.cookie_secure, samesite="strict")
         return {"user": r["user"], "csrf": r["csrf"]}
 
     @app.get("/api/auth/session")
@@ -132,7 +136,7 @@ def create_app(cfg: Config, mailer=None, aws=None, grafana=None, zabbix=None, au
     @app.post("/api/auth/logout")
     def logout(request: Request, response: Response, u: dict = Depends(user)):
         auth.logout(request.cookies.get(SESSION_COOKIE), u["email"])
-        response.delete_cookie(SESSION_COOKIE, path="/")
+        response.delete_cookie(SESSION_COOKIE, path=cfg.base_path or "/")
         return {"ok": True}
 
     # ---- datos (solo lectura) ----

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -18,6 +19,7 @@ class Config:
     cookie_secure: bool = True
     otp_secret: bytes = b""                 # clave HMAC de los verificadores OTP (NEXOOPS_OTP_SECRET)
     mail_mode: str = "smtp"                 # smtp | outbox (solo dev)
+    base_path: str = ""                     # subruta detrás de Nginx (p. ej. /nexoops); vacío = raíz
     smtp_host: str = ""
     smtp_port: int = 587
     smtp_user: str = ""
@@ -51,7 +53,7 @@ class Config:
                    grafana_url=e.get("GRAFANA_URL", "").rstrip("/"), grafana_token=e.get("GRAFANA_TOKEN", ""), grafana_embed=_b(e.get("NEXOOPS_GRAFANA_EMBED")), grafana_cafile=e.get("GRAFANA_CAFILE", ""), zabbix_cafile=e.get("ZABBIX_CAFILE", ""), zabbix_auth=e.get("ZABBIX_AUTH_MODE", "bearer"),
                    zabbix_url=e.get("ZABBIX_URL", "").rstrip("/"), zabbix_token=e.get("ZABBIX_TOKEN", ""),
                    aws_region=e.get("NEXOOPS_AWS_REGION", ""), aws_asg_names=[x for x in e.get("NEXOOPS_AWS_ASG_NAMES", "").split(",") if x.strip()],
-                   llm_provider=e.get("NEXOOPS_LLM_PROVIDER", ""), env_raw=e)
+                   llm_provider=e.get("NEXOOPS_LLM_PROVIDER", ""), base_path=e.get("NEXOOPS_BASE_PATH", "").rstrip("/"), env_raw=e)
 
     def validate(self):
         if len(self.otp_secret) < 32:
@@ -60,3 +62,5 @@ class Config:
             raise ValueError("el buzón local de OTP solo existe con NEXOOPS_ENV=dev")
         if self.env != "dev" and not self.cookie_secure:
             raise ValueError("las cookies deben ser Secure fuera de dev")
+        if self.base_path and not re.fullmatch(r"/[a-z0-9][a-z0-9-]{0,30}", self.base_path):
+            raise ValueError("NEXOOPS_BASE_PATH debe ser /<letras-minúsculas-dígitos-guiones>")
