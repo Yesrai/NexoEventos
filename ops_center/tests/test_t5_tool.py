@@ -76,11 +76,59 @@ def hist(tmp, n=8, paso=60, hueco_en=None, sondas=True):
     p = tmp / "h.jsonl"; p.write_text("\n".join(L) + "\n"); return p
 
 
-def azure(tmp, p):
-    out = tmp / "az.json"; rc = T5.main(["azure", "--history", str(p), "--desde", "2026-11-24T09:00:00Z", "--hasta", "2026-11-24T11:00:00Z", "--out", str(out)]); return rc, json.loads(out.read_text())
+def azure(tmp, p, *extra):
+    out = tmp / "az.json"; rc = T5.main(["azure", "--history", str(p), "--desde", "2026-11-24T09:00:00Z", "--hasta", "2026-11-24T11:00:00Z", "--out", str(out), *extra]); return rc, json.loads(out.read_text())
 
 
-def test_azure_registra_la_caida_parcial_y_exige_continuidad(tmp_path):
-    rc, r = azure(tmp_path, hist(tmp_path)); assert rc == 0 and r["estados_aws"] == {"OK": 7, "ADVERTENCIA": 1} and r["ciclos"] == 8
+def fast(tmp, falla_desde=None, falla_hasta=None, paso=5.0, n=200, extra_fallo=None, t0=datetime(2026, 11, 24, 10, 0, 0)):
+    """Muestras de 5 s con ms; fallan las del intervalo [falla_desde, falla_hasta) (segundos desde t0)."""
+    L = []
+    for i in range(n):
+        t = t0 + timedelta(seconds=i * paso); off = i * paso
+        bad = (falla_desde is not None and falla_desde <= off < falla_hasta) or (extra_fallo is not None and abs(off - extra_fallo) < 1)
+        L.append(json.dumps({"t": t.strftime("%Y-%m-%dT%H:%M:%S.") + "%03dZ" % (t.microsecond // 1000), "code": 502 if bad else 200, "ms": 40}))
+    p = tmp / "fast.jsonl"; p.write_text("\n".join(L) + "\n"); return p
+
+
+INC = ("--incidente-desde", "2026-11-24T10:06:40Z", "--incidente-hasta", "2026-11-24T10:07:02Z")
+
+
+def test_azure_sin_sonda_rapida_no_es_valido_aunque_el_recolector_este_bien(tmp_path):
+    rc, r = azure(tmp_path, hist(tmp_path)); assert rc == 1 and r["ok"] is False and r["ok_recolector"] is True and "falta la sonda rápida" in r["motivo"]
+
+
+def test_azure_con_sonda_rapida_captura_el_incidente_corto(tmp_path):
+    rc, r = azure(tmp_path, hist(tmp_path), "--fast", str(fast(tmp_path, 400, 422)), *INC)         # 22 s de fallo a partir de +400 s (= 10:06:40)
+    assert rc == 0 and r["ok"] and r["rapida"]["incidente_capturado"] and r["rapida"]["fallos"] == 5 and r["rapida"]["fallos_inexplicados"] == 0 and r["resolucion_max_s"] == 5.0
+    assert r["rapida"]["primer_fallo"].endswith(".000Z") and r["rapida"]["muestras_antes_del_incidente_s"] >= 300
+
+
+def test_azure_falla_si_no_captura_el_incidente_si_hay_fallos_inexplicados_o_poca_resolucion(tmp_path):
+    casos = {"no captura": fast(tmp_path, None, None), "fallo inexplicado": fast(tmp_path, 400, 422, extra_fallo=100)}
+    for nombre, f in casos.items():
+        t = tmp_path / nombre.replace(" ", "_"); t.mkdir(); assert azure(t, hist(t), "--fast", str(f), *INC)[0] == 1, nombre
+    t = tmp_path / "lenta"; t.mkdir(); assert azure(t, hist(t), "--fast", str(fast(t, 400, 422, paso=20.0, n=60)), *INC)[0] == 1          # muestreo de 20 s: no es «5–10 s»
+    t = tmp_path / "sin_base"; t.mkdir(); assert azure(t, hist(t), "--fast", str(fast(t, 60, 82, n=100)), "--incidente-desde", "2026-11-24T10:01:00Z", "--incidente-hasta", "2026-11-24T10:01:22Z")[0] == 1   # < 5 min de línea base
+
+
+def test_azure_recolector_con_huecos_o_pocos_ciclos_sigue_siendo_invalido(tmp_path):
     for kw in ({"n": 3}, {"hueco_en": 4}, {"sondas": False}):
-        t2 = tmp_path / str(kw); t2.mkdir(); assert azure(t2, hist(t2, **kw))[0] == 1
+        t2 = tmp_path / str(kw); t2.mkdir(); assert azure(t2, hist(t2, **kw), "--fast", str(fast(t2, 400, 422)), *INC)[0] == 1
+
+
+def test_derive_con_seis_instancias_exige_seis_sanas_y_la_victima_ausente():
+    r = resultado(expected_instances=6); r["final"]["alb"] = {f"i{k}": "healthy" for k in range(6)}
+    assert T5.derive(r, solicitudes())["ec2_reemplazada_por_asg"] is True
+    r["final"]["alb"] = {f"i{k}": "healthy" for k in range(5)}; assert T5.derive(r, solicitudes())["ec2_reemplazada_por_asg"] is False        # solo 5 de 6
+    r["final"]["alb"] = {f"i{k}": "healthy" for k in range(5)} | {"aa11bb": "healthy"}; assert T5.derive(r, solicitudes())["ec2_reemplazada_por_asg"] is False      # la víctima sigue ahí
+    r = resultado(); assert T5.derive(r, solicitudes())["ec2_reemplazada_por_asg"] is True       # sin el campo se asume 2, como en el 1.er intento
+
+
+def test_fast_analysis_cuenta_solicitudes_fallidas_de_las_rafagas(tmp_path):
+    L = []
+    for i in range(120):
+        t = datetime(2026, 11, 24, 10, 0, 0) + timedelta(seconds=i * 5); bad = 80 <= i <= 82
+        L.append(json.dumps({"t": t.strftime("%Y-%m-%dT%H:%M:%S.000Z"), "code": 502 if bad else 200, "ms": 40, "burst": 6, "fallos": 1 if bad else 0}))
+    p = tmp_path / "f.jsonl"; p.write_text("\n".join(L) + "\n")
+    fa = T5.fast_analysis(p, "2026-11-24T09:00:00Z", "2026-11-24T11:00:00Z", "2026-11-24T10:06:35Z", "2026-11-24T10:06:50Z")
+    assert fa["fallos"] == 3 and fa["solicitudes_fallidas"] == 3 and fa["solicitudes_por_muestra"] == 6 and fa["incidente_capturado"] is True

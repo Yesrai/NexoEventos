@@ -155,3 +155,48 @@ variable "ami_includes_livez" {
   type        = bool
   default     = false
 }
+
+# --- T5: ajustes de detección del ALB (los valores por defecto CONSERVAN el comportamiento actual) ---
+variable "alb_health_interval" {
+  description = "Segundos entre comprobaciones de salud del ALB por destino (el ALB admite 5–300). Por defecto 10 (comportamiento histórico)."
+  type        = number
+  default     = 10
+  validation {
+    condition     = var.alb_health_interval >= 5 && var.alb_health_interval <= 300
+    error_message = "alb_health_interval debe estar entre 5 y 300 s (límites del ALB)."
+  }
+}
+
+variable "alb_health_timeout" {
+  description = "Segundos sin respuesta para que una comprobación cuente como fallo (el ALB admite 2–120). Aquí se exige además < intervalo."
+  type        = number
+  default     = 5
+  validation {
+    condition     = var.alb_health_timeout >= 2 && var.alb_health_timeout <= 120 && var.alb_health_timeout < var.alb_health_interval
+    error_message = "alb_health_timeout debe estar entre 2 y 120 s y ser menor que alb_health_interval."
+  }
+}
+
+variable "alb_lb_algorithm" {
+  description = "Algoritmo del grupo de destino: round_robin, least_outstanding_requests (actual) o weighted_random (necesario para la mitigación automática de anomalías, ATW)."
+  type        = string
+  default     = "least_outstanding_requests"
+  validation {
+    condition     = contains(["round_robin", "least_outstanding_requests", "weighted_random"], var.alb_lb_algorithm)
+    error_message = "alb_lb_algorithm debe ser round_robin, least_outstanding_requests o weighted_random."
+  }
+}
+
+variable "alb_anomaly_mitigation" {
+  description = "Mitigación automática de anomalías del ALB (Automatic Target Weights): on|off. Solo con alb_lb_algorithm=weighted_random y, según AWS, con ≥ 3 destinos sanos (asg_desired ≥ 3). Detecta 5xx/errores de conexión de un destino frente a sus pares, independiente de las comprobaciones de salud; reduce su tráfico en pasos periódicos (cada 5 s); AWS no publica un tiempo garantizado."
+  type        = string
+  default     = "off"
+  validation {
+    condition     = contains(["on", "off"], var.alb_anomaly_mitigation)
+    error_message = "alb_anomaly_mitigation debe ser on u off."
+  }
+  validation {
+    condition     = var.alb_anomaly_mitigation == "off" || var.alb_lb_algorithm == "weighted_random"
+    error_message = "La mitigación de anomalías exige alb_lb_algorithm = weighted_random."
+  }
+}

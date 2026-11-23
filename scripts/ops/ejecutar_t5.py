@@ -42,12 +42,40 @@ def derive(res, reqs):
     if ev.get("detection_after_stop_s") is not None and not abort:
         v["deteccion_s"] = float(ev["detection_after_stop_s"])
     victim = ev.get("victim"); alb = fin.get("alb") or {}
-    sustituida = bool(victim and ev.get("allow_replacement") is True and not abort and victim not in alb and len(alb) == 2 and all(s == "healthy" for s in alb.values())
+    sustituida = bool(victim and ev.get("allow_replacement") is True and not abort and victim not in alb and len(alb) == int(ev.get("expected_instances", 2)) and all(s == "healthy" for s in alb.values())
                       and any("aunch" in str(a) for a in (fin.get("asg_activities_new") or [])))
     v["ec2_reemplazada_por_asg"] = sustituida
     if sustituida and ev.get("capacity_restored_after_stop_s") is not None:
         v["sustitucion_sana_s"] = float(ev["capacity_restored_after_stop_s"])
     return v
+
+
+def _t(x):
+    """UTC con zona explícita (un naive se interpretaría como hora LOCAL al llamar a .timestamp(): error real que cazó la prueba)."""
+    return datetime.strptime(x.replace("Z", ""), "%Y-%m-%dT%H:%M:%S.%f" if "." in x else "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc)
+
+
+def fast_analysis(path, desde, hasta, inc_desde=None, inc_hasta=None):
+    """Sondeo rápido (5–10 s): resolución, cobertura, fallos y si CAPTURÓ el incidente. Los fallos fuera del incidente (± margen) quedan como «inexplicados»."""
+    t0, t1 = _t(desde), _t(hasta); rows = []
+    for l in Path(path).read_text().splitlines():
+        try:
+            r = json.loads(l); t = _t(r["t"])
+        except (ValueError, KeyError):
+            continue
+        if t0 <= t <= t1:
+            rows.append((t, r))
+    rows.sort(key=lambda x: x[0]); gaps = [(rows[i + 1][0] - rows[i][0]).total_seconds() for i in range(len(rows) - 1)]
+    fails = [(t, r) for t, r in rows if r.get("code") != 200]
+    out = {"muestras": len(rows), "hueco_max_s": round(max(gaps), 2) if gaps else None, "mediana_intervalo_s": round(sorted(gaps)[len(gaps) // 2], 2) if gaps else None,
+           "fallos": len(fails), "solicitudes_fallidas": sum(int(r.get("fallos", 1)) for _, r in fails), "solicitudes_por_muestra": max((int(r.get("burst", 1)) for _, r in rows), default=1), "primer_fallo": fails[0][1]["t"] if fails else None, "ultimo_fallo": fails[-1][1]["t"] if fails else None,
+           "primera_muestra": rows[0][1]["t"] if rows else None, "ultima_muestra": rows[-1][1]["t"] if rows else None}
+    if inc_desde and inc_hasta:
+        a, b = _t(inc_desde), _t(inc_hasta); ai, bi = a.timestamp() - 5, b.timestamp() + 10                 # a y b son UTC con zona: .timestamp() es correcto
+        dentro = [x for x in fails if ai <= x[0].timestamp() <= bi]
+        out.update({"incidente_desde": inc_desde, "incidente_hasta": inc_hasta, "fallos_dentro_del_incidente": len(dentro), "fallos_inexplicados": len(fails) - len(dentro), "incidente_capturado": len(dentro) >= 1,
+                    "muestras_antes_del_incidente_s": round((a - rows[0][0]).total_seconds(), 1) if rows else 0})
+    return out
 
 
 def cmd_azure(a):
@@ -66,8 +94,18 @@ def cmd_azure(a):
     real = bool(rows) and all(any(s.get("code") is not None for s in r.get("sondas", {}).get("aws", [])) for _, r in rows)
     res = {"ciclos": len(rows), "hueco_max_s": max(gaps) if gaps else None, "estados_aws": estados, "primer_ciclo": rows[0][1]["t"] if rows else None, "ultimo_ciclo": rows[-1][1]["t"] if rows else None,
            "sondas_reales": real, "cobertura_s": (rows[-1][0] - rows[0][0]).total_seconds() if len(rows) > 1 else 0,
-           "ok": bool(len(rows) >= 5 and gaps and max(gaps) <= 120 and real), "utc": datetime.now(timezone.utc).strftime(FMT)}
-    Path(a.out).parent.mkdir(parents=True, exist_ok=True); Path(a.out).write_text(json.dumps(res, indent=1)); print(json.dumps(res)); return 0 if res["ok"] else 1
+           "ok_recolector": bool(len(rows) >= 5 and gaps and max(gaps) <= 120 and real), "utc": datetime.now(timezone.utc).strftime(FMT)}
+    ok = res["ok_recolector"]
+    if a.fast:
+        fa = fast_analysis(a.fast, a.desde, a.hasta, a.incidente_desde, a.incidente_hasta); res["rapida"] = fa
+        res["resolucion_max_s"] = fa["hueco_max_s"]
+        ok = ok and bool(fa["muestras"] >= 30 and fa["hueco_max_s"] is not None and fa["hueco_max_s"] <= 15 and fa.get("incidente_capturado") is True and fa.get("fallos_inexplicados", 1) == 0
+                         and fa.get("muestras_antes_del_incidente_s", 0) >= 300)
+    else:
+        ok = False                       # T5 (2.º intento): sin la sonda rápida NO hay observación válida (la de 60 s no ve incidentes < 30 s)
+        res["motivo"] = "falta la sonda rápida (5–10 s)"
+    res["ok"] = bool(ok)
+    Path(a.out).parent.mkdir(parents=True, exist_ok=True); Path(a.out).write_text(json.dumps(res, indent=1)); print(json.dumps({k: v for k, v in res.items() if k != "rapida"} | {"rapida": res.get("rapida")})); return 0 if res["ok"] else 1
 
 
 def cmd_evidencia(a):
@@ -92,6 +130,7 @@ def cmd_evidencia(a):
 def main(argv=None):
     ap = argparse.ArgumentParser(); sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("azure"); p.add_argument("--history", required=True); p.add_argument("--desde", required=True); p.add_argument("--hasta", required=True); p.add_argument("--out", required=True)
+    p.add_argument("--fast", help="probe-fast.jsonl (sonda de 5 s)"); p.add_argument("--incidente-desde"); p.add_argument("--incidente-hasta")
     p = sub.add_parser("evidencia"); p.add_argument("--medidas", required=True); p.add_argument("--evidence-root", default="work/evidencias")
     a = ap.parse_args(argv)
     return {"azure": cmd_azure, "evidencia": cmd_evidencia}[a.cmd](a)
