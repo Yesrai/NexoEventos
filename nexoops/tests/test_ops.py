@@ -156,3 +156,34 @@ def test_grafana_subpath_sin_duplicar_y_cafile(cfg):
         got.update(kw); return [{"uid": "abc", "title": "A", "url": "/grafana/d/abc/a"}]
     d = Grafana(cfg, fetch).dashboards()["data"]["dashboards"][0]
     assert d["open_url"] == "https://vm.test/grafana/d/abc/a" and got["cafile"] == "/etc/x.pem"
+
+
+def test_configure_smtp_archivo_0600_y_gmail_465(tmp_path, monkeypatch):
+    import os
+    from nexoops import __main__ as M
+    from nexoops.config import Config
+    f = tmp_path / "x" / "nexoops.env"
+    monkeypatch.setenv("NEXOOPS_ENV_FILE", str(f))
+    monkeypatch.setattr("builtins.input", lambda *_: "ti@gmail.com")
+    monkeypatch.setattr("getpass.getpass", lambda *_: "abcd efgh ijkl mnop")
+    M.configure_smtp()
+    assert f.stat().st_mode & 0o777 == 0o600
+    e = dict(l.split("=", 1) for l in f.read_text().splitlines())
+    c = Config.from_env(e); c.validate()
+    assert (c.smtp_host, c.smtp_port, c.mail_mode, c.smtp_from, c.smtp_user) == ("smtp.gmail.com", 465, "smtp", "ti@gmail.com", "ti@gmail.com") and e["NEXOOPS_SMTP_PASSWORD"] == "abcdefghijklmnop"
+
+
+def test_smtp_465_usa_ssl_verificado(cfg, monkeypatch):
+    import smtplib
+    from nexoops import mailer as M
+    cfg.smtp_host, cfg.smtp_port, cfg.smtp_from, cfg.smtp_user, cfg.smtp_password = "smtp.gmail.com", 465, "a@gmail.com", "a@gmail.com", "pw"
+    used = {}
+    class Fake:
+        def __init__(s, host, port, timeout, context): used.update(host=host, port=port, verify=context.verify_mode.name, hostname=context.check_hostname)
+        def __enter__(s): return s
+        def __exit__(s, *a): pass
+        def login(s, u, p): used["login"] = u
+        def send_message(s, m): used["to"] = m["To"]
+    monkeypatch.setattr(smtplib, "SMTP_SSL", Fake)
+    M.SmtpMailer(cfg).send("a@gmail.com", "123456")
+    assert used == {"host": "smtp.gmail.com", "port": 465, "verify": "CERT_REQUIRED", "hostname": True, "login": "a@gmail.com", "to": "a@gmail.com"}
