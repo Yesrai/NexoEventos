@@ -28,7 +28,10 @@ check)
   else [[ -n "$CERT" ]] || bad "indique --cert"; [[ "$(pubhash "$SRC")" == "$(openssl x509 -in "$CERT" -noout -pubkey | openssl sha256 | awk '{print $NF}')" ]] && ok "la clave privada corresponde al certificado (huella SHA-256 del cert: $(openssl x509 -in "$CERT" -outform DER | openssl sha256 | awk '{print $NF}'))" || bad "la clave privada NO corresponde al certificado"; fi ;;
 copy)
   [[ -f "$SRC" && -n "$DEST" ]] || bad "uso: copy --src CLAVE --dest-dir DIR"
-  case "$(cd "$(dirname "$DEST")" 2>/dev/null && pwd)/$(basename "$DEST")" in "$ROOT"/*) bad "el destino no puede estar dentro del repositorio";; esac
+  # Se resuelve el ancestro existente más cercano: un destino aún inexistente (p. ej. work/x) también debe rechazarse si cae dentro del repositorio.
+  _D="$DEST"; _REST=""; while [[ ! -d "$_D" && "$_D" != "/" && "$_D" != "." ]]; do _REST="/$(basename "$_D")$_REST"; _D="$(dirname "$_D")"; done
+  ABSDEST="$(cd "$_D" 2>/dev/null && pwd)$_REST"
+  case "$ABSDEST/" in "$ROOT"/*) bad "el destino no puede estar dentro del repositorio";; esac
   umask 077; mkdir -p "$DEST"; chmod 700 "$DEST"; T="$DEST/recovery-private.pem"
   [[ ! -e "$T" ]] || bad "ya existe $T; no se sobrescribe"
   cp "$SRC" "$T"; chmod 600 "$T"   # cp no imprime el contenido

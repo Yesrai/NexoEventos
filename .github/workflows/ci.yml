@@ -112,6 +112,22 @@ jobs:
       - name: Probar la carrera de adquisición del lease, la limpieza del probe de PAR y el perfil Azure del testigo (servidores solo en 127.0.0.1)
         run: python -m pytest scripts/multicloud/tests/test_lease_race.py scripts/multicloud/tests/test_par_probe_cleanup.py scripts/multicloud/tests/test_witness_azure_profile.py scripts/multicloud/tests/test_real_factory.py scripts/multicloud/tests/test_iac_security_guard.py scripts/multicloud/tests/test_tls_context.py scripts/multicloud/tests/test_witness_thread_safety.py -q -p no:cacheprovider
 
+  nexoops:
+    name: NexoOps (pruebas locales, sin nube)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Instalar dependencias
+        run: python -m pip install -r backend/requirements-production.lock -r nexoops/requirements.txt pytest==9.0.2 httpx==0.28.1
+      - name: Probar NexoOps (OTP, subruta, CSRF, lista blanca de acciones, auditoría, integraciones simuladas, coherencia del despliegue; sin nube)
+        run: PYTHONPATH=.:backend python -m pytest nexoops -q -p no:cacheprovider
+
   frontend:
     name: Frontend (pruebas + build)
     runs-on: ubuntu-24.04
