@@ -95,7 +95,7 @@ class FullRecoveryAdapters(Adapters):
     def __init__(self, *, run_id: str, clock: SimClock, lease: LeaseClient, standby: StandbyService, ledger: PromotionLedger, probes: ap.ProbeSet, dns: DnsSwitchAdapter,
                  oci_reader, oci_key, oci_passin: str = "", signer_pub=None, backup_env: str | None = None, restore_mode: str = "local", restore_env: dict | None = None,
                  wall_now=lambda: datetime.now(timezone.utc), max_backup_age_s: float = 3600.0, standby_health: ap.HttpProbe | None = None,
-                 primary_gate_url: str | None = None, standby_gate_url: str | None = None, min_probes: int = 3, allow_http_localhost: bool = False,
+                 primary_gate_url: str | None = None, standby_gate_url: str | None = None, min_probes: int = 3, allow_http_localhost: bool = False, primary_tls=None, standby_tls=None,
                  tick_hooks=(), step_s: float = 0.25, store_verifier=None, primary_db_fence=None, require_primary_db_fence: bool = False,
                  external_writers_check=None, allow_partial_visibility: bool = False, primary_gate_attested=None, standby_readiness_probes: dict | None = None, aws_state=None, detector=None, restore_cert_sha256: str | None = None, db_attestation=None, strong_fence=None, require_strong_fence: bool = False, sealer=None, require_seal: bool = False):
         self.sealer, self.requires_seal = sealer, require_seal
@@ -104,6 +104,7 @@ class FullRecoveryAdapters(Adapters):
         self.oci = dict(reader=oci_reader, key=oci_key, passin=oci_passin, signer_pub=signer_pub, env=backup_env, mode=restore_mode, restore_env=restore_env)
         self.wall_now, self.max_backup_age_s, self.standby_health = wall_now, max_backup_age_s, standby_health
         self.primary_gate_url, self.standby_gate_url, self.min_probes, self.allow_http_localhost = primary_gate_url, standby_gate_url, min_probes, allow_http_localhost
+        self.primary_tls, self.standby_tls = primary_tls, standby_tls            # G9: política TLS (certificado fijado / verify_as) de cada extremo; None = CA públicas
         self.tick_hooks, self.step_s = list(tick_hooks), step_s
         # El almacén del lease debe PASAR la autoprueba de If-Match / If-None-Match (store_verifier -> bool) en el precheck y otra vez antes de tomar el lease en esta ejecución.
         # Sin verificador se exige al menos que el almacén venga marcado `verified`. Vallado externo de la base del primario (opcional): callable -> dict; con
@@ -184,7 +185,7 @@ class FullRecoveryAdapters(Adapters):
             if self.standby.promote_permitted() or self.standby.writes_permitted():
                 return False
             if self.standby_gate_url:                                    # además, lo que el propio standby declara por HTTP: debe estar vallado (sin lease)
-                return ap.gate_status(self.standby_gate_url, allow_http_localhost=self.allow_http_localhost) == "vallado"
+                return ap.gate_status(self.standby_gate_url, allow_http_localhost=self.allow_http_localhost, tls=self.standby_tls) == "vallado"
             return not self.lease.is_valid()
         def rpo_reachable():
             return ap.peek_backup_meets_rpo(self.oci["reader"], now=self.wall_now(), max_age_s=self.max_backup_age_s, signer_pub=self.oci["signer_pub"], env=self.oci["env"])["ok"]
@@ -301,7 +302,7 @@ class FullRecoveryAdapters(Adapters):
     def old_can_write(self):
         if not self.primary_gate_url:
             return None
-        r = ap.gate_status(self.primary_gate_url, allow_http_localhost=self.allow_http_localhost)
+        r = ap.gate_status(self.primary_gate_url, allow_http_localhost=self.allow_http_localhost, tls=self.primary_tls)
         return {"escribe": True, "vallado": False}.get(r)
 
     def incident(self):
@@ -310,7 +311,7 @@ class FullRecoveryAdapters(Adapters):
     def fencing_assessment(self) -> dict:
         """Evidencia de que el primario no puede escribir (evidence.assess_fencing): compuerta, estado de la EC2 en AWS (solo lectura), vallado de la BD y, si el primario es inalcanzable, lease tomado + atestación."""
         from evidence import assess_fencing
-        gate = ap.gate_status(self.primary_gate_url, allow_http_localhost=self.allow_http_localhost) if self.primary_gate_url else None
+        gate = ap.gate_status(self.primary_gate_url, allow_http_localhost=self.allow_http_localhost, tls=self.primary_tls) if self.primary_gate_url else None
         try:
             aws = self.aws_state() if callable(self.aws_state) else (self.aws_state.read() if self.aws_state is not None else None)
         except Exception:  # noqa: BLE001

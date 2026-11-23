@@ -53,18 +53,22 @@ def _g(d, *ks, default=None):
     return d
 
 
-def derive_kwargs(cfg: dict, *, env=None, allow_http_localhost: bool = False) -> dict:
+def derive_kwargs(cfg: dict, *, env=None, allow_http_localhost: bool = False, check_files: bool = True) -> dict:
     """Mapeo PURO configuración → argumentos de FullRecoveryAdapters que NO requieren un extremo real. No abre archivos ni conexiones."""
     env = os.environ if env is None else env
     p, s, r = cfg.get("primary") or {}, cfg.get("standby") or {}, cfg.get("recovery") or {}
     det = cfg.get("detector") or {}
     mk = lambda url, **kw: ap.HttpProbe(url, allow_http_localhost=allow_http_localhost, **kw)
-    probes = [mk(p["livez_url"]), mk(p["ready_url"], json_ok=lambda d: isinstance(d, dict)), mk(p["write_gate_url"])]
+    # G9: política TLS por extremo (certificado fijado y/o verify_as). El control (un tercer sitio) usa siempre las CA públicas.
+    ptls = ap.TlsPolicy.from_config(p.get("tls"), check_files=check_files)
+    stls = ap.TlsPolicy.from_config(s.get("tls"), check_files=check_files)
+    probes = [mk(p["livez_url"], tls=ptls), mk(p["ready_url"], json_ok=lambda d: isinstance(d, dict), tls=ptls), mk(p["write_gate_url"], tls=ptls)]
     kw = dict(
         probes=ap.ProbeSet(probes, control=mk(p["control_url"])),
         min_probes=max(int(det.get("quorum", 2)), 2),
-        standby_health=mk(s["api_url"]),
-        standby_readiness_probes={"livez": mk(s["livez_url"]), "ready": mk(s["ready_url"]), "api": mk(s["api_url"])},
+        standby_health=mk(s["api_url"], tls=stls),
+        standby_readiness_probes={"livez": mk(s["livez_url"], tls=stls), "ready": mk(s["ready_url"], tls=stls), "api": mk(s["api_url"], tls=stls)},
+        primary_tls=ptls, standby_tls=stls,
         primary_gate_url=p["write_gate_url"], standby_gate_url=s.get("write_gate_url") or s["livez_url"].rsplit("/", 1)[0] + "/write-gate",
         oci_key=Path(r["private_key_file"]) if r.get("private_key_file") else None,
         oci_passin="env:NEXO_RECOVERY_PASS" if r.get("key_provider") == "interactive_person" else "",
@@ -88,7 +92,7 @@ def build_adapters(cfg: dict, providers: dict, *, mode: str = "sim", run_id: str
     missing = [n for n in REQUIRED_PROVIDERS if n not in providers or not callable(providers[n])]
     if missing:
         raise WiringError("faltan proveedores: " + ", ".join(missing) + " (cada uno entrega un extremo real o simulado; ver REAL_CONTRACT)")
-    kw = derive_kwargs(cfg, env=env, allow_http_localhost=allow_http_localhost)
+    kw = derive_kwargs(cfg, env=env, allow_http_localhost=allow_http_localhost, check_files=check_files)
     built = {n: providers[n](cfg) for n in REQUIRED_PROVIDERS}
     for n in OPTIONAL_PROVIDERS:
         if n in providers and callable(providers[n]): built[n] = providers[n](cfg)

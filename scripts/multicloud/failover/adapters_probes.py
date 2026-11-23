@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import http.client
 import json
+import re
+import socket
 import sys
 import time
 import urllib.error
@@ -45,8 +47,69 @@ def _verified_ctx():
 _OPENER = urllib.request.build_opener(_NoRedirect, urllib.request.HTTPSHandler(context=_verified_ctx()))
 
 
-def _fetch(url: str, timeout: float, max_bytes: int = 65536):
-    """Devuelve (código, cuerpo) o lanza OSError/HTTPException/TimeoutError. Sin redirecciones."""
+class TlsPolicy:
+    """G9 — TLS de un extremo cuyo certificado NO coincide con el nombre de la URL (el ALB sirve el certificado del dominio de NexoEventos pero se sondea por su DNS; la VM de OCI usa un certificado efímero autofirmado).
+    `verify_as`: nombre contra el que se VALIDA el certificado (SNI, validación del nombre y cabecera Host); `cafile`: certificado/CA FIJADO (solo él es de confianza para este extremo).
+    La verificación NUNCA se desactiva: no existe ninguna opción para ello, y sin `cafile` se usan las CA públicas (almacén del sistema o certifi)."""
+    HOST = re.compile(r"^(?=.{1,253}$)([A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)*[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$")
+
+    def __init__(self, verify_as: str | None = None, cafile=None, *, check_files: bool = True):
+        if verify_as is not None and not self.HOST.match(str(verify_as)):
+            raise ValueError("tls.verify_as inválido (un nombre de host)")
+        if cafile is not None:
+            cafile = Path(cafile)
+            if not cafile.is_absolute():
+                raise ValueError("tls.cafile: ruta absoluta")
+            if check_files and not cafile.is_file():
+                raise ValueError("tls.cafile: el certificado fijado no existe")
+        if verify_as is None and cafile is None:
+            raise ValueError("TlsPolicy vacía: no aporta nada (omítala)")
+        self.verify_as, self.cafile = verify_as, cafile
+
+    def __repr__(self):
+        return "TlsPolicy(<fijada>)" if self.cafile else "TlsPolicy(verify_as)"
+
+    @classmethod
+    def from_config(cls, d, *, check_files: bool = True):
+        if d is None:
+            return None
+        if not isinstance(d, dict) or set(d) - {"verify_as", "cafile"}:
+            raise ValueError("tls: solo se admiten verify_as y cafile (la verificación no se puede desactivar)")
+        return cls(d.get("verify_as"), d.get("cafile"), check_files=check_files)
+
+    def context(self):
+        import ssl
+        if self.cafile is not None:
+            ctx = ssl.create_default_context(cafile=str(self.cafile))
+        else:
+            ctx = _verified_ctx()
+        ctx.check_hostname = True
+        ctx.verify_mode = ssl.CERT_REQUIRED
+        return ctx
+
+
+def _fetch_tls(url: str, timeout: float, max_bytes: int, tls: "TlsPolicy"):
+    u = urllib.parse.urlparse(url)
+    name = tls.verify_as or u.hostname
+    ctx = tls.context()
+
+    class _Conn(http.client.HTTPSConnection):
+        def connect(self):
+            raw = socket.create_connection((self.host, self.port), self.timeout)
+            self.sock = self._context.wrap_socket(raw, server_hostname=name)
+    conn = _Conn(u.hostname, u.port or 443, timeout=timeout, context=ctx)
+    try:
+        conn.request("GET", (u.path or "/") + ("?" + u.query if u.query else ""), headers={"Host": name, "User-Agent": "nexoeventos-failover/1"})
+        r = conn.getresponse()
+        return r.status, r.read(max_bytes)           # sin redirecciones: un 3xx se devuelve tal cual (la sonda lo trata como no concluyente)
+    finally:
+        conn.close()
+
+
+def _fetch(url: str, timeout: float, max_bytes: int = 65536, tls: "TlsPolicy | None" = None):
+    """Devuelve (código, cuerpo) o lanza OSError/HTTPException/TimeoutError. Sin redirecciones. Con `tls` valida el certificado contra `verify_as`/el certificado fijado (G9)."""
+    if tls is not None:
+        return _fetch_tls(url, timeout, max_bytes, tls)
     try:
         with _OPENER.open(urllib.request.Request(url), timeout=timeout) as r:
             return r.status, r.read(max_bytes)
@@ -55,12 +118,12 @@ def _fetch(url: str, timeout: float, max_bytes: int = 65536):
 
 
 class HttpProbe:
-    def __init__(self, url: str, *, timeout: float = 3.0, attempts: int = 2, spacing_s: float = 1.0, json_ok=None, sleep=time.sleep, allow_http_localhost: bool = False):
+    def __init__(self, url: str, *, timeout: float = 3.0, attempts: int = 2, spacing_s: float = 1.0, json_ok=None, sleep=time.sleep, allow_http_localhost: bool = False, tls: "TlsPolicy | None" = None):
         u = urllib.parse.urlparse(url)
         local = u.hostname in ("127.0.0.1", "localhost", "::1")
         self.valid = bool(u.hostname) and (u.scheme == "https" or (allow_http_localhost and u.scheme == "http" and local)) and not u.username
         self.url, self.timeout, self.attempts, self.spacing_s = url, timeout, max(1, attempts), spacing_s
-        self.json_ok, self._sleep = json_ok, sleep
+        self.json_ok, self._sleep, self.tls = json_ok, sleep, tls
 
     def __repr__(self):
         return "HttpProbe(<url>)"
@@ -68,7 +131,7 @@ class HttpProbe:
     def _once(self):
         """True / False / None para UN intento."""
         try:
-            code, body = _fetch(self.url, self.timeout)
+            code, body = _fetch(self.url, self.timeout, **({"tls": self.tls} if self.tls is not None else {}))
         except (OSError, TimeoutError, http.client.HTTPException):
             return False                                   # sin conexión / tiempo agotado: fallo del objetivo (o de la red; el control lo distingue)
         if code == 200:
@@ -110,13 +173,13 @@ class ProbeSet:
         return [p.run() for p in self.probes]
 
 
-def gate_status(probe_url: str, timeout: float = 3.0, allow_http_localhost: bool = False):
+def gate_status(probe_url: str, timeout: float = 3.0, allow_http_localhost: bool = False, tls: "TlsPolicy | None" = None):
     """Lee /write-gate (backend/app/failover/gate.py). Devuelve 'escribe' | 'vallado' | None (inalcanzable o ilegible). Para old_can_write()."""
     p = HttpProbe(probe_url, timeout=timeout, allow_http_localhost=allow_http_localhost)
     if not p.valid:
         return None
     try:
-        code, body = _fetch(probe_url, timeout)
+        code, body = _fetch(probe_url, timeout, **({"tls": tls} if tls is not None else {}))
     except (OSError, TimeoutError, http.client.HTTPException):
         return None
     if code != 200:

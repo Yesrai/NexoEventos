@@ -113,6 +113,19 @@ def build_from_env(env=None):
     else: raise SystemExit("WITNESS_SIGNER debe ser kms:<CryptoKeyVersion> (local-ecdsa:<archivo> solo con WITNESS_ALLOW_LOCAL_SIGNER=1, para pruebas)")
     if pub is not None: assert_key_separation(pub, rep)
     reporters = Ed25519Auth("witness", b"\x01" * 32, rep)
+    an = env.get("WITNESS_ANCHOR", "")                                                              # anclaje anti-retroceso (B-T6-1): dir:<ruta> (pruebas) | oci-par:<archivo 0600> (bucket con retención bloqueada)
+    if an:
+        from app.failover.anchor import AnchoredAppendStore, FileAnchorBucket, OciParAnchorBucket
+        from app.failover.witness import EcdsaP256Verifier, FileAppendStore
+        if pub is None:
+            pf = env.get("WITNESS_PUBLIC_DER_FILE")
+            if not pf: raise SystemExit("con kms: y WITNESS_ANCHOR hace falta WITNESS_PUBLIC_DER_FILE (clave pública DER del testigo)")
+            pub = Path(pf).read_bytes()
+        bucket = FileAnchorBucket(an[4:]) if an.startswith("dir:") else OciParAnchorBucket(an[8:]) if an.startswith("oci-par:") else None
+        if bucket is None: raise SystemExit("WITNESS_ANCHOR debe ser dir:<ruta> u oci-par:<archivo>")
+        primary = store if hasattr(store, "lines") else FileAppendStore(store)
+        store = AnchoredAppendStore(primary, bucket, signer, EcdsaP256Verifier(pub), bootstrap=env.get("WITNESS_ANCHOR_BOOTSTRAP") == "1")
+    elif env.get("WITNESS_REQUIRE_ANCHOR") == "1": raise SystemExit("WITNESS_REQUIRE_ANCHOR=1 pero falta WITNESS_ANCHOR")
     return Witness(store, signer, reporters)
 
 

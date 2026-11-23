@@ -44,6 +44,19 @@ def validate(cfg: dict, *, check_files: bool = True) -> dict:
     for key in ("primary.livez_url", "primary.ready_url", "primary.control_url", "primary.write_gate_url", "standby.livez_url", "standby.ready_url", "standby.api_url"):
         if not _https(get(*key.split("."))):
             errs.append(f"{key}: debe ser una URL https sin credenciales ni parámetros")
+    # G9: TLS de cada extremo (certificado fijado y/o validación contra otro nombre); la verificación NUNCA se puede desactivar
+    for side in ("primary", "standby"):
+        t = get(side, "tls")
+        if t is None:
+            continue
+        if not isinstance(t, dict) or set(t) - {"verify_as", "cafile"}:
+            errs.append(f"{side}.tls: solo verify_as y cafile (no existe ninguna opción para desactivar la verificación de TLS)"); continue
+        if not t.get("verify_as") and not t.get("cafile"):
+            errs.append(f"{side}.tls: indique verify_as y/o cafile")
+        if t.get("verify_as") and not re.fullmatch(r"[A-Za-z0-9]([A-Za-z0-9.-]{0,251}[A-Za-z0-9])?", str(t["verify_as"])):
+            errs.append(f"{side}.tls.verify_as: nombre de host inválido")
+        if t.get("cafile") and (not os.path.isabs(str(t["cafile"])) or (check_files and not os.path.isfile(str(t["cafile"])))):
+            errs.append(f"{side}.tls.cafile: ruta absoluta de un certificado existente")
     aws = get("primary", "aws") or {}
     if not (aws.get("instance_tag") and aws.get("db_id")):
         errs.append("primary.aws: faltan instance_tag y db_id (estado de EC2/RDS por API, solo lectura): sin esa familia de señales una sola fuente no basta")
