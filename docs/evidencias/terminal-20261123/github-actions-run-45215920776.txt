@@ -1,0 +1,11 @@
+run https://github.com/Yesrai/NexoEventos/actions/runs/45215920776
+commit a3c8d2b44d2c976058ecb57e932b38b7ae4ae9a5
+creado 2026-11-23T16:23:17Z
+conclusion success
+Backend (pytest + PostgreSQL 18)                               success  16:23:21 -> 16:25:45
+Trivy (dependencias, secretos y configuración)                 success  16:23:21 -> 16:23:49
+NexoOps (pruebas locales, sin nube)                            success  16:23:22 -> 16:24:03
+Frontend (pruebas + build)                                     success  16:23:21 -> 16:24:01
+Imagen Docker + Trivy (imagen)                                 success  16:23:21 -> 16:24:24
+Respaldo periódico cifrado (pruebas locales, sin nube)         success  16:23:22 -> 16:26:02
+Centro de operaciones (pruebas locales, sin nube)              success  16:23:21 -> 16:25:49

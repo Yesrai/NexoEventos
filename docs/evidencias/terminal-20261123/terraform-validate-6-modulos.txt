@@ -1,0 +1,24 @@
+== aws
+init=0
+Success! The configuration is valid.
+
+== aws-recovery
+init=0
+Success! The configuration is valid.
+
+== aws-v2
+init=0
+Success! The configuration is valid.
+
+== azure
+init=0
+Success! The configuration is valid.
+
+== oci
+init=0
+Success! The configuration is valid.
+
+== gcp
+init=0
+Success! The configuration is valid.
+
