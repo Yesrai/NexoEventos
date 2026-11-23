@@ -1,0 +1,14 @@
+[
+    {
+        "Id": "i-02a27512458ed7b84",
+        "Type": "t3.small",
+        "AZ": "us-east-1b",
+        "State": "running"
+    },
+    {
+        "Id": "i-0486b079364b1709a",
+        "Type": "t3.small",
+        "AZ": "us-east-1a",
+        "State": "running"
+    }
+]

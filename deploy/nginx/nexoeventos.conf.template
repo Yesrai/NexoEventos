@@ -53,6 +53,21 @@ server {
         proxy_set_header X-Forwarded-Proto https;
     }
 
+    # Liveness (proceso de la API; no toca la base): para decidir si reiniciar/reemplazar. Readiness (con PostgreSQL): para decidir si recibe tráfico (/ready y /healthz).
+    location = /livez {
+        access_log off;
+        proxy_pass http://127.0.0.1:8000/health;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
+    location = /ready {
+        access_log off;
+        proxy_pass http://127.0.0.1:8000/ready;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
     location / {
         try_files $uri $uri/ /index.html;
     }

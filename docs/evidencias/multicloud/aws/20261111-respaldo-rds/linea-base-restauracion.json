@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "baselines": {
+    "rds-20261111T164610Z": {
+      "descripcion": "Huella OBSERVADA en la RDS de origen justo antes del volcado nexoeventos-rds-20261111T164610Z.cms",
+      "fingerprint": {
+        "access_logs": "9",
+        "alembic": "0008",
+        "events": "35",
+        "inventory_md5": "4efb172bc654bfc41d01dfa206f80fd1",
+        "operator_assignments": "2",
+        "reservations": "136",
+        "reservations_md5": "5b14a6ad7cb3c0179f36758ce991f217",
+        "reserved_total": "136",
+        "tickets": "136",
+        "users": "26"
+      }
+    }
+  }
+}

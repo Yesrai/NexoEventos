@@ -179,3 +179,4 @@ resource "oci_core_network_security_group_security_rule" "https_to_internet" {
 
 output "private_subnet_id" { value = oci_core_subnet.private.id }
 output "nsg_id" { value = oci_core_network_security_group.recovery.id }
+output "vcn_id" { value = oci_core_vcn.this.id }

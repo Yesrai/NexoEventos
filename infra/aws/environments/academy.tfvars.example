@@ -13,6 +13,11 @@ ec2_instance_type       = "t3.small"
 ec2_root_volume_gib     = 20
 db_instance_class       = "db.t3.micro"
 db_allocated_storage_gib = 20
-db_max_allocated_storage_gib = 0
+# RDS: valores seguros. Multi-AZ activo (el valor por defecto de la variable es false y quitaría la réplica);
+# máximo de autoescalado = 2 x lo asignado (nunca 0 ni igual al asignado en una base ya existente: 0 desactiva el
+# autoescalado y un valor igual provoca avisos permanentes). El almacenamiento solo crece si el espacio libre baja del 10 %.
+db_max_allocated_storage_gib = 40
+db_multi_az                  = true
+db_apply_immediately         = false
 backup_retention_days   = 7
 log_retention_days      = 7

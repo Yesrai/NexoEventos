@@ -3,12 +3,28 @@
 
 No consulta ni imprime secretos. Falla si el estado no contiene exactamente los
 recursos esperados o si sus nombres no corresponden a NexoEventos Academy.
+
+Seguridad de la RDS (corregido el 6-nov-2026): ya NO hay valores fijos para la base de datos.
+- `db_multi_az` y `db_apply_immediately` se leen del estado real (nunca se omiten: el valor por
+  defecto de la variable es false y quitaría Multi-AZ).
+- `db_max_allocated_storage_gib` es el MAYOR entre el valor del estado y el del archivo de destino
+  actual (el estado puede ir por detrás de AWS, p. ej. si el máximo se subió con la CLI); así una
+  regeneración nunca desactiva ni reduce el autoescalado por accidente.
+- Si el archivo actual tiene Multi-AZ activo y el estado dice lo contrario, se aborta
+  (salvo --allow-downgrade explícito).
+Interruptores opcionales (corregido el 6-nov-2026): `enable_alarms` y `enable_cloudtrail` se deducen de si el estado
+contiene `aws_sns_topic.alarms` / `aws_cloudtrail`. Omitir `enable_alarms = true` haría que un plan de V1 proponga
+DESTRUIR el tema SNS, las alarmas y la suscripción a eventos de RDS (hallazgo del plan de solo lectura del 6-nov).
+Opciones: --state RUTA, --dest RUTA (por defecto, las reales) y --dry-run (muestra el resultado
+con la cuenta enmascarada y no escribe nada).
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
+import re
 import stat
 import sys
 import tempfile
@@ -41,10 +57,81 @@ def hcl_string(value: str) -> str:
     return json.dumps(value, ensure_ascii=True)
 
 
-def main() -> None:
-    if not STATE.is_file():
-        fail(f"no existe el estado real esperado: {STATE}")
-    state = json.loads(STATE.read_text(encoding="utf-8"))
+def render(value: object) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, str):
+        return hcl_string(value)
+    return str(value)
+
+
+def existing_value(path: Path, key: str) -> object | None:
+    """Lee un valor simple (número o booleano) de un tfvars existente; None si no está."""
+    if not path.is_file():
+        return None
+    match = re.search(rf"^\s*{re.escape(key)}\s*=\s*(true|false|\d+)\s*(?:#.*)?$", path.read_text(encoding="utf-8"), re.MULTILINE)
+    if not match:
+        return None
+    raw = match.group(1)
+    return raw == "true" if raw in ("true", "false") else int(raw)
+
+
+def has_resource(state: dict, resource_type: str, name: str | None = None) -> bool:
+    return any(r.get("type") == resource_type and (name is None or r.get("name") == name) and r.get("instances")
+               and r.get("mode", "managed") == "managed" for r in state.get("resources", []))
+
+
+def optional_switches(state: dict, destination: Path, allow_downgrade: bool) -> list[tuple[str, object]]:
+    """Interruptores que el estado ya tiene activos: si no se declaran, el valor por defecto (false) destruiría esos recursos."""
+    switches = [
+        ("enable_alarms", has_resource(state, "aws_sns_topic", "alarms")),
+        ("enable_cloudtrail", has_resource(state, "aws_cloudtrail")),
+    ]
+    for key, value in switches:
+        if existing_value(destination, key) is True and value is False and not allow_downgrade:
+            fail(f"el archivo actual declara {key} = true pero el estado no tiene esos recursos; "
+                 "no se sobrescribe (usa --allow-downgrade solo si es lo que se quiere)")
+    return switches
+
+
+def rds_settings(database: dict, destination: Path, allow_downgrade: bool) -> list[tuple[str, object]]:
+    multi_az = database.get("multi_az")
+    if not isinstance(multi_az, bool):
+        fail("el estado no indica de forma clara si la RDS es Multi-AZ; no se genera nada")
+    previous_multi_az = existing_value(destination, "db_multi_az")
+    if previous_multi_az is True and multi_az is False and not allow_downgrade:
+        fail("el archivo actual declara Multi-AZ activo pero el estado dice lo contrario; "
+             "no se sobrescribe (usa --allow-downgrade solo si eso es lo que se quiere)")
+    apply_immediately = database.get("apply_immediately")
+    if not isinstance(apply_immediately, bool):
+        apply_immediately = False
+    state_max = database.get("max_allocated_storage") or 0
+    previous_max = existing_value(destination, "db_max_allocated_storage_gib")
+    previous_max = previous_max if isinstance(previous_max, int) and not isinstance(previous_max, bool) else 0
+    chosen_max = max(int(state_max), previous_max)
+    if previous_max > int(state_max):
+        print(f"AVISO: el estado dice máximo {state_max} GiB pero el archivo actual dice {previous_max}; se conserva {chosen_max} (el estado puede ir por detrás de AWS).", file=sys.stderr)
+    allocated = int(database["allocated_storage"])
+    if chosen_max not in (0, allocated) and chosen_max < -(-allocated * 11 // 10):
+        fail(f"db_max_allocated_storage_gib={chosen_max} incumple el margen mínimo del 10 % sobre {allocated} GiB")
+    return [
+        ("db_max_allocated_storage_gib", chosen_max),
+        ("db_multi_az", multi_az),
+        ("db_apply_immediately", apply_immediately),
+    ]
+
+
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description="Reconstruye work/terraform-envs/academy.tfvars desde el estado real.")
+    parser.add_argument("--state", type=Path, default=STATE)
+    parser.add_argument("--dest", type=Path, default=DESTINATION)
+    parser.add_argument("--dry-run", action="store_true", help="muestra el resultado (cuenta enmascarada) sin escribir")
+    parser.add_argument("--allow-downgrade", action="store_true", help="permite pasar de Multi-AZ activo a inactivo")
+    args = parser.parse_args(argv)
+    state_path, destination = args.state, args.dest
+    if not state_path.is_file():
+        fail(f"no existe el estado real esperado: {state_path}")
+    state = json.loads(state_path.read_text(encoding="utf-8"))
     if not state.get("lineage") or not isinstance(state.get("serial"), int):
         fail("el estado carece de lineage o serial")
 
@@ -92,10 +179,8 @@ def main() -> None:
         ("instance_profile_name", profile["name"]),
         ("db_instance_class", database["instance_class"]),
         ("db_allocated_storage_gib", database["allocated_storage"]),
-        # Decisión V1 revisada: desactivar explícitamente el autoescalado. El
-        # estado remoto conserva 20, valor igual al asignado que no puede
-        # escalar y que además incumple el margen mínimo documentado por RDS.
-        ("db_max_allocated_storage_gib", 0),
+        *rds_settings(database, destination, args.allow_downgrade),
+        *optional_switches(state, destination, args.allow_downgrade),
         ("backup_retention_days", database["backup_retention_period"]),
         ("log_retention_days", api_logs["retention_in_days"]),
         ("final_snapshot_identifier", database["final_snapshot_identifier"]),
@@ -105,18 +190,22 @@ def main() -> None:
         f"# lineage presente; serial {state['serial']}. Archivo ignorado por Git.",
     ]
     for key, value in values:
-        rendered = hcl_string(value) if isinstance(value, str) else str(value)
-        lines.append(f"{key} = {rendered}")
+        lines.append(f"{key} = {render(value)}")
     content = "\n".join(lines) + "\n"
 
-    DESTINATION.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    fd, temporary = tempfile.mkstemp(prefix=".academy.", dir=DESTINATION.parent)
+    if args.dry_run:
+        print(content.replace(account_id, "<cuenta>"), end="")
+        print("(--dry-run) No se escribió ningún archivo.")
+        return
+
+    destination.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    fd, temporary = tempfile.mkstemp(prefix=".academy.", dir=destination.parent)
     try:
         os.fchmod(fd, stat.S_IRUSR | stat.S_IWUSR)
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
             handle.write(content)
-        os.replace(temporary, DESTINATION)
-        os.chmod(DESTINATION, stat.S_IRUSR | stat.S_IWUSR)
+        os.replace(temporary, destination)
+        os.chmod(destination, stat.S_IRUSR | stat.S_IWUSR)
     finally:
         if os.path.exists(temporary):
             os.unlink(temporary)

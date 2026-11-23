@@ -1,0 +1,22 @@
+[Unit]
+Description=NexoEventos periodic encrypted database backup to the recovery bucket
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# DATABASE_URL (rol de solo lectura/migración) en este archivo 0600; el perfil del entorno (copiar deploy/backup/<entorno>.example.json a /etc/nexoeventos/backup.json) solo tiene rutas y parámetros; la URL del PAR va en el archivo que indica par_url_file (0600). Nada se imprime.
+EnvironmentFile=/etc/nexoeventos/backup.env
+ExecStart=/usr/bin/python3 /opt/nexoeventos/scripts/multicloud/backup_cycle.py --config /etc/nexoeventos/backup.json
+ExecStopPost=/usr/bin/python3 /opt/nexoeventos/scripts/multicloud/backup_freshness.py --config /etc/nexoeventos/backup.json
+User=root
+Group=root
+UMask=0077
+StateDirectory=nexoeventos/backup
+StateDirectoryMode=0700
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectHome=true
+ProtectSystem=strict
+ProtectProc=invisible
+TimeoutStartSec=900

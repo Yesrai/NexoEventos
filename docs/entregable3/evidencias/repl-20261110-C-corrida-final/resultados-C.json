@@ -1,0 +1,222 @@
+{
+  "pruebas": [
+    {
+      "prueba": "C1 C1-natural-1: sin sobreventa ni duplicados (reserved_count == suma de cantidades; una reserva por clave de idempotencia) tras la conmutación",
+      "ok": true,
+      "detalle": "{\"reservas_en_nueva_primaria\": 1457, \"claves_distintas\": 1457, \"reserved_count\": \"1457\", \"suma_cantidades\": \"1457\"}"
+    },
+    {
+      "prueba": "C1 C1-natural-1: el servicio de escritura se recupera por el borde tras la caída de la primaria",
+      "ok": true,
+      "detalle": "{\"RTO_escritura_s_desde_la_orden_de_caida\": 3.82, \"RTO_lectura_s\": 3.63, \"lease_otorgado_s\": 2.76}"
+    },
+    {
+      "prueba": "C1 C1-natural-2: sin sobreventa ni duplicados (reserved_count == suma de cantidades; una reserva por clave de idempotencia) tras la conmutación",
+      "ok": true,
+      "detalle": "{\"reservas_en_nueva_primaria\": 1326, \"claves_distintas\": 1326, \"reserved_count\": \"1326\", \"suma_cantidades\": \"1326\"}"
+    },
+    {
+      "prueba": "C1 C1-natural-2: el servicio de escritura se recupera por el borde tras la caída de la primaria",
+      "ok": true,
+      "detalle": "{\"RTO_escritura_s_desde_la_orden_de_caida\": 3.08, \"RTO_lectura_s\": 3.19, \"lease_otorgado_s\": 2.35}"
+    },
+    {
+      "prueba": "C1 C1-natural-3: sin sobreventa ni duplicados (reserved_count == suma de cantidades; una reserva por clave de idempotencia) tras la conmutación",
+      "ok": true,
+      "detalle": "{\"reservas_en_nueva_primaria\": 1578, \"claves_distintas\": 1578, \"reserved_count\": \"1578\", \"suma_cantidades\": \"1578\"}"
+    },
+    {
+      "prueba": "C1 C1-natural-3: el servicio de escritura se recupera por el borde tras la caída de la primaria",
+      "ok": true,
+      "detalle": "{\"RTO_escritura_s_desde_la_orden_de_caida\": 4.39, \"RTO_lectura_s\": 4.43, \"lease_otorgado_s\": 3.57}"
+    },
+    {
+      "prueba": "C1 C1-retraso-inducido: sin sobreventa ni duplicados (reserved_count == suma de cantidades; una reserva por clave de idempotencia) tras la conmutación",
+      "ok": true,
+      "detalle": "{\"reservas_en_nueva_primaria\": 1012, \"claves_distintas\": 1012, \"reserved_count\": \"1012\", \"suma_cantidades\": \"1012\"}"
+    },
+    {
+      "prueba": "C1 C1-retraso-inducido: el servicio de escritura se recupera por el borde tras la caída de la primaria",
+      "ok": true,
+      "detalle": "{\"RTO_escritura_s_desde_la_orden_de_caida\": 3.16, \"RTO_lectura_s\": 3.22, \"lease_otorgado_s\": 2.13}"
+    },
+    {
+      "prueba": "C1 retraso inducido (replicación pausada 3 s antes de caer): se observan transacciones confirmadas al cliente que se pierden; ese es el RPO real bajo retraso",
+      "ok": true,
+      "detalle": "{\"RPO_transacciones_confirmadas_al_cliente_PERDIDAS\": 328, \"RPO_ventana_s_(caida_menos_la_confirmacion_perdida_mas_antigua)\": 3.0}"
+    },
+    {
+      "prueba": "C2a caída tras confirmar y antes de responder (con la reserva ya replicada): el reintento con la misma clave devuelve 200 con LA MISMA reserva, sin duplicar",
+      "ok": true,
+      "detalle": "{\"respuesta_retenida_tras_confirmar\": true, \"reserva_en_la_primaria_antes_de_caer\": \"f3b15dfd-cf85-4b42-8de0-5b2bddc7daff\", \"replicada_antes_de_caer\": true, \"cliente_no_recibio_respuesta\": true, \"reintentos_con_la_misma_clave\": [503, 503, 503, 503, 503, 503, 503, 503, 503, 503, 200], \"estado_final\": 200, \"replayed\": true, \"reservation_id_final\": \"f3b15dfd-cf85-4b42-8de0-5b2bddc7daff\", \"misma_reserva\": true, \"reservas_con_esa_clave_en_la_nueva_primaria\": \"1\", \"tiempo_hasta_respuesta_valida_s\": 4.5, \"idempotency_key\": \"669828084ec64ed698263ec9865eea4e\"}"
+    }
+  ],
+  "datos": {
+    "C1": {
+      "C1-natural-1": {
+        "induccion_de_retraso_s": 0.0,
+        "RTO_escritura_s_desde_la_orden_de_caida": 3.82,
+        "RTO_lectura_s": 3.63,
+        "lectura_primer_error_s": 0.09,
+        "lectura_ultimo_error_s": 3.53,
+        "deteccion_primera_sonda_fallida_s": 0.59,
+        "aislamiento_confirmado_s": 1.71,
+        "lease_otorgado_s": 2.76,
+        "haproxy_db_enruta_s": 3.78,
+        "escrituras_intentos": 1513,
+        "escrituras_confirmadas_al_cliente": 1457,
+        "de_ellas_repetidas_200_por_idempotencia": 0,
+        "errores_http_escritura": {
+          "503": 56
+        },
+        "lecturas": 306,
+        "errores_http_lectura": {
+          "503": 38
+        },
+        "retraso_de_replicacion_maximo_antes_de_caer_KiB": 34.0,
+        "RPO_transacciones_confirmadas_al_cliente_PERDIDAS": 0,
+        "huerfanas_en_la_antigua_primaria_reservas": 0,
+        "huerfanas_confirmadas_al_cliente_(perdidas)": 0,
+        "huerfanas_NO_confirmadas_al_cliente_(INCIERTAS)": 0,
+        "huerfanas_con_clave_repetida_en_la_nueva_primaria_(duplicado_logico)": 0,
+        "perdidas_confirmadas_coinciden_con_las_huerfanas_confirmadas": true,
+        "RPO_ventana_s_(caida_menos_la_confirmacion_perdida_mas_antigua)": null,
+        "filas_en_la_nueva_primaria_sin_confirmar_al_cliente": 0,
+        "reservas_en_nueva_primaria": 1457,
+        "claves_distintas": 1457,
+        "reserved_count": "1457",
+        "suma_cantidades": "1457"
+      },
+      "C1-natural-2": {
+        "induccion_de_retraso_s": 0.0,
+        "RTO_escritura_s_desde_la_orden_de_caida": 3.08,
+        "RTO_lectura_s": 3.19,
+        "lectura_primer_error_s": 0.08,
+        "lectura_ultimo_error_s": 2.98,
+        "deteccion_primera_sonda_fallida_s": 0.19,
+        "aislamiento_confirmado_s": 1.39,
+        "lease_otorgado_s": 2.35,
+        "haproxy_db_enruta_s": 3.18,
+        "escrituras_intentos": 1382,
+        "escrituras_confirmadas_al_cliente": 1326,
+        "de_ellas_repetidas_200_por_idempotencia": 0,
+        "errores_http_escritura": {
+          "503": 56
+        },
+        "lecturas": 306,
+        "errores_http_lectura": {
+          "503": 38
+        },
+        "retraso_de_replicacion_maximo_antes_de_caer_KiB": 60.5,
+        "RPO_transacciones_confirmadas_al_cliente_PERDIDAS": 0,
+        "huerfanas_en_la_antigua_primaria_reservas": 0,
+        "huerfanas_confirmadas_al_cliente_(perdidas)": 0,
+        "huerfanas_NO_confirmadas_al_cliente_(INCIERTAS)": 0,
+        "huerfanas_con_clave_repetida_en_la_nueva_primaria_(duplicado_logico)": 0,
+        "perdidas_confirmadas_coinciden_con_las_huerfanas_confirmadas": true,
+        "RPO_ventana_s_(caida_menos_la_confirmacion_perdida_mas_antigua)": null,
+        "filas_en_la_nueva_primaria_sin_confirmar_al_cliente": 0,
+        "reservas_en_nueva_primaria": 1326,
+        "claves_distintas": 1326,
+        "reserved_count": "1326",
+        "suma_cantidades": "1326"
+      },
+      "C1-natural-3": {
+        "induccion_de_retraso_s": 0.0,
+        "RTO_escritura_s_desde_la_orden_de_caida": 4.39,
+        "RTO_lectura_s": 4.43,
+        "lectura_primer_error_s": 0.04,
+        "lectura_ultimo_error_s": 4.21,
+        "deteccion_primera_sonda_fallida_s": 0.55,
+        "aislamiento_confirmado_s": 1.93,
+        "lease_otorgado_s": 3.57,
+        "haproxy_db_enruta_s": 4.34,
+        "escrituras_intentos": 1642,
+        "escrituras_confirmadas_al_cliente": 1578,
+        "de_ellas_repetidas_200_por_idempotencia": 0,
+        "errores_http_escritura": {
+          "503": 64
+        },
+        "lecturas": 314,
+        "errores_http_lectura": {
+          "503": 46
+        },
+        "retraso_de_replicacion_maximo_antes_de_caer_KiB": 66.3,
+        "RPO_transacciones_confirmadas_al_cliente_PERDIDAS": 0,
+        "huerfanas_en_la_antigua_primaria_reservas": 0,
+        "huerfanas_confirmadas_al_cliente_(perdidas)": 0,
+        "huerfanas_NO_confirmadas_al_cliente_(INCIERTAS)": 0,
+        "huerfanas_con_clave_repetida_en_la_nueva_primaria_(duplicado_logico)": 0,
+        "perdidas_confirmadas_coinciden_con_las_huerfanas_confirmadas": true,
+        "RPO_ventana_s_(caida_menos_la_confirmacion_perdida_mas_antigua)": null,
+        "filas_en_la_nueva_primaria_sin_confirmar_al_cliente": 0,
+        "reservas_en_nueva_primaria": 1578,
+        "claves_distintas": 1578,
+        "reserved_count": "1578",
+        "suma_cantidades": "1578"
+      },
+      "C1-retraso-inducido": {
+        "induccion_de_retraso_s": 3.0,
+        "RTO_escritura_s_desde_la_orden_de_caida": 3.16,
+        "RTO_lectura_s": 3.22,
+        "lectura_primer_error_s": 0.02,
+        "lectura_ultimo_error_s": 3.01,
+        "deteccion_primera_sonda_fallida_s": 0.08,
+        "aislamiento_confirmado_s": 1.14,
+        "lease_otorgado_s": 2.13,
+        "haproxy_db_enruta_s": 3.16,
+        "escrituras_intentos": 1399,
+        "escrituras_confirmadas_al_cliente": 1340,
+        "de_ellas_repetidas_200_por_idempotencia": 0,
+        "errores_http_escritura": {
+          "503": 59
+        },
+        "lecturas": 319,
+        "errores_http_lectura": {
+          "503": 41
+        },
+        "retraso_de_replicacion_maximo_antes_de_caer_KiB": 538.4,
+        "RPO_transacciones_confirmadas_al_cliente_PERDIDAS": 328,
+        "huerfanas_en_la_antigua_primaria_reservas": 328,
+        "huerfanas_confirmadas_al_cliente_(perdidas)": 328,
+        "huerfanas_NO_confirmadas_al_cliente_(INCIERTAS)": 0,
+        "huerfanas_con_clave_repetida_en_la_nueva_primaria_(duplicado_logico)": 0,
+        "perdidas_confirmadas_coinciden_con_las_huerfanas_confirmadas": true,
+        "RPO_ventana_s_(caida_menos_la_confirmacion_perdida_mas_antigua)": 3.0,
+        "filas_en_la_nueva_primaria_sin_confirmar_al_cliente": 0,
+        "reservas_en_nueva_primaria": 1012,
+        "claves_distintas": 1012,
+        "reserved_count": "1012",
+        "suma_cantidades": "1012"
+      }
+    },
+    "C2": {
+      "C2a-natural": {
+        "respuesta_retenida_tras_confirmar": true,
+        "reserva_en_la_primaria_antes_de_caer": "f3b15dfd-cf85-4b42-8de0-5b2bddc7daff",
+        "replicada_antes_de_caer": true,
+        "cliente_no_recibio_respuesta": true,
+        "reintentos_con_la_misma_clave": [
+          503,
+          503,
+          503,
+          503,
+          503,
+          503,
+          503,
+          503,
+          503,
+          503,
+          200
+        ],
+        "estado_final": 200,
+        "replayed": true,
+        "reservation_id_final": "f3b15dfd-cf85-4b42-8de0-5b2bddc7daff",
+        "misma_reserva": true,
+        "reservas_con_esa_clave_en_la_nueva_primaria": "1",
+        "tiempo_hasta_respuesta_valida_s": 4.5,
+        "idempotency_key": "669828084ec64ed698263ec9865eea4e"
+      }
+    }
+  }
+}

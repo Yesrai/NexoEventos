@@ -11,6 +11,13 @@ resource "azurerm_consumption_budget_subscription" "this" {
   amount          = var.amount_usd
   time_grain      = "Monthly"
 
+  lifecycle {
+    precondition {
+      condition     = length(var.alert_emails) > 0
+      error_message = "El presupuesto necesita al menos un correo de contacto (alert_emails)."
+    }
+  }
+
   time_period {
     start_date = var.start_date
   }

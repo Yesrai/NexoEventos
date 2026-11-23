@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" font-family="Helvetica, Arial, sans-serif" font-size="14">
+<title>Arquitectura Cloud V2 — NexoEventos (AWS us-east-1, dos zonas)</title>
+<desc>ALB HTTPS, grupo Auto Scaling de 2 a 3 EC2 en dos zonas, RDS PostgreSQL Multi-AZ privada, S3, Secrets Manager, ACM y CloudWatch. Fuente: infra/aws-v2 y infra/aws (Terraform), mediciones del 22 y 23 de octubre de 2026.</desc>
+<rect width="1200" height="800" fill="#ffffff"/>
+<text x="24" y="34" font-size="20" font-weight="bold" fill="#1a1a1a">Figura 2. Arquitectura Cloud V2 — NexoEventos (AWS, us-east-1)</text>
+<text x="24" y="56" fill="#555">Capa web redundante en dos zonas detrás de un ALB y base de datos Multi-AZ. Los SPOF de V1 (instancia única y base Single-AZ) se eliminan.</text>
+<defs><marker id="a" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#333"/></marker></defs>
+<!-- usuarios -->
+<rect x="24" y="130" width="140" height="70" rx="10" fill="#eef3fb" stroke="#4a6fa5"/>
+<text x="94" y="160" text-anchor="middle" font-weight="bold">Usuarios</text><text x="94" y="180" text-anchor="middle" fill="#555">HTTPS 443</text>
+<!-- VPC -->
+<rect x="200" y="80" width="975" height="640" rx="14" fill="#fbfdf8" stroke="#6a8f3c" stroke-width="2"/>
+<text x="216" y="104" font-weight="bold" fill="#3d5a1e">VPC 10.20.0.0/16 (us-east-1) · Internet Gateway</text>
+<!-- ALB -->
+<rect x="225" y="122" width="560" height="74" rx="10" fill="#fff0e6" stroke="#d9772b" stroke-width="2"/>
+<text x="505" y="148" text-anchor="middle" font-weight="bold">Application Load Balancer (público, multi-AZ)</text>
+<text x="505" y="168" text-anchor="middle" fill="#444">Escucha 443 (TLS 1.3/1.2, certificado en ACM) · 80 → redirección 301 a HTTPS</text>
+<text x="505" y="186" text-anchor="middle" fill="#444">Health check /healthz cada 10 s (2 aciertos / 2 fallos) · least_outstanding_requests</text>
+<!-- AZ a -->
+<rect x="225" y="220" width="270" height="260" rx="10" fill="#fff8ec" stroke="#d99a2b"/>
+<text x="240" y="244" font-weight="bold" fill="#8a5a00">Zona a · subred pública 10.20.1.0/24</text>
+<rect x="245" y="262" width="230" height="130" rx="8" fill="#fff" stroke="#d99a2b"/>
+<text x="360" y="288" text-anchor="middle" font-weight="bold">EC2 web (ASG)</text>
+<text x="360" y="308" text-anchor="middle" fill="#444">t3.small · Nginx + FastAPI</text>
+<text x="360" y="328" text-anchor="middle" fill="#444">gp3 20 GiB cifrado · IMDSv2</text>
+<text x="360" y="348" text-anchor="middle" fill="#444">SG web: 80 solo desde el SG del ALB</text>
+<text x="360" y="372" text-anchor="middle" fill="#2c7a3d" font-size="12">sin SSH · acceso por Session Manager</text>
+<!-- AZ b -->
+<rect x="515" y="220" width="270" height="260" rx="10" fill="#fff8ec" stroke="#d99a2b"/>
+<text x="530" y="244" font-weight="bold" fill="#8a5a00">Zona b · subred pública 10.20.2.0/24</text>
+<rect x="535" y="262" width="230" height="130" rx="8" fill="#fff" stroke="#d99a2b"/>
+<text x="650" y="288" text-anchor="middle" font-weight="bold">EC2 web (ASG)</text>
+<text x="650" y="308" text-anchor="middle" fill="#444">t3.small · Nginx + FastAPI</text>
+<text x="650" y="328" text-anchor="middle" fill="#444">gp3 20 GiB cifrado · IMDSv2</text>
+<text x="650" y="348" text-anchor="middle" fill="#444">SG web: 80 solo desde el SG del ALB</text>
+<text x="650" y="372" text-anchor="middle" fill="#2c7a3d" font-size="12">sin SSH · acceso por Session Manager</text>
+<rect x="225" y="414" width="560" height="52" rx="8" fill="#fff" stroke="#d99a2b" stroke-dasharray="5 4"/>
+<text x="505" y="436" text-anchor="middle" font-weight="bold">Auto Scaling Group: mínimo 2 · deseado 2 · máximo 3 · health check tipo ELB</text>
+<text x="505" y="455" text-anchor="middle" fill="#444">Política: CPU media objetivo 40 % · retira primero la instancia más antigua</text>
+<!-- datos -->
+<rect x="815" y="122" width="335" height="358" rx="10" fill="#eef6ff" stroke="#4a7fb5"/>
+<text x="832" y="146" font-weight="bold" fill="#1f4c7a">Subredes privadas de datos</text>
+<text x="832" y="166" fill="#444">10.20.21.0/24 y 10.20.22.0/24 (sin ruta a Internet)</text>
+<rect x="835" y="184" width="295" height="190" rx="8" fill="#fff" stroke="#4a7fb5"/>
+<text x="982" y="210" text-anchor="middle" font-weight="bold">RDS PostgreSQL db.t3.micro</text>
+<text x="982" y="232" text-anchor="middle" fill="#444">Multi-AZ: primaria + standby síncrono</text>
+<text x="982" y="252" text-anchor="middle" fill="#444">en zonas distintas · privada · cifrada</text>
+<text x="982" y="272" text-anchor="middle" fill="#444">Failover medido: ≈ 14 s (PostgreSQL)</text>
+<text x="982" y="292" text-anchor="middle" fill="#444">≈ 13 s (/healthz) · datos íntegros</text>
+<text x="982" y="318" text-anchor="middle" fill="#444">Backups automáticos 7 días · snapshot</text>
+<text x="982" y="344" text-anchor="middle" fill="#2c7a3d" font-weight="bold">SPOF de base eliminado</text>
+<rect x="835" y="392" width="295" height="70" rx="8" fill="#fff" stroke="#4a7fb5" stroke-dasharray="5 4"/>
+<text x="982" y="416" text-anchor="middle" font-weight="bold">SG base de datos</text>
+<text x="982" y="438" text-anchor="middle" fill="#444">5432 solo desde el SG web (SG → SG)</text>
+<!-- servicios -->
+<rect x="225" y="500" width="925" height="195" rx="10" fill="#f6f2fb" stroke="#7a5aa5"/>
+<text x="242" y="524" font-weight="bold" fill="#4a2f73">Servicios gestionados de AWS</text>
+<rect x="245" y="542" width="205" height="130" rx="8" fill="#fff" stroke="#7a5aa5"/>
+<text x="347" y="568" text-anchor="middle" font-weight="bold">Secrets Manager</text>
+<text x="347" y="590" text-anchor="middle" fill="#444">Entorno de la aplicación</text>
+<text x="347" y="610" text-anchor="middle" fill="#444">compartido por las dos EC2</text>
+<text x="347" y="630" text-anchor="middle" fill="#444">+ secreto maestro de RDS</text>
+<rect x="465" y="542" width="205" height="130" rx="8" fill="#fff" stroke="#7a5aa5"/>
+<text x="567" y="568" text-anchor="middle" font-weight="bold">ACM</text>
+<text x="567" y="590" text-anchor="middle" fill="#444">Certificado importado</text>
+<text x="567" y="610" text-anchor="middle" fill="#444">(DuckDNS no valida CNAME)</text>
+<text x="567" y="630" text-anchor="middle" fill="#a33" font-size="12">vence el 1-ene-2027</text>
+<rect x="685" y="542" width="205" height="130" rx="8" fill="#fff" stroke="#7a5aa5"/>
+<text x="787" y="568" text-anchor="middle" font-weight="bold">S3 privado</text>
+<text x="787" y="590" text-anchor="middle" fill="#444">Versionado · SSE-S3</text>
+<text x="787" y="610" text-anchor="middle" fill="#444">Respaldos cifrados (CMS)</text>
+<text x="787" y="630" text-anchor="middle" fill="#444">Bloqueo de acceso público</text>
+<rect x="905" y="542" width="225" height="130" rx="8" fill="#fff" stroke="#7a5aa5"/>
+<text x="1017" y="568" text-anchor="middle" font-weight="bold">CloudWatch</text>
+<text x="1017" y="590" text-anchor="middle" fill="#444">Panel V2 (ALB, ASG, RDS)</text>
+<text x="1017" y="610" text-anchor="middle" fill="#444">Logs API/Nginx (7 días)</text>
+<text x="1017" y="630" text-anchor="middle" fill="#444">Alarmas de escalado y CPU</text>
+<!-- flechas -->
+<path d="M164,165 L225,160" stroke="#333" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M400,196 L380,262" stroke="#333" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M610,196 L640,262" stroke="#333" stroke-width="2" fill="none" marker-end="url(#a)"/>
+<path d="M360,392 L360,402 L800,402 L800,330 L835,300" stroke="#4a7fb5" stroke-width="1.8" fill="none"/>
+<path d="M650,392 L650,402" stroke="#4a7fb5" stroke-width="1.8" fill="none"/>
+<path d="M800,330 L835,300" stroke="#4a7fb5" stroke-width="1.8" fill="none" marker-end="url(#a)"/>
+<text x="808" y="386" fill="#1f4c7a" font-size="12">5432 (ambas EC2)</text>
+<text x="24" y="760" fill="#777" font-size="12">Fuente: infra/aws-v2/*.tf (21 recursos) e infra/aws (RDS Multi-AZ aplicado el 23-oct). V2 desplegada, medida el 22-oct-2026 y destruida; la RDS Multi-AZ permanece.</text>
+<text x="24" y="780" fill="#777" font-size="12">Las instancias web están en subredes públicas (variante de menor costo) y solo aceptan tráfico del ALB; no se añadió NAT Gateway.</text>
+</svg>

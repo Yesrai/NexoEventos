@@ -1,0 +1,5 @@
+Historial de CloudWatch de la alarma nexoeventos-academy-v2-alb-destinos-no-sanos (hora de Perú, UTC-5; cuenta enmascarada)
+2026-11-04T12:01:47.597-05:00  StateUpdate  Alarm updated from OK to ALARM            (set-alarm-state manual)
+2026-11-04T12:01:47.642-05:00  Action       Successfully executed action arn:aws:sns:us-east-1:<cuenta>:nexoeventos-academy-alarmas
+2026-11-04T12:03:41.829-05:00  StateUpdate  Alarm updated from ALARM to OK            (evaluación de CloudWatch; sin restablecimiento manual)
+2026-11-04T12:03:41.875-05:00  Action       Successfully executed action arn:aws:sns:us-east-1:<cuenta>:nexoeventos-academy-alarmas

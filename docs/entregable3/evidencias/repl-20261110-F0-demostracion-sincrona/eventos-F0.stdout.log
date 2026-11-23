@@ -1,0 +1,6 @@
+{"t": 1794349775.614, "ev": "monitor_inicio", "auto": true, "pid": 35993}
+{"t": 1794349775.623, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 4.96}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794349780.653, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.68}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794349783.438, "ev": "seguidor_no_disponible", "estado": "async", "politica": "bloquear: los COMMIT esperan, sin pérdida"}
+{"t": 1794349785.697, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.63}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794349786.697, "ev": "monitor_fin", "motivo": "SIGTERM"}

@@ -1,0 +1,26 @@
+test_400_escenarios_aleatorios_con_cancelacion_y_caidas_jamas_dos_escritores_ni_dns_prematuro (test_failover_orchestrator.Aleatorio.test_400_escenarios_aleatorios_con_cancelacion_y_caidas_jamas_dos_escritores_ni_dns_prematuro) ... ok
+test_cancelar_durante_la_espera_del_lease (test_failover_orchestrator.Cancelacion.test_cancelar_durante_la_espera_del_lease) ... ok
+test_cancelar_en_cada_frontera_deja_a_lo_sumo_un_escritor (test_failover_orchestrator.Cancelacion.test_cancelar_en_cada_frontera_deja_a_lo_sumo_un_escritor) ... ok
+test_compuerta_del_primario_desactivada_se_DETECTA_el_doble_escritor_y_no_se_declara_exito (test_failover_orchestrator.Escenarios.test_compuerta_del_primario_desactivada_se_DETECTA_el_doble_escritor_y_no_se_declara_exito) ... ok
+test_dry_run_no_aplica_dns (test_failover_orchestrator.Escenarios.test_dry_run_no_aplica_dns) ... ok
+test_falso_positivo_primario_vivo_pero_sondas_ciegas_no_se_promueve (test_failover_orchestrator.Escenarios.test_falso_positivo_primario_vivo_pero_sondas_ciegas_no_se_promueve) ... ok
+test_flapping_nunca_dos_escritores_en_30_semillas (test_failover_orchestrator.Escenarios.test_flapping_nunca_dos_escritores_en_30_semillas) ... ok
+test_huella_de_datos_distinta_no_promueve_ni_toma_el_lease (test_failover_orchestrator.Escenarios.test_huella_de_datos_distinta_no_promueve_ni_toma_el_lease) ... ok
+test_primario_caido_promueve_con_un_solo_escritor_y_dns_despues (test_failover_orchestrator.Escenarios.test_primario_caido_promueve_con_un_solo_escritor_y_dns_despues) ... ok
+test_primario_sano_no_se_toca (test_failover_orchestrator.Escenarios.test_primario_sano_no_se_toca) ... ok
+test_primario_sirve_pero_pierde_el_almacen_se_cierra_y_el_standby_toma (test_failover_orchestrator.Escenarios.test_primario_sirve_pero_pierde_el_almacen_se_cierra_y_el_standby_toma) ... ok
+test_sondas_discrepantes_no_actuan (test_failover_orchestrator.Escenarios.test_sondas_discrepantes_no_actuan) ... ok
+test_caida_en_cada_etapa_antes_y_despues_del_efecto_y_se_reanuda_sin_duplicar (test_failover_orchestrator.Idempotencia.test_caida_en_cada_etapa_antes_y_despues_del_efecto_y_se_reanuda_sin_duplicar) ... ok
+test_el_primario_que_vuelve_tras_la_promocion_no_recupera_la_escritura (test_failover_orchestrator.Idempotencia.test_el_primario_que_vuelve_tras_la_promocion_no_recupera_la_escritura) ... ok
+test_repetir_una_ejecucion_terminada_no_repite_efectos (test_failover_orchestrator.Idempotencia.test_repetir_una_ejecucion_terminada_no_repite_efectos) ... ok
+test_una_ejecucion_abortada_no_se_reanuda_con_el_mismo_run_id (test_failover_orchestrator.Idempotencia.test_una_ejecucion_abortada_no_se_reanuda_con_el_mismo_run_id) ... ok
+test_adaptadores_sin_configurar_fallan_cerrado (test_failover_orchestrator.SeguridadPorDefecto.test_adaptadores_sin_configurar_fallan_cerrado) ... ok
+test_cli_run_se_rechaza_sin_entorno_frase_y_adaptadores_reales (test_failover_orchestrator.SeguridadPorDefecto.test_cli_run_se_rechaza_sin_entorno_frase_y_adaptadores_reales) ... ok
+test_el_codigo_del_orquestador_no_contiene_llamadas_de_nube (test_failover_orchestrator.SeguridadPorDefecto.test_el_codigo_del_orquestador_no_contiene_llamadas_de_nube) ... ok
+
+----------------------------------------------------------------------
+Ran 19 tests in 0.850s
+
+OK
+
+estadísticas: {'DONE': 65, 'ABORTED': 226, 'CANCELLED': 109, 'reanudadas': 127}

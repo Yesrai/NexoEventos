@@ -18,5 +18,7 @@ echo "OK    SHA-256 del volcado en claro coincide"
 "$PG/pg_restore" --list "$D/db.dump" >/dev/null || { echo "FALLÓ: catálogo inválido" >&2; exit 4; }
 "$PG/psql" -d postgres -qAt -c "DROP DATABASE IF EXISTS \"$DB\"" -c "CREATE DATABASE \"$DB\""
 "$PG/pg_restore" -d "$DB" --no-owner --no-acl --exit-on-error "$D/db.dump"
+# Un volcado tomado en el primario trae SU estado del vallado (época y, si se tomó con autoridad vigente, un `valid_until` futuro): el standby restaurado debe quedar SIN autoridad (solo lectura efectiva).
+"$PG/psql" -d "$DB" -qAt -v ON_ERROR_STOP=1 -c "DO \$\$ BEGIN IF to_regproc('nexo_fence.reset_after_restore') IS NOT NULL THEN PERFORM nexo_fence.reset_after_restore(); END IF; END \$\$;"
 echo "OK    restauración en base aislada"
 "$PG/psql" -d "$DB" -At -v ON_ERROR_STOP=1 -f "$SQL" | sort

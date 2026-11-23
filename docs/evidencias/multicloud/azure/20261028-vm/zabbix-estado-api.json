@@ -1,0 +1,188 @@
+{
+  "version_api": "7.0.32",
+  "hora_utc": "2026-10-28T15:04:30Z",
+  "hosts": [
+    {
+      "host": "Zabbix server",
+      "tipo_datos": "EN VIVO (medido en esta ventana)",
+      "habilitado": true,
+      "plantillas": [
+        "Linux by Zabbix agent",
+        "Zabbix server health"
+      ],
+      "interfaz_agente_disponible": [
+        "1"
+      ],
+      "items_activos": 153,
+      "items_no_soportados": 11,
+      "items_con_valor": 136
+    },
+    {
+      "host": "aws-historico",
+      "tipo_datos": "HISTÓRICO (cargado)",
+      "habilitado": true,
+      "plantillas": [
+        "NexoEventos Historical Metrics"
+      ],
+      "interfaz_agente_disponible": [],
+      "items_activos": 21,
+      "items_no_soportados": 0,
+      "items_con_valor": 0,
+      "puntos_historicos_cargados": 468,
+      "series_con_datos": 5,
+      "puntos_por_serie": {
+        "nexo.hist.k6_p95_ms": 6,
+        "nexo.hist.k6_rps": 6,
+        "nexo.hist.k6_errors": 6,
+        "nexo.hist.failover_healthz_code": 225,
+        "nexo.hist.failover_healthz_s": 225
+      }
+    },
+    {
+      "host": "aws-nexoeventos-v1",
+      "tipo_datos": "EN VIVO (medido en esta ventana)",
+      "habilitado": true,
+      "plantillas": [
+        "NexoEventos HTTP Probes"
+      ],
+      "interfaz_agente_disponible": [
+        "1"
+      ],
+      "items_activos": 6,
+      "items_no_soportados": 4,
+      "items_con_valor": 2
+    },
+    {
+      "host": "azure-obs",
+      "tipo_datos": "EN VIVO (medido en esta ventana)",
+      "habilitado": true,
+      "plantillas": [
+        "Linux by Zabbix agent",
+        "Zabbix server health"
+      ],
+      "interfaz_agente_disponible": [
+        "1"
+      ],
+      "items_activos": 153,
+      "items_no_soportados": 11,
+      "items_con_valor": 136
+    },
+    {
+      "host": "oci-historico",
+      "tipo_datos": "HISTÓRICO (cargado)",
+      "habilitado": true,
+      "plantillas": [
+        "NexoEventos Historical Metrics"
+      ],
+      "interfaz_agente_disponible": [],
+      "items_activos": 21,
+      "items_no_soportados": 0,
+      "items_con_valor": 0,
+      "puntos_historicos_cargados": 734,
+      "series_con_datos": 8,
+      "puntos_por_serie": {
+        "nexo.hist.cpu_pct": 179,
+        "nexo.hist.mem_pct": 179,
+        "nexo.hist.net_in_bytes": 179,
+        "nexo.hist.net_out_bytes": 179,
+        "nexo.hist.oci_put_requests": 2,
+        "nexo.hist.oci_get_requests": 6,
+        "nexo.hist.oci_client_errors": 4,
+        "nexo.hist.oci_first_byte_ms": 6
+      }
+    }
+  ],
+  "triggers_activos": 170,
+  "triggers_en_problema": [
+    "aws-nexoeventos-v1: Catálogo /api/events no responde 200 (3 comprobaciones) en nexoeventos-demo.duckdns.org",
+    "aws-nexoeventos-v1: NexoEventos no disponible: /healthz falla 3 comprobaciones seguidas en nexoeventos-demo.duckdns.org"
+  ],
+  "problemas_actuales": [
+    {
+      "nombre": "NexoEventos no disponible: /healthz falla 3 comprobaciones seguidas en nexoeventos-demo.duckdns.org",
+      "severidad": "4",
+      "desde_utc": "14:23:31Z"
+    },
+    {
+      "nombre": "Catálogo /api/events no responde 200 (3 comprobaciones) en nexoeventos-demo.duckdns.org",
+      "severidad": "3",
+      "desde_utc": "14:23:32Z"
+    }
+  ],
+  "usuarios": [
+    "Admin",
+    "grafana-ro",
+    "guest",
+    "history-push"
+  ],
+  "tipos_de_medio": [
+    "Brevis.one",
+    "Discord",
+    "Email",
+    "Email (HTML)",
+    "Event-Driven Ansible",
+    "Express.ms",
+    "GLPI",
+    "GitHub",
+    "Gmail",
+    "Gmail relay",
+    "IBM Maximo Service Request",
+    "Jira",
+    "Jira Service Management",
+    "Line",
+    "MS Teams Workflow",
+    "ManageEngine ServiceDesk",
+    "MantisBT",
+    "Mattermost",
+    "OTRS CE",
+    "Office365",
+    "Office365 relay",
+    "Opsgenie",
+    "PagerDuty",
+    "Pushover",
+    "Redmine",
+    "Registro local de alertas",
+    "Rocket.Chat",
+    "SIGNL4",
+    "SMS",
+    "ServiceNow",
+    "Slack",
+    "SolarWinds Service Desk",
+    "SysAid",
+    "TOPdesk",
+    "Telegram",
+    "VictorOps",
+    "Zammad",
+    "Zendesk",
+    "iLert",
+    "iTop"
+  ],
+  "acciones": [
+    "Auto discovery. Linux servers.",
+    "NexoEventos — notificar problemas y recuperaciones",
+    "Report not supported items",
+    "Report not supported low level discovery rules",
+    "Report problems to Zabbix administrators",
+    "Report unknown triggers"
+  ],
+  "plantillas_nexo": [
+    "NexoEventos HTTP Probes",
+    "NexoEventos Historical Metrics"
+  ],
+  "valores_en_vivo_nexo": [
+    {
+      "host": "aws-nexoeventos-v1",
+      "item": "healthz: código HTTP (0 = sin respuesta)",
+      "valor": "0",
+      "unidad": "",
+      "hace_s": 33
+    },
+    {
+      "host": "aws-nexoeventos-v1",
+      "item": "catálogo: código HTTP de /api/events (0 = sin respuesta)",
+      "valor": "0",
+      "unidad": "",
+      "hace_s": 32
+    }
+  ]
+}

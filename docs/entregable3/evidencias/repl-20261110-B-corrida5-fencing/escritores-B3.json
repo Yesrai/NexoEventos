@@ -1,0 +1,163 @@
+[
+ {
+  "t": 1794336157.313,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.2), port 5432 failed: timeout ex",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794336158.178,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794336159.671,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794336160.509,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794336161.065,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794336161.522,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794336161.962,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794336162.458,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794336162.926,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794336163.427,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794336163.956,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794336164.422,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794336164.874,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794336165.332,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794336165.859,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "",
+  "error_oci": "psql: error: connection to server at \"pg-oci\" (172.29.241.3), port 5432 failed: FATAL:  pg"
+ },
+ {
+  "t": 1794336166.334,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "",
+  "error_oci": "psql: error: connection to server at \"pg-oci\" (172.29.241.3), port 5432 failed: FATAL:  pg"
+ },
+ {
+  "t": 1794336166.84,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "",
+  "error_oci": "psql: error: connection to server at \"pg-oci\" (172.29.241.3), port 5432 failed: FATAL:  pg"
+ },
+ {
+  "t": 1794336167.283,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "",
+  "error_oci": "psql: error: connection to server at \"pg-oci\" (172.29.241.3), port 5432 failed: FATAL:  pg"
+ },
+ {
+  "t": 1794336167.792,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "",
+  "error_oci": "psql: error: connection to server at \"pg-oci\" (172.29.241.3), port 5432 failed: FATAL:  pg"
+ },
+ {
+  "t": 1794336168.272,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "",
+  "error_oci": "psql: error: connection to server at \"pg-oci\" (172.29.241.3), port 5432 failed: FATAL:  pg"
+ },
+ {
+  "t": 1794336168.77,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "",
+  "error_oci": "psql: error: connection to server at \"pg-oci\" (172.29.241.3), port 5432 failed: FATAL:  pg"
+ },
+ {
+  "t": 1794336169.421,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "",
+  "error_oci": "psql: error: connection to server at \"pg-oci\" (172.29.241.3), port 5432 failed: FATAL:  pg"
+ },
+ {
+  "t": 1794336170.112,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "",
+  "error_oci": "psql: error: connection to server at \"pg-oci\" (172.29.241.3), port 5432 failed: FATAL:  pg"
+ }
+]

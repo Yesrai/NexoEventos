@@ -1,0 +1,17 @@
+2026-11-20T23:30:30Z V2: llevando el ASG a 0 (estaba en 2).
+2026-11-20T23:31:14Z V2: sin EC2 de V2 en ejecución.
+2026-11-20T23:31:15Z V2: eliminando el ALB nexoeventos-academy-v2-alb (etiquetas Project=NexoEventos, Stack=v2 verificadas).
+2026-11-20T23:31:16Z V2: sin ALB de V2.
+2026-11-20T23:31:17Z Parada: stop-db-instance (0s).
+2026-11-20T23:31:39Z Parada AVANZANDO: la RDS sigue en 'stopping' (22s de 1800s; Multi-AZ tarda 5–15 min). No es un fallo.
+2026-11-20T23:33:45Z Parada AVANZANDO: la RDS sigue en 'stopping' (148s de 1800s; Multi-AZ tarda 5–15 min). No es un fallo.
+2026-11-20T23:35:52Z Parada AVANZANDO: la RDS sigue en 'stopping' (275s de 1800s; Multi-AZ tarda 5–15 min). No es un fallo.
+2026-11-20T23:37:58Z VERIFICADO: la RDS está detenida (tras 401s).
+2026-11-20T23:38:22Z cancelación solicitada
+2026-11-20T23:38:36Z CANCELADO por archivo de parada; no se detiene la RDS.
+2026-11-20T23:40:14Z OK cuenta y región coinciden con las esperadas
+2026-11-20T23:40:15Z OK RDS nexoeventos-academy-postgres en 'stopped'
+2026-11-20T23:40:16Z OK ASG de V2 en capacidad 0 y sin instancias
+2026-11-20T23:40:17Z OK ninguna EC2 en ejecución (nada se conecta a la base)
+2026-11-20T23:40:17Z OK no existe ningún ALB
+2026-11-20T23:40:17Z Watchdog: no armado

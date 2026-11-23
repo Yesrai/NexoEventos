@@ -1,0 +1,7 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NexoEventos · Centro de operaciones</title><link rel="stylesheet" href="panel.css"></head>
+<body><header><h1>Centro de operaciones · Azure</h1><p class="note">Consulta y solicitudes. Este panel <strong>no ejecuta</strong> failover, DNS ni escritura: solo registra solicitudes y decisiones auditadas.</p></header>
+<main><section id="login"><label>Token de acceso (se guarda solo en memoria) <input id="token" type="password" autocomplete="off"></label><button id="enter">Entrar</button><p id="msg" role="alert"></p></section>
+<div id="app" hidden><section><h2>Nubes</h2><div id="clouds"></div></section><section><h2>Respaldo y failover</h2><div id="sections"></div></section><section><h2>Barreras de seguridad del failover</h2><p id="gate"></p><ul id="barriers"></ul></section>
+<section><h2>Solicitar recuperación</h2><select id="tipo"></select><textarea id="reason" maxlength="500" placeholder="Justificación (10–500 caracteres)"></textarea><button id="send">Solicitar</button></section>
+<section><h2>Solicitudes</h2><div id="reqs"></div></section><section><h2>Auditoría</h2><p id="chain"></p><ul id="audit"></ul></section></div></main><script src="panel.js"></script></body></html>

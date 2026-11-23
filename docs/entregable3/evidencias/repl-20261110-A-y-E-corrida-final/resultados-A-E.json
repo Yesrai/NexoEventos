@@ -1,0 +1,129 @@
+{
+  "pruebas": [
+    {
+      "prueba": "A1 usuarios, sesiones, eventos, reservas, entradas y asientos se replican (conteo y huella md5 idénticos en todas las tablas)",
+      "ok": true,
+      "detalle": "{\"convergencia_s\": 0.18, \"filas_por_tabla\": {\"access_logs\": 0, \"auth_rate_limits\": 0, \"auth_sessions\": 10, \"event_seats\": 40, \"event_zones\": 1, \"events\": 5, \"lab_bulk\": 0, \"operator_event_assignments\": 0, \"queue_entries\": 0, \"reservations\": 6, \"tickets\": 12, \"users\": 5, \"venue_layouts\": 0, \"venues\": 0}, \"tablas_identicas\": 14, \"tablas\": 14}"
+    },
+    {
+      "prueba": "A6 el seguidor rechaza una escritura real del rol de la aplicación (solo lectura)",
+      "ok": true,
+      "detalle": "psql: error: connection to server at \"pg-oci\" (172.29.241.3), port 5432 failed: FATAL:  pg_hba.conf rejects connection for host \"172.29.241."
+    },
+    {
+      "prueba": "A2 las secuencias NO se replican: pg-oci conserva el valor inicial y una inserción local sin ajustar choca con una clave existente",
+      "ok": true,
+      "detalle": "{\"ultimo_valor_secuencia_aws\": \"40\", \"ultimo_valor_secuencia_oci\": \"1\", \"insercion_en_oci_sin_ajustar\": \"DETAIL:  Key (id)=(1) already exists.\"}"
+    },
+    {
+      "prueba": "A3 un cambio de esquema hecho solo en el origen DETIENE la replicación; reanuda al aplicarlo también en el seguidor (el DDL no se replica)",
+      "ok": true,
+      "detalle": "{\"replicacion_detenida_tras_DDL_solo_en_origen\": true, \"error_en_el_log_del_seguidor\": \"logical replication target relation \\\"public.events\\\" is missing replicated column: \\\"lab_x\\\"\", \"reanuda_tras_aplicar_el_DDL_en_el_seguidor_s\": 4.0}"
+    },
+    {
+      "prueba": "A4 un conflicto de clave en el seguidor bloquea TODOS los cambios posteriores hasta resolverlo a mano",
+      "ok": true,
+      "detalle": "{\"cambio_posterior_bloqueado_por_el_conflicto\": true, \"error\": \"conflict detected on relation \\\"public.events\\\": conflict=insert_exists\", \"reanuda_tras_resolver_s\": 2.1}"
+    },
+    {
+      "prueba": "A5 con carga el seguidor alcanza al origen; una transacción abierta NO es visible en el seguidor hasta el COMMIT (y se perdería si el origen cae antes)",
+      "ok": true,
+      "detalle": "{\"carga\": \"pgbench 8 clientes 10 s, 12472.058789 tps, 124492 filas\", \"retraso_maximo_KiB\": 561.3, \"retraso_maximo_s_pg_stat_replication\": 0.004, \"alcanza_al_origen_tras_la_carga_s\": 0.19, \"transaccion_de_300000_filas_visible_en_seguidor_tras_commit_s\": 1.18, \"filas_visibles_en_seguidor_mientras_la_transaccion_sigue_abierta\": 0, \"visibles_tras_commit_s\": 0.1}"
+    },
+    {
+      "prueba": "E1 con el código ACTUAL del repositorio la BD no disponible produce 503 (no 500) en lecturas y escrituras, y 401/503 según haya sesión válida; /health sigue en 200",
+      "ok": true,
+      "detalle": "{\"GET /health\": 200, \"GET /ready\": 503, \"GET /api/events\": 503, \"GET /api/events/990001\": 503, \"GET /api/auth/session\": 503, \"GET /api/me/reservations\": 503, \"POST /api/events/990002/reservations\": 503}"
+    },
+    {
+      "prueba": "E2 la imagen antigua usada en el laboratorio del 9-nov NO tenía los manejadores de BD y devolvía 500: el 500 era un artefacto de la imagen, no del código actual",
+      "ok": true,
+      "detalle": "{\"antigua\": {\"GET /health\": 200, \"GET /ready\": 503, \"GET /api/events\": 500, \"GET /api/events/990001\": 500, \"GET /api/auth/session\": 500, \"GET /api/me/reservations\": 500, \"POST /api/events/990002/reservations\": 500}, \"md5\": {\"actual\": \"54a2bc1fd1fa528143f375db64855b6e\", \"antigua\": \"c4d6f709b2f5bdcf49cf9afe00ca48d1\", \"repositorio\": \"54a2bc1fd1fa528143f375db64855b6e\"}, \"manejadores\": {\"actual\": \"['HTTPException', 'InterfaceError', 'OperationalError', 'RequestValidationError', 'TimeoutError', 'WebSocketRequestValidationError']\", \"antigua\": \"['HTTPException', 'RequestValidationError', 'WebSocketRequestValidationError']\"}}"
+    }
+  ],
+  "datos": {
+    "A": {
+      "A1": {
+        "convergencia_s": 0.18,
+        "filas_por_tabla": {
+          "access_logs": 0,
+          "auth_rate_limits": 0,
+          "auth_sessions": 10,
+          "event_seats": 40,
+          "event_zones": 1,
+          "events": 5,
+          "lab_bulk": 0,
+          "operator_event_assignments": 0,
+          "queue_entries": 0,
+          "reservations": 6,
+          "tickets": 12,
+          "users": 5,
+          "venue_layouts": 0,
+          "venues": 0
+        },
+        "tablas_identicas": 14,
+        "tablas": 14
+      },
+      "A2": {
+        "ultimo_valor_secuencia_aws": "40",
+        "ultimo_valor_secuencia_oci": "1",
+        "insercion_en_oci_sin_ajustar": "DETAIL:  Key (id)=(1) already exists."
+      },
+      "A3": {
+        "replicacion_detenida_tras_DDL_solo_en_origen": true,
+        "error_en_el_log_del_seguidor": "logical replication target relation \"public.events\" is missing replicated column: \"lab_x\"",
+        "reanuda_tras_aplicar_el_DDL_en_el_seguidor_s": 4.0
+      },
+      "A4": {
+        "cambio_posterior_bloqueado_por_el_conflicto": true,
+        "error": "conflict detected on relation \"public.events\": conflict=insert_exists",
+        "reanuda_tras_resolver_s": 2.1
+      },
+      "A5": {
+        "carga": "pgbench 8 clientes 10 s, 12472.058789 tps, 124492 filas",
+        "retraso_maximo_KiB": 561.3,
+        "retraso_maximo_s_pg_stat_replication": 0.004,
+        "alcanza_al_origen_tras_la_carga_s": 0.19,
+        "transaccion_de_300000_filas_visible_en_seguidor_tras_commit_s": 1.18,
+        "filas_visibles_en_seguidor_mientras_la_transaccion_sigue_abierta": 0,
+        "visibles_tras_commit_s": 0.1
+      }
+    },
+    "E": {
+      "codigos_http_con_la_BD_no_disponible": {
+        "imagen_actual_(codigo_del_repositorio)": {
+          "GET /health": 200,
+          "GET /ready": 503,
+          "GET /api/events": 503,
+          "GET /api/events/990001": 503,
+          "GET /api/auth/session": 503,
+          "GET /api/me/reservations": 503,
+          "POST /api/events/990002/reservations": 503
+        },
+        "imagen_antigua_(nexoeventos-dev-backend:latest, 22-oct)": {
+          "GET /health": 200,
+          "GET /ready": 503,
+          "GET /api/events": 500,
+          "GET /api/events/990001": 500,
+          "GET /api/auth/session": 500,
+          "GET /api/me/reservations": 500,
+          "POST /api/events/990002/reservations": 500
+        }
+      },
+      "manejadores_de_excepcion_registrados": {
+        "actual": "['HTTPException', 'InterfaceError', 'OperationalError', 'RequestValidationError', 'TimeoutError', 'WebSocketRequestValidationError']",
+        "antigua": "['HTTPException', 'RequestValidationError', 'WebSocketRequestValidationError']"
+      },
+      "md5_main_py": {
+        "actual": "54a2bc1fd1fa528143f375db64855b6e",
+        "antigua": "c4d6f709b2f5bdcf49cf9afe00ca48d1",
+        "repositorio": "54a2bc1fd1fa528143f375db64855b6e"
+      },
+      "imagen_antigua_creada": "2026-10-22T16:51:40.957668793Z",
+      "commit_que_agrego_el_manejador": "ca983f1 2026-10-29 Auditoría del Entregable 2: TLS verify-full, health check liveness/readiness, resiliencia de BD, Trivy del lockfile y evidencias",
+      "excepcion_final_en_la_imagen_antigua": [
+        "sqlalchemy.exc.OperationalError: (psycopg.OperationalError) connection failed: connection to server at \"127.0.0.1\", port 5432 failed: server closed the connection unexpectedly"
+      ]
+    }
+  }
+}

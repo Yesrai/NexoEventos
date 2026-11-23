@@ -1,0 +1,60 @@
+Consulta de solo lectura de AWS (sección estado) — 2026-11-10 22:17 — script v2 SHA-256 6b9524178e96adcb00de19bc1c5152f8af821c50d306fd7ea4ddcd227700e9b3 (versión autorizada)
+Salida ya filtrada por el propio script.
+
+== 0. Identidad de la sesión (solo el nombre del rol; sin cuenta ni usuario)
+Rol: voclabs   Región: us-east-1
+== 1. ¿Qué hay encendido o facturando? (solo estados; sin IDs)
+-- EC2
+<largo-oculto>
+|            DescribeInstances           |
++----------+-----------------------------+
+|  estado  |  running                    |
+|  lanzada |  2026-11-11T03:12:21+00:00  |
+|  nombre  |  nexoeventos-academy-app    |
+|  tipo    |  t3.small                   |
++----------+-----------------------------+
+-- Auto Scaling
+<largo-oculto>
+|                         DescribeAutoScalingGroups                         |
++---------+-------------+---------+---------+-------------------------------+
+| deseada | instancias  | maximo  | minimo  |            nombre             |
++---------+-------------+---------+---------+-------------------------------+
+|  0      |  0          |  3      |  0      |  nexoeventos-academy-v2-asg   |
++---------+-------------+---------+---------+-------------------------------+
+-- Balanceadores
+<largo-oculto>
+|                           DescribeLoadBalancers                          |
++------------------+---------+------------------------------+--------------+
+|      esquema     | estado  |           nombre             |    tipo      |
++------------------+---------+------------------------------+--------------+
+|  internet-facing |  active |  nexoeventos-academy-v2-alb  |  application |
++------------------+---------+------------------------------+--------------+
+-- NAT gateways
+
+-- IP elásticas
+-------------------------
+|   DescribeAddresses   |
++-----------+-----------+
+| asociada  |  dominio  |
++-----------+-----------+
+|  True     |  vpc      |
+|  True     |  vpc      |
++-----------+-----------+
+-- Volúmenes EBS
+---------------------------
+|     DescribeVolumes     |
++-----+----------+--------+
+| GiB | estado   | tipo   |
++-----+----------+--------+
+|  20 |  in-use  |  gp3   |
++-----+----------+--------+
+-- RDS (todas las instancias)
+<largo-oculto>
+|                              DescribeDBInstances                             |
++-----+--------------+------------+----------+---------------------------------+
+| GiB |    clase     |  estado    | multiAZ  |             nombre              |
++-----+--------------+------------+----------+---------------------------------+
+|  20 |  db.t3.micro |  available |  True    |  nexoeventos-academy-postgres   |
++-----+--------------+------------+----------+---------------------------------+
+== fin (solo consultas; nada se creó, modificó, inició ni detuvo; no se instaló nada)
+código de salida: 0

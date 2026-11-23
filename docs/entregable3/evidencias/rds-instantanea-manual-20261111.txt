@@ -1,0 +1,16 @@
+Instantánea manual de RDS — 2026-11-11 (autorizada por la usuaria). Cuenta/ARN ocultos.
+Región: us-east-1 · rol: voclabs · RDS: nexoeventos-academy-postgres (available, Multi-AZ)
+Verificado antes: la instantánea no existía (DBSnapshotNotFound). Se creó UNA sola; no se eliminó ni reemplazó ninguna.
+Resultado tras 'aws rds wait db-snapshot-available':
+{
+    "Id": "nexoeventos-pre-parada-20261111",
+    "Estado": "available",
+    "Tipo": "manual",
+    "Creada": "2026-11-11T14:09:32.494000+00:00",
+    "Progreso": 100,
+    "GiB": 20,
+    "Cifrada": true,
+    "Motor": "18.3",
+    "Instancia": "nexoeventos-academy-postgres"
+}
+Manuales totales ahora: 5 (4 anteriores + 1 nueva). RDS sigue available; EC2 V1 detenida.

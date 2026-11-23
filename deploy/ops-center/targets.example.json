@@ -1,0 +1,5 @@
+{
+  "aws":   {"base": "https://<DNS del ALB de T5, o el dominio de pruebas>", "esperado": "activo"},
+  "oci":   {"base": "https://<IP o DNS de la entrada pública de OCI en T6>", "cafile": "/etc/ops-center/oci-cert.pem", "esperado": "standby"},
+  "azure": {"self_url": "https://127.0.0.1", "self_cafile": "/etc/ops-center/azure-cert.pem", "witness_url": "https://127.0.0.1/witness", "witness_cafile": "/etc/ops-center/azure-cert.pem"}
+}

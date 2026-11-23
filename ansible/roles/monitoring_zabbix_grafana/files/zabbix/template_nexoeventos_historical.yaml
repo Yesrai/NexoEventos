@@ -1,0 +1,288 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 55da4a5c1f104eca8d864f24ac72730b
+      name: Templates/NexoEventos
+  templates:
+    - uuid: 526a6b9caff74eb4abeb3322c3ce40c7
+      template: 'NexoEventos Historical Metrics'
+      name: 'NexoEventos Historical Metrics (datos históricos reales importados)'
+      description: |
+        Series reales de AWS (CloudWatch) y OCI (Monitoring) y de las pruebas de carga, obtenidas de solo lectura en las ventanas en que los recursos estuvieron encendidos
+        e importadas a Zabbix con su marca de tiempo original (history.push). NO son monitoreo en vivo: los paneles lo indican y la fecha de cada serie es la real.
+      groups:
+        - name: Templates/NexoEventos
+      items:
+        - uuid: 16e8f1fcb4bd435a8317f91bd29d2ba0
+          name: '[hist] CPU de la instancia (%)'
+          type: TRAP
+          key: nexo.hist.cpu_pct
+          delay: '0'
+          history: 365d
+          trends: 365d
+          value_type: FLOAT
+          units: '%'
+          description: 'Datos históricos reales de CloudWatch / OCI Monitoring importados con su marca de tiempo original.'
+          tags:
+            - tag: source
+              value: historical
+        - uuid: 2a39f868e1b64401bc514f158e4671a5
+          name: '[hist] Memoria utilizada (%)'
+          type: TRAP
+          key: nexo.hist.mem_pct
+          delay: '0'
+          history: 365d
+          trends: 365d
+          value_type: FLOAT
+          units: '%'
+          description: 'OCI Monitoring (agente de cómputo) o métrica equivalente; vacío en AWS si no se publicó.'
+          tags:
+            - tag: source
+              value: historical
+        - uuid: 1b608eac89844d6eafc8f2f20239c370
+          name: '[hist] Red entrante (bytes)'
+          type: TRAP
+          key: nexo.hist.net_in_bytes
+          delay: '0'
+          history: 365d
+          trends: 365d
+          value_type: FLOAT
+          units: 'B'
+          description: ''
+          tags:
+            - tag: source
+              value: historical
+        - uuid: ec276afe764242939c9583eb6d720d8d
+          name: '[hist] Red saliente (bytes)'
+          type: TRAP
+          key: nexo.hist.net_out_bytes
+          delay: '0'
+          history: 365d
+          trends: 365d
+          value_type: FLOAT
+          units: 'B'
+          description: ''
+          tags:
+            - tag: source
+              value: historical
+        - uuid: 0f532303a6dc44d08adf56f2f6d9f8db
+          name: '[hist] Conexiones a la base de datos'
+          type: TRAP
+          key: nexo.hist.db_connections
+          delay: '0'
+          history: 365d
+          trends: 365d
+          value_type: FLOAT
+          units: ''
+          description: 'RDS DatabaseConnections (CloudWatch).'
+          tags:
+            - tag: source
+              value: historical
+        - uuid: f77b4effe29e4a6c82dc4fa0c2028b29
+          name: '[hist] CPU de la base de datos (%)'
+          type: TRAP
+          key: nexo.hist.db_cpu_pct
+          delay: '0'
+          history: 365d
+          trends: 365d
+          value_type: FLOAT
+          units: '%'
+          description: 'RDS CPUUtilization (CloudWatch).'
+          tags:
+            - tag: source
+              value: historical
+        - uuid: 1c6608c692854eb3ba23c48870bc79cb
+          name: '[hist] Peticiones por intervalo (ALB)'
+          type: TRAP
+          key: nexo.hist.alb_requests
+          delay: '0'
+          history: 365d
+          trends: 365d
+          value_type: FLOAT
+          units: ''
+          description: 'ALB RequestCount (CloudWatch).'
+          tags:
+            - tag: source
+              value: historical
+        - uuid: 180b608d53204d548fc66c10fe60c0d8
+          name: '[hist] Errores 5xx por intervalo (ALB)'
+          type: TRAP
+          key: nexo.hist.alb_5xx
+          delay: '0'
+          history: 365d
+          trends: 365d
+          value_type: FLOAT
+          units: ''
+          description: 'ALB HTTPCode_Target_5XX_Count (CloudWatch).'
+          tags:
+            - tag: source
+              value: historical
+        - uuid: ee0f4be37e5f4b44b26a6ee333551bda
+          name: '[hist] Latencia de destino ALB (s)'
+          type: TRAP
+          key: nexo.hist.alb_target_time
+          delay: '0'
+          history: 365d
+          trends: 365d
+          value_type: FLOAT
+          units: 's'
+          description: 'ALB TargetResponseTime (CloudWatch).'
+          tags:
+            - tag: source
+              value: historical
+        - uuid: 97294ad33080436fb0573041ec652808
+          name: '[hist] Instancias en servicio (ASG)'
+          type: TRAP
+          key: nexo.hist.asg_in_service
+          delay: '0'
+          history: 365d
+          trends: 365d
+          value_type: FLOAT
+          units: ''
+          description: 'Auto Scaling GroupInServiceInstances (CloudWatch).'
+          tags:
+            - tag: source
+              value: historical
+        - uuid: 6a85027b15fc477796b24baf52eab2e6
+          name: '[hist] Tamaño almacenado del bucket (bytes)'
+          type: TRAP
+          key: nexo.hist.bucket_bytes
+          delay: '0'
+          history: 365d
+          trends: 365d
+          value_type: FLOAT
+          units: 'B'
+          description: 'OCI Object Storage StoredBytes.'
+          tags:
+            - tag: source
+              value: historical
+        - uuid: b6789c92503243549f272eb6407efde3
+          name: '[hist] Objetos en el bucket'
+          type: TRAP
+          key: nexo.hist.bucket_objects
+          delay: '0'
+          history: 365d
+          trends: 365d
+          value_type: FLOAT
+          units: ''
+          description: 'OCI Object Storage ObjectCount.'
+          tags:
+            - tag: source
+              value: historical
+        - uuid: a62a6c28bce445e7be9e7eb106ed3220
+          name: '[hist] Carga k6: latencia p95 (ms)'
+          type: TRAP
+          key: nexo.hist.k6_p95_ms
+          delay: '0'
+          history: 365d
+          trends: 365d
+          value_type: FLOAT
+          units: 'ms'
+          description: 'Resultados de pruebas de carga registrados en perf/results.'
+          tags:
+            - tag: source
+              value: historical
+        - uuid: 8943939f5f954ca19b632667c5f565d6
+          name: '[hist] Carga k6: peticiones por segundo'
+          type: TRAP
+          key: nexo.hist.k6_rps
+          delay: '0'
+          history: 365d
+          trends: 365d
+          value_type: FLOAT
+          units: 'rps'
+          description: ''
+          tags:
+            - tag: source
+              value: historical
+        - uuid: 8975e49901ee49b7b25a753c3cbd74bc
+          name: '[hist] Carga k6: errores inesperados (recuento)'
+          type: TRAP
+          key: nexo.hist.k6_errors
+          delay: '0'
+          history: 365d
+          trends: 365d
+          value_type: FLOAT
+          units: '%'
+          description: ''
+          tags:
+            - tag: source
+              value: historical
+        - uuid: 8d3bb8e84040415b90f461b9dd0c0472
+          name: '[hist] Object Storage: PutRequests (5 min)'
+          type: TRAP
+          key: nexo.hist.oci_put_requests
+          delay: '0'
+          history: 365d
+          trends: 365d
+          value_type: FLOAT
+          units: ''
+          description: 'OCI Monitoring, bucket de respaldos (cargas).'
+          tags:
+            - tag: source
+              value: historical
+        - uuid: 7f71ea3d73264707b9a88b3a4ba7f505
+          name: '[hist] Object Storage: GetRequests (5 min)'
+          type: TRAP
+          key: nexo.hist.oci_get_requests
+          delay: '0'
+          history: 365d
+          trends: 365d
+          value_type: FLOAT
+          units: ''
+          description: 'OCI Monitoring, bucket de respaldos (descargas/verificaciones).'
+          tags:
+            - tag: source
+              value: historical
+        - uuid: 3025806a16c6420493a741a10788bbb0
+          name: '[hist] Object Storage: ClientErrors (5 min)'
+          type: TRAP
+          key: nexo.hist.oci_client_errors
+          delay: '0'
+          history: 365d
+          trends: 365d
+          value_type: FLOAT
+          units: ''
+          description: 'Errores de cliente (p. ej. pruebas de denegación de permisos del usuario de carga).'
+          tags:
+            - tag: source
+              value: historical
+        - uuid: 1ba6830a8df248f1a028d162f9a34a5e
+          name: '[hist] Object Storage: latencia al primer byte (ms)'
+          type: TRAP
+          key: nexo.hist.oci_first_byte_ms
+          delay: '0'
+          history: 365d
+          trends: 365d
+          value_type: FLOAT
+          units: 'ms'
+          description: ''
+          tags:
+            - tag: source
+              value: historical
+        - uuid: 4497b3730cdb43c98f3b74ca40d4d823
+          name: '[hist] Failover Multi-AZ: código HTTP de /healthz (0 = sin respuesta)'
+          type: TRAP
+          key: nexo.hist.failover_healthz_code
+          delay: '0'
+          history: 365d
+          trends: 365d
+          value_type: FLOAT
+          units: ''
+          description: 'Sondeo de 1 s durante la conmutación real de la RDS (23-oct-2026).'
+          tags:
+            - tag: source
+              value: historical
+        - uuid: 3b8e80a71969480c8f7f1d42aa837db3
+          name: '[hist] Failover Multi-AZ: latencia de /healthz'
+          type: TRAP
+          key: nexo.hist.failover_healthz_s
+          delay: '0'
+          history: 365d
+          trends: 365d
+          value_type: FLOAT
+          units: 's'
+          description: ''
+          tags:
+            - tag: source
+              value: historical

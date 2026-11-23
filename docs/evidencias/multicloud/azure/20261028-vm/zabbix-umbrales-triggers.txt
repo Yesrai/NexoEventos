@@ -1,0 +1,26 @@
+Triggers (umbrales) activos relevantes — Zabbix 7.0 en Azure — 2026-10-28T14:43:07Z
+12 triggers listados (de 165 activos); el resto son los de las plantillas estándar de Zabbix
+[aws-nexoeventos-v1] Average  Catálogo /api/events no responde 200 (3 comprobaciones) en nexoeventos-demo.duckdns.org
+      count(/aws-nexoeventos-v1/nexo.http.events.code,#3,"ne",200)=3
+[aws-nexoeventos-v1] High     NexoEventos no disponible: /healthz falla 3 comprobaciones seguidas en nexoeventos-demo.
+      count(/aws-nexoeventos-v1/nexo.http.healthz.code,#3,"ne",200)=3
+[aws-nexoeventos-v1] Warning  El certificado TLS de nexoeventos-demo.duckdns.org vence en menos de 14 días
+      last(/aws-nexoeventos-v1/nexo.tls.days_left)<14
+[aws-nexoeventos-v1] Warning  Latencia alta de /healthz (> 1.5 s de media en 5 min) en nexoeventos-demo.duckdns.org
+      avg(/aws-nexoeventos-v1/web.page.perf["https://nexoeventos-demo.duckdns.org:443/healthz"],5m)>1.5
+[azure-obs] Average  Linux: High memory utilization
+      min(/azure-obs/vm.memory.util,5m)>90
+[azure-obs] Average  Linux: Lack of available memory
+      max(/azure-obs/vm.memory.size[available],5m)<20M and last(/azure-obs/vm.memory.size[total])>0
+[azure-obs] Average  Linux: Zabbix agent is not available
+      max(/azure-obs/zabbix[host,agent,available],3m)=0
+[azure-obs] Average  Zabbix server: Utilization of http agent poller processes is high
+      avg(/azure-obs/zabbix[process,http agent poller,avg,busy],10m)>75
+[azure-obs] Average  Zabbix server: Utilization of http poller processes is high
+      avg(/azure-obs/zabbix[process,http poller,avg,busy],10m)>75
+[azure-obs] High     Zabbix server: Zabbix value cache working in low-memory mode
+      last(/azure-obs/zabbix[vcache,cache,mode])=1
+[azure-obs] Warning  Linux: High CPU utilization
+      min(/azure-obs/system.cpu.util,5m)>90
+[azure-obs] Warning  Linux: sda: Disk read/write request responses are too high
+      min(/azure-obs/vfs.dev.read.await[sda],15m) > 20 or min(/azure-obs/vfs.dev.write.await[sda],15m) > 20

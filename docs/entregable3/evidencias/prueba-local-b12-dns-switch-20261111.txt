@@ -1,0 +1,19 @@
+test_api_base_solo_en_pruebas (test_dns_switch.Cambios.test_api_base_solo_en_pruebas) ... ok
+test_apply_correcto_guarda_estado_audita_y_espera_propagacion_sin_filtrar_el_token (test_dns_switch.Cambios.test_apply_correcto_guarda_estado_audita_y_espera_propagacion_sin_filtrar_el_token) ... ok
+test_apply_exige_entorno_y_frase_exacta (test_dns_switch.Cambios.test_apply_exige_entorno_y_frase_exacta) ... ok
+test_destino_o_dominio_fuera_de_lista_blanca (test_dns_switch.Cambios.test_destino_o_dominio_fuera_de_lista_blanca) ... ok
+test_dos_cambios_simultaneos_solo_uno_pasa (test_dns_switch.Cambios.test_dos_cambios_simultaneos_solo_uno_pasa) ... ok
+test_intervalo_minimo_y_sin_cambios (test_dns_switch.Cambios.test_intervalo_minimo_y_sin_cambios) ... ok
+test_plan_no_cambia_nada_y_no_llama_al_proveedor (test_dns_switch.Cambios.test_plan_no_cambia_nada_y_no_llama_al_proveedor) ... ok
+test_rechazo_o_caida_del_proveedor_no_cambia_el_estado_ni_filtra_el_token (test_dns_switch.Cambios.test_rechazo_o_caida_del_proveedor_no_cambia_el_estado_ni_filtra_el_token) ... ok
+test_rollback_vuelve_a_la_ip_anterior_y_exige_su_propia_frase (test_dns_switch.Cambios.test_rollback_vuelve_a_la_ip_anterior_y_exige_su_propia_frase) ... ok
+test_token_ausente_o_con_permisos_inseguros (test_dns_switch.Cambios.test_token_ausente_o_con_permisos_inseguros) ... ok
+test_verify_espera_y_detecta_resolvedores_atrasados (test_dns_switch.Cambios.test_verify_espera_y_detecta_resolvedores_atrasados) ... ok
+test_configuracion_con_ip_invalida_en_lista_blanca_se_rechaza (test_dns_switch.Validacion.test_configuracion_con_ip_invalida_en_lista_blanca_se_rechaza) ... ok
+test_ips_validas_e_invalidas (test_dns_switch.Validacion.test_ips_validas_e_invalidas) ... ok
+test_paquete_dns_ida_y_vuelta_con_compresion_de_nombres (test_dns_switch.Validacion.test_paquete_dns_ida_y_vuelta_con_compresion_de_nombres) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 6.255s
+
+OK

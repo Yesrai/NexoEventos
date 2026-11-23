@@ -1,0 +1,21 @@
+{"t": 1794360484.248, "ev": "monitor_inicio", "auto": true, "pid": 3941}
+{"t": 1794360484.258, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.04, "prot": {"mode": "protected", "seq": 2, "primario": "pg-aws", "epoch": 1, "verified_age_s": 1.37}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794360489.292, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.67, "prot": {"mode": "protected", "seq": 2, "primario": "pg-aws", "epoch": 1, "verified_age_s": 0.2}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794360492.934, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 1, "error": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  terminating connection due to unexpected postmaster "}
+{"t": 1794360493.514, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 2, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794360493.955, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 3, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794360493.962, "ev": "proteccion", "modo": "promoting", "antes": "protected", "ok": true, "seq": 3, "primario": "pg-aws", "motivo": "reclamo exclusivo de la promoción"}
+{"t": 1794360493.962, "ev": "promote_inicio", "destino": "pg-oci", "origen": "pg-aws", "planificada": false, "epoca": 1}
+{"t": 1794360493.964, "ev": "lease_retirado", "epoca": 2}
+{"t": 1794360494.103, "ev": "fence", "nodo": "pg-aws", "detenido": true, "escritura_real_aceptada": false, "escritura_real_error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known", "resultado": "confirmado"}
+{"t": 1794360494.528, "ev": "secuencias_ajustadas", "cantidad": 6}
+{"t": 1794360495.154, "ev": "destino_abierto", "rol_sin_solo_lectura": true, "solo_lectura_global_apagado": true, "modo_abierto": {"modo": "open", "escribir_hba": true, "recargar": true, "efecto_en_conexion_nueva": true, "mensaje_de_la_conexion_nueva": ""}}
+{"t": 1794360495.244, "ev": "escritura_destino", "aceptada": true, "error": ""}
+{"t": 1794360495.248, "ev": "lease_otorgado", "escritor": "pg-oci", "epoca": 3, "t_desde_inicio_s": 1.29}
+{"t": 1794360495.252, "ev": "proteccion", "modo": "unprotected", "antes": "unknown", "ok": true, "seq": 6, "primario": "pg-oci", "motivo": "conmutación: aún no hay seguidor; las escrituras confirmadas hasta reconstruirlo NO tienen copia"}
+{"t": 1794360496.289, "ev": "haproxy_db_enruta", "nodo": "pg-oci", "t_desde_inicio_s": 2.33}
+{"t": 1794360496.399, "ev": "verificacion_final", "antiguo_escribe": false, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794360496.404, "ev": "latido", "witness": {"writer": "pg-oci", "epoch": 3, "lease_remaining_s": 4.84, "prot": {"mode": "unprotected", "seq": 6, "primario": "pg-oci", "epoch": 3, "verified_age_s": null}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794360501.444, "ev": "latido", "witness": {"writer": "pg-oci", "epoch": 3, "lease_remaining_s": 5.61, "prot": {"mode": "unprotected", "seq": 6, "primario": "pg-oci", "epoch": 3, "verified_age_s": null}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794360506.507, "ev": "latido", "witness": {"writer": "pg-oci", "epoch": 3, "lease_remaining_s": 5.61, "prot": {"mode": "unprotected", "seq": 6, "primario": "pg-oci", "epoch": 3, "verified_age_s": null}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794360509.666, "ev": "monitor_fin", "motivo": "SIGTERM"}

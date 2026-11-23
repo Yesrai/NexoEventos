@@ -1,0 +1,610 @@
+{
+  "pruebas": [
+    {
+      "prueba": "F0 la replicación es síncrona desde la primaria: ajustes y pg_stat_replication en quorum; con el seguidor retenido el COMMIT espera (SyncRep) y al volver el seguidor YA había confirmado (flush_lsn >= LSN de la transacción); el control asíncrono NO espera y al volver el seguidor aún NO había confirmado",
+      "ok": true,
+      "detalle": "{\"synchronous_standby_names\": \"ANY 1 (sub_oci)\", \"synchronous_commit_de_la_primaria\": \"on\", \"fsync_primaria_y_seguidor\": [\"on\", \"on\"], \"suscripcion\": \"sub_oci synchronous_commit=on habilitada=true\", \"pg_stat_replication\": \"sub_oci | streaming | quorum | sent=0/1CC90F0 write=0/1CC90F0 flush=0/1CC90F0 replay=0/1CC90F0\", \"monitor_y_proteccion\": \"protected\", \"COMMIT_SINCRONO_con_el_seguidor_retenido\": {\"duracion_del_commit_s\": 3.07, \"durante_la_espera\": {\"commit_sigue_esperando\": true, \"wait_event_en_pg_stat_activity\": \"IPC/SyncRep\", \"fila_en_el_seguidor_mientras_espera\": \"no consultable (tabla bloqueada)\"}, \"fila_en_el_seguidor_al_terminar_el_bloqueo\": \"1\", \"LSN_de_la_transaccion\": \"0/1CC93C0\", \"AL_VOLVER_EL_COMMIT_flush_lsn_del_seguidor\": \"0/1CC9870\", \"AL_VOLVER_EL_COMMIT_el_seguidor_ya_habia_confirmado_la_transaccion\": \"t\", \"flush_lsn_confirmado_por_el_seguidor\": \"0/1CC9930\", \"flush_lsn_mayor_o_igual_que_el_LSN_de_la_transaccion\": \"t\"}, \"CONTROL_ASINCRONO_con_el_seguidor_retenido\": {\"duracion_del_commit_s\": 0.08, \"durante_la_espera\": {\"commit_sigue_esperando\": false, \"wait_event_en_pg_stat_activity\": \"(ninguno)\", \"fila_en_el_seguidor_mientras_espera\": \"no consultable (tabla bloqueada)\"}, \"fila_en_el_seguidor_al_terminar_el_bloqueo\": \"1\", \"LSN_de_la_transaccion\": \"0/1CC9B38\", \"AL_VOLVER_EL_COMMIT_flush_lsn_del_seguidor\": \"0/1CC9AB0\", \"AL_VOLVER_EL_COMMIT_el_seguidor_ya_habia_confirmado_la_transaccion\": \"f\", \"flush_lsn_confirmado_por_el_seguidor\": \"0/1CC9DE0\", \"flush_lsn_mayor_o_igual_que_el_LSN_de_la_transaccion\": \"t\"}}"
+    },
+    {
+      "prueba": "F1 con la estrategia síncrona el seguidor figura como candidato síncrono (quorum) y la suscripción lleva synchronous_commit='on'; las latencias síncrona, asíncrona y con la opción en 'off' se registran como DATO (la diferencia con 'off' varió entre 10 y 224 ms de mediana según el patrón de carga: no se usa como criterio)",
+      "ok": true,
+      "detalle": "{\"estado_del_seguidor_en_pg_stat_replication\": \"quorum\", \"latencia_de_confirmacion_sincrona\": {\"p50_ms\": 4.77, \"p95_ms\": 7.45}, \"latencia_asincrona\": {\"p50_ms\": 4.49, \"p95_ms\": 7.32}, \"sincrona_con_suscripcion_synchronous_commit_off_(configuracion_incorrecta)\": {\"p50_ms\": 229.29, \"p95_ms\": 453.4}}"
+    },
+    {
+      "prueba": "C1 F2-sync-1: sin sobreventa ni duplicados (reserved_count == suma de cantidades; una reserva por clave de idempotencia) tras la conmutación",
+      "ok": true,
+      "detalle": "{\"reservas_en_nueva_primaria\": 1581, \"claves_distintas\": 1581, \"reserved_count\": \"1581\", \"suma_cantidades\": \"1581\"}"
+    },
+    {
+      "prueba": "C1 F2-sync-1: el servicio de escritura se recupera por el borde tras la caída de la primaria",
+      "ok": true,
+      "detalle": "{\"RTO_escritura_s_desde_la_orden_de_caida\": 3.38, \"RTO_lectura_s\": 3.51, \"lease_otorgado_s\": 2.42}"
+    },
+    {
+      "prueba": "F2 1: con replicación síncrona y seguidor sano, 0 reservas confirmadas al cliente se pierden al caer la primaria (huérfanas inciertas: 0)",
+      "ok": true,
+      "detalle": "{\"RTO_escritura_s_desde_la_orden_de_caida\": 3.38, \"RPO_transacciones_confirmadas_al_cliente_PERDIDAS\": 0, \"huerfanas_NO_confirmadas_al_cliente_(INCIERTAS)\": 0, \"errores_http_escritura\": {\"503\": 56}, \"escrituras_confirmadas_al_cliente\": 1581}"
+    },
+    {
+      "prueba": "C1 F2-sync-2: sin sobreventa ni duplicados (reserved_count == suma de cantidades; una reserva por clave de idempotencia) tras la conmutación",
+      "ok": true,
+      "detalle": "{\"reservas_en_nueva_primaria\": 1596, \"claves_distintas\": 1596, \"reserved_count\": \"1596\", \"suma_cantidades\": \"1596\"}"
+    },
+    {
+      "prueba": "C1 F2-sync-2: el servicio de escritura se recupera por el borde tras la caída de la primaria",
+      "ok": true,
+      "detalle": "{\"RTO_escritura_s_desde_la_orden_de_caida\": 3.7, \"RTO_lectura_s\": 3.61, \"lease_otorgado_s\": 2.69}"
+    },
+    {
+      "prueba": "F2 2: con replicación síncrona y seguidor sano, 0 reservas confirmadas al cliente se pierden al caer la primaria (huérfanas inciertas: 0)",
+      "ok": true,
+      "detalle": "{\"RTO_escritura_s_desde_la_orden_de_caida\": 3.7, \"RPO_transacciones_confirmadas_al_cliente_PERDIDAS\": 0, \"huerfanas_NO_confirmadas_al_cliente_(INCIERTAS)\": 0, \"errores_http_escritura\": {\"503\": 56}, \"escrituras_confirmadas_al_cliente\": 1596}"
+    },
+    {
+      "prueba": "C1 F2-sync-3: sin sobreventa ni duplicados (reserved_count == suma de cantidades; una reserva por clave de idempotencia) tras la conmutación",
+      "ok": true,
+      "detalle": "{\"reservas_en_nueva_primaria\": 1602, \"claves_distintas\": 1602, \"reserved_count\": \"1602\", \"suma_cantidades\": \"1602\"}"
+    },
+    {
+      "prueba": "C1 F2-sync-3: el servicio de escritura se recupera por el borde tras la caída de la primaria",
+      "ok": true,
+      "detalle": "{\"RTO_escritura_s_desde_la_orden_de_caida\": 3.79, \"RTO_lectura_s\": 3.77, \"lease_otorgado_s\": 2.75}"
+    },
+    {
+      "prueba": "F2 3: con replicación síncrona y seguidor sano, 0 reservas confirmadas al cliente se pierden al caer la primaria (huérfanas inciertas: 0)",
+      "ok": true,
+      "detalle": "{\"RTO_escritura_s_desde_la_orden_de_caida\": 3.79, \"RPO_transacciones_confirmadas_al_cliente_PERDIDAS\": 0, \"huerfanas_NO_confirmadas_al_cliente_(INCIERTAS)\": 0, \"errores_http_escritura\": {\"503\": 56}, \"escrituras_confirmadas_al_cliente\": 1602}"
+    },
+    {
+      "prueba": "C1 F2b-retraso-de-3s: sin sobreventa ni duplicados (reserved_count == suma de cantidades; una reserva por clave de idempotencia) tras la conmutación",
+      "ok": true,
+      "detalle": "{\"reservas_en_nueva_primaria\": 1358, \"claves_distintas\": 1358, \"reserved_count\": \"1358\", \"suma_cantidades\": \"1358\"}"
+    },
+    {
+      "prueba": "C1 F2b-retraso-de-3s: el servicio de escritura se recupera por el borde tras la caída de la primaria",
+      "ok": true,
+      "detalle": "{\"RTO_escritura_s_desde_la_orden_de_caida\": 3.29, \"RTO_lectura_s\": 3.39, \"lease_otorgado_s\": 2.28}"
+    },
+    {
+      "prueba": "F2b el mismo escenario de 3 s (seguidor desconectado y caída de la primaria) con replicación síncrona: 0 reservas confirmadas ausentes (con asíncrona fueron 328)",
+      "ok": true,
+      "detalle": "{\"RPO_transacciones_confirmadas_al_cliente_PERDIDAS\": 0, \"huerfanas_NO_confirmadas_al_cliente_(INCIERTAS)\": 1, \"errores_http_escritura\": {\"error_de_red\": 8, \"503\": 48}, \"RTO_escritura_s_desde_la_orden_de_caida\": 3.29}"
+    },
+    {
+      "prueba": "C1 F3-retraso-de-aplicacion: sin sobreventa ni duplicados (reserved_count == suma de cantidades; una reserva por clave de idempotencia) tras la conmutación",
+      "ok": true,
+      "detalle": "{\"reservas_en_nueva_primaria\": 1340, \"claves_distintas\": 1340, \"reserved_count\": \"1340\", \"suma_cantidades\": \"1340\"}"
+    },
+    {
+      "prueba": "C1 F3-retraso-de-aplicacion: el servicio de escritura se recupera por el borde tras la caída de la primaria",
+      "ok": true,
+      "detalle": "{\"RTO_escritura_s_desde_la_orden_de_caida\": 3.35, \"RTO_lectura_s\": 3.46, \"lease_otorgado_s\": 2.34}"
+    },
+    {
+      "prueba": "F3 con la aplicación retrasada en el seguidor (tabla bloqueada) y caída de la primaria a mitad: 0 reservas confirmadas perdidas, y no hubo confirmaciones al cliente mientras duraba el bloqueo",
+      "ok": true,
+      "detalle": "{\"RPO_transacciones_confirmadas_al_cliente_PERDIDAS\": 0, \"confirmaciones_al_cliente_durante_el_bloqueo_inducido\": 0, \"huerfanas_NO_confirmadas_al_cliente_(INCIERTAS)\": 1, \"RTO_escritura_s_desde_la_orden_de_caida\": 3.35}"
+    },
+    {
+      "prueba": "F4 con el seguidor no disponible y política BLOQUEAR: los COMMIT esperan (SyncRep), no se confirma nada al cliente, no se degrada ni se promueve (la primaria está viva) y al volver el seguidor se reanuda",
+      "ok": true,
+      "detalle": "{\"commits_esperando_en_SyncRep\": \"1\", \"confirmaciones_201_(COMMIT_nuevo)_con_el_seguidor_caido\": 0, \"respuestas_200_repeticion_de_claves_ya_replicadas\": 0, \"todas_las_repeticiones_ya_estaban_en_el_seguidor\": true, \"modo_de_proteccion\": \"protected\", \"promociones\": false, \"confirmaciones_tras_volver_el_seguidor\": 493, \"perdidas\": 0}"
+    },
+    {
+      "prueba": "F4b con el seguidor detenido: los COMMIT esperan, 0 confirmaciones sin copia, no se promueve (la primaria vive), y al reiniciar el seguidor se reanuda sin pérdidas",
+      "ok": true,
+      "detalle": "{\"commits_esperando_en_SyncRep\": \"1\", \"confirmaciones_al_cliente_con_el_seguidor_detenido\": 0, \"promociones\": false, \"confirmaciones_tras_reiniciar_el_seguidor\": 26, \"perdidas\": 0, \"modo\": \"protected\"}"
+    },
+    {
+      "prueba": "F5 la intención 'degrading' se registra ANTES de desactivar el síncrono y 'degraded' después; con la primaria caída la promoción automática queda bloqueada (con sus razones); la promoción insegura explícita pierde solo reservas confirmadas DESPUÉS de que el estado dejó de ser 'protected' (límite de la garantía, no un defecto)",
+      "ok": true,
+      "detalle": "{\"orden_intencion_desactivacion_registro\": {\"degrading\": 1794360660.25, \"sync_deshabilitada\": 1794360660.521, \"degraded\": 1794360660.526, \"orden_correcto\": true}, \"degradado_tras_s\": 6.2, \"confirmadas_desde_que_el_estado_dejo_de_ser_protected\": 511, \"promocion_automatica_bloqueada\": true, \"promocion_insegura_ordenada_ok\": true, \"confirmadas_perdidas_tras_la_promocion_insegura\": 511, \"primera_perdida_menos_registro_de_la_intencion_s\": 0.243, \"todas_las_perdidas_son_posteriores_al_registro_de_la_intencion_degrading\": true}"
+    },
+    {
+      "prueba": "F5c en 30 carreras simultáneas entre degradar y promover sobre el mismo estado, exactamente UNA transición gana siempre (nunca ambas)",
+      "ok": true,
+      "detalle": "{\"degradar\": 18, \"promover\": 12, \"ninguna\": 0, \"ambas\": 0}"
+    },
+    {
+      "prueba": "F5x after_intent/exit: con la primaria caída tras el fallo en ese punto NO se promueve automáticamente (compuerta bloqueada, sin lease ni promoción) y no se confirma nada más",
+      "ok": true,
+      "detalle": "{\"fallo_inyectado\": true, \"controlador_vivo_tras_el_fallo\": false, \"transiciones_de_estado\": [\"degraded\", \"degrading\"], \"promocion_bloqueada\": true, \"lease_a_pg-oci\": false, \"promocion_iniciada\": false, \"confirmaciones_al_cliente_tras_la_caida\": 0}"
+    },
+    {
+      "prueba": "F5x after_intent/kill_primary: con la primaria caída tras el fallo en ese punto NO se promueve automáticamente (compuerta bloqueada, sin lease ni promoción) y no se confirma nada más",
+      "ok": true,
+      "detalle": "{\"fallo_inyectado\": true, \"controlador_vivo_tras_el_fallo\": true, \"transiciones_de_estado\": [\"degrading\"], \"promocion_bloqueada\": true, \"lease_a_pg-oci\": false, \"promocion_iniciada\": false, \"confirmaciones_al_cliente_tras_la_caida\": 0}"
+    },
+    {
+      "prueba": "F5x after_disable/exit: con la primaria caída tras el fallo en ese punto NO se promueve automáticamente (compuerta bloqueada, sin lease ni promoción) y no se confirma nada más",
+      "ok": true,
+      "detalle": "{\"fallo_inyectado\": true, \"controlador_vivo_tras_el_fallo\": false, \"transiciones_de_estado\": [\"degraded\", \"degrading\"], \"promocion_bloqueada\": true, \"lease_a_pg-oci\": false, \"promocion_iniciada\": false, \"confirmaciones_al_cliente_tras_la_caida\": 0}"
+    },
+    {
+      "prueba": "F5x after_disable/kill_primary: con la primaria caída tras el fallo en ese punto NO se promueve automáticamente (compuerta bloqueada, sin lease ni promoción) y no se confirma nada más",
+      "ok": true,
+      "detalle": "{\"fallo_inyectado\": true, \"controlador_vivo_tras_el_fallo\": true, \"transiciones_de_estado\": [\"degrading\", \"degraded\"], \"promocion_bloqueada\": true, \"lease_a_pg-oci\": false, \"promocion_iniciada\": false, \"confirmaciones_al_cliente_tras_la_caida\": 0}"
+    },
+    {
+      "prueba": "F5x after_record/exit: con la primaria caída tras el fallo en ese punto NO se promueve automáticamente (compuerta bloqueada, sin lease ni promoción) y no se confirma nada más",
+      "ok": true,
+      "detalle": "{\"fallo_inyectado\": true, \"controlador_vivo_tras_el_fallo\": false, \"transiciones_de_estado\": [\"degrading\", \"degraded\"], \"promocion_bloqueada\": true, \"lease_a_pg-oci\": false, \"promocion_iniciada\": false, \"confirmaciones_al_cliente_tras_la_caida\": 0}"
+    },
+    {
+      "prueba": "F5x after_record/kill_primary: con la primaria caída tras el fallo en ese punto NO se promueve automáticamente (compuerta bloqueada, sin lease ni promoción) y no se confirma nada más",
+      "ok": true,
+      "detalle": "{\"fallo_inyectado\": true, \"controlador_vivo_tras_el_fallo\": true, \"transiciones_de_estado\": [\"degrading\", \"degraded\"], \"promocion_bloqueada\": true, \"lease_a_pg-oci\": false, \"promocion_iniciada\": false, \"confirmaciones_al_cliente_tras_la_caida\": 0}"
+    },
+    {
+      "prueba": "F6 conmutación: queda UNPROTECTED sin síncrono heredado; la antigua primaria que reaparece sola conserva un síncrono OBSOLETO pero NO escribe (arranca cerrada) y el escritor sigue siendo pg-oci; la reconstrucción limpia el síncrono (verificado), no se bloquea y devuelve PROTECTED; el retorno planificado no pierde reservas confirmadas",
+      "ok": true,
+      "detalle": "{\"modo_tras_la_conmutacion\": \"unprotected\", \"synchronous_standby_names_en_la_nueva_primaria\": \"\", \"confirmaciones_sin_proteccion\": 0, \"perdidas_en_la_conmutacion\": 0, \"antigua_primaria_reiniciada_sola\": {\"synchronous_standby_names_obsoleto\": \"ANY 1 (sub_oci)\", \"escrituras_directas_aceptadas\": [false, false], \"escritor_en_el_witness\": \"pg-oci\", \"promociones_automaticas_hacia_ella\": 0}, \"reconstruccion\": {\"duracion_s\": 2.7, \"synchronous_standby_names_tras_limpiar\": \"\", \"modo_de_proteccion\": \"protected\", \"estado_del_seguidor\": \"quorum\"}, \"retorno_planificado_ok\": true, \"perdidas_en_el_retorno\": 0}"
+    },
+    {
+      "prueba": "F7 caída simultánea de ambos nodos: tras reiniciar la primaria, 0 reservas confirmadas ausentes (durabilidad local con fsync); NO implica disponibilidad ni cubre pérdida de disco",
+      "ok": true,
+      "detalle": "{\"confirmadas\": 496, \"perdidas_tras_reiniciar_la_primaria\": 0}"
+    },
+    {
+      "prueba": "F8 con incertidumbre sobre si lo confirmado tiene copia (registro de protección ausente) y la primaria caída: no se promueve, se registra el motivo y no se confirma nada más (falla segura)",
+      "ok": true,
+      "detalle": "{\"promocion_bloqueada\": true, \"lease_otorgado\": false, \"confirmaciones_al_cliente_tras_la_caida\": 0, \"motivo\": \"no se puede comprobar que lo confirmado tenga copia síncrona: promover podría perder reservas; se requiere decisión explícita (LAB_UNSAFE_PROMOTE=1)\"}"
+    },
+    {
+      "prueba": "C2a caída tras confirmar y antes de responder (con la reserva ya replicada): el reintento con la misma clave devuelve 200 con LA MISMA reserva, sin duplicar",
+      "ok": true,
+      "detalle": "{\"respuesta_retenida_tras_confirmar\": true, \"reserva_en_la_primaria_antes_de_caer\": \"7bffb2dc-0ce6-4f59-8d39-c667e05632d4\", \"replicada_antes_de_caer\": true, \"cliente_no_recibio_respuesta\": true, \"reintentos_con_la_misma_clave\": [503, 503, 503, 503, 503, 503, 200], \"estado_final\": 200, \"replayed\": true, \"reservation_id_final\": \"7bffb2dc-0ce6-4f59-8d39-c667e05632d4\", \"misma_reserva\": true, \"reservas_con_esa_clave_en_la_nueva_primaria\": \"1\", \"tiempo_hasta_respuesta_valida_s\": 3.8, \"idempotency_key\": \"bcac9731bca24a95a765588f4cda7587\"}"
+    },
+    {
+      "prueba": "F9a con replicación síncrona, la respuesta HTTP solo existe si la reserva ya está en el seguidor: tras la caída, el reintento con la misma clave devuelve la MISMA reserva (200) y no hay duplicado",
+      "ok": true,
+      "detalle": "{\"respuesta_retenida_tras_confirmar\": true, \"reserva_en_la_primaria_antes_de_caer\": \"7bffb2dc-0ce6-4f59-8d39-c667e05632d4\", \"replicada_antes_de_caer\": true, \"cliente_no_recibio_respuesta\": true, \"reintentos_con_la_misma_clave\": [503, 503, 503, 503, 503, 503, 200], \"estado_final\": 200, \"replayed\": true, \"reservation_id_final\": \"7bffb2dc-0ce6-4f59-8d39-c667e05632d4\", \"misma_reserva\": true, \"reservas_con_esa_clave_en_la_nueva_primaria\": \"1\", \"tiempo_hasta_respuesta_valida_s\": 3.8, \"idempotency_key\": \"bcac9731bca24a95a765588f4cda7587\"}"
+    },
+    {
+      "prueba": "F9b caída con el COMMIT esperando al seguidor: el cliente NO recibió confirmación; el reintento crea la reserva en la nueva primaria (201); la fila de la antigua es una transacción INCIERTA (huérfana, duplicado lógico detectado), nunca una confirmación perdida",
+      "ok": true,
+      "detalle": "{\"commit_esperando_al_seguidor_cuando_cayo_la_primaria\": true, \"cliente_recibio_respuesta_original\": false, \"reintento_con_la_misma_clave\": 201, \"reintento_replayed\": false, \"huerfanas_en_la_antigua_primaria\": {\"reservations\": 1, \"tickets\": 1}, \"duplicados_logicos\": [{\"orfana\": \"a66a71bf-ce20-453c-8553-e0b8004d3cb4\", \"idempotency_key\": \"ec9ff550e37b420a9b07b06f1ac2d5c1\", \"reserva_en_nueva_primaria\": \"dd39cb48-1e43-40af-a84f-62fd8c5eba19\"}], \"Idempotency_Key\": \"ec9ff550e37b420a9b07b06f1ac2d5c1\"}"
+    }
+  ],
+  "datos": {
+    "F0": {
+      "synchronous_standby_names": "ANY 1 (sub_oci)",
+      "synchronous_commit_de_la_primaria": "on",
+      "fsync_primaria_y_seguidor": [
+        "on",
+        "on"
+      ],
+      "suscripcion": "sub_oci synchronous_commit=on habilitada=true",
+      "pg_stat_replication": "sub_oci | streaming | quorum | sent=0/1CC90F0 write=0/1CC90F0 flush=0/1CC90F0 replay=0/1CC90F0",
+      "monitor_y_proteccion": "protected",
+      "COMMIT_SINCRONO_con_el_seguidor_retenido": {
+        "duracion_del_commit_s": 3.07,
+        "durante_la_espera": {
+          "commit_sigue_esperando": true,
+          "wait_event_en_pg_stat_activity": "IPC/SyncRep",
+          "fila_en_el_seguidor_mientras_espera": "no consultable (tabla bloqueada)"
+        },
+        "fila_en_el_seguidor_al_terminar_el_bloqueo": "1",
+        "LSN_de_la_transaccion": "0/1CC93C0",
+        "AL_VOLVER_EL_COMMIT_flush_lsn_del_seguidor": "0/1CC9870",
+        "AL_VOLVER_EL_COMMIT_el_seguidor_ya_habia_confirmado_la_transaccion": "t",
+        "flush_lsn_confirmado_por_el_seguidor": "0/1CC9930",
+        "flush_lsn_mayor_o_igual_que_el_LSN_de_la_transaccion": "t"
+      },
+      "CONTROL_ASINCRONO_con_el_seguidor_retenido": {
+        "duracion_del_commit_s": 0.08,
+        "durante_la_espera": {
+          "commit_sigue_esperando": false,
+          "wait_event_en_pg_stat_activity": "(ninguno)",
+          "fila_en_el_seguidor_mientras_espera": "no consultable (tabla bloqueada)"
+        },
+        "fila_en_el_seguidor_al_terminar_el_bloqueo": "1",
+        "LSN_de_la_transaccion": "0/1CC9B38",
+        "AL_VOLVER_EL_COMMIT_flush_lsn_del_seguidor": "0/1CC9AB0",
+        "AL_VOLVER_EL_COMMIT_el_seguidor_ya_habia_confirmado_la_transaccion": "f",
+        "flush_lsn_confirmado_por_el_seguidor": "0/1CC9DE0",
+        "flush_lsn_mayor_o_igual_que_el_LSN_de_la_transaccion": "t"
+      }
+    },
+    "F1": {
+      "estado_del_seguidor_en_pg_stat_replication": "quorum",
+      "latencia_de_confirmacion_sincrona": {
+        "p50_ms": 4.77,
+        "p95_ms": 7.45
+      },
+      "latencia_asincrona": {
+        "p50_ms": 4.49,
+        "p95_ms": 7.32
+      },
+      "sincrona_con_suscripcion_synchronous_commit_off_(configuracion_incorrecta)": {
+        "p50_ms": 229.29,
+        "p95_ms": 453.4
+      }
+    },
+    "F2": {
+      "F2-sync-1": {
+        "induccion_de_retraso_s": 0.0,
+        "RTO_escritura_s_desde_la_orden_de_caida": 3.38,
+        "RTO_lectura_s": 3.51,
+        "lectura_primer_error_s": 0.07,
+        "lectura_ultimo_error_s": 3.28,
+        "deteccion_primera_sonda_fallida_s": 0.09,
+        "aislamiento_confirmado_s": 1.32,
+        "lease_otorgado_s": 2.42,
+        "haproxy_db_enruta_s": 3.44,
+        "escrituras_intentos": 1637,
+        "escrituras_confirmadas_al_cliente": 1581,
+        "de_ellas_repetidas_200_por_idempotencia": 0,
+        "errores_http_escritura": {
+          "503": 56
+        },
+        "lecturas": 298,
+        "errores_http_lectura": {
+          "503": 39
+        },
+        "retraso_de_replicacion_maximo_antes_de_caer_KiB": 0.0,
+        "latencia_de_confirmacion_ms_p50_antes_de_la_caida": 9.71,
+        "latencia_de_confirmacion_ms_p95_antes_de_la_caida": 33.71,
+        "intentos_no_exitosos_(reintentos_con_la_misma_clave)": 56,
+        "RPO_transacciones_confirmadas_al_cliente_PERDIDAS": 0,
+        "confirmaciones_al_cliente_durante_el_bloqueo_inducido": null,
+        "huerfanas_en_la_antigua_primaria_reservas": 0,
+        "huerfanas_confirmadas_al_cliente_(perdidas)": 0,
+        "huerfanas_NO_confirmadas_al_cliente_(INCIERTAS)": 0,
+        "huerfanas_con_clave_repetida_en_la_nueva_primaria_(duplicado_logico)": 0,
+        "perdidas_confirmadas_coinciden_con_las_huerfanas_confirmadas": true,
+        "RPO_ventana_s_(caida_menos_la_confirmacion_perdida_mas_antigua)": null,
+        "filas_en_la_nueva_primaria_sin_confirmar_al_cliente": 0,
+        "reservas_en_nueva_primaria": 1581,
+        "claves_distintas": 1581,
+        "reserved_count": "1581",
+        "suma_cantidades": "1581"
+      },
+      "F2-sync-2": {
+        "induccion_de_retraso_s": 0.0,
+        "RTO_escritura_s_desde_la_orden_de_caida": 3.7,
+        "RTO_lectura_s": 3.61,
+        "lectura_primer_error_s": 0.06,
+        "lectura_ultimo_error_s": 3.51,
+        "deteccion_primera_sonda_fallida_s": 0.45,
+        "aislamiento_confirmado_s": 1.62,
+        "lease_otorgado_s": 2.69,
+        "haproxy_db_enruta_s": 3.71,
+        "escrituras_intentos": 1652,
+        "escrituras_confirmadas_al_cliente": 1596,
+        "de_ellas_repetidas_200_por_idempotencia": 0,
+        "errores_http_escritura": {
+          "503": 56
+        },
+        "lecturas": 300,
+        "errores_http_lectura": {
+          "503": 37
+        },
+        "retraso_de_replicacion_maximo_antes_de_caer_KiB": 1.7,
+        "latencia_de_confirmacion_ms_p50_antes_de_la_caida": 10.5,
+        "latencia_de_confirmacion_ms_p95_antes_de_la_caida": 32.29,
+        "intentos_no_exitosos_(reintentos_con_la_misma_clave)": 56,
+        "RPO_transacciones_confirmadas_al_cliente_PERDIDAS": 0,
+        "confirmaciones_al_cliente_durante_el_bloqueo_inducido": null,
+        "huerfanas_en_la_antigua_primaria_reservas": 0,
+        "huerfanas_confirmadas_al_cliente_(perdidas)": 0,
+        "huerfanas_NO_confirmadas_al_cliente_(INCIERTAS)": 0,
+        "huerfanas_con_clave_repetida_en_la_nueva_primaria_(duplicado_logico)": 0,
+        "perdidas_confirmadas_coinciden_con_las_huerfanas_confirmadas": true,
+        "RPO_ventana_s_(caida_menos_la_confirmacion_perdida_mas_antigua)": null,
+        "filas_en_la_nueva_primaria_sin_confirmar_al_cliente": 0,
+        "reservas_en_nueva_primaria": 1596,
+        "claves_distintas": 1596,
+        "reserved_count": "1596",
+        "suma_cantidades": "1596"
+      },
+      "F2-sync-3": {
+        "induccion_de_retraso_s": 0.0,
+        "RTO_escritura_s_desde_la_orden_de_caida": 3.79,
+        "RTO_lectura_s": 3.77,
+        "lectura_primer_error_s": 0.1,
+        "lectura_ultimo_error_s": 3.7,
+        "deteccion_primera_sonda_fallida_s": 0.54,
+        "aislamiento_confirmado_s": 1.66,
+        "lease_otorgado_s": 2.75,
+        "haproxy_db_enruta_s": 3.78,
+        "escrituras_intentos": 1658,
+        "escrituras_confirmadas_al_cliente": 1602,
+        "de_ellas_repetidas_200_por_idempotencia": 0,
+        "errores_http_escritura": {
+          "503": 56
+        },
+        "lecturas": 300,
+        "errores_http_lectura": {
+          "503": 40
+        },
+        "retraso_de_replicacion_maximo_antes_de_caer_KiB": 0.0,
+        "latencia_de_confirmacion_ms_p50_antes_de_la_caida": 9.92,
+        "latencia_de_confirmacion_ms_p95_antes_de_la_caida": 24.63,
+        "intentos_no_exitosos_(reintentos_con_la_misma_clave)": 56,
+        "RPO_transacciones_confirmadas_al_cliente_PERDIDAS": 0,
+        "confirmaciones_al_cliente_durante_el_bloqueo_inducido": null,
+        "huerfanas_en_la_antigua_primaria_reservas": 0,
+        "huerfanas_confirmadas_al_cliente_(perdidas)": 0,
+        "huerfanas_NO_confirmadas_al_cliente_(INCIERTAS)": 0,
+        "huerfanas_con_clave_repetida_en_la_nueva_primaria_(duplicado_logico)": 0,
+        "perdidas_confirmadas_coinciden_con_las_huerfanas_confirmadas": true,
+        "RPO_ventana_s_(caida_menos_la_confirmacion_perdida_mas_antigua)": null,
+        "filas_en_la_nueva_primaria_sin_confirmar_al_cliente": 0,
+        "reservas_en_nueva_primaria": 1602,
+        "claves_distintas": 1602,
+        "reserved_count": "1602",
+        "suma_cantidades": "1602"
+      },
+      "F2b-retraso-de-3s": {
+        "induccion_de_retraso_s": 3.0,
+        "RTO_escritura_s_desde_la_orden_de_caida": 3.29,
+        "RTO_lectura_s": 3.39,
+        "lectura_primer_error_s": 0.02,
+        "lectura_ultimo_error_s": 3.17,
+        "deteccion_primera_sonda_fallida_s": 0.04,
+        "aislamiento_confirmado_s": 1.2,
+        "lease_otorgado_s": 2.28,
+        "haproxy_db_enruta_s": 3.33,
+        "escrituras_intentos": 1414,
+        "escrituras_confirmadas_al_cliente": 1358,
+        "de_ellas_repetidas_200_por_idempotencia": 0,
+        "errores_http_escritura": {
+          "error_de_red": 8,
+          "503": 48
+        },
+        "lecturas": 322,
+        "errores_http_lectura": {
+          "503": 39
+        },
+        "retraso_de_replicacion_maximo_antes_de_caer_KiB": 2.8,
+        "latencia_de_confirmacion_ms_p50_antes_de_la_caida": 11.52,
+        "latencia_de_confirmacion_ms_p95_antes_de_la_caida": 37.94,
+        "intentos_no_exitosos_(reintentos_con_la_misma_clave)": 56,
+        "RPO_transacciones_confirmadas_al_cliente_PERDIDAS": 0,
+        "confirmaciones_al_cliente_durante_el_bloqueo_inducido": null,
+        "huerfanas_en_la_antigua_primaria_reservas": 1,
+        "huerfanas_confirmadas_al_cliente_(perdidas)": 0,
+        "huerfanas_NO_confirmadas_al_cliente_(INCIERTAS)": 1,
+        "huerfanas_con_clave_repetida_en_la_nueva_primaria_(duplicado_logico)": 1,
+        "perdidas_confirmadas_coinciden_con_las_huerfanas_confirmadas": true,
+        "RPO_ventana_s_(caida_menos_la_confirmacion_perdida_mas_antigua)": null,
+        "filas_en_la_nueva_primaria_sin_confirmar_al_cliente": 0,
+        "reservas_en_nueva_primaria": 1358,
+        "claves_distintas": 1358,
+        "reserved_count": "1358",
+        "suma_cantidades": "1358"
+      },
+      "F3-retraso-de-aplicacion": {
+        "induccion_de_retraso_s": 0.0,
+        "RTO_escritura_s_desde_la_orden_de_caida": 3.35,
+        "RTO_lectura_s": 3.46,
+        "lectura_primer_error_s": 0.06,
+        "lectura_ultimo_error_s": 3.21,
+        "deteccion_primera_sonda_fallida_s": 0.03,
+        "aislamiento_confirmado_s": 1.2,
+        "lease_otorgado_s": 2.34,
+        "haproxy_db_enruta_s": 3.39,
+        "escrituras_intentos": 1396,
+        "escrituras_confirmadas_al_cliente": 1340,
+        "de_ellas_repetidas_200_por_idempotencia": 0,
+        "errores_http_escritura": {
+          "503": 56
+        },
+        "lecturas": 309,
+        "errores_http_lectura": {
+          "503": 37
+        },
+        "retraso_de_replicacion_maximo_antes_de_caer_KiB": 2.6,
+        "latencia_de_confirmacion_ms_p50_antes_de_la_caida": 11.69,
+        "latencia_de_confirmacion_ms_p95_antes_de_la_caida": 37.67,
+        "intentos_no_exitosos_(reintentos_con_la_misma_clave)": 56,
+        "RPO_transacciones_confirmadas_al_cliente_PERDIDAS": 0,
+        "confirmaciones_al_cliente_durante_el_bloqueo_inducido": 0,
+        "huerfanas_en_la_antigua_primaria_reservas": 1,
+        "huerfanas_confirmadas_al_cliente_(perdidas)": 0,
+        "huerfanas_NO_confirmadas_al_cliente_(INCIERTAS)": 1,
+        "huerfanas_con_clave_repetida_en_la_nueva_primaria_(duplicado_logico)": 1,
+        "perdidas_confirmadas_coinciden_con_las_huerfanas_confirmadas": true,
+        "RPO_ventana_s_(caida_menos_la_confirmacion_perdida_mas_antigua)": null,
+        "filas_en_la_nueva_primaria_sin_confirmar_al_cliente": 0,
+        "reservas_en_nueva_primaria": 1340,
+        "claves_distintas": 1340,
+        "reserved_count": "1340",
+        "suma_cantidades": "1340"
+      }
+    },
+    "F2b_comparacion": {
+      "asincrona_corrida_final_C": "328 reservas confirmadas perdidas (ventana 3,0 s)",
+      "sincrona_ahora": 0,
+      "confirmaciones_durante_los_3_s": null
+    },
+    "F4": {
+      "commits_esperando_en_SyncRep": "1",
+      "confirmaciones_201_(COMMIT_nuevo)_con_el_seguidor_caido": 0,
+      "respuestas_200_repeticion_de_claves_ya_replicadas": 0,
+      "todas_las_repeticiones_ya_estaban_en_el_seguidor": true,
+      "modo_de_proteccion": "protected",
+      "promociones": false,
+      "confirmaciones_tras_volver_el_seguidor": 493,
+      "perdidas": 0
+    },
+    "F4b": {
+      "commits_esperando_en_SyncRep": "1",
+      "confirmaciones_al_cliente_con_el_seguidor_detenido": 0,
+      "promociones": false,
+      "confirmaciones_tras_reiniciar_el_seguidor": 26,
+      "perdidas": 0,
+      "modo": "protected"
+    },
+    "F5": {
+      "orden_intencion_desactivacion_registro": {
+        "degrading": 1794360660.25,
+        "sync_deshabilitada": 1794360660.521,
+        "degraded": 1794360660.526,
+        "orden_correcto": true
+      },
+      "degradado_tras_s": 6.2,
+      "confirmadas_desde_que_el_estado_dejo_de_ser_protected": 511,
+      "promocion_automatica_bloqueada": true,
+      "promocion_insegura_ordenada_ok": true,
+      "confirmadas_perdidas_tras_la_promocion_insegura": 511,
+      "primera_perdida_menos_registro_de_la_intencion_s": 0.243,
+      "todas_las_perdidas_son_posteriores_al_registro_de_la_intencion_degrading": true
+    },
+    "F5c": {
+      "degradar": 18,
+      "promover": 12,
+      "ninguna": 0,
+      "ambas": 0
+    },
+    "F5x": {
+      "F5x-after_intent-exit": {
+        "fallo_inyectado": true,
+        "controlador_vivo_tras_el_fallo": false,
+        "transiciones_de_estado": [
+          "degraded",
+          "degrading"
+        ],
+        "promocion_bloqueada": true,
+        "lease_a_pg-oci": false,
+        "promocion_iniciada": false,
+        "confirmaciones_al_cliente_tras_la_caida": 0
+      },
+      "F5x-after_intent-kill_primary": {
+        "fallo_inyectado": true,
+        "controlador_vivo_tras_el_fallo": true,
+        "transiciones_de_estado": [
+          "degrading"
+        ],
+        "promocion_bloqueada": true,
+        "lease_a_pg-oci": false,
+        "promocion_iniciada": false,
+        "confirmaciones_al_cliente_tras_la_caida": 0
+      },
+      "F5x-after_disable-exit": {
+        "fallo_inyectado": true,
+        "controlador_vivo_tras_el_fallo": false,
+        "transiciones_de_estado": [
+          "degraded",
+          "degrading"
+        ],
+        "promocion_bloqueada": true,
+        "lease_a_pg-oci": false,
+        "promocion_iniciada": false,
+        "confirmaciones_al_cliente_tras_la_caida": 0
+      },
+      "F5x-after_disable-kill_primary": {
+        "fallo_inyectado": true,
+        "controlador_vivo_tras_el_fallo": true,
+        "transiciones_de_estado": [
+          "degrading",
+          "degraded"
+        ],
+        "promocion_bloqueada": true,
+        "lease_a_pg-oci": false,
+        "promocion_iniciada": false,
+        "confirmaciones_al_cliente_tras_la_caida": 0
+      },
+      "F5x-after_record-exit": {
+        "fallo_inyectado": true,
+        "controlador_vivo_tras_el_fallo": false,
+        "transiciones_de_estado": [
+          "degrading",
+          "degraded"
+        ],
+        "promocion_bloqueada": true,
+        "lease_a_pg-oci": false,
+        "promocion_iniciada": false,
+        "confirmaciones_al_cliente_tras_la_caida": 0
+      },
+      "F5x-after_record-kill_primary": {
+        "fallo_inyectado": true,
+        "controlador_vivo_tras_el_fallo": true,
+        "transiciones_de_estado": [
+          "degrading",
+          "degraded"
+        ],
+        "promocion_bloqueada": true,
+        "lease_a_pg-oci": false,
+        "promocion_iniciada": false,
+        "confirmaciones_al_cliente_tras_la_caida": 0
+      }
+    },
+    "F6": {
+      "modo_tras_la_conmutacion": "unprotected",
+      "synchronous_standby_names_en_la_nueva_primaria": "",
+      "confirmaciones_sin_proteccion": 0,
+      "perdidas_en_la_conmutacion": 0,
+      "antigua_primaria_reiniciada_sola": {
+        "synchronous_standby_names_obsoleto": "ANY 1 (sub_oci)",
+        "escrituras_directas_aceptadas": [
+          false,
+          false
+        ],
+        "escritor_en_el_witness": "pg-oci",
+        "promociones_automaticas_hacia_ella": 0
+      },
+      "reconstruccion": {
+        "duracion_s": 2.7,
+        "synchronous_standby_names_tras_limpiar": "",
+        "modo_de_proteccion": "protected",
+        "estado_del_seguidor": "quorum"
+      },
+      "retorno_planificado_ok": true,
+      "perdidas_en_el_retorno": 0
+    },
+    "F7": {
+      "confirmadas": 496,
+      "perdidas_tras_reiniciar_la_primaria": 0
+    },
+    "F8": {
+      "promocion_bloqueada": true,
+      "lease_otorgado": false,
+      "confirmaciones_al_cliente_tras_la_caida": 0,
+      "motivo": "no se puede comprobar que lo confirmado tenga copia síncrona: promover podría perder reservas; se requiere decisión explícita (LAB_UNSAFE_PROMOTE=1)"
+    },
+    "C2": {
+      "F9a-sync-tras-confirmar": {
+        "respuesta_retenida_tras_confirmar": true,
+        "reserva_en_la_primaria_antes_de_caer": "7bffb2dc-0ce6-4f59-8d39-c667e05632d4",
+        "replicada_antes_de_caer": true,
+        "cliente_no_recibio_respuesta": true,
+        "reintentos_con_la_misma_clave": [
+          503,
+          503,
+          503,
+          503,
+          503,
+          503,
+          200
+        ],
+        "estado_final": 200,
+        "replayed": true,
+        "reservation_id_final": "7bffb2dc-0ce6-4f59-8d39-c667e05632d4",
+        "misma_reserva": true,
+        "reservas_con_esa_clave_en_la_nueva_primaria": "1",
+        "tiempo_hasta_respuesta_valida_s": 3.8,
+        "idempotency_key": "bcac9731bca24a95a765588f4cda7587"
+      }
+    },
+    "F9b": {
+      "commit_esperando_al_seguidor_cuando_cayo_la_primaria": true,
+      "cliente_recibio_respuesta_original": false,
+      "reintento_con_la_misma_clave": 201,
+      "reintento_replayed": false,
+      "huerfanas_en_la_antigua_primaria": {
+        "reservations": 1,
+        "tickets": 1
+      },
+      "duplicados_logicos": [
+        {
+          "orfana": "a66a71bf-ce20-453c-8553-e0b8004d3cb4",
+          "idempotency_key": "ec9ff550e37b420a9b07b06f1ac2d5c1",
+          "reserva_en_nueva_primaria": "dd39cb48-1e43-40af-a84f-62fd8c5eba19"
+        }
+      ],
+      "Idempotency_Key": "ec9ff550e37b420a9b07b06f1ac2d5c1"
+    }
+  }
+}

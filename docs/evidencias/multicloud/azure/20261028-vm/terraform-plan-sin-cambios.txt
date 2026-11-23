@@ -1,0 +1,2 @@
+terraform plan posterior al apply (mismas variables):
+No changes. Your infrastructure matches the configuration.

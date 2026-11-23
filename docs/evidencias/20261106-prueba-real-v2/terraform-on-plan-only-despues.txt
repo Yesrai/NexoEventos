@@ -1,0 +1,5 @@
+• Sesión AWS válida (rol: voclabs, perfil: nexoeventos-lab, región: us-east-1)
+• Cuenta coincide con expected_account_id; perfil nexoeventos-lab; región us-east-1
+• Generando plan guardado: 20261106T204203Z-on.tfplan
+── Revisión del plan (on) ────────────────────
+OK: Sin cambios: AWS ya coincide con V2 'on'. No hay nada que aplicar.

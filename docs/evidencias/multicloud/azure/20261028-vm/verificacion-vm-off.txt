@@ -1,0 +1,14 @@
+Grupo de recursos rg-nexoeventos-observabilidad true
+Máquinas virtuales                            1
+Discos administrados (facturan aunque la VM esté apagada) 1
+IP públicas (facturan mientras existan)       1
+Interfaces de red                              1
+Espacios de trabajo de Log Analytics           1
+Discos administrados en la suscripción        1
+IP públicas en la suscripción                1
+Máquinas virtuales en la suscripción         1
+Interfaces de red en la suscripción           1
+Presupuesto «presupuesto-nexoeventos» (alcance de suscripción) 1
+Ajuste de diagnóstico «actividad-suscripcion» (suscripción) 1
+Recursos totales en la suscripción            13
+RESULTADO: correcto para --expect vm-off

@@ -1,0 +1,7 @@
+# Identidad esperada del estado de Terraform de AWS V2 (la lee la guarda de v2-terraform.sh).
+# El «lineage» es un UUID que Terraform fija al crear el estado y NO cambia con serial, apply ni respaldos.
+# Si cambia, el estado es OTRO (p. ej. uno vacío recreado por error) y el script se niega a trabajar.
+# Mantenimiento: este archivo está versionado en Git y solo debe editarse a propósito, tras revisar el motivo,
+# si el estado de V2 se recrea de forma deliberada. No es un secreto; su protección es el control de cambios de Git.
+# Formato estricto: exactamente una línea «lineage=<uuid en minúsculas>».
+lineage=651191fe-c064-7e67-0314-a095b1c5efc5

@@ -137,3 +137,45 @@ variable "bastion_client_cidr" {
 locals {
   common_tags = { Project = "NexoEventos", Role = "recuperacion", ManagedBy = "Terraform" }
 }
+
+variable "create_lease_test" {
+  description = "false por defecto. true crea el bucket de PRUEBAS sin versionado y la identidad mínima para la autoprueba del lease (B-10). Requiere revisar el plan y autorización explícita."
+  type        = bool
+  default     = false
+}
+
+variable "lease_bucket_name" {
+  type    = string
+  default = "nexoeventos-lease-test"
+}
+
+variable "create_public_entry" {
+  description = "false por defecto. true crea Internet Gateway, subred pública y NSG para el acceso HTTPS de PRUEBA a la VM de recuperación (T3/T6). Exige entry_allowed_cidrs."
+  type        = bool
+  default     = false
+}
+
+variable "public_subnet_cidr" {
+  description = "CIDR de la subred pública de prueba (dentro de vcn_cidr y sin solaparse con la privada)."
+  type        = string
+  default     = "10.30.2.0/24"
+  validation {
+    condition = can(cidrhost(var.public_subnet_cidr, 0)) && (
+      tonumber(split("/", var.public_subnet_cidr)[1]) >= tonumber(split("/", var.vcn_cidr)[1]) &&
+      cidrhost(format("%s/%d", cidrhost(var.public_subnet_cidr, 0), tonumber(split("/", var.vcn_cidr)[1])), 0) == cidrhost(var.vcn_cidr, 0) &&
+      !(tonumber(split("/", var.public_subnet_cidr)[1]) >= tonumber(split("/", var.private_subnet_cidr)[1]) && cidrhost(format("%s/%d", cidrhost(var.public_subnet_cidr, 0), tonumber(split("/", var.private_subnet_cidr)[1])), 0) == cidrhost(var.private_subnet_cidr, 0)) &&
+      !(tonumber(split("/", var.private_subnet_cidr)[1]) >= tonumber(split("/", var.public_subnet_cidr)[1]) && cidrhost(format("%s/%d", cidrhost(var.private_subnet_cidr, 0), tonumber(split("/", var.public_subnet_cidr)[1])), 0) == cidrhost(var.public_subnet_cidr, 0))
+    )
+    error_message = "public_subnet_cidr debe ser un CIDR válido DENTRO de vcn_cidr y sin solaparse con la subred privada."
+  }
+}
+
+variable "entry_allowed_cidrs" {
+  description = "Orígenes autorizados para HTTPS (443) a la VM: tu IP /32 y las de los sondeadores. Nunca 0.0.0.0/0."
+  type        = list(string)
+  default     = []
+  validation {
+    condition     = alltrue([for c in var.entry_allowed_cidrs : can(cidrhost(c, 0)) && c != "0.0.0.0/0" && c != "::/0"])
+    error_message = "entry_allowed_cidrs solo admite CIDR válidos y prohíbe 0.0.0.0/0 y ::/0."
+  }
+}

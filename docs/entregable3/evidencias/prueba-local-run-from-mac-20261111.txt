@@ -1,0 +1,20 @@
+== 1) Datos y claves de prueba
+NOTICE:  database "nexoeventos_rfmtest" does not exist, skipping
+OK    base, volcado, cifrado «AWS» y re-cifrado «OCI» de prueba (10 claves de huella)
+== 2) «VM» desechable (contenedor nuevo) y simuladores de oci/ssh/scp
+OK    simuladores y contenedor «nexo-rfm-test» listos
+== 3) Casos
+OK    caso éxito: línea base y respaldo parametrizados, huella idéntica, código 0
+OK    known_hosts por ejecución (no se usa ~/.ssh/known_hosts)
+OK    clave de línea base inexistente: código 2 ANTES de usar red o pedir la frase (sin llamadas a oci/ssh)
+OK    sin BASELINE_KEY: se rechaza (no hay valor por defecto)
+OK    línea base distinta: falla con código 1
+OK    clave privada equivocada: falla con código 7 (descifrado local)
+OK    archivo alterado: se detiene en verify-transfer antes de tocar la VM
+OK    manifiesto de otro respaldo (nombre distinto de BUNDLE): código 3
+OK    sin RPM: código 2 antes de usar red
+OK    RPM alterado respecto a la lista fijada: código 2 antes de usar red
+OK    PREFLIGHT_ONLY=1: código 0, sin red y sin crear directorios
+OK    ninguna salida contiene claves ni frases de paso
+
+Resultado: 14 correctas, 0 fallidas

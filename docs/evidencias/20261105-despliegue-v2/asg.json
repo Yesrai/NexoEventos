@@ -1,0 +1,23 @@
+{
+    "Min": 2,
+    "Desired": 2,
+    "Max": 3,
+    "AZs": [
+        "us-east-1a",
+        "us-east-1b"
+    ],
+    "Instances": [
+        {
+            "Id": "i-02a27512458ed7b84",
+            "AZ": "us-east-1b",
+            "State": "InService",
+            "Health": "Healthy"
+        },
+        {
+            "Id": "i-0486b079364b1709a",
+            "AZ": "us-east-1a",
+            "State": "InService",
+            "Health": "Healthy"
+        }
+    ]
+}

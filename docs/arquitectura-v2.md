@@ -1,5 +1,10 @@
 # Alternativa V2: dos instancias y balanceador
 
+> **Nota del 23-nov-2026 (T5):** la V2 tiene **dos modos operativos medidos**: *económico* (2 instancias; la disponibilidad ante la caída de una instancia fue **95,21 %**, no cumple el criterio interno de 99 %) y *alta disponibilidad* (6 instancias; **99,49 % en una sola ejecución**, ver `docs/evidencias/T5-20261123-resultado.md`). Ninguna de las dos mediciones probó la caída **abrupta** de una instancia ni tráfico de **escritura**.
+
+
+> **Actualización del 28-oct-2026:** este documento es el **diseño del 7-oct**. La V2 se implementó (`infra/aws-v2`, 21 recursos), se desplegó, se midió el 22-oct (validación 15/15, escalera V1 vs V2, escalado 2→3→2 y fallos) y se **destruyó**; la RDS de V1 pasó a Multi-AZ el 23-oct. Resultados y diagramas reales: [`entregable2/informe-entregable2.md`](entregable2/informe-entregable2.md).
+
 Diseño del **7 de octubre de 2026**; no desplegado ni incorporado a Terraform.
 
 ## Diseño mínimo útil

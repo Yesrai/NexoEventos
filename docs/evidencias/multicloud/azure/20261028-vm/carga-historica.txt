@@ -1,0 +1,9 @@
+  oci-historico   nexo.hist.mem_pct                     179 puntos
+  oci-historico   nexo.hist.net_in_bytes                179 puntos
+  oci-historico   nexo.hist.net_out_bytes               179 puntos
+  oci-historico   nexo.hist.oci_client_errors             4 puntos
+  oci-historico   nexo.hist.oci_first_byte_ms             6 puntos
+  oci-historico   nexo.hist.oci_get_requests              6 puntos
+  oci-historico   nexo.hist.oci_put_requests              2 puntos
+1202 puntos cargados con su marca de tiempo original
+14:23Z — carga con history.push conservando marcas de tiempo originales (datos REALES de ejecuciones anteriores en AWS/OCI; NO son mediciones de Azure)

@@ -1,0 +1,31 @@
+== IMDS (169.254.169.254) con la salida a Internet denegada por el NSG
+token de identidad administrada: HTTP 200
+token obtenido: sí (no se imprime)
+== lectura de métricas de la propia VM (debe ser 200)
+Percentage CPU: HTTP 200 | puntos con dato: 30
+Available Memory Bytes: HTTP 200 | puntos con dato: 30
+VmAvailabilityMetric: HTTP 200 | puntos con dato: 30
+== lectura a nivel de grupo de recursos propio (debe ser 200)
+GET del grupo de recursos: HTTP 200
+== las listas de la suscripción se filtran a lo visible (ARM): cuántos elementos ve esta identidad
+grupos de recursos visibles: 1 (esperado 1)
+máquinas virtuales visibles: 1 (esperado 1: ella misma)
+== accesos fuera de su alcance (deben ser 403)
+la suscripción: HTTP 200
+asignaciones de rol de la suscripción: HTTP 200
+grupo de recursos inexistente/ajeno: HTTP 403
+presupuestos (Consumption): HTTP 401
+== permisos efectivos en el grupo de recursos (acciones permitidas; ninguna de escritura/borrado/arranque)
+acciones: 3
+  */read
+  Microsoft.OperationalInsights/workspaces/search/action
+  Microsoft.Support/*
+acciones de escritura/borrado: ninguna (workspaces/search/action es la consulta de lectura de Log Analytics)
+Nota: la primera ejecución de esta prueba esperaba 403 en las listas de la suscripción y obtuvo 200; no era un exceso de permisos: ARM filtra las listas a lo visible. Se rehízo contando elementos y con accesos que sí deben dar 403.
+GET suscripción -> campos devueltos:
+  ['authorizationSource', 'displayName', 'id', 'managedByTenants', 'promotions', 'state', 'subscriptionId', 'subscriptionPolicies', 'tenantId']
+roleAssignments visibles (alcances):
+  cantidad: 1
+  alcance: /subscriptions/<id>/resourceGroups/rg-nexoeventos-observabilidad
+escritura (debe ser 403): crear etiqueta en el RG -> HTTP 403
+Aclaración: «la suscripción: HTTP 200» devuelve solo metadatos de la suscripción (visibles para cualquier identidad con algún rol en ella); «asignaciones de rol» devuelve 1 elemento filtrado (la del grupo de recursos); la escritura da 403. No hay exceso de permisos.

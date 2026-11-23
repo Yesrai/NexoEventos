@@ -1,0 +1,12 @@
+---
+# Zabbix Server 7.0 + PostgreSQL + Grafana en la VM de monitoreo de Azure (Ubuntu 24.04).
+# Uso (tras crear la VM con Terraform y con la clave SSH en el agente):
+#   ansible-playbook -i ../monitoring-inventory.yml playbooks/monitoring-azure.yml --syntax-check
+#   ansible-playbook -i ../monitoring-inventory.yml playbooks/monitoring-azure.yml
+- name: Monitoreo multicloud (Zabbix + Grafana)
+  hosts: monitoring
+  become: true
+  gather_facts: true
+  force_handlers: true   # si una tarea posterior falla, los reinicios ya notificados (Nginx, PHP-FPM…) igualmente se aplican
+  roles:
+    - monitoring_zabbix_grafana

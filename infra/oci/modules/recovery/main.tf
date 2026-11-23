@@ -10,6 +10,14 @@ variable "boot_volume_gb" { type = number }
 variable "allow_trial_paid_shape" { type = bool }
 variable "flex_ocpus" { type = number }
 variable "flex_memory_gb" { type = number }
+variable "assign_public_ip" {
+  type    = bool
+  default = false
+}
+variable "bastion_subnet_id" {
+  type    = string
+  default = ""
+}
 
 data "oci_identity_availability_domains" "this" {
   compartment_id = var.compartment_id
@@ -25,7 +33,7 @@ data "oci_core_images" "ol9" {
   sort_order               = "DESC"
 }
 
-# VM TEMPORAL (create=false por defecto): sin IP pública, sin credenciales; se destruye tras cada simulacro.
+# VM TEMPORAL (create=false por defecto): sin IP pública (salvo assign_public_ip=true con la entrada de prueba), sin credenciales; se destruye tras cada simulacro.
 resource "oci_core_instance" "recovery" {
   count               = var.create ? 1 : 0
   compartment_id      = var.compartment_id
@@ -34,7 +42,7 @@ resource "oci_core_instance" "recovery" {
   display_name        = "nexoeventos-recovery-drill"
   create_vnic_details {
     subnet_id        = var.subnet_id
-    assign_public_ip = false
+    assign_public_ip = var.assign_public_ip
     nsg_ids          = [var.nsg_id]
   }
   # Formas Flex (A1): tamaño explícito dentro de Always Free (máx. 4 OCPU / 24 GB en total). E2.1.Micro no lleva shape_config.
@@ -56,6 +64,8 @@ resource "oci_core_instance" "recovery" {
   }
   metadata = {
     ssh_authorized_keys = var.ssh_public_key
+    # Primer arranque (cloud-init): neutraliza dnf-makecache y ksplice-agent antes de cualquier SSH; es un atributo de la MISMA instancia (no añade recursos).
+    user_data = base64encode(file("${path.module}/cloud-init-quiesce.sh"))
   }
   agent_config {
     plugins_config {
@@ -81,7 +91,7 @@ resource "oci_bastion_bastion" "this" {
   count                        = var.create && var.bastion_client_cidr != "" ? 1 : 0
   bastion_type                 = "STANDARD"
   compartment_id               = var.compartment_id
-  target_subnet_id             = var.subnet_id
+  target_subnet_id             = var.bastion_subnet_id != "" ? var.bastion_subnet_id : var.subnet_id
   name                         = "nexorecovery"
   client_cidr_block_allow_list = [var.bastion_client_cidr]
   max_session_ttl_in_seconds   = 3600

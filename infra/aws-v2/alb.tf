@@ -11,19 +11,20 @@ resource "aws_lb" "main" {
 }
 
 resource "aws_lb_target_group" "web" {
-  name                          = "${local.v2_prefix}-tg"
-  port                          = 80
-  protocol                      = "HTTP"
-  vpc_id                        = data.aws_vpc.v1.id
-  deregistration_delay          = 30
-  load_balancing_algorithm_type = "least_outstanding_requests" # reparte mejor cuando las solicitudes tardan distinto (login con Argon2)
+  name                              = "${local.v2_prefix}-tg"
+  port                              = 80
+  protocol                          = "HTTP"
+  vpc_id                            = data.aws_vpc.v1.id
+  deregistration_delay              = 30
+  load_balancing_algorithm_type     = var.alb_lb_algorithm # por defecto least_outstanding_requests: reparte mejor cuando las solicitudes tardan distinto (login con Argon2)
+  load_balancing_anomaly_mitigation = var.alb_anomaly_mitigation
 
   health_check {
     protocol            = "HTTP"
-    path                = "/healthz" # Nginx -> FastAPI /ready (comprueba PostgreSQL)
+    path                = var.ami_includes_livez ? "/livez" : "/healthz" # /livez: Nginx -> FastAPI /health (liveness, SIN PostgreSQL), solo con AMI que la incluye; /healthz (readiness con BD) en AMI antiguas y para monitoreo
     matcher             = "200"
-    interval            = 10
-    timeout             = 5
+    interval            = var.alb_health_interval
+    timeout             = var.alb_health_timeout
     healthy_threshold   = 2
     unhealthy_threshold = 2
   }

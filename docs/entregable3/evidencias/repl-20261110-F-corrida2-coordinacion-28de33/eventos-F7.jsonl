@@ -1,0 +1,4 @@
+{"t": 1794358482.866, "ev": "monitor_inicio", "auto": true, "pid": 78144}
+{"t": 1794358482.877, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 4.97, "prot": {"mode": "protected", "seq": 2, "primario": "pg-aws", "epoch": 1, "verified_age_s": 1.47}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794358487.901, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.7, "prot": {"mode": "protected", "seq": 2, "primario": "pg-aws", "epoch": 1, "verified_age_s": 0.17}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794358489.136, "ev": "monitor_fin", "motivo": "SIGTERM"}

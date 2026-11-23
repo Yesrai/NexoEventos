@@ -1,0 +1,21 @@
+Parada de RDS — 2026-11-11 (autorizada por la usuaria). Cuenta/ARN ocultos.
+Comprobaciones previas: rol voclabs; us-east-1; cuenta = expected_account_id; instantánea nexoeventos-pre-parada-20261111 available 100 %; RDS nexoeventos-academy-postgres available Multi-AZ db.t3.micro.
+Operación: 'aws rds stop-db-instance' (solicitud 14:32:10Z). Primer intento de espera con 'aws rds wait db-instance-stopped' falló por sintaxis (no existe ese waiter); sin efecto; se sondeó el estado.
+Evento oficial de RDS: 2026-11-11T14:38:33Z  DB instance stopped
+Reinicio automático previsto (parada + 7 días): ≈ 2026-11-18T14:38Z
+-- estado final RDS:
+{
+    "Estado": "stopped",
+    "MultiAZ": true,
+    "Clase": "db.t3.micro",
+    "GiB": 20
+}
+-- instantánea:
+available	100
+-- manuales: 5
+-- EC2 V1:
+stopped
+-- EC2 en marcha en la cuenta: 0
+-- ASG V2 (deseada, instancias):
+0	0
+-- ALBs existentes: 0

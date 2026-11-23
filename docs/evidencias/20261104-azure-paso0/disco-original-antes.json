@@ -1,0 +1,26 @@
+{
+ "nombre": "vm-nexoeventos-obs_disk1_<sufijo>",
+ "tamano_bytes": 68719476736,
+ "tamano_gib": 64.0,
+ "region": "centralus",
+ "sku": "StandardSSD_LRS",
+ "seguridad": {
+  "securityType": "TrustedLaunch"
+ },
+ "cifrado": "EncryptionAtRestWithPlatformKey",
+ "hyperV": "V2",
+ "osType": "Linux",
+ "estado": "Reserved",
+ "zonas": null,
+ "creada": "2026-10-28T13:39:10.5775451+00:00",
+ "ultimoCambioPropiedad": null,
+ "adjunto_a_vm": "vm-nexoeventos-obs",
+ "etiquetas": {
+  "managed_by": "Terraform",
+  "project": "NexoEventos",
+  "role": "observabilidad"
+ },
+ "creationData": "FromImage",
+ "iops": 500,
+ "nivel": null
+}

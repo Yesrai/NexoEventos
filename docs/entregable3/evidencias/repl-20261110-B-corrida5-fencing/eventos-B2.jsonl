@@ -1,0 +1,17 @@
+{"t": 1794336103.991, "ev": "monitor_inicio", "auto": true, "pid": 26614}
+{"t": 1794336104.001, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 4.8}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794336105.668, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 1, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794336106.125, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 2, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794336106.62, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 3, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794336106.622, "ev": "promote_inicio", "destino": "pg-oci", "origen": "pg-aws", "planificada": false, "epoca": 1}
+{"t": 1794336106.624, "ev": "lease_retirado", "epoca": 2}
+{"t": 1794336107.26, "ev": "fence_en_linea", "nodo": "pg-aws", "verificado": true, "modo_cerrado": {"modo": "fenced", "escribir_hba": true, "recargar": true, "efecto_en_conexion_nueva": true, "mensaje_de_la_conexion_nueva": "psql: error: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  pg_hba.conf rejects connection for host \"127.0.0.1\", user \"nexoeventos_app\", database \"nexoeventos\", no encryption"}, "solo_lectura_global": true, "sesiones_app_terminadas": true, "escritura_real_conexion_nueva_aceptada": false, "escritura_real_con_anulacion_aceptada": false, "rechazo_conexion_nueva": "psql: error: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  pg_hba.conf rejects connection for host \"127.0.0.1\", user \"nexoeventos_app\", database \"nexoeventos\", no encryption", "rechazo_con_anulacion": "psql: error: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  pg_hba.conf rejects connection for host \"127.0.0.1\", user \"nexoeventos_app\", database \"nexoeventos\", no encryption", "rechazo_atribuible_a_pg_hba": true}
+{"t": 1794336107.467, "ev": "fence", "nodo": "pg-aws", "detenido": true, "escritura_real_aceptada": false, "escritura_real_error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known", "resultado": "confirmado"}
+{"t": 1794336107.719, "ev": "secuencias_ajustadas", "cantidad": 6}
+{"t": 1794336108.327, "ev": "destino_abierto", "rol_sin_solo_lectura": true, "solo_lectura_global_apagado": true, "modo_abierto": {"modo": "open", "escribir_hba": true, "recargar": true, "efecto_en_conexion_nueva": true, "mensaje_de_la_conexion_nueva": ""}}
+{"t": 1794336108.416, "ev": "escritura_destino", "aceptada": true, "error": ""}
+{"t": 1794336108.42, "ev": "lease_otorgado", "escritor": "pg-oci", "epoca": 3, "t_desde_inicio_s": 1.8}
+{"t": 1794336109.18, "ev": "haproxy_db_enruta", "nodo": "pg-oci", "t_desde_inicio_s": 2.56}
+{"t": 1794336109.276, "ev": "verificacion_final", "antiguo_escribe": false, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794336109.28, "ev": "latido", "witness": {"writer": "pg-oci", "epoch": 3, "lease_remaining_s": 5.14}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794336111.237, "ev": "monitor_fin", "motivo": "SIGTERM"}

@@ -1,0 +1,12 @@
+== verify-rpms.sh
+OK    RPM reales coinciden con la lista fijada (código 0)
+OK    RPM alterado (1 byte) se detecta (código 1)
+OK    RPM ausente se detecta (código 1)
+OK    RPM no listado (sobrante) se detecta (código 1)
+OK    directorio inexistente (código 2)
+== ensure-swap.sh (DRY_RUN, meminfo simulada)
+OK    RAM 486 MB: planea dd, mkswap, swapon y fstab
+OK    RAM 7,6 GB: no crea swap
+OK    DRY_RUN no creó ningún archivo de swap
+
+Resultado: 8 correctas, 0 fallidas

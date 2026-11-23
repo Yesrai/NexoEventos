@@ -1,0 +1,5 @@
+{"t": 1794335866.705, "ev": "monitor_inicio", "auto": true, "pid": 23970}
+{"t": 1794335866.714, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 4.91}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794335868.319, "ev": "nodo_no_escritor_expuesto", "nodo": "pg-oci", "accion": "aislar en línea y verificar con escrituras reales"}
+{"t": 1794335868.751, "ev": "nodo_no_escritor_aislado", "nodo": "pg-oci", "t_aislamiento_s": 0.43, "escritura_real_aceptada_despues": false, "modo_cerrado": {"modo": "fenced", "escribir_hba": true, "recargar": true, "efecto_en_conexion_nueva": true, "mensaje_de_la_conexion_nueva": "psql: error: connection to server at \"pg-oci\" (172.29.241.2), port 5432 failed: FATAL:  pg_hba.conf rejects connection for host \"172.29.241.2\", user \"nexoeventos_app\", database \"nexoeventos\", no encry"}, "sesiones_app_terminadas": true}
+{"t": 1794335868.818, "ev": "monitor_fin", "motivo": "SIGTERM"}

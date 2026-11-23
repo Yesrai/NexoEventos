@@ -1,0 +1,9 @@
+{"t": 1794360161.301, "ev": "monitor_inicio", "auto": true, "pid": 99177}
+{"t": 1794360161.311, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 4.95, "prot": {"mode": "protected", "seq": 2, "primario": "pg-aws", "epoch": 1, "verified_age_s": 1.46}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794360166.361, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.66, "prot": {"mode": "protected", "seq": 2, "primario": "pg-aws", "epoch": 1, "verified_age_s": 0.75}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794360169.177, "ev": "proteccion", "modo": "degraded", "antes": "protected", "ok": true, "seq": 3, "primario": "pg-aws", "motivo": "synchronous_standby_names cambió fuera del controlador: ''"}
+{"t": 1794360170.458, "ev": "proteccion", "modo": "reprotecting", "antes": "degraded", "ok": true, "seq": 4, "primario": "pg-aws", "motivo": "reprotección desde degraded"}
+{"t": 1794360170.738, "ev": "sync_habilitada", "primario": "pg-aws", "estado_seguidor": "quorum"}
+{"t": 1794360171.978, "ev": "proteccion", "modo": "protected", "antes": "reprotecting", "ok": true, "seq": 5, "primario": "pg-aws", "seguidor": "pg-oci", "motivo": "síncrono activo, seguidor confirmando y al día (barrera de LSN)"}
+{"t": 1794360171.979, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 4.09, "prot": {"mode": "protected", "seq": 5, "primario": "pg-aws", "epoch": 1, "verified_age_s": 0.0}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794360172.45, "ev": "monitor_fin", "motivo": "SIGTERM"}

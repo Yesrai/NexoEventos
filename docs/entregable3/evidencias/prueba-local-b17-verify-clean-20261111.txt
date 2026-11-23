@@ -1,0 +1,128 @@
+test_alb_nat_eip_y_volumen_huerfano (test_verify_clean.AwsCases.test_alb_nat_eip_y_volumen_huerfano) ... /Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmpjyw0qanl/inv.json' mode='w' encoding='utf-8'>
+  fx = os.path.join(d, "inv.json"); json.dump(inv, open(fx, "w"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:27: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmpjyw0qanl/base.json' mode='w' encoding='utf-8'>
+  bp = os.path.join(d, "base.json"); json.dump(baseline, open(bp, "w")); args += ["--baseline", bp]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmplmruzp63/inv.json' mode='w' encoding='utf-8'>
+  fx = os.path.join(d, "inv.json"); json.dump(inv, open(fx, "w"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:27: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmplmruzp63/base.json' mode='w' encoding='utf-8'>
+  bp = os.path.join(d, "base.json"); json.dump(baseline, open(bp, "w")); args += ["--baseline", bp]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmpe2hyg9n1/inv.json' mode='w' encoding='utf-8'>
+  fx = os.path.join(d, "inv.json"); json.dump(inv, open(fx, "w"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:27: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmpe2hyg9n1/base.json' mode='w' encoding='utf-8'>
+  bp = os.path.join(d, "base.json"); json.dump(baseline, open(bp, "w")); args += ["--baseline", bp]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmplk52l0p2/inv.json' mode='w' encoding='utf-8'>
+  fx = os.path.join(d, "inv.json"); json.dump(inv, open(fx, "w"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:27: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmplk52l0p2/base.json' mode='w' encoding='utf-8'>
+  bp = os.path.join(d, "base.json"); json.dump(baseline, open(bp, "w")); args += ["--baseline", bp]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmp5iv82xju/inv.json' mode='w' encoding='utf-8'>
+  fx = os.path.join(d, "inv.json"); json.dump(inv, open(fx, "w"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmpe15lg89a/inv.json' mode='w' encoding='utf-8'>
+  fx = os.path.join(d, "inv.json"); json.dump(inv, open(fx, "w"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_ec2_detenida_fuera_de_linea_base (test_verify_clean.AwsCases.test_ec2_detenida_fuera_de_linea_base) ... /Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmpg9shlt2p/inv.json' mode='w' encoding='utf-8'>
+  fx = os.path.join(d, "inv.json"); json.dump(inv, open(fx, "w"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:27: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmpg9shlt2p/base.json' mode='w' encoding='utf-8'>
+  bp = os.path.join(d, "base.json"); json.dump(baseline, open(bp, "w")); args += ["--baseline", bp]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_ec2_en_marcha (test_verify_clean.AwsCases.test_ec2_en_marcha) ... /Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmpkf5_as6o/inv.json' mode='w' encoding='utf-8'>
+  fx = os.path.join(d, "inv.json"); json.dump(inv, open(fx, "w"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:27: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmpkf5_as6o/base.json' mode='w' encoding='utf-8'>
+  bp = os.path.join(d, "base.json"); json.dump(baseline, open(bp, "w")); args += ["--baseline", bp]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_estado_actual_del_proyecto_es_limpio (test_verify_clean.AwsCases.test_estado_actual_del_proyecto_es_limpio) ... /Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmpmjozqaxn/inv.json' mode='w' encoding='utf-8'>
+  fx = os.path.join(d, "inv.json"); json.dump(inv, open(fx, "w"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:27: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmpmjozqaxn/base.json' mode='w' encoding='utf-8'>
+  bp = os.path.join(d, "base.json"); json.dump(baseline, open(bp, "w")); args += ["--baseline", bp]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_rds_disponible_es_residual (test_verify_clean.AwsCases.test_rds_disponible_es_residual) ... /Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmpl3toxnmi/inv.json' mode='w' encoding='utf-8'>
+  fx = os.path.join(d, "inv.json"); json.dump(inv, open(fx, "w"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:27: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmpl3toxnmi/base.json' mode='w' encoding='utf-8'>
+  bp = os.path.join(d, "base.json"); json.dump(baseline, open(bp, "w")); args += ["--baseline", bp]
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_rds_estado_raro (test_verify_clean.AwsCases.test_rds_estado_raro) ... /Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmpqauf9ntg/inv.json' mode='w' encoding='utf-8'>
+  fx = os.path.join(d, "inv.json"); json.dump(inv, open(fx, "w"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_aws_salida_vacia_o_sin_lista_es_no_verificable (test_verify_clean.LiveCases.test_aws_salida_vacia_o_sin_lista_es_no_verificable) ... ok
+test_cli_ausente_es_no_verificable (test_verify_clean.LiveCases.test_cli_ausente_es_no_verificable) ... ok
+test_credenciales_caducadas_es_no_verificable (test_verify_clean.LiveCases.test_credenciales_caducadas_es_no_verificable) ... ok
+test_lista_blanca_rechaza_modificaciones (test_verify_clean.LiveCases.test_lista_blanca_rechaza_modificaciones) ... ok
+test_live_limpio_y_solo_comandos_de_lectura (test_verify_clean.LiveCases.test_live_limpio_y_solo_comandos_de_lectura) ... ok
+test_live_sin_proveedor_o_sin_ad (test_verify_clean.LiveCases.test_live_sin_proveedor_o_sin_ad) ... ok
+test_los_numeros_de_cuenta_de_los_errores_se_enmascaran (test_verify_clean.LiveCases.test_los_numeros_de_cuenta_de_los_errores_se_enmascaran) ... ok
+test_residuo_en_vivo (test_verify_clean.LiveCases.test_residuo_en_vivo) ... ok
+test_si_un_proveedor_falla_el_otro_se_informa_igualmente_y_el_veredicto_es_no_verificable (test_verify_clean.LiveCases.test_si_un_proveedor_falla_el_otro_se_informa_igualmente_y_el_veredicto_es_no_verificable) ... ok
+test_bastion_activo_es_residual_aunque_no_cobre (test_verify_clean.OciCases.test_bastion_activo_es_residual_aunque_no_cobre) ... /Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmpq7lecrku/inv.json' mode='w' encoding='utf-8'>
+  fx = os.path.join(d, "inv.json"); json.dump(inv, open(fx, "w"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_dato_ausente_es_no_verificable (test_verify_clean.OciCases.test_dato_ausente_es_no_verificable) ... /Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmpejwkyml_/inv.json' mode='w' encoding='utf-8'>
+  fx = os.path.join(d, "inv.json"); json.dump(inv, open(fx, "w"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmpbs96fmd2/inv.json' mode='w' encoding='utf-8'>
+  fx = os.path.join(d, "inv.json"); json.dump(inv, open(fx, "w"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_e5_en_marcha_es_residual_con_costo_y_tope (test_verify_clean.OciCases.test_e5_en_marcha_es_residual_con_costo_y_tope) ... /Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmpzicf718z/inv.json' mode='w' encoding='utf-8'>
+  fx = os.path.join(d, "inv.json"); json.dump(inv, open(fx, "w"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_estado_desconocido_es_no_verificable (test_verify_clean.OciCases.test_estado_desconocido_es_no_verificable) ... /Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmplckxu5q7/inv.json' mode='w' encoding='utf-8'>
+  fx = os.path.join(d, "inv.json"); json.dump(inv, open(fx, "w"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_instancia_terminada_no_cuenta (test_verify_clean.OciCases.test_instancia_terminada_no_cuenta) ... /Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmph66h3nxn/inv.json' mode='w' encoding='utf-8'>
+  fx = os.path.join(d, "inv.json"); json.dump(inv, open(fx, "w"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_inventario_vacio_no_es_limpio (test_verify_clean.OciCases.test_inventario_vacio_no_es_limpio) ... /Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmpep70gneb/inv.json' mode='w' encoding='utf-8'>
+  fx = os.path.join(d, "inv.json"); json.dump(inv, open(fx, "w"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_ip_reservada_si_efimera_no (test_verify_clean.OciCases.test_ip_reservada_si_efimera_no) ... /Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmp8kris03u/inv.json' mode='w' encoding='utf-8'>
+  fx = os.path.join(d, "inv.json"); json.dump(inv, open(fx, "w"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmp757y3pfr/inv.json' mode='w' encoding='utf-8'>
+  fx = os.path.join(d, "inv.json"); json.dump(inv, open(fx, "w"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_limpio (test_verify_clean.OciCases.test_limpio) ... /Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmpqh5lemqg/inv.json' mode='w' encoding='utf-8'>
+  fx = os.path.join(d, "inv.json"); json.dump(inv, open(fx, "w"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_terminando_aun_no_esta_limpio (test_verify_clean.OciCases.test_terminando_aun_no_esta_limpio) ... /Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmpndekswxw/inv.json' mode='w' encoding='utf-8'>
+  fx = os.path.join(d, "inv.json"); json.dump(inv, open(fx, "w"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_volumen_huerfano (test_verify_clean.OciCases.test_volumen_huerfano) ... /Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmpgp51gof4/inv.json' mode='w' encoding='utf-8'>
+  fx = os.path.join(d, "inv.json"); json.dump(inv, open(fx, "w"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_el_verificador_no_contiene_llamadas_de_escritura (test_verify_clean.SalidaYSeguridad.test_el_verificador_no_contiene_llamadas_de_escritura) ... ok
+test_json_valido_y_sin_datos_sensibles (test_verify_clean.SalidaYSeguridad.test_json_valido_y_sin_datos_sensibles) ... /Users/yeseniaramirezmedina/Documents/Codex/2026-09-29/nexoeventos/scripts/multicloud/tests/test_verify_clean.py:24: ResourceWarning: unclosed file <_io.TextIOWrapper name='/var/folders/md/41zblhrx5yb9r4dzz8smfgxh0000gn/T/tmplo4nnywh/inv.json' mode='w' encoding='utf-8'>
+  fx = os.path.join(d, "inv.json"); json.dump(inv, open(fx, "w"))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+
+----------------------------------------------------------------------
+Ran 27 tests in 0.022s
+
+OK

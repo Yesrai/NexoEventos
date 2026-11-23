@@ -1,0 +1,60 @@
+---
+- name: Retirar los sitios por defecto de Nginx (solo se sirve HTTPS)
+  ansible.builtin.file: { path: "{{ item }}", state: absent }
+  loop: [/etc/nginx/sites-enabled/default, /etc/nginx/conf.d/zabbix.conf]
+  notify: Recargar Nginx
+
+- name: Directorio del certificado TLS
+  ansible.builtin.file: { path: /etc/ssl/nexo-obs, state: directory, owner: root, group: root, mode: "0750" }
+
+- name: Certificado autofirmado y clave privada (se generan EN la VM y no salen de ella)
+  ansible.builtin.command:
+    cmd: >-
+      openssl req -x509 -newkey rsa:3072 -nodes -days 90 -subj "/CN={{ monitoring_fqdn }}"
+      -addext "subjectAltName=DNS:{{ monitoring_fqdn }}" -keyout /etc/ssl/nexo-obs/key.pem -out /etc/ssl/nexo-obs/cert.pem
+    creates: /etc/ssl/nexo-obs/cert.pem
+  notify: Recargar Nginx
+
+- name: Permisos de la clave privada
+  ansible.builtin.file: { path: /etc/ssl/nexo-obs/key.pem, owner: root, group: root, mode: "0600" }
+
+- name: Zona horaria UTC en PHP (Zabbix)
+  ansible.builtin.lineinfile:
+    path: /etc/zabbix/php-fpm.conf
+    regexp: '^php_value\[date\.timezone\]'
+    line: "php_value[date.timezone] = UTC"
+  notify: Reiniciar PHP-FPM
+
+- name: Configuración del frontend de Zabbix (contiene la clave de BD; modo 0640, grupo www-data)
+  ansible.builtin.template:
+    src: zabbix.conf.php.j2
+    dest: /etc/zabbix/web/zabbix.conf.php
+    owner: root
+    group: www-data
+    mode: "0640"
+  no_log: true
+  notify: Reiniciar PHP-FPM
+
+- name: Sitio HTTPS (Grafana en /grafana/, Zabbix en /zabbix/)
+  ansible.builtin.template:
+    src: nexo-obs.nginx.conf.j2
+    dest: /etc/nginx/conf.d/nexo-obs.conf
+    mode: "0644"
+  notify: Recargar Nginx
+
+- name: Directiva server_tokens desactivada
+  ansible.builtin.lineinfile:
+    path: /etc/nginx/nginx.conf
+    regexp: '^\s*#?\s*server_tokens'
+    line: "        server_tokens {{ nginx_server_tokens }};"
+    insertafter: '^\s*http \{'
+  notify: Recargar Nginx
+
+- name: Validar la configuración de Nginx
+  ansible.builtin.command: nginx -t
+  changed_when: false
+
+- name: Servicios web
+  ansible.builtin.systemd: { name: "{{ item }}", state: started, enabled: true }
+  loop: [php8.3-fpm, nginx]
+  when: monitoring_manage_services | bool

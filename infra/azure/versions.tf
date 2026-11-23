@@ -13,7 +13,12 @@ terraform {
 # Autenticación fuera del repositorio: `az login` (sin service principal ni secretos en archivos).
 # Los proveedores Microsoft.Compute/Network/Storage están NotRegistered: se registran a mano y con autorización, nunca automáticamente.
 provider "azurerm" {
-  features {}
+  features {
+    # Al destruir, el espacio de Log Analytics se elimina de forma permanente (si no, queda 14 días en papelera y bloquea recrear el mismo nombre).
+    log_analytics_workspace {
+      permanently_delete_on_destroy = true
+    }
+  }
   subscription_id                 = var.subscription_id
   resource_provider_registrations = "none"
 }

@@ -1,0 +1,9 @@
+module.budget.azurerm_consumption_budget_subscription.this
+module.monitor.azurerm_log_analytics_workspace.this
+module.monitor.azurerm_monitor_action_group.ops[0]
+module.monitor.azurerm_monitor_diagnostic_setting.activity[0]
+module.network.azurerm_network_security_group.monitoring
+module.network.azurerm_resource_group.this
+module.network.azurerm_subnet.monitoring
+module.network.azurerm_subnet_network_security_group_association.monitoring
+module.network.azurerm_virtual_network.this

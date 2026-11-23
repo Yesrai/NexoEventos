@@ -1,0 +1,8 @@
+Simulación del lease (B-10): corridas con DOS titulares válidos a la vez, de 300 (4 clientes, 600 pasos, latencia, pausas, particiones, respuestas perdidas)
+Deriva de reloj ρ = ±20 %, ttl = 15 s  →  margen mínimo teórico = ρ·ttl = 3 s
+  margen  0.0 s:  76/300 corridas con solape
+  margen  1.0 s:   7/300 corridas con solape
+  margen  2.9 s:   0/300 corridas con solape
+  margen  3.0 s:   0/300 corridas con solape
+  margen  5.0 s:   0/300 corridas con solape
+Deriva ρ = ±5 %, margen 5 s (configuración por defecto):  0 /300 con solape

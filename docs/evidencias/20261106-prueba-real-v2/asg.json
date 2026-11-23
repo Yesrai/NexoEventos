@@ -1,0 +1,23 @@
+{
+    "min": 2,
+    "deseada": 2,
+    "max": 3,
+    "zonas": [
+        "us-east-1a",
+        "us-east-1b"
+    ],
+    "instancias": [
+        {
+            "id": "i-047939a71f0087190",
+            "zona": "us-east-1b",
+            "estado": "InService",
+            "salud": "Healthy"
+        },
+        {
+            "id": "i-068ef939e2355d2b6",
+            "zona": "us-east-1a",
+            "estado": "InService",
+            "salud": "Healthy"
+        }
+    ]
+}

@@ -1,0 +1,11 @@
+Subida a OCI del respaldo PostgreSQL cifrado — 2026-11-11 (autorizada por la usuaria). Namespace/OCID ocultos; sin secretos.
+Origen: nexoeventos-rds-20261111T164610Z.cms (AWS, SHA-256 d0f50687b93ee66a8cb9d2bb47752bd4ebb93f8e2ef656d46a7c37bd293f4872, 92.911 bytes), descifrado y re-cifrado en tubería con el certificado público de recuperación de OCI (huella 98:1C:97:B5…); sin texto plano en disco.
+Volcado en claro (para la restauración): SHA-256 8ea75d66987266bd5725073995cdb078f963ce7cedf7dd7f77b860f3d15e0040 = el calculado en la EC2.
+Objetos en el bucket nexoeventos-recovery (sa-saopaulo-1, NoPublicAccess, versionado Enabled, Standard), subidos 16:54:01–16:54:04 UTC con --no-overwrite y el perfil NEXOEVENTOS_UPLOADER (solo crear/leer/inspeccionar):
+  backups/nexoeventos-rds-20261111T164610Z.oci.cms — 92.908 bytes — SHA-256 5ef0532830ed45d93c73f90de458df0f99100415d9631959546b83fc64bb3c1c
+  backups/nexoeventos-rds-20261111T164610Z.manifest.json — 612 bytes — SHA-256 cb46035a685fe4953f4f46a8d2038e0c21360fd8733d5aae7d85752d60a8b260
+Verificación: ambos objetos se descargaron de OCI a un directorio temporal (destruido); SHA-256 y tamaño = locales; verify-transfer.sh OK.
+Prueba negativa: reintentar subir el mismo nombre con --no-overwrite → "The object already exists and was not overwritten".
+Listado de backups/ tras la subida: los 2 objetos del 23-oct (intactos) + los 2 nuevos.
+Costo: ≈ 0,1 MB en Object Storage Standard (≈ USD 0 dentro de lo gratuito; no verificado en el panel de OCI).
+No se encendió ni tocó AWS; sin VM ni recursos nuevos en OCI; Azure y Docker intactos. Pendiente: restauración aislada del respaldo nuevo (autorización aparte).

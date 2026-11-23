@@ -1,0 +1,32 @@
+Parada de la EC2 de V1 (única acción autorizada) — 2026-11-10 22:22 hora local
+No se tocó RDS, ALB, IP elásticas ni ningún otro recurso. Salida enmascarada.
+
+Comprobación previa: código 0; instancias 'nexoeventos-academy-app' en ejecución: 1
+Antes:
+------------------------------------------------------
+|                  DescribeInstances                 |
++---------+-----------------------------+------------+
+| estado  |           lanzada           |   tipo     |
++---------+-----------------------------+------------+
+|  running|  2026-11-11T03:12:21+00:00  |  t3.small  |
++---------+-----------------------------+------------+
+stop-instances (única llamada de escritura):
+-------------------------
+|     StopInstances     |
++-----------+-----------+
+|   ahora   |   antes   |
++-----------+-----------+
+|  stopping |  running  |
++-----------+-----------+
+Esperando a 'stopped' (22:22:14)...
+wait: código 0  (22:22:45)
+Después:
+-------------------------
+|   DescribeInstances   |
++----------+------------+
+|  estado  |   tipo     |
++----------+------------+
+|  stopped |  t3.small  |
++----------+------------+
+Instancias EC2 en ejecución ahora:
+0

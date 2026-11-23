@@ -1,0 +1,287 @@
+Consultas de solo lectura de AWS para planificar la eliminación del ALB de V2 y la parada de RDS — 2026-11-10 22:27 — script SHA-256 a096c54f9ea43b1b556f1e27095ef3642e0c3d2d639566a85507a0449c54824c
+Salida enmascarada. Nada se creó, modificó, inició ni detuvo.
+
+== 0. Sesión
+Rol: voclabs
+
+== A. ALB de V2, listeners, reglas, target groups y dependencias
+<largo-oculto>
+|                  DescribeLoadBalancers                  |
++--------------------+------------------------------------+
+|  creado            |  2026-11-05T19:28:09.322000+00:00  |
+|  esquema           |  internet-facing                   |
+|  estado            |  active                            |
+|  gruposDeSeguridad |  1                                 |
+|  nombre            |  nexoeventos-academy-v2-alb        |
+|  tipo              |  application                       |
+|  zonas             |  2                                 |
++--------------------+------------------------------------+
+-- atributos (protección contra eliminación, tiempo de inactividad, registros de acceso)
+<largo-oculto>
+|     DescribeLoadBalancerAttributes      |
++--------------------------------+--------+
+|              clave             | valor  |
++--------------------------------+--------+
+|  access_logs.s3.enabled        |  false |
+|  idle_timeout.timeout_seconds  |  60    |
+|  deletion_protection.enabled   |  false |
++--------------------------------+--------+
+-- listeners
+<largo-oculto>
+|                                         DescribeListeners                                        |
++------------------+---------------+---------------------------------------+------------+----------+
+| accionPorDefecto | certificados  |              politicaTLS              | protocolo  | puerto   |
++------------------+---------------+---------------------------------------+------------+----------+
+|  forward         |  1            |  ELBSecurityPolicy-TLS13-1-2-2021-06  |  HTTPS     |  443     |
+|  redirect        |  0            |  None                                 |  HTTP      |  80      |
++------------------+---------------+---------------------------------------+------------+----------+
+-- reglas del listener
+<largo-oculto>
+|                     DescribeRules                    |
++----------+---------------+--------------+------------+
+| acciones |  condiciones  | porDefecto   | prioridad  |
++----------+---------------+--------------+------------+
+|  forward |  0            |  True        |  default   |
++----------+---------------+--------------+------------+
+-- reglas del listener
+<largo-oculto>
+|                     DescribeRules                    |
++----------+---------------+--------------+------------+
+| acciones |  condiciones  | porDefecto   | prioridad  |
++----------+---------------+--------------+------------+
+|  redirect|  0            |  True        |  default   |
++----------+---------------+--------------+------------+
+-- target groups del ALB y salud de sus destinos
+<largo-oculto>
+|            DescribeTargetGroups            |
++--------------+-----------------------------+
+|  nombre      |  nexoeventos-academy-v2-tg  |
+|  protocolo   |  HTTP                       |
+|  puerto      |  80                         |
+|  rutaDeSalud |  /livez                     |
+|  tipo        |  instance                   |
++--------------+-----------------------------+
+0
+-- interfaces de red del ALB (se liberan al eliminarlo)
+<largo-oculto>
+|             DescribeNetworkInterfaces            |
++-------+-------------+-------------+--------------+
+|estado |  ipPublica  |    tipo     |    zona      |
++-------+-------------+-------------+--------------+
+|in-use |  True       |  interface  |  us-east-1a  |
+|in-use |  True       |  interface  |  us-east-1b  |
++-------+-------------+-------------+--------------+
+-- Auto Scaling de V2 (su grupo de destino es el del ALB)
+<largo-oculto>
+|            DescribeAutoScalingGroups            |
++------------------+------------------------------+
+|  deseada         |  0                           |
+|  gruposDeDestino |  1                           |
+|  instancias      |  0                           |
+|  maximo          |  3                           |
+|  minimo          |  0                           |
+|  nombre          |  nexoeventos-academy-v2-asg  |
++------------------+------------------------------+
+-- grupos de seguridad de V2 y reglas
+<largo-oculto>
+|                 DescribeSecurityGroups                 |
++----------+---------------------------------+-----------+
+| entradas |             nombre              |  salidas  |
++----------+---------------------------------+-----------+
+|  1       |  nexoeventos-academy-v2-web-sg  |  4        |
+|  2       |  nexoeventos-academy-v2-alb-sg  |  1        |
++----------+---------------------------------+-----------+
+-- certificados de ACM (el certificado importado no lo gestiona Terraform)
+
+-- plantillas de lanzamiento, imágenes (AMI) e instantáneas propias (cobran almacenamiento)
+<largo-oculto>
+|                       DescribeLaunchTemplates                       |
++--------------------------------------------------------+------------+
+|                         nombre                         | versiones  |
++--------------------------------------------------------+------------+
+|  nexoeventos-academy-v2-<lt>5b026e1a8  |  1         |
++--------------------------------------------------------+------------+
+<largo-oculto>
+|                                  DescribeImages                                   |
++-----+----------------------------+------------+-----------------------------------+
+| GiB |          creada            |  estado    |              nombre               |
++-----+----------------------------+------------+-----------------------------------+
+|  20 |  2026-10-22T05:13:16.000Z  |  available |  nexoeventos-v2-20261022t051316z  |
+|  20 |  2026-11-04T15:38:10.000Z  |  available |  nexoeventos-v2-20261104t153809z  |
++-----+----------------------------+------------+-----------------------------------+
+<largo-oculto>
+|                    DescribeSnapshots                   |
++-----+------------+-------------------------------------+
+| GiB |  estado    |              iniciada               |
++-----+------------+-------------------------------------+
+|  20 |  completed |  2026-11-04T15:38:10.288000+00:00   |
+|  20 |  completed |  2026-10-22T05:13:17.206000+00:00   |
++-----+------------+-------------------------------------+
+
+== B. IP elásticas: a qué están asociadas
+<largo-oculto>
+|                       DescribeAddresses                      |
++------------+------------+-----------+-----------+------------+
+| aInstancia | aInterfaz  | asociada  |  dominio  | etiqueta   |
++------------+------------+-----------+-----------+------------+
+|  False     |  True      |  True     |  vpc      |  None      |
+|  False     |  True      |  True     |  vpc      |  None      |
++------------+------------+-----------+-----------+------------+
+<largo-oculto>
+|                                            DescribeNetworkInterfaces                                           |
++------------------------------------------------------+---------+-------------------+------------+--------------+
+|                      descripcion                     | estado  | instanciaAdjunta  |   tipo     |    zona      |
++------------------------------------------------------+---------+-------------------+------------+--------------+
+|  ELB <largo-oculto> |  in-use |  False            |  interface |  us-east-1a  |
+|  ELB <largo-oculto> |  in-use |  False            |  interface |  us-east-1b  |
++------------------------------------------------------+---------+-------------------+------------+--------------+
+-- instancias EC2 (¿a cuál pertenece cada IP?)
+<largo-oculto>
+|                 DescribeInstances                 |
++---------+-------------+---------------------------+
+| estado  |  ipPublica  |          nombre           |
++---------+-------------+---------------------------+
+|  stopped|  False      |  nexoeventos-academy-app  |
++---------+-------------+---------------------------+
+
+== C. RDS: copias disponibles y condiciones para detenerla
+{
+    "estado": "available",
+    "multiAZ": true,
+    "clase": "db.t3.micro",
+    "GiB": 20,
+    "maxGiB": 40,
+    "cifrada": true,
+    "retencionDias": 7,
+    "ultimaRestauracionPosible": "2026-11-11T03:24:35+00:00",
+    "ventanaDeCopia": "07:44-08:14",
+    "ventanaDeMantenimiento": "tue:04:54-tue:05:24",
+    "proteccionContraEliminacion": false,
+    "replicasDeLectura": 0,
+    "esReplica": false,
+    "modificacionesPendientes": {}
+}
+-- instantáneas (manuales y automáticas)
+<largo-oculto>
+|                              DescribeDBSnapshots                             |
++-----+------------------------------------+------------+--------+-------------+
+| GiB |              creada                |  estado    | motor  |    tipo     |
++-----+------------------------------------+------------+--------+-------------+
+|  20 |  2026-10-04T00:28:17.364000+00:00  |  available |  18.3  |  manual     |
+|  20 |  2026-10-23T01:06:41.019000+00:00  |  available |  18.3  |  manual     |
+|  20 |  2026-10-08T01:13:23.758000+00:00  |  available |  18.3  |  manual     |
+|  20 |  2026-10-19T06:28:41.418000+00:00  |  available |  18.3  |  manual     |
+|  20 |  2026-10-18T00:35:35.022000+00:00  |  available |  18.3  |  automated  |
+|  20 |  2026-10-18T07:56:30.205000+00:00  |  available |  18.3  |  automated  |
+|  20 |  2026-10-19T07:56:27.316000+00:00  |  available |  18.3  |  automated  |
+|  20 |  2026-10-22T05:25:59.054000+00:00  |  available |  18.3  |  automated  |
+|  20 |  2026-10-28T21:41:17.981000+00:00  |  available |  18.3  |  automated  |
+|  20 |  2026-11-04T16:27:23.007000+00:00  |  available |  18.3  |  automated  |
+|  20 |  2026-11-06T07:45:47.080000+00:00  |  available |  18.3  |  automated  |
+|  20 |  2026-11-07T07:55:34.952000+00:00  |  available |  18.3  |  automated  |
+|  20 |  2026-11-08T07:55:53.766000+00:00  |  available |  18.3  |  automated  |
+|  20 |  2026-11-09T07:56:22.395000+00:00  |  available |  18.3  |  automated  |
+|  20 |  2026-11-10T07:56:33.491000+00:00  |  available |  18.3  |  automated  |
++-----+------------------------------------+------------+--------+-------------+
+-- copias automáticas (ventana de restauración)
+<largo-oculto>
+|      DescribeDBInstanceAutomatedBackups      |
++----------------+-----------------------------+
+|  desde         |  2026-11-04T03:24:35+00:00  |
+|  estado        |  active                     |
+|  hasta         |  2026-11-11T03:24:35+00:00  |
+|  retencionDias |  7                          |
++----------------+-----------------------------+
+-- acciones de mantenimiento pendientes
+
+-- eventos de RDS de los últimos 14 días (paradas, arranques y avisos)
+2026-10-28T21:39:15.740000+00:00	Multi-AZ instance activation started
+2026-10-28T21:39:33.600000+00:00	DB instance restarted
+2026-10-28T21:39:50.703000+00:00	The RDS Multi-AZ primary instance is busy and unresponsive.
+2026-10-28T21:39:50.703000+00:00	Multi-AZ instance activation completed
+2026-10-28T21:39:55.562000+00:00	DB instance started
+2026-10-28T21:41:14.757000+00:00	Backing up DB instance
+2026-10-28T21:43:47.828000+00:00	Finished DB Instance backup
+2026-10-28T21:45:19.147000+00:00	Storage size 20 GiB is approaching the maximum storage threshold 20 GiB. Increase the maximum storage threshold.
+2026-10-28T21:51:22.515000+00:00	DB instance stopped
+2026-11-04T16:25:08.105000+00:00	DB instance restarted
+2026-11-04T16:26:09.116000+00:00	DB instance started
+2026-11-04T16:27:19.974000+00:00	Backing up DB instance
+2026-11-04T16:29:52.725000+00:00	Finished DB Instance backup
+2026-11-04T16:30:01.583000+00:00	Storage size 20 GiB is approaching the maximum storage threshold 20 GiB. Increase the maximum storage threshold.
+2026-11-04T16:31:37.026000+00:00	Reset master credentials
+2026-11-04T16:48:56.175000+00:00	Multi-AZ instance failover started. 
+2026-11-04T16:49:13.716000+00:00	DB instance restarted
+2026-11-04T16:49:35.864000+00:00	Multi-AZ instance failover completed
+2026-11-04T16:49:35.864000+00:00	The user requested a failover of the DB instance.
+2026-11-04T18:45:01.665000+00:00	Storage size 20 GiB is approaching the maximum storage threshold 20 GiB. Increase the maximum storage threshold.
+2026-11-04T20:45:01.759000+00:00	Storage size 20 GiB is approaching the maximum storage threshold 20 GiB. Increase the maximum storage threshold.
+2026-11-04T21:47:44.747000+00:00	DB instance stopped
+2026-11-05T19:23:43.889000+00:00	DB instance restarted
+2026-11-05T19:24:45.048000+00:00	DB instance started
+2026-11-05T19:30:32.738000+00:00	Storage size 20 GiB is approaching the maximum storage threshold 20 GiB. Increase the maximum storage threshold.
+2026-11-05T21:45:02.861000+00:00	Storage size 20 GiB is approaching the maximum storage threshold 20 GiB. Increase the maximum storage threshold.
+2026-11-05T23:45:02.912000+00:00	Storage size 20 GiB is approaching the maximum storage threshold 20 GiB. Increase the maximum storage threshold.
+2026-11-06T01:45:02.983000+00:00	Storage size 20 GiB is approaching the maximum storage threshold 20 GiB. Increase the maximum storage threshold.
+2026-11-06T03:45:03.039000+00:00	Storage size 20 GiB is approaching the maximum storage threshold 20 GiB. Increase the maximum storage threshold.
+2026-11-06T05:45:03.262000+00:00	Storage size 20 GiB is approaching the maximum storage threshold 20 GiB. Increase the maximum storage threshold.
+2026-11-06T07:45:03.292000+00:00	Storage size 20 GiB is approaching the maximum storage threshold 20 GiB. Increase the maximum storage threshold.
+2026-11-06T07:45:42.642000+00:00	Backing up DB instance
+2026-11-06T07:50:16.059000+00:00	Finished DB Instance backup
+2026-11-06T09:45:03.353000+00:00	Storage size 20 GiB is approaching the maximum storage threshold 20 GiB. Increase the maximum storage threshold.
+2026-11-06T11:45:03.414000+00:00	Storage size 20 GiB is approaching the maximum storage threshold 20 GiB. Increase the maximum storage threshold.
+2026-11-06T13:45:03.474000+00:00	Storage size 20 GiB is approaching the maximum storage threshold 20 GiB. Increase the maximum storage threshold.
+2026-11-06T15:45:03.591000+00:00	Storage size 20 GiB is approaching the maximum storage threshold 20 GiB. Increase the maximum storage threshold.
+2026-11-06T17:45:03.692000+00:00	Storage size 20 GiB is approaching the maximum storage threshold 20 GiB. Increase the maximum storage threshold.
+2026-11-07T07:55:30.746000+00:00	Backing up DB instance
+2026-11-07T08:00:04.580000+00:00	Finished DB Instance backup
+2026-11-08T07:55:49.552000+00:00	Backing up DB instance
+2026-11-08T08:00:22.433000+00:00	Finished DB Instance backup
+2026-11-09T07:56:18.166000+00:00	Backing up DB instance
+2026-11-09T07:58:51.043000+00:00	Finished DB Instance backup
+2026-11-10T07:56:29.368000+00:00	Backing up DB instance
+2026-11-10T08:01:03.404000+00:00	Finished DB Instance backup
+-- respaldos lógicos cifrados en S3 (prefijo database-backups/)
+
+
+== D. Otros costos que continúan (almacenamiento, alarmas, secretos, registros)
+<largo-oculto>
+|                                                 DescribeAlarms                                                  |
++--------------------------------------------------------------------------------------------+--------------------+
+|                                           alarma                                           |      estado        |
++--------------------------------------------------------------------------------------------+--------------------+
+|  <largo-oculto>  |  INSUFFICIENT_DATA |
+|  <largo-oculto>   |  INSUFFICIENT_DATA |
+|  <largo-oculto>                                           |  OK                |
+|  nexoeventos-academy-ec2-cpu-high                                                          |  OK                |
+|  nexoeventos-academy-rds-cpu-alta                                                          |  OK                |
+|  <largo-oculto>                                                |  OK                |
+|  <largo-oculto>                                            |  OK                |
+|  nexoeventos-academy-v2-alb-5xx-destino                                                    |  OK                |
+|  <largo-oculto>                                              |  OK                |
+|  nexoeventos-academy-v2-alb-latencia-p95                                                   |  OK                |
+|  <largo-oculto>                                          |  OK                |
+|  <largo-oculto>                                    |  OK                |
++--------------------------------------------------------------------------------------------+--------------------+
+<largo-oculto>
+|                  ListSecrets                  |
++-----------------------------------------------+
+|                    nombre                     |
++-----------------------------------------------+
+|  rds!db-d429550d-e45b-4842-8ab1-3058037a04ea  |
+|  nexoeventos/academy/backend-env              |
++-----------------------------------------------+
+<largo-oculto>
+|                          DescribeLogGroups                         |
++--------+-----------------------------------------+-----------------+
+|  bytes |                  grupo                  |  retencionDias  |
++--------+-----------------------------------------+-----------------+
+|  3569  |  /aws/lambda/RedshiftEventSubscription  |  None           |
+|  1578  |  /aws/lambda/RedshiftOverwatch          |  None           |
+|  1040  |  /aws/lambda/RoleCreationFunction       |  None           |
+|  149208|  /nexoeventos/academy/api               |  7              |
+|  174043|  /nexoeventos/academy/nginx             |  7              |
++--------+-----------------------------------------+-----------------+
+
+== fin (solo consultas; nada se creó, modificó, inició ni detuvo; no se instaló nada)
+código de salida: 0

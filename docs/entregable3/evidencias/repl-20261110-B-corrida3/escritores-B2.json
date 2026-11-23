@@ -1,0 +1,233 @@
+[
+ {
+  "t": 1794335081.217,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.2), port 5432 failed: timeout ex",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335081.681,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335082.166,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335082.684,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335083.2,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335083.823,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335084.388,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335084.922,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335085.408,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335086.105,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335086.931,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335087.451,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335087.887,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335088.359,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335088.772,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335089.211,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335089.654,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335090.069,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335090.497,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335090.922,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335091.37,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335091.804,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335092.296,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335092.799,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335093.237,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335093.691,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335094.132,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335094.57,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335095.021,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335095.446,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335095.893,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335096.368,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ },
+ {
+  "t": 1794335096.857,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "",
+  "error_oci": ""
+ }
+]

@@ -1,0 +1,11 @@
+2026-11-23T04:49:47Z
+5e1fed1
+backend/tests:
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+343 passed, 66 warnings in 101.28s (0:01:41)
+exit=0
+scripts/multicloud:
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+704 passed, 17 warnings, 66 subtests passed in 693.19s (0:11:33)
+2026-11-23T05:03:03Z
+nota: ejecutado en /Users/.../NexoEventos (rama cierre-t6-t8, 5e1fed1) con PYTHONDONTWRITEBYTECODE=1 y -p no:cacheprovider; scripts/multicloud sin 'failed' en la salida.

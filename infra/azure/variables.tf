@@ -41,8 +41,8 @@ variable "admin_cidr" {
   type        = string
   default     = ""
   validation {
-    condition     = var.admin_cidr == "" || (can(cidrhost(var.admin_cidr, 0)) && var.admin_cidr != "0.0.0.0/0")
-    error_message = "admin_cidr debe ser un CIDR concreto y nunca 0.0.0.0/0."
+    condition     = var.admin_cidr == "" || (can(cidrhost(var.admin_cidr, 0)) && var.admin_cidr != "0.0.0.0/0" && endswith(var.admin_cidr, "/32"))
+    error_message = "admin_cidr debe ser una única IP /32 y nunca 0.0.0.0/0."
   }
 }
 
@@ -59,9 +59,13 @@ variable "create_monitoring_vm" {
 }
 
 variable "vm_size" {
-  description = "2 vCPU / 4 GB suficiente para Zabbix + PostgreSQL + Grafana. Validar disponibilidad y cuota en la región antes de crear."
+  description = "Standard_B2s (y toda la serie B) está restringida («NotAvailableForSubscription») para Azure for Students (comprobado el 28-oct-2026). Se usa Standard_D2s_v4 (2 vCPU / 8 GiB, Gen2/Trusted Launch), la más barata disponible con cuota en centralus (≈ USD 0,108/h). Solo se admite este tamaño."
   type        = string
-  default     = "Standard_B2s"
+  default     = "Standard_D2s_v4"
+  validation {
+    condition     = var.vm_size == "Standard_D2s_v4"
+    error_message = "Tamaño autorizado: Standard_D2s_v4. Cualquier otro requiere una decisión explícita (costo y cuota)."
+  }
 }
 
 variable "ssh_public_key" {
@@ -71,20 +75,37 @@ variable "ssh_public_key" {
 }
 
 variable "budget_amount_usd" {
-  description = "Presupuesto mensual del grupo de recursos; la alerta se dispara al 50/80/100 %. Crédito inicial informado: 100 (sin verificar)."
+  description = "Presupuesto mensual de la suscripción; alertas al 50/80/100 % real y 100 % previsto. Saldo de crédito verificado el 27-oct-2026: USD 100,00 (consulta de solo lectura); se fija 60 como tope operativo."
   type        = number
-  default     = 100
+  default     = 60
 }
 
 variable "budget_start_date" {
   description = "Primer día de un mes (AAAA-MM-01T00:00:00Z)."
   type        = string
-  default     = "2026-11-01T00:00:00Z"
+  default     = "2026-10-01T00:00:00Z"
 }
 
 variable "alert_emails" {
-  type    = list(string)
-  default = []
+  description = "Correos para el presupuesto y el grupo de acción de Azure Monitor (tfvars local; no van en Git)."
+  type        = list(string)
+  default     = []
+}
+
+variable "dns_label" {
+  description = "Etiqueta DNS gratuita de la IP pública (<etiqueta>.<región>.cloudapp.azure.com), en minúsculas. Vacío = sin nombre."
+  type        = string
+  default     = ""
+  validation {
+    condition     = var.dns_label == "" || can(regex("^[a-z][a-z0-9-]{2,60}[a-z0-9]$", var.dns_label))
+    error_message = "dns_label: minúsculas, números y guiones (3–62)."
+  }
+}
+
+variable "enable_activity_log" {
+  description = "Envía el registro de actividad de la suscripción a Log Analytics (auditoría; volumen mínimo)."
+  type        = bool
+  default     = true
 }
 
 variable "enable_availability_tests" {
@@ -102,3 +123,20 @@ variable "monitored_urls" {
 locals {
   common_tags = { project = "NexoEventos", role = "observabilidad", managed_by = "Terraform" }
 }
+
+variable "enable_auto_shutdown" {
+  description = "Apagado automático (DevTest Labs, Microsoft.DevTestLab/schedules): DESASIGNA la VM todos los días a shutdown_time_utc. Obligatorio mientras exista la VM."
+  type        = bool
+  default     = true
+}
+
+variable "shutdown_time_utc" {
+  description = "Hora UTC (HHmm, 24 h) del apagado diario. Se fija con scripts/observability/azure-set-shutdown-window.sh = ahora + duración de la ventana. Sin valor, el plan con VM se rechaza."
+  type        = string
+  default     = ""
+  validation {
+    condition     = var.shutdown_time_utc == "" || can(regex("^([01][0-9]|2[0-3])[0-5][0-9]$", var.shutdown_time_utc))
+    error_message = "shutdown_time_utc debe ser HHmm en 24 h (por ejemplo 1830)."
+  }
+}
+

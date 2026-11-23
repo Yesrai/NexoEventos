@@ -1,0 +1,103 @@
+---
+- name: Clave pública del repositorio de Grafana (incluida en el rol; huella comprobada)
+  ansible.builtin.copy:
+    src: grafana-apt.key.asc
+    dest: /etc/apt/keyrings/grafana.asc
+    mode: "0644"
+  register: _gkey
+
+- name: La clave coincide con la verificada
+  ansible.builtin.stat: { path: /etc/apt/keyrings/grafana.asc, checksum_algorithm: sha256 }
+  register: _gkey_stat
+  failed_when: _gkey_stat.stat.checksum != '3d4029689bc7e4444ec00abafa07f21e9c812b41f1123ab5bbe6f8c3e3f7ff8c'
+
+- name: Repositorio APT de Grafana
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/grafana.asc] https://apt.grafana.com stable main"
+    filename: grafana
+    state: present
+
+- name: Instalar Grafana OSS
+  ansible.builtin.apt:
+    name: "{{ 'grafana=' ~ grafana_package_version if grafana_package_version | length > 0 else 'grafana' }}"
+    update_cache: true
+    lock_timeout: 300
+    state: present
+
+- name: Contraseña del administrador de Grafana (archivo 0640 root:grafana; nunca en grafana.ini)
+  ansible.builtin.copy:
+    content: "{{ _pw_grafana_admin }}"
+    dest: /etc/grafana/admin_password
+    owner: root
+    group: grafana
+    mode: "0640"
+  no_log: true
+  notify: Reiniciar Grafana
+
+- name: Contraseña del usuario de solo lectura de Zabbix para Grafana
+  ansible.builtin.copy:
+    content: "{{ _pw_grafana_ro }}"
+    dest: /etc/grafana/zabbix_ro_password
+    owner: root
+    group: grafana
+    mode: "0640"
+  no_log: true
+  notify: Reiniciar Grafana
+
+- name: Archivo grafana.ini
+  ansible.builtin.template:
+    src: grafana.ini.j2
+    dest: /etc/grafana/grafana.ini
+    owner: root
+    group: grafana
+    mode: "0640"
+  notify: Reiniciar Grafana
+
+- name: Plugins (descarga firmada desde grafana.com)
+  ansible.builtin.command:
+    cmd: "grafana cli plugins install {{ item }}"
+    creates: "/var/lib/grafana/plugins/{{ item }}"
+  loop: "{{ grafana_plugins }}"
+  notify: Reiniciar Grafana
+
+- name: Directorios de aprovisionamiento
+  ansible.builtin.file: { path: "{{ item }}", state: directory, owner: root, group: grafana, mode: "0750" }
+  loop: [/etc/grafana/provisioning/datasources, /etc/grafana/provisioning/plugins, /etc/grafana/provisioning/dashboards, /var/lib/grafana/dashboards]
+
+- name: Orígenes de datos, plugin y proveedor de paneles
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: grafana
+    mode: "0640"
+  loop:
+    - { src: grafana-datasources.yml.j2, dest: /etc/grafana/provisioning/datasources/nexo.yml }
+    - { src: grafana-plugins.yml.j2, dest: /etc/grafana/provisioning/plugins/apps.yml }
+    - { src: grafana-dashboards.yml.j2, dest: /etc/grafana/provisioning/dashboards/nexo.yml }
+  loop_control: { label: "{{ item.dest }}" }
+  notify: Reiniciar Grafana
+
+- name: Paneles (JSON versionado en el repositorio)
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/var/lib/grafana/dashboards/{{ item | basename }}"
+    owner: root
+    group: grafana
+    mode: "0640"
+  with_fileglob: "{{ role_path }}/files/grafana/dashboards/*.json"
+  notify: Reiniciar Grafana
+
+- name: Panel de Azure (requiere el ID de la suscripción para Azure Monitor)
+  ansible.builtin.template:
+    src: grafana-30-azure.json.j2
+    dest: /var/lib/grafana/dashboards/30-azure-vm.json
+    owner: root
+    group: grafana
+    mode: "0640"
+  when: grafana_azure_subscription_id | length > 0
+  notify: Reiniciar Grafana
+
+- name: Servicio Grafana
+  ansible.builtin.systemd: { name: grafana-server, state: started, enabled: true }
+  when: monitoring_manage_services | bool

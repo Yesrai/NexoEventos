@@ -1,0 +1,42 @@
+[
+ {
+  "regla": "alerta-vm-cpu",
+  "severidad": "Sev2",
+  "condicion": "Resolved",
+  "estado": "New",
+  "disparada": "2026-10-28T14:41:12.7830094Z",
+  "resuelta": "2026-10-28T15:02:59.8086308Z",
+  "modificada": "2026-10-28T15:02:59.4133129Z",
+  "señal": "Metric"
+ },
+ {
+  "regla": "alerta-vm-up",
+  "severidad": "Sev1",
+  "condicion": "Resolved",
+  "estado": "New",
+  "disparada": "2026-10-28T15:08:34.6200588Z",
+  "resuelta": "2026-11-04T22:57:09.4887738Z",
+  "modificada": "2026-11-04T22:57:09.2811811Z",
+  "señal": "Metric"
+ },
+ {
+  "regla": "alerta-vm-mem",
+  "severidad": "Sev2",
+  "condicion": "Fired",
+  "estado": "New",
+  "disparada": "2026-11-04T22:50:41.6743832Z",
+  "resuelta": null,
+  "modificada": "2026-11-04T22:50:41.6743832Z",
+  "señal": "Metric"
+ },
+ {
+  "regla": "alerta-vm-up",
+  "severidad": "Sev1",
+  "condicion": "Fired",
+  "estado": "New",
+  "disparada": "2026-11-04T23:03:09.7311811Z",
+  "resuelta": null,
+  "modificada": "2026-11-04T23:03:09.7311811Z",
+  "señal": "Metric"
+ }
+]

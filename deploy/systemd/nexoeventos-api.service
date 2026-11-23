@@ -9,7 +9,7 @@ User=nexoeventos
 Group=nexoeventos
 WorkingDirectory=/opt/nexoeventos/backend
 EnvironmentFile=/etc/nexoeventos/backend.env
-ExecStart=/opt/nexoeventos/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 2 --proxy-headers --forwarded-allow-ips=127.0.0.1 --no-access-log
+ExecStart=/opt/nexoeventos/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 2 --proxy-headers --forwarded-allow-ips=127.0.0.1 --timeout-graceful-shutdown 25 --no-access-log
 Restart=on-failure
 RestartSec=5
 TimeoutStopSec=30

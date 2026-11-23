@@ -1,0 +1,16 @@
+{"t": 1794360000.811, "ev": "monitor_inicio", "auto": true, "pid": 97404}
+{"t": 1794360000.821, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 4.9, "prot": {"mode": "protected", "seq": 2, "primario": "pg-aws", "epoch": 1, "verified_age_s": 1.52}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794360003.452, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 1, "error": "psql: error: connection to server at \"pg-aws\" (172.29.241.2), port 5432 failed: FATAL:  terminating connection due to unexpected postmaster "}
+{"t": 1794360004.072, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 2, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794360004.46, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 3, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794360004.467, "ev": "proteccion", "modo": "promoting", "antes": "protected", "ok": true, "seq": 3, "primario": "pg-aws", "motivo": "reclamo exclusivo de la promoción"}
+{"t": 1794360004.468, "ev": "promote_inicio", "destino": "pg-oci", "origen": "pg-aws", "planificada": false, "epoca": 1}
+{"t": 1794360004.47, "ev": "lease_retirado", "epoca": 2}
+{"t": 1794360004.612, "ev": "fence", "nodo": "pg-aws", "detenido": true, "escritura_real_aceptada": false, "escritura_real_error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known", "resultado": "confirmado"}
+{"t": 1794360005.067, "ev": "secuencias_ajustadas", "cantidad": 6}
+{"t": 1794360005.683, "ev": "destino_abierto", "rol_sin_solo_lectura": true, "solo_lectura_global_apagado": true, "modo_abierto": {"modo": "open", "escribir_hba": true, "recargar": true, "efecto_en_conexion_nueva": true, "mensaje_de_la_conexion_nueva": ""}}
+{"t": 1794360005.769, "ev": "escritura_destino", "aceptada": true, "error": ""}
+{"t": 1794360005.772, "ev": "lease_otorgado", "escritor": "pg-oci", "epoca": 3, "t_desde_inicio_s": 1.3}
+{"t": 1794360005.776, "ev": "proteccion", "modo": "unprotected", "antes": "unknown", "ok": true, "seq": 6, "primario": "pg-oci", "motivo": "conmutación: aún no hay seguidor; las escrituras confirmadas hasta reconstruirlo NO tienen copia"}
+{"t": 1794360006.555, "ev": "haproxy_db_enruta", "nodo": "pg-oci", "t_desde_inicio_s": 2.09}
+{"t": 1794360006.705, "ev": "monitor_fin", "motivo": "SIGTERM"}

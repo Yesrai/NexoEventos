@@ -1,0 +1,85 @@
+{
+  "DBInstances": [
+    {
+      "DBInstanceIdentifier": "nexoeventos-academy-postgres",
+      "DBInstanceClass": "db.t3.micro",
+      "Engine": "postgres",
+      "DBInstanceStatus": "available",
+      "AllocatedStorage": 20,
+      "InstanceCreateTime": "2026-10-02T20:28:02.162000+00:00",
+      "BackupRetentionPeriod": 7,
+      "DBSecurityGroups": [],
+      "DBParameterGroups": [
+        {
+          "DBParameterGroupName": "default.postgres18",
+          "ParameterApplyStatus": "in-sync"
+        }
+      ],
+      "AvailabilityZone": "us-east-1b",
+      "PreferredMaintenanceWindow": "tue:04:54-tue:05:24",
+      "UpgradeRolloutOrder": "second",
+      "PendingModifiedValues": {},
+      "LatestRestorableTime": "2026-11-06T19:29:37+00:00",
+      "MultiAZ": true,
+      "EngineVersion": "18.3",
+      "AutoMinorVersionUpgrade": true,
+      "ReadReplicaDBInstanceIdentifiers": [],
+      "LicenseModel": "postgresql-license",
+      "StorageThroughput": 0,
+      "OptionGroupMemberships": [
+        {
+          "OptionGroupName": "default:postgres-18",
+          "Status": "in-sync"
+        }
+      ],
+      "SecondaryAvailabilityZone": "us-east-1a",
+      "PubliclyAccessible": false,
+      "StorageType": "gp2",
+      "StorageEncrypted": true,
+      "KmsKeyId": "arn:aws:kms:us-east-1:<cuenta>:key/ce6363c7-bf7e-4973-bf87-09b9fba3cae2",
+      "CACertificateIdentifier": "rds-ca-rsa2048-g1",
+      "DomainMemberships": [],
+      "CopyTagsToSnapshot": true,
+      "MonitoringInterval": 0,
+      "IAMDatabaseAuthenticationEnabled": false,
+      "DatabaseInsightsMode": "standard",
+      "PerformanceInsightsEnabled": false,
+      "DeletionProtection": false,
+      "AssociatedRoles": [],
+      "MaxAllocatedStorage": 40,
+      "TagList": [
+        {
+          "Key": "Project",
+          "Value": "NexoEventos"
+        },
+        {
+          "Key": "Environment",
+          "Value": "academy"
+        },
+        {
+          "Key": "ManagedBy",
+          "Value": "Terraform"
+        },
+        {
+          "Key": "Academic",
+          "Value": "true"
+        },
+        {
+          "Key": "Name",
+          "Value": "nexoeventos-academy-postgres"
+        }
+      ],
+      "CustomerOwnedIpEnabled": false,
+      "NetworkType": "IPV4",
+      "ActivityStreamStatus": "stopped",
+      "BackupTarget": "region",
+      "CertificateDetails": {
+        "CAIdentifier": "rds-ca-rsa2048-g1",
+        "ValidTill": "2027-10-02T20:26:43+00:00"
+      },
+      "DedicatedLogVolume": false,
+      "IsStorageConfigUpgradeAvailable": false,
+      "EngineLifecycleSupport": "open-source-rds-extended-support"
+    }
+  ]
+}

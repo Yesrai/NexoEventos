@@ -1,0 +1,14 @@
+{
+  "env": "aws-academy",
+  "cert": "/etc/nexoeventos/recovery-backup-public.crt",
+  "par_url_file": "/etc/nexoeventos/backup-par.url",
+  "state_dir": "/var/lib/nexoeventos/backup/aws-academy",
+  "prefix": "nexoeventos-rds",
+  "retries": 3,
+  "backoff": 5,
+  "timeout": 120,
+  "max_age_min": 90,
+  "sign_key_file": "/etc/nexoeventos/backup-sign.pem",
+  "fingerprint_cmd": "psql \"$DATABASE_URL\" -At -f /opt/nexoeventos/scripts/multicloud/fingerprint.sql",
+  "cert_sha256": "5c6d387bbc29ef818e0c3267cf477b32a2b890fda31be2d7c3c3d6cd9d5c7bcf"
+}

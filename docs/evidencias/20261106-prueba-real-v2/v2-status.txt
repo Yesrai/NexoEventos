@@ -1,0 +1,13 @@
+• Sesión AWS válida (rol: voclabs, perfil: nexoeventos-lab, región: us-east-1)
+── AWS V2 ───────────────────────────────────────
+ASG:        nexoeventos-academy-v2-asg
+Capacidad:  mínima=2  deseada=2  máxima=3
+Instancias: 2 en el grupo, 2 InService/Healthy en 2 zona(s)
+   - i-047939a71f0087190  us-east-1b  InService/Healthy
+   - i-068ef939e2355d2b6  us-east-1a  InService/Healthy
+ALB:        nexoeventos-academy-v2-alb (active)  destinos healthy: 2
+   - destino i-047939a71f0087190: healthy
+   - destino i-068ef939e2355d2b6: healthy
+RDS:        available  (nexoeventos-academy-postgres)
+EC2 de V1:  running  (solo informativo; estos scripts no la tocan)
+RESULTADO: V2 ENCENDIDA y SANA (2 instancias en 2 zonas, 2 destinos healthy).

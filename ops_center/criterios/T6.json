@@ -1,0 +1,69 @@
+{
+ "stage": "T6",
+ "title": "Failover real controlado AWS → OCI",
+ "criteria": [
+  {
+   "id": "escrituras_201_de_aws_tras_la_toma",
+   "kind": "max",
+   "threshold": 0,
+   "desc": "respuestas 201 de AWS tras la toma del lease"
+  },
+  {
+   "id": "un_solo_escritor_siempre",
+   "kind": "bool",
+   "desc": "nunca hubo dos escritores"
+  },
+  {
+   "id": "dns_solo_dominio_de_pruebas",
+   "kind": "bool",
+   "desc": "DNS cambiado solo en el dominio de pruebas"
+  },
+  {
+   "id": "dns_tras_lease_datos_standby",
+   "kind": "bool",
+   "desc": "DNS cambió solo tras lease + datos verificados + standby listo"
+  },
+  {
+   "id": "aws_cerrado_por_efecto",
+   "kind": "bool",
+   "desc": "verificado por efecto que AWS no puede escribir"
+  },
+  {
+   "id": "rto_s",
+   "kind": "max",
+   "threshold": 3600,
+   "desc": "RTO medido (objetivo del proyecto ≤ 60 min, por confirmar)"
+  },
+  {
+   "id": "rpo_s",
+   "kind": "max",
+   "threshold": 5400,
+   "desc": "RPO = edad del respaldo usado (umbral 90 min del panel)"
+  },
+  {
+   "id": "sin_perdida_reservas_confirmadas",
+   "kind": "bool",
+   "desc": "ninguna reserva confirmada se perdió"
+  },
+  {
+   "id": "limpieza_verificada",
+   "kind": "bool",
+   "desc": "verify_clean --live en AWS y OCI"
+  },
+  {
+   "id": "ensayo_en_seco_con_adaptadores_reales",
+   "kind": "bool",
+   "desc": "T6.0: orquestador en dry-run contra los extremos reales (solo lectura): sondas, precheck y lease verificados sin habilitar nada"
+  },
+  {
+   "id": "cancelacion_tras_lease_antes_de_habilitar_deja_cero_escritores_nuevos",
+   "kind": "bool",
+   "desc": "cancelar tras adquirir el lease y antes de ENABLE: lease liberado, registro de promoción en NONE, AWS sigue siendo el único escritor"
+  },
+  {
+   "id": "aborto_por_standby_no_listo_es_limpio",
+   "kind": "bool",
+   "desc": "con el standby deliberadamente no listo, HEALTH_GATE aborta, libera el lease y no cambia el DNS"
+  }
+ ]
+}

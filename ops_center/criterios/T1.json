@@ -1,0 +1,72 @@
+{
+ "stage": "T1",
+ "title": "Lease real por PAR en OCI (CAS, carrera de adquisición, latencia, limpieza)",
+ "criteria": [
+  {
+   "id": "par_creados_y_revocados",
+   "kind": "bool",
+   "desc": "3 PAR creados, revocados; 0 activos y las URL ya no responden 200"
+  },
+  {
+   "id": "create_duplicado_rechazado",
+   "kind": "bool",
+   "desc": "If-None-Match:* acepta el primero (200) y rechaza el segundo (412)"
+  },
+  {
+   "id": "cas_etag_viejo_rechazado",
+   "kind": "bool",
+   "desc": "If-Match vigente 200; ETag obsoleto 412; contenido intacto"
+  },
+  {
+   "id": "cas_rondas_con_un_solo_ganador",
+   "kind": "min",
+   "threshold": 20,
+   "desc": "rondas CAS (8 contendientes) con exactamente 1 ganador"
+  },
+  {
+   "id": "cas_rondas_con_mas_de_un_ganador",
+   "kind": "max",
+   "threshold": 0,
+   "desc": "rondas CAS con más de un ganador"
+  },
+  {
+   "id": "lease_adquisicion_rondas_exclusivas",
+   "kind": "min",
+   "threshold": 20,
+   "desc": "rondas de ADQUISICIÓN del lease (LeaseClient real) con 1 ganador, ≤ 1 válido, época +1"
+  },
+  {
+   "id": "lease_adquisicion_violaciones",
+   "kind": "max",
+   "threshold": 0,
+   "desc": "violaciones P0–P5 (varios ganadores, válidos simultáneos, inconclusos)"
+  },
+  {
+   "id": "p95_put_exitoso_s",
+   "kind": "max",
+   "threshold": 2.5,
+   "desc": "p95 de PUT exitoso (margen del lease 5 s ⇒ < 2,5 s)"
+  },
+  {
+   "id": "reloj_desfase_s",
+   "kind": "max",
+   "threshold": 5,
+   "desc": "desfase del reloj local vs servidor (cabecera Date)"
+  },
+  {
+   "id": "ejecucion_sin_interrupcion",
+   "kind": "bool",
+   "desc": "sin timeout, sin plazo agotado, sin interrupción"
+  },
+  {
+   "id": "sin_residuos",
+   "kind": "bool",
+   "desc": "0 PAR activos y 0 versiones en el prefijo (limpio=true)"
+  },
+  {
+   "id": "inventario_previo_intacto",
+   "kind": "bool",
+   "desc": "tras T1, el bucket tiene los MISMOS objetos y bytes que antes (21 / 471979 en la lectura previa), 0 PAR y el modo plan-only vuelve a dar LISTO"
+  }
+ ]
+}

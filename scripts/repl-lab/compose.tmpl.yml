@@ -1,0 +1,162 @@
+# GENERADO por build_compose.py a partir de compose.tmpl.yml y parts/*. No editar compose.yml a mano.
+# Laboratorio LOCAL de replicación lógica + failover de BD (Entregable 3). Sin nubes, sin costos, datos ficticios.
+# Aislado: proyecto nexo-repl-lab, red 172.29.241.0/24, volúmenes y puertos propios (127.0.0.1).
+name: nexo-repl-lab
+
+x-pg: &pg
+  image: postgres:18
+  entrypoint: ["/bin/bash", "/lab-entry.sh"]   # arranque cerrado: ver parts/lab-entry.sh
+  depends_on:
+    witness: {condition: service_healthy}
+  command: ["postgres", "-c", "wal_level=logical", "-c", "max_replication_slots=10", "-c", "max_wal_senders=10",
+            "-c", "max_logical_replication_workers=8", "-c", "max_connections=200", "-c", "wal_receiver_timeout=5s"]
+  configs:
+    - {source: db_init, target: /docker-entrypoint-initdb.d/10-roles.sql, mode: 0444}
+    - {source: lab_entry, target: /lab-entry.sh, mode: 0444}
+  environment:
+    POSTGRES_PASSWORD: lab-local-only-admin
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U postgres -d nexoeventos"]
+    interval: 2s
+    timeout: 2s
+    retries: 30
+
+x-app: &app
+  image: nexo-repl-lab-backend:current   # código ACTUAL de backend/ sobre la imagen de desarrollo (ver Dockerfile.current); sin modificar el repositorio
+  environment: &appenv
+    APP_ENV: development
+    DATABASE_URL: postgresql+psycopg://nexoeventos_app:lab-local-only-app@127.0.0.1:5432/nexoeventos
+    FRONTEND_ORIGINS: http://127.0.0.1:18080,http://localhost:18080
+    TICKET_ENCRYPTION_KEY: "${TICKET_ENCRYPTION_KEY:?Usa scripts/repl-lab/lab.sh up}"
+  read_only: true
+  tmpfs: [/tmp]
+  cap_drop: ["ALL"]
+  security_opt: ["no-new-privileges:true"]
+
+services:
+  pg-aws:
+    <<: *pg
+    environment: {POSTGRES_PASSWORD: lab-local-only-admin, NODE_NAME: pg-aws}
+    ports: ["127.0.0.1:55441:5432"]
+    volumes: ["pg-aws-data:/var/lib/postgresql"]
+
+  pg-oci:
+    <<: *pg
+    environment: {POSTGRES_PASSWORD: lab-local-only-admin, NODE_NAME: pg-oci}
+    ports: ["127.0.0.1:55442:5432"]
+    volumes: ["pg-oci-data:/var/lib/postgresql"]
+
+  witness:
+    image: nexo-repl-lab-backend:current
+    command: ["python", "/witness.py"]
+    user: "0:0"
+    cap_drop: ["ALL"]   # sin read_only: Compose no puede crear configs en línea en servicios de solo lectura
+    configs:
+      - {source: witness_py, target: /witness.py, mode: 0444}
+    volumes: ["witness-data:/data"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/state', timeout=2)"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+    ports: ["127.0.0.1:18100:8000"]
+    networks:
+      default: {ipv4_address: 172.29.241.10}
+
+  migrate:
+    image: nexo-repl-lab-backend:current
+    profiles: ["tools"]
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      MIGRATION_DATABASE_URL: postgresql+psycopg://postgres:lab-local-only-admin@pg-aws:5432/nexoeventos
+
+  app-aws:
+    <<: *app
+    environment: {<<: *appenv, SITE_NAME: aws}
+    ports: ["127.0.0.1:18001:8000", "127.0.0.1:18405:8405"]   # 8405 = estadísticas del gateway de BD de este nodo (sidecar)
+
+  app-oci:
+    <<: *app
+    environment: {<<: *appenv, SITE_NAME: oci}
+    ports: ["127.0.0.1:18002:8000", "127.0.0.1:18406:8405"]
+
+  # Gateway de BD ("db-writer") como SIDECAR de cada app (comparte su red): la aplicación actual exige sslmode=verify-full para cualquier host de BD que no sea
+  # local (backend/app/database.py), así que se conecta a 127.0.0.1:5432 y el sidecar reenvía al escritor que declara el witness.
+  haproxy-db-aws:
+    image: haproxy:lts-alpine
+    network_mode: "service:app-aws"
+    depends_on: [app-aws, witness]
+    configs:
+      - {source: haproxy_db_cfg, target: /usr/local/etc/haproxy/haproxy.cfg, mode: 0444}
+
+  haproxy-db-oci:
+    image: haproxy:lts-alpine
+    network_mode: "service:app-oci"
+    depends_on: [app-oci, witness]
+    configs:
+      - {source: haproxy_db_cfg, target: /usr/local/etc/haproxy/haproxy.cfg, mode: 0444}
+
+  # Solo para la etapa E: la imagen ANTIGUA de desarrollo (22-oct) con su propio sidecar.
+  app-stale:
+    <<: *app
+    image: nexoeventos-dev-backend:latest
+    profiles: ["stale"]
+    ports: ["127.0.0.1:18003:8000"]
+
+  haproxy-db-stale:
+    image: haproxy:lts-alpine
+    profiles: ["stale"]
+    network_mode: "service:app-stale"
+    depends_on: [app-stale, witness]
+    configs:
+      - {source: haproxy_db_cfg, target: /usr/local/etc/haproxy/haproxy.cfg, mode: 0444}
+
+  haproxy-edge:
+    image: haproxy:lts-alpine
+    configs:
+      - {source: haproxy_edge_cfg, target: /usr/local/etc/haproxy/haproxy.cfg, mode: 0444}
+    ports: ["127.0.0.1:18080:8080", "127.0.0.1:18404:8404"]
+
+  cut-proxy:
+    image: nexo-repl-lab-backend:current
+    profiles: ["fault"]
+    command: ["python", "/cutproxy.py"]
+    cap_drop: ["ALL"]
+    configs:
+      - {source: cutproxy_py, target: /cutproxy.py, mode: 0444}
+    ports: ["127.0.0.1:18090:8000", "127.0.0.1:18091:8001"]
+
+networks:
+  default:
+    ipam:
+      config: [{subnet: 172.29.241.0/24}]
+
+configs:
+  db_init:
+    content: |
+      CREATE ROLE nexoeventos_owner NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+      CREATE ROLE nexoeventos_app LOGIN PASSWORD 'lab-local-only-app' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+      CREATE ROLE repl LOGIN REPLICATION PASSWORD 'lab-local-only-repl' NOSUPERUSER NOCREATEDB NOCREATEROLE;
+      CREATE DATABASE nexoeventos OWNER nexoeventos_owner;
+      REVOKE ALL ON DATABASE nexoeventos FROM PUBLIC;
+      GRANT CONNECT ON DATABASE nexoeventos TO nexoeventos_app, repl;
+  lab_entry:
+    content: |
+@@parts/lab-entry.sh@@
+  witness_py:
+    content: |
+@@parts/witness.py@@
+  cutproxy_py:
+    content: |
+@@parts/cutproxy.py@@
+  haproxy_db_cfg:
+    content: |
+@@parts/haproxy-db.cfg@@
+  haproxy_edge_cfg:
+    content: |
+@@parts/haproxy-edge.cfg@@
+
+volumes:
+  pg-aws-data:
+  pg-oci-data:
+  witness-data:

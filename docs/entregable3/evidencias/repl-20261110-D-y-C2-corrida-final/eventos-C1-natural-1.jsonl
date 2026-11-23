@@ -1,0 +1,18 @@
+{"t": 1794338635.967, "ev": "monitor_inicio", "auto": true, "pid": 41680}
+{"t": 1794338635.981, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 4.62}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794338640.993, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.79}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794338644.667, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 1, "error": "\tIs the server running on that host and accepting TCP/IP connections?"}
+{"t": 1794338645.38, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 2, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794338645.74, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 3, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794338645.742, "ev": "promote_inicio", "destino": "pg-oci", "origen": "pg-aws", "planificada": false, "epoca": 1}
+{"t": 1794338645.747, "ev": "lease_retirado", "epoca": 2}
+{"t": 1794338645.952, "ev": "fence", "nodo": "pg-aws", "detenido": true, "escritura_real_aceptada": false, "escritura_real_error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known", "resultado": "confirmado"}
+{"t": 1794338646.221, "ev": "secuencias_ajustadas", "cantidad": 6}
+{"t": 1794338646.912, "ev": "destino_abierto", "rol_sin_solo_lectura": true, "solo_lectura_global_apagado": true, "modo_abierto": {"modo": "open", "escribir_hba": true, "recargar": true, "efecto_en_conexion_nueva": true, "mensaje_de_la_conexion_nueva": ""}}
+{"t": 1794338647.004, "ev": "escritura_destino", "aceptada": true, "error": ""}
+{"t": 1794338647.012, "ev": "lease_otorgado", "escritor": "pg-oci", "epoca": 3, "t_desde_inicio_s": 1.27}
+{"t": 1794338648.042, "ev": "haproxy_db_enruta", "nodo": "pg-oci", "t_desde_inicio_s": 2.3}
+{"t": 1794338648.203, "ev": "verificacion_final", "antiguo_escribe": false, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794338648.205, "ev": "latido", "witness": {"writer": "pg-oci", "epoch": 3, "lease_remaining_s": 4.81}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794338653.223, "ev": "latido", "witness": {"writer": "pg-oci", "epoch": 3, "lease_remaining_s": 5.71}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794338656.631, "ev": "monitor_fin", "motivo": "SIGTERM"}

@@ -1,0 +1,7 @@
+{"t": 1794361393.088, "ev": "monitor_inicio", "auto": true, "pid": 15448}
+{"t": 1794361393.097, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.06, "prot": {"mode": "protected", "seq": 2, "primario": "pg-aws", "epoch": 1, "verified_age_s": 1.32}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794361398.134, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.67, "prot": {"mode": "protected", "seq": 2, "primario": "pg-aws", "epoch": 1, "verified_age_s": 0.19}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794361399.505, "ev": "seguidor_no_disponible", "estado": "", "politica": "bloquear: los COMMIT esperan, sin pérdida"}
+{"t": 1794361403.197, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.6, "prot": {"mode": "protected", "seq": 2, "primario": "pg-aws", "epoch": 1, "verified_age_s": 5.26}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794361408.262, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.62, "prot": {"mode": "protected", "seq": 2, "primario": "pg-aws", "epoch": 1, "verified_age_s": 1.2}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794361410.542, "ev": "monitor_fin", "motivo": "SIGTERM"}

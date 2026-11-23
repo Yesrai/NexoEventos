@@ -1,0 +1,28 @@
+{
+ "name": "snap-vm-nexoeventos-obs-os-20261104",
+ "location": "centralus",
+ "provisioningState": "Succeeded",
+ "diskSizeBytes": 68719476736,
+ "incremental": true,
+ "hyperVGeneration": "V2",
+ "osType": "Linux",
+ "diskState": "Unattached",
+ "supportsHibernation": true,
+ "timeCreated": "2026-11-05T01:14:45.8857182+00:00",
+ "tags": {
+  "managed_by": "manual-no-terraform",
+  "origen": "paso0",
+  "project": "NexoEventos",
+  "proposito": "recuperacion-acceso"
+ },
+ "sku": "Standard_LRS",
+ "securityProfile": {
+  "securityType": "TrustedLaunch"
+ },
+ "cifrado": "EncryptionAtRestWithPlatformKey",
+ "creationData": {
+  "createOption": "Copy",
+  "sourceResourceId": "/subscriptions/<guid>/resourceGroups/RG-NEXOEVENTOS-OBSERVABILIDAD/providers/Microsoft.Compute/disks/vm-nexoeventos-obs_disk1_<sufijo>",
+  "sourceUniqueIdCoincideConElDiscoOriginal": true
+ }
+}

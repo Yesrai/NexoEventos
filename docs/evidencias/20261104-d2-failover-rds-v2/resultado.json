@@ -1,0 +1,139 @@
+{
+ "schema": 1,
+ "hypothesis": "con /livez, un failover de RDS no marca instancias no sanas ni provoca actividades del ASG",
+ "events": {
+  "rds_before": {
+   "status": "available",
+   "az": "us-east-1b",
+   "secondary_az": "us-east-1a"
+  },
+  "rate_req_per_s": 6.0,
+  "max_seconds": 420,
+  "failover_issued_at": 24.1,
+  "reboot_result": "rebooting",
+  "primary_az_changed_at": null,
+  "available_again_at": null,
+  "abort_reason": "tiempo máximo excedido (420 s)",
+  "rds_after": {
+   "status": "available",
+   "az": "us-east-1b",
+   "secondary_az": "us-east-1a"
+  }
+ },
+ "client": {
+  "requests": 2412,
+  "non_200": 6,
+  "by_path": {
+   "/api/events": {
+    "requests": 836,
+    "non_200": 3,
+    "statuses": {
+     "-1": 3
+    },
+    "first_non200_at": 30.57,
+    "last_non200_at": 50.99,
+    "with_retry_after_5xx": 0
+   },
+   "/healthz": {
+    "requests": 773,
+    "non_200": 3,
+    "statuses": {
+     "-1": 3
+    },
+    "first_non200_at": 30.01,
+    "last_non200_at": 55.95,
+    "with_retry_after_5xx": 0
+   },
+   "/livez": {
+    "requests": 803,
+    "non_200": 0,
+    "statuses": {},
+    "first_non200_at": null,
+    "last_non200_at": null,
+    "with_retry_after_5xx": 0
+   }
+  },
+  "availability_api_pct": 99.6,
+  "availability_health_pct": 99.8,
+  "requests_api": 836,
+  "requests_health": 1576
+ },
+ "target_not_healthy_snapshots": [],
+ "timeline": [
+  {
+   "t": 7.5,
+   "alb": {
+    "d425cd": "healthy",
+    "a7d090": "healthy"
+   },
+   "asg": {
+    "a7d090": [
+     "InService",
+     "Healthy"
+    ],
+    "d425cd": [
+     "InService",
+     "Healthy"
+    ]
+   },
+   "rds": {
+    "status": "available",
+    "az": "us-east-1b",
+    "secondary_az": "us-east-1a"
+   }
+  },
+  {
+   "t": 28.5,
+   "alb": {
+    "d425cd": "healthy",
+    "a7d090": "healthy"
+   },
+   "asg": {
+    "a7d090": [
+     "InService",
+     "Healthy"
+    ],
+    "d425cd": [
+     "InService",
+     "Healthy"
+    ]
+   },
+   "rds": {
+    "status": "rebooting",
+    "az": "us-east-1b",
+    "secondary_az": "us-east-1a"
+   }
+  },
+  {
+   "t": 92.2,
+   "alb": {
+    "d425cd": "healthy",
+    "a7d090": "healthy"
+   },
+   "asg": {
+    "a7d090": [
+     "InService",
+     "Healthy"
+    ],
+    "d425cd": [
+     "InService",
+     "Healthy"
+    ]
+   },
+   "rds": {
+    "status": "available",
+    "az": "us-east-1b",
+    "secondary_az": "us-east-1a"
+   }
+  }
+ ],
+ "final": {
+  "alb": {
+   "i-<id>": "healthy",
+   "i-<id>": "healthy"
+  },
+  "asg_activities_new": []
+ },
+ "duration_s": 432.5,
+ "started_at": "2026-11-04T16:48:26Z"
+}

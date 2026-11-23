@@ -1,0 +1,50 @@
+# T4 — Tarjeta DEFINITIVA de autorización (22-nov-2026; nada ejecutado en Azure todavía)
+**Objetivo:** que Azure supervise de verdad T5 (AWS HA) y T6 (failover AWS→OCI): sondas reales, panel, Grafana, Zabbix, alerta con correo, testigo y panel de recuperación, **sin ejecución real**. Orden T1–T8 intacto (T1–T3 en PASS). Una sola ventana de **hasta 3 h**.
+
+## 1. Estado real de Azure (lecturas de solo lectura, 22-nov)
+| Recurso | Estado |
+|---|---|
+| Suscripción | Azure for Students, habilitada. **Presupuesto `presupuesto-nexoeventos`: USD 60/mes, gasto de noviembre USD 14,27** (la API de crédito no responde; último saldo conocido USD 100 el 27-oct → confirmar en el portal) |
+| VM `vm-nexoeventos-obs` | `Standard_D2s_v4` (8 GiB), Ubuntu 24.04, **desasignada**, IP estática, disco 64 GB `StandardSSD_LRS`, identidad administrada (solo `Monitoring Reader`) |
+| Contenido previo | Zabbix 7.0.32 + PostgreSQL + Grafana 13.2.4 de las ventanas del 4–5-nov (no se puede inspeccionar el disco sin encender la VM: lo hace el inventario del paso A3) |
+| NSG | entrada solo **22 y 443 desde tu IP /32** (huella `9bdc6910…`, 3 reglas); salida 80/443/53/123 + plataforma Azure |
+| Azure Monitor | grupo de acción `ag-nexoeventos-obs` (1 correo activo) + 3 alertas de VM |
+| **Apagado automático original (guardado en `work/t4/ventana-original.json`)** | estado **Enabled**, **17:38 UTC** diario, zona UTC, notificación Disabled, destino la VM |
+| Snapshots | `snap-…-20261104` (**incremental**, Standard_LRS, 64 GB, del 4-nov) + 2 discos sueltos del 4-nov: **no se tocan** |
+
+## 2. Tus 7 puntos
+1. **Correo (sin contraseñas):** reutiliza lo existente, **sin SMTP ni secretos**. Cadena: sonda falla → Zabbix → medio «NexoEventos → Azure Monitor» (`nexo-alert-azure.py`) → la VM publica la métrica `NexoEventos/sondas_fallidas` con su **identidad administrada** (token de IMDS) → regla `alerta-nexo-sonda` → grupo de acción **existente** → correo. Cambios en Azure: **1 asignación de rol** «Monitoring Metrics Publisher» acotada a esa VM y **1 regla de métricas** (etiqueta `t4=temporal`; `--retirar` las borra). El NSG no cambia (HTTPS saliente ya permitido). Si este camino fallara, el plan B (SMTP) exigiría regla de salida 587 y credenciales que escribirías solo en la VM: sería otra autorización. **El criterio `correo_recibido` solo cuenta con tu confirmación humana** (asunto y hora); sin ella no hay PASS.
+2. **Apagado automático:** la programación COMPLETA (estado, hora, zona, notificación, destino) está guardada. `--iniciar 3` la mueve a ahora+3 h **antes** de encender (así el 17:38 no apaga en mitad de la ventana) y `--cerrar` desasigna, la restaura y **compara campo a campo con el original**; si algo difiere, falla y no se declara éxito. Respaldo adicional: el vigilante del Mac (`azure-vm-watchdog.sh --minutes 190`) desasigna si la sesión se cae.
+3. **Monitoreo multicloud (real vs. pendiente):** AWS = sonda HTTPS real a `nexoeventos-demo.duckdns.org` (hoy **sin respuesta ⇒ ERROR real**, medido desde el Mac). OCI = **solo alcanzabilidad** del endpoint regional de Object Storage (HTTP 404 ⇒ ADVERTENCIA «en espera»; **no** hay aplicación activa). Azure = autodiagnóstico local. Nunca hay datos simulados: sin dato = «No verificado».
+   | Demostrado en T4 (real) | Solo podrá validarse cuando la nube esté activa |
+   |---|---|
+   | sondas reales continuas, estados ERROR/ADVERTENCIA reales, panel sin AWS, alerta y correo, testigo, auditoría | AWS «OK» con ALB+ASG (T5); OCI «OK» con entrada pública activa (T6); alertas de reemplazo EC2 y de failover (T5/T6) |
+   Para T5/T6 los hosts de Zabbix `aws-nexoeventos-v2` y `oci-nexoeventos-recovery` quedan **creados y deshabilitados**; se activan con un comando (`--enable aws|oci --host …`) y se cambia el destino en `targets.json`.
+4. **Seguridad:** Grafana, Zabbix, PostgreSQL y UFW **no se tocan** (el instalador compara sus huellas antes/después y falla si cambian; copia con SHA-256 de Nginx y restauración si `nginx -t` falla). Comprobaciones reales desde el Mac con el certificado **fijado** y tokens que escribes tú en la terminal (`getpass`): panel (anónimo 401, token inválido 401, viewer no solicita 403, requester no aprueba 403, aprobador distinto aprueba, aprobada de prueba se cancela, failover RECHAZADO, sin endpoints de ejecución, denegaciones y solicitudes auditadas, cadena íntegra) y testigo (anónimo 401, token sin alcance 403, token válido 200, firma verificada con la clave pública anclada, sin inicializar y **sin dueño**: sus claves de informantes se generan y las privadas se descartan). Persistencia: reinicio del servicio con el mismo estado + **28 pruebas del testigo ejecutadas EN la VM** (kill -9, exclusividad, alterado, cola truncada, sin permisos). **Límite que se mantiene:** con almacén en archivo local, un prefijo restaurado no se detecta localmente ⇒ no se declara «independencia validada»; se ancla la cabeza fuera de la VM.
+5. **Costos y snapshot:** cómputo 3 h × USD 0,108 = **USD 0,32**; snapshot **incremental** del disco (cobra solo bloques cambiados desde el del 4-nov, USD 0,05/GB-mes ⇒ típicamente < USD 0,30/mes; peor caso, como primer snapshot de 64 GB, USD 3,2/mes); regla de métricas y rol: USD 0. Consumo estimado de la ventana **≈ USD 0,4–0,7** (umbral del criterio ≤ USD 1,5; presupuesto mensual USD 60, gastado 14,27). **Retención del snapshot:** hasta el cierre de T4 con PASS y luego **se borra** (la reversión de T4 ya no hace falta); si T4 queda PARCIAL se conserva hasta repetir. Reversión: ver §6.
+6. **Evidencias:** 18 criterios intactos; cada medición la produce una comprobación real y `ejecutar_t4.py` da PASS solo si las 18 existen y cumplen (ausente o fallida ⇒ nunca PASS; el correo exige confirmación humana; la alerta exige problema real de Zabbix **y** publicación posterior; el panel «sin AWS» exige la sonda real de AWS en ERROR). Capturas del navegador (panel, Grafana, Zabbix) y logs con marcas UTC se adjuntan.
+7. **Cambios locales:** copia verificable `work/backups/t1-t3-t4-…` (SHA-256 correcto; se rehace al cierre). Ningún secreto ni estado Terraform en Git. Sin commit, push ni merge.
+
+## 3. Autorización solicitada (alcance exacto, orden fijo, 1 ventana ≤ 3 h)
+| Paso | Quién | Acción | Cambia |
+|---|---|---|---|
+| A0 | Yo (hecho) | `azure-t4-ventana.sh --check` + empaquetado `deploy/azure/empaquetar-t4.sh --con-pruebas` (hash SHA-256) | no |
+| A1 | Yo | snapshot incremental del disco de la VM | +1 snapshot |
+| A2 | Yo | `azure-t4-ventana.sh --iniciar 3 --aplicar "INICIAR VENTANA T4"` + vigilante del Mac | VM encendida; apagado → ahora+3 h |
+| A3 | Yo | SSH por tu IP /32: copiar paquete, `inventario-solo-lectura.sh` (huellas ANTES) | no |
+| A4 | Yo | `instalar-t4-en-vm.sh --aplicar "INSTALAR T4 EN LA VM DE AZURE"` (usuarios, `/opt/nexoeventos`, unidades, include Nginx, script de alertas) y `preparar-testigo.py` | solo adiciones |
+| A5 | **Tú** | guardas en tu gestor los **tokens** (3 del centro y 2 del testigo; se muestran una vez en tu terminal) | — |
+| A6 | Yo | `targets.json` real; arranca el recolector; **≥ 10 min** de ciclos | historial |
+| A7 | Yo | `azure-t4-correo.sh --rol` y, tras la primera muestra, `--regla`; `zabbix_t4_additive.py --apply` + `zabbix_t4_correo.py --apply` | 1 rol + 1 regla + hosts/medio Zabbix |
+| A8 | Yo / **tú** | alerta real ⇒ correo; **tú confirmas el correo (asunto y hora)**; `probar_t4_azure.py panel` y `testigo` (tokens en tu terminal); `pruebas-testigo-en-vm.sh`; reinicio del testigo; capturas de Grafana, Zabbix y panel | no |
+| A9 | Yo | **retirada**: `zabbix_t4_additive.py --remove-test`, `zabbix_t4_correo.py --retirar`, `azure-t4-correo.sh --retirar`; `azure-t4-ventana.sh --cerrar` (desasigna y restaura **exacto**); evidencia `ejecutar_t4.py evidencia`; `record-evidence T4` solo si PASS; copia del snapshot según §2.5 | revierte lo temporal |
+**Lo que queda instalado al final (permanente, aditivo):** usuarios `opscenter`/`nexowitness`, `/opt/nexoeventos`, unidades (centro, testigo, recolector+timer) y los 2 hosts de Zabbix deshabilitados; la VM vuelve a desasignada. **No se hace en T4:** abrir puertos del NSG, DNS, AWS/OCI (solo sondas HTTPS públicas de lectura), failover, S14, commit/push.
+
+## 4. Riesgos
+R1 la VM no arranca o su disco difiere de lo esperado → el inventario lo detecta antes de tocar nada; reversión = snapshot. R2 `nginx -t` falla → restauración automática. R3 propagación del rol (minutos) o latencia de la métrica personalizada (1–5 min) → se espera y se mide; si no hay correo no hay PASS. R4 AWS responde durante la ventana (p. ej. se encendió el laboratorio): el criterio «panel con AWS apagado» no podría demostrarse sin apagar AWS, **que no tocamos** ⇒ T4 quedaría PARCIAL en ese criterio y se repetiría. R5 Academy vence ≈ 26-nov (por confirmar): T4 no consume AWS. R6 límite del testigo en archivo (arriba).
+
+## 5. Criterios de PASS (18, todos medidos y cumplidos; `ops_center/criterios/T4.json`)
+inventario previo · despliegue aditivo intacto · servicios activos · panel con AWS apagado (sonda real en ERROR) · tres nubes con origen y hora · sondas reales continuas (≥ 10 ciclos/10 min, hueco ≤ 120 s, OCI en espera = ADVERTENCIA) · Grafana con datos reales de sondas · alerta real · **correo recibido (confirmación humana)** · testigo auth/roles/firma · testigo persistencia (reinicio + 28 pruebas en la VM) · auditoría íntegra (+ matriz de roles) · ejecución real bloqueada · NSG sin cambios de entrada · sin OOM (> 1 GiB libre) · sonda de prueba retirada · costo ≤ USD 1,5 · VM desasignada con apagado restaurado exacto.
+
+## 6. Abortos y reversión
+Abortar si: la VM no arranca o el SSH no entra desde la IP autorizada; huellas de Grafana/Zabbix/UFW cambian; `nginx -t` falla; OOM; cualquier paso remoto fuera de la lista. Reversión: `zabbix_t4_correo.py --retirar`, `zabbix_t4_additive.py --remove-test`, `azure-t4-correo.sh --retirar --aplicar "RETIRAR CORREO T4"`, desinstalar unidades y restaurar Nginx (comando impreso por el instalador), restaurar el snapshot solo si hiciera falta, `azure-t4-ventana.sh --cerrar`. Toda la evidencia (incluida la de fallos) se conserva.

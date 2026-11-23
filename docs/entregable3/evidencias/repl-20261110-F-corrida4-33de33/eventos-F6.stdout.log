@@ -1,0 +1,28 @@
+{"t": 1794361028.594, "ev": "monitor_inicio", "auto": true, "pid": 10982}
+{"t": 1794361028.606, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.03, "prot": {"mode": "protected", "seq": 2, "primario": "pg-aws", "epoch": 1, "verified_age_s": 1.36}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794361033.632, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.69, "prot": {"mode": "protected", "seq": 2, "primario": "pg-aws", "epoch": 1, "verified_age_s": 0.17}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794361033.764, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 1, "error": "\tIs the server running on that host and accepting TCP/IP connections?"}
+{"t": 1794361034.258, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 2, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794361034.83, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 3, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794361034.837, "ev": "proteccion", "modo": "promoting", "antes": "protected", "ok": true, "seq": 3, "primario": "pg-aws", "motivo": "reclamo exclusivo de la promoción"}
+{"t": 1794361034.839, "ev": "promote_inicio", "destino": "pg-oci", "origen": "pg-aws", "planificada": false, "epoca": 1}
+{"t": 1794361034.841, "ev": "lease_retirado", "epoca": 2}
+{"t": 1794361034.994, "ev": "fence", "nodo": "pg-aws", "detenido": true, "escritura_real_aceptada": false, "escritura_real_error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known", "resultado": "confirmado"}
+{"t": 1794361035.433, "ev": "secuencias_ajustadas", "cantidad": 6}
+{"t": 1794361036.049, "ev": "destino_abierto", "rol_sin_solo_lectura": true, "solo_lectura_global_apagado": true, "modo_abierto": {"modo": "open", "escribir_hba": true, "recargar": true, "efecto_en_conexion_nueva": true, "mensaje_de_la_conexion_nueva": ""}}
+{"t": 1794361036.141, "ev": "escritura_destino", "aceptada": true, "error": ""}
+{"t": 1794361036.143, "ev": "lease_otorgado", "escritor": "pg-oci", "epoca": 3, "t_desde_inicio_s": 1.31}
+{"t": 1794361036.149, "ev": "proteccion", "modo": "unprotected", "antes": "unknown", "ok": true, "seq": 6, "primario": "pg-oci", "motivo": "conmutación: aún no hay seguidor; las escrituras confirmadas hasta reconstruirlo NO tienen copia"}
+{"t": 1794361037.191, "ev": "haproxy_db_enruta", "nodo": "pg-oci", "t_desde_inicio_s": 2.35}
+{"t": 1794361037.294, "ev": "verificacion_final", "antiguo_escribe": false, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794361038.809, "ev": "latido", "witness": {"writer": "pg-oci", "epoch": 3, "lease_remaining_s": 5.61, "prot": {"mode": "unprotected", "seq": 6, "primario": "pg-oci", "epoch": 3, "verified_age_s": null}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794361043.008, "ev": "sync_habilitada", "primario": "pg-oci", "estado_seguidor": "quorum"}
+{"t": 1794361043.132, "ev": "proteccion_cas_rechazada", "modo": "protected", "actual": "protected", "esperado": ["reprotecting"], "primario": "pg-oci", "seguidor": "pg-aws", "motivo": "síncrono activo, seguidor confirmando y al día (barrera de LSN)"}
+{"t": 1794361043.327, "ev": "proteccion_cas_rechazada", "modo": "unprotected", "actual": "protected", "esperado": ["reprotecting"], "primario": "pg-oci", "motivo": "no se pudo completar la reprotección"}
+{"t": 1794361043.833, "ev": "latido", "witness": {"writer": "pg-oci", "epoch": 3, "lease_remaining_s": 5.6, "prot": {"mode": "protected", "seq": 8, "primario": "pg-oci", "epoch": 3, "verified_age_s": 1.08}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794361044.149, "ev": "proteccion", "modo": "degraded", "antes": "protected", "ok": true, "seq": 9, "primario": "pg-oci", "motivo": "synchronous_standby_names cambió fuera del controlador: ''"}
+{"t": 1794361045.826, "ev": "proteccion", "modo": "reprotecting", "antes": "degraded", "ok": true, "seq": 10, "primario": "pg-oci", "motivo": "reprotección desde degraded"}
+{"t": 1794361046.105, "ev": "sync_habilitada", "primario": "pg-oci", "estado_seguidor": "quorum"}
+{"t": 1794361046.256, "ev": "proteccion", "modo": "protected", "antes": "reprotecting", "ok": true, "seq": 11, "primario": "pg-oci", "seguidor": "pg-aws", "motivo": "síncrono activo, seguidor confirmando y al día (barrera de LSN)"}
+{"t": 1794361053.647, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 5, "lease_remaining_s": 4.65, "prot": {"mode": "unprotected", "seq": 14, "primario": "pg-aws", "epoch": 5, "verified_age_s": null}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794361057.589, "ev": "monitor_fin", "motivo": "SIGTERM"}

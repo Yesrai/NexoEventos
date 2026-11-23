@@ -1,0 +1,8 @@
+prioridad | nombre | dirección | acceso | protocolo | puertos | origen | destino
+100 | allow-azure-platform-out | Outbound | Allow | * | * | * | 168.63.129.16/32
+122 | admin-ssh | Inbound | Allow | Tcp | 22 | <IP del operador>/32 | *
+143 | admin-https | Inbound | Allow | Tcp | 443 | <IP del operador>/32 | *
+200 | allow-web-out | Outbound | Allow | Tcp | 80,443 | * | Internet
+210 | allow-dns-ntp-out | Outbound | Allow | * | 53,123 | * | Internet
+4000 | deny-internet-out | Outbound | Deny | * | * | * | Internet
+4096 | deny-all-inbound | Inbound | Deny | * | * | * | *

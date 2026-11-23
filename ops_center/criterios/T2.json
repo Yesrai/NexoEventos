@@ -1,0 +1,73 @@
+{
+ "stage": "T2",
+ "title": "Cambio real de DNS en nexoeventos-test: actualización, resolución y reversión",
+ "criteria": [
+  {
+   "id": "dominio_de_pruebas",
+   "kind": "bool",
+   "desc": "la lista blanca contiene solo nexoeventos-test y no el dominio de producción"
+  },
+  {
+   "id": "produccion_rechazada",
+   "kind": "bool",
+   "desc": "un plan sobre nexoeventos-demo es RECHAZADO (código 2) antes de cualquier consulta"
+  },
+  {
+   "id": "sin_variable_rechazada",
+   "kind": "bool",
+   "desc": "un apply sin NEXO_ALLOW_DNS_CHANGE=YES es rechazado antes de cualquier consulta"
+  },
+  {
+   "id": "confirmacion_incorrecta_rechazada",
+   "kind": "bool",
+   "desc": "un apply con frase de confirmación errónea es rechazado y no cambia nada"
+  },
+  {
+   "id": "punto_de_partida_verificado",
+   "kind": "bool",
+   "desc": "antes de cambiar, los 3 resolvedores coinciden en la IP A"
+  },
+  {
+   "id": "propagacion_apply_s",
+   "kind": "max",
+   "threshold": 180,
+   "desc": "propagación del cambio A→B en los 3 resolvedores (≤ 3 × TTL asumido de 60 s)"
+  },
+  {
+   "id": "resolvedores_coinciden_en_B",
+   "kind": "bool",
+   "desc": "verify confirma B en 1.1.1.1, 8.8.8.8 y 9.9.9.9"
+  },
+  {
+   "id": "segundo_cambio_rechazado",
+   "kind": "bool",
+   "desc": "un segundo apply inmediato (destino distinto) es rechazado por el intervalo mínimo (código 3)"
+  },
+  {
+   "id": "propagacion_rollback_s",
+   "kind": "max",
+   "threshold": 180,
+   "desc": "propagación de la reversión B→A en los 3 resolvedores"
+  },
+  {
+   "id": "rollback_correcto",
+   "kind": "bool",
+   "desc": "tras la reversión los 3 resolvedores vuelven a A (verify y plan final)"
+  },
+  {
+   "id": "ip_final_igual_a_inicial",
+   "kind": "bool",
+   "desc": "la IP final es la IP inicial A"
+  },
+  {
+   "id": "auditoria_dns_switch_registrada",
+   "kind": "bool",
+   "desc": "el registro de auditoría de dns_switch tiene el apply y el rollback con hora UTC"
+  },
+  {
+   "id": "token_ausente_de_salidas",
+   "kind": "bool",
+   "desc": "el token no aparece en ninguna salida ni archivo de la evidencia"
+  }
+ ]
+}
