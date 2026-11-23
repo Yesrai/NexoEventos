@@ -60,8 +60,9 @@ class Zabbix:
 
     def problems(self):
         def f():
-            rows = self._rpc("problem.get", {"output": ["eventid", "name", "severity", "clock", "acknowledged"], "recent": False, "sortfield": ["eventid"], "sortorder": "DESC", "limit": 50})
-            return {"problems": [{"event_id": p["eventid"], "name": str(p["name"])[:160], "severity": SEV.get(str(p["severity"]), "?"), "severity_n": int(p["severity"]), "since": _iso(p["clock"]), "acknowledged": p.get("acknowledged") == "1"} for p in rows]}
+            rows = self._rpc("problem.get", {"output": ["eventid", "name", "severity", "clock", "acknowledged"], "selectHosts": ["hostid", "name"], "recent": False, "sortfield": ["eventid"], "sortorder": "DESC", "limit": 50})
+            return {"problems": [{"event_id": p["eventid"], "name": str(p["name"])[:160], "severity": SEV.get(str(p["severity"]), "?"), "severity_n": int(p["severity"]), "since": _iso(p["clock"]), "acknowledged": p.get("acknowledged") == "1",
+                                   "hosts": [{"id": str(h.get("hostid", ""))[:32], "name": str(h.get("name", ""))[:80]} for h in p.get("hosts", [])[:20] if isinstance(h, dict)]} for p in rows]}
         return self._wrap(f)
 
     def history(self):

@@ -12,10 +12,47 @@ def test_flujo_completo_correcto(client, mail):
     assert client.get("/api/auth/session").status_code == 200
 
 
+def test_desafio_persiste_en_cookie_y_entre_instancias(client, mail, app, cfg, clock):
+    from fastapi.testclient import TestClient
+    from nexoops.app import create_app
+    r, code = login(client, mail)
+    assert r.status_code == 200 and client.cookies.get("nexoops_challenge")
+    restarted = create_app(cfg, mailer=mail, clock=clock)
+    c2 = TestClient(restarted, base_url="http://localhost")
+    c2.cookies.set("nexoops_challenge", client.cookies.get("nexoops_challenge"))
+    assert c2.get("/api/auth/challenge").json()["step"] == "otp"
+    assert c2.post("/api/auth/verify", json={"code": code}).status_code == 200
+
+
+def test_login_repetido_reutiliza_unico_desafio(client, mail):
+    first, code = login(client, mail)
+    cookie = client.cookies.get("nexoops_challenge")
+    second, _ = login(client, mail)
+    assert first.status_code == second.status_code == 200
+    assert client.cookies.get("nexoops_challenge") == cookie
+    assert len(mail.sent) == 1
+    assert client.post("/api/auth/verify", json={"code": code}).status_code == 200
+
+
+def test_recarga_conserva_paso_otp(client, mail):
+    login(client, mail)
+    r = client.get("/api/auth/challenge")
+    assert r.status_code == 200 and r.json()["step"] == "otp" and r.json()["expires_in"] <= 300
+
+
 def test_sin_segundo_factor_no_hay_acceso(client, mail):
     login(client, mail)                                      # solo contraseña
     for path in ("/api/overview", "/api/auth/session", "/api/audit", "/api/recovery", "/api/actions"):
         assert client.get(path).status_code == 401
+
+
+def test_rol_distinto_no_puede_autenticarse(cfg, mail, clock):
+    from fastapi.testclient import TestClient
+    from nexoops.app import create_app
+    a = create_app(cfg, mailer=mail, clock=clock)
+    a.state.auth.create_user("operador@nexoeventos.test", PW, role="OPERADOR")
+    r = TestClient(a).post("/api/auth/login", json={"email": "operador@nexoeventos.test", "password": PW})
+    assert r.status_code == 401 and not mail.sent
 
 
 def test_contrasena_incorrecta_y_usuario_inexistente_mismo_mensaje(client, mail):
@@ -140,3 +177,30 @@ def test_config_exige_secreto_y_cookie_secure(cfg):
     with pytest.raises(ValueError): cfg.validate()
     cfg.otp_secret = b"s" * 40; cfg.env = "production"; cfg.mail_mode = "outbox"
     with pytest.raises(ValueError): cfg.validate()
+
+
+def test_cookie_local_http_y_produccion_https(cfg, mail, clock):
+    from dataclasses import replace
+    from fastapi.testclient import TestClient
+    from nexoops.app import create_app
+
+    local = create_app(cfg, mailer=mail, clock=clock); local.state.auth.create_user(EMAIL, PW)
+    lc = TestClient(local, base_url="http://localhost:8088")
+    lr = lc.post("/api/auth/login", json={"email": EMAIL, "password": PW})
+    assert "secure" not in lr.headers["set-cookie"].lower()
+    assert lc.post("/api/auth/verify", json={"code": mail.sent[-1][1]}).status_code == 200
+
+    prod_cfg = replace(cfg, data_dir=cfg.data_dir.parent / "prod", env="production", cookie_secure=True, mail_mode="smtp")
+    prod_mail = type(mail)()
+    prod = create_app(prod_cfg, mailer=prod_mail, clock=clock); prod.state.auth.create_user(EMAIL, PW)
+    pc = TestClient(prod, base_url="https://nexoops.example")
+    pr = pc.post("/api/auth/login", json={"email": EMAIL, "password": PW})
+    assert "secure" in pr.headers["set-cookie"].lower()
+    assert pc.post("/api/auth/verify", json={"code": prod_mail.sent[-1][1]}).status_code == 200
+
+
+def test_respuestas_no_exponen_secretos(client, mail):
+    r, code = login(client, mail)
+    assert code not in r.text and PW not in r.text and "challenge_id" not in r.text
+    v = client.post("/api/auth/verify", json={"code": code})
+    assert code not in v.text and PW not in v.text and "token" not in v.text

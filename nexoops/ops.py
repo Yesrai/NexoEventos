@@ -45,7 +45,7 @@ def cloud_overview(cfg, aws, zbx, now=None):
     awsr = aws.summary()
     def cloud(n):
         c = clouds.get(n)
-        return {"estado": c["estado"] if c else "No verificado", "detalle": c["detalle"] if c else snap["detail"], "origen": c["origen"] if c else "sin_datos", "observed_at": obs if c else None}
+        return {"estado": c["estado"] if c else "No verificado", "estado_operativo": c["estado_operativo"] if c else "no_verificado", "detalle": c["detalle"] if c else snap["detail"], "origen": c["origen"] if c else "sin_datos", "observed_at": obs if c else None}
     aws_alarms = len(awsr["data"]["alarms_in_alarm"]) if awsr["status"] == "ok" else None
     primary = cloud("aws")
     aw_probes = last_probes.get("aws", [])

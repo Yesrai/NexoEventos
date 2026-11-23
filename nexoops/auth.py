@@ -79,17 +79,36 @@ class AuthService:
                 self.audit.append("anonimo", "login_bloqueado", ip=ip)
                 raise AuthError("Demasiados intentos; espera e inténtalo de nuevo", 429, wait)
             u = self._user(email)
-            ok = S.verify_password(u["password_hash"] if u and u["active"] else None, password or "")
+            password_ok = S.verify_password(u["password_hash"] if u and u["active"] else None, password or "")
+            ok = bool(password_ok and u and u["role"] == ROLE_ADMIN)
             self._record(email, ip, ok)
             if not ok:
                 self.audit.append("anonimo", "login_fallido", ip=ip, resultado="credenciales")
                 raise AuthError(GENERIC)
+            # Reutilizar el desafío ya enviado evita códigos incompatibles si
+            # se repite el envío del formulario mientras SMTP aún responde.
+            t = self.now()
+            active = self.db.execute(
+                "SELECT * FROM challenges WHERE user_id=? AND consumed=0 AND expires_at>=? AND attempts<? ORDER BY last_sent DESC LIMIT 1",
+                (u["id"], t, OTP_MAX_ATTEMPTS),
+            ).fetchone()
+            if active:
+                self.db.execute("UPDATE challenges SET consumed=1 WHERE user_id=? AND consumed=0 AND id<>?", (u["id"], active["id"]))
+                self.db.commit()
+                self.audit.append(u["email"], "login_paso1_reutilizado", rol=u["role"], ip=ip)
+                return {"challenge_id": active["id"], "expires_in": max(0, int(active["expires_at"] - t))}
+
+            self.db.execute("UPDATE challenges SET consumed=1 WHERE user_id=? AND consumed=0", (u["id"],))
             cid = S.new_token(24)
             code = S.new_otp()
-            t = self.now()
             self.db.execute("INSERT INTO challenges(id,user_id,verifier,expires_at,last_sent) VALUES(?,?,?,?,?)", (cid, u["id"], S.otp_verifier(self.cfg.otp_secret, cid, code), t + OTP_TTL_S, t))
             self.db.commit()
-            self._send(u, cid, code)
+            try:
+                self._send(u, cid, code)
+            except AuthError:
+                self.db.execute("UPDATE challenges SET consumed=1 WHERE id=?", (cid,))
+                self.db.commit()
+                raise
             self.audit.append(u["email"], "login_paso1_ok", rol=u["role"], ip=ip)
             return {"challenge_id": cid, "expires_in": OTP_TTL_S}
 
@@ -122,6 +141,17 @@ class AuthService:
         if not c or c["consumed"]:
             raise AuthError("Verificación no válida; inicia sesión de nuevo")
         return c
+
+    def challenge_status(self, cid: str | None) -> dict:
+        """Estado mínimo para recuperar la pantalla OTP tras una recarga."""
+        with self.lock:
+            c = self._challenge(cid)
+            remaining = int(c["expires_at"] - self.now())
+            if remaining < 0 or c["attempts"] >= OTP_MAX_ATTEMPTS:
+                self.db.execute("UPDATE challenges SET consumed=1 WHERE id=?", (c["id"],))
+                self.db.commit()
+                raise AuthError("Verificación no válida; inicia sesión de nuevo")
+            return {"step": "otp", "expires_in": remaining}
 
     # ---- paso 2: OTP ----
     def verify_otp(self, cid: str, code: str, ip: str = "?") -> dict:

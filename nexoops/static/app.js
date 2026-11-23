@@ -39,25 +39,39 @@ function loginView() {
   const email = h("input", { type: "email", autocomplete: "username", required: true }), pw = h("input", { type: "password", autocomplete: "current-password", required: true });
   const box = h("div", { class: "authcard" });
   const step1 = () => {
+    let pending = false;
+    const submitButton = h("button", { class: "btn", style: "width:100%;justify-content:center", type: "submit" }, ic("lock"), "Continuar");
     box.replaceChildren(h("div", { class: "logo" }, ic("cloud")), h("h1", {}, "NexoOps"), h("div", { class: "label" }, "Centro de Operaciones · acceso de TI"),
       h("form", { style: "margin-top:26px", onsubmit: async (ev) => {
         ev.preventDefault(); err.textContent = "";
-        try { await api("/api/auth/login", { method: "POST", body: { email: email.value, password: pw.value } }); pw.value = ""; step2(); } catch (e) { err.textContent = e.message; }
+        if (pending) return;
+        pending = true; submitButton.disabled = true;
+        try { await api("/api/auth/login", { method: "POST", body: { email: email.value, password: pw.value } }); pw.value = ""; step2(); }
+        catch (e) { err.textContent = e.message; pending = false; submitButton.disabled = false; }
       } }, h("div", { class: "field" }, h("label", { class: "label" }, "Correo electrónico"), email), h("div", { class: "field" }, h("label", { class: "label" }, "Contraseña"), pw), err,
-      h("button", { class: "btn", style: "width:100%;justify-content:center", type: "submit" }, ic("lock"), "Continuar")));
+      submitButton));
   };
   const step2 = () => {
+    let pending = false;
     const boxes = [...Array(6)].map((_, i) => h("input", { inputmode: "numeric", autocomplete: i ? "off" : "one-time-code" }));
     const read = () => boxes.map((b) => b.value).join("");
-    const submit = async () => { err.textContent = ""; try { const r = await api("/api/auth/verify", { method: "POST", body: { code: read() } }); CSRF = r.csrf; USER = r.user; route(); } catch (e) { err.textContent = e.message; boxes.forEach((b) => (b.value = "")); boxes[0].focus(); } };
+    const verifyButton = h("button", { class: "btn" }, "Verificar");
+    const submit = async () => {
+      if (pending) return;
+      pending = true; verifyButton.disabled = true; err.textContent = "";
+      try { const r = await api("/api/auth/verify", { method: "POST", body: { code: read() } }); CSRF = r.csrf; USER = r.user; route(); }
+      catch (e) { err.textContent = e.message; boxes.forEach((b) => (b.value = "")); boxes[0].focus(); pending = false; verifyButton.disabled = false; }
+    };
+    verifyButton.addEventListener("click", submit);
     boxes.forEach((b, i) => { b.addEventListener("input", () => { const d = b.value.replace(/\D/g, ""); b.value = d.slice(0, 1); [...d.slice(1)].forEach((c, k) => { if (boxes[i + 1 + k]) boxes[i + 1 + k].value = c; }); const nx = Math.min(5, i + Math.max(1, d.length)); if (d && nx !== i) boxes[nx].focus(); if (read().length === 6) submit(); }); b.addEventListener("keydown", (e) => { if (e.key === "Backspace" && !b.value && i) boxes[i - 1].focus(); });
       b.addEventListener("paste", (e) => { const d = (e.clipboardData.getData("text") || "").replace(/\D/g, "").slice(0, 6); if (d) { e.preventDefault(); [...d].forEach((c, k) => (boxes[k].value = c)); if (d.length === 6) submit(); } }); });
     box.replaceChildren(h("div", { class: "logo" }, ic("mail")), h("h1", {}, "Verifica tu identidad"), h("div", { class: "label" }, "Enviamos un código de 6 dígitos a tu correo. Caduca en 5 minutos."), h("div", { class: "otp" }, boxes), err,
       h("div", { style: "display:flex;gap:10px;justify-content:space-between;margin-top:8px" }, h("button", { class: "btn ghost", onclick: async () => { try { await api("/api/auth/resend", { method: "POST" }); toast("Código reenviado"); } catch (e) { err.textContent = e.message; } } }, "Reenviar código"),
-        h("button", { class: "btn", onclick: submit }, "Verificar")));
+        verifyButton));
     boxes[0].focus();
   };
   step1(); root.append(h("div", { class: "auth" }, box));
+  api("/api/auth/challenge").then(() => step2()).catch(() => {});
 }
 
 // ---------------- estructura ----------------
@@ -130,14 +144,28 @@ VIEWS.monitoreo = async () => {
     seg.querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.textContent === GSEL.range));
     const uid = sel.value || (ds[0] && ds[0].uid); if (!uid) return; GSEL.uid = uid; body.replaceChildren(h("div", { class: "empty" }, "Cargando paneles…"));
     const p = await api(`/api/monitoring/grafana/${encodeURIComponent(uid)}?range=${GSEL.range}`);
-    body.replaceChildren(...(p.status !== "ok" ? [st(p)] : p.data.panels.map((x) => h("div", { class: "panel" }, h("div", { class: "row" }, x.title || "(sin título)", h("span", {}, h("a", { href: x.open_url, target: "_blank", rel: "noopener" }, "Abrir"), " · ", h("a", { href: x.edit_url, target: "_blank", rel: "noopener" }, "Editar"))),
-      x.embed_url ? h("iframe", { src: x.embed_url, loading: "lazy", sandbox: "allow-scripts allow-same-origin" }) : h("div", { class: "label" }, "Incrustación desactivada (NEXOOPS_GRAFANA_EMBED). Usa «Abrir» para ver el panel autenticado en Grafana.")))));
+    const panelView = (x) => {
+      const metrics = h("div", { class: "label" }, "Métricas no consultadas todavía.");
+      const query = h("button", { class: "btn ghost", onclick: async () => {
+        query.disabled = true; metrics.replaceChildren("Consultando la API de Grafana…");
+        try {
+          const m = await api(`/api/monitoring/grafana/${encodeURIComponent(uid)}/panels/${x.id}/metrics?range=${GSEL.range}`);
+          const fields = (m.data?.series || []).flatMap((s) => s.fields || []).filter((f) => f.type === "number" || f.type === "boolean");
+          metrics.replaceChildren(fields.length ? h("div", { class: "rows" }, fields.map((f) => h("div", { class: "row" }, f.name || "valor", h("b", {}, String(f.values.filter((v) => v != null).at(-1) ?? "sin dato"))))) : h("div", { class: "empty" }, "El panel no devolvió series numéricas."),
+            h("div", { class: "src" }, `${m.source} · ${m.observed_at || "sin hora"}`));
+        } catch (e) { metrics.replaceChildren(h("div", { class: "note err" }, e.message)); }
+        finally { query.disabled = false; }
+      } }, "Consultar métricas");
+      return h("div", { class: "panel" }, h("div", { class: "row" }, x.title || "(sin título)", h("span", {}, query, " · ", h("a", { href: x.open_url, target: "_blank", rel: "noopener" }, "Abrir"), " · ", h("a", { href: x.edit_url, target: "_blank", rel: "noopener" }, "Editar"))),
+        metrics, x.embed_url ? h("iframe", { src: x.embed_url, loading: "lazy", sandbox: "allow-scripts allow-same-origin" }) : h("div", { class: "label" }, "Incrustación desactivada (NEXOOPS_GRAFANA_EMBED). Usa «Abrir» para ver el panel autenticado en Grafana."));
+    };
+    body.replaceChildren(...(p.status !== "ok" ? [st(p)] : p.data.panels.map(panelView)));
   }
   const graf = card("s12", "chart-line", "Grafana", h("div", { style: "display:flex;gap:10px" }, ds.length ? [sel, seg] : []), st(gd), body, gd.observed_at ? h("div", { class: "src" }, `${gd.source} · ${gd.observed_at}`) : null);
   if (ds.length) setTimeout(load, 0);
   const probs = (z.problems.data || {}).problems || [], hosts = (z.hosts.data || {}).hosts || [];
   const zc = card("s7", "siren", "Zabbix — problemas activos", z.problems.observed_at ? h("span", { class: "src" }, `${z.problems.source} · ${z.problems.observed_at}`) : null, st(z.problems),
-    probs.length ? h("table", {}, h("tr", {}, ["Severidad", "Problema", "Desde"].map((x) => h("th", {}, x))), probs.map((p) => h("tr", {}, h("td", {}, h("span", { class: "chip " + (p.severity_n >= 4 ? "err" : "warn") }, p.severity)), h("td", {}, p.name), h("td", { class: "mono" }, p.since)))) : (z.problems.status === "ok" ? h("div", { class: "empty" }, "Sin problemas activos.") : null));
+    probs.length ? h("table", {}, h("tr", {}, ["Severidad", "Problema", "Host", "Desde"].map((x) => h("th", {}, x))), probs.map((p) => h("tr", {}, h("td", {}, h("span", { class: "chip " + (p.severity_n >= 4 ? "err" : "warn") }, p.severity)), h("td", {}, p.name), h("td", {}, (p.hosts || []).map((x) => x.name).join(", ") || "—"), h("td", { class: "mono" }, p.since)))) : (z.problems.status === "ok" ? h("div", { class: "empty" }, "Sin problemas activos.") : null));
   const zh = card("s5", "server", "Zabbix — hosts", null, st(z.hosts), hosts.length ? h("div", { class: "rows" }, hosts.map((x) => h("div", { class: "row" }, h("div", {}, x.name, h("small", {}, x.monitored ? "monitorizado" : "sin monitorizar")), h("span", { class: "chip " + (x.available === "disponible" ? "" : x.available === "no disponible" ? "err" : "mute") }, x.available)))) : null);
   return h("div", {}, h("div", { class: "title" }, "Monitoreo"), h("div", { class: "grid" }, graf, zc, zh));
 };

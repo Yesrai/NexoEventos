@@ -11,6 +11,7 @@ from . import envelope, http_json
 SRC = "Grafana API"
 RANGES = {"15m": "now-15m", "1h": "now-1h", "6h": "now-6h", "24h": "now-24h", "7d": "now-7d"}
 UID = re.compile(r"^[A-Za-z0-9_-]{1,40}$")
+MAX_METRIC_POINTS = 300
 
 
 class Grafana:
@@ -69,3 +70,61 @@ class Grafana:
                            "embed_url": f"{base}/d-solo/{uid}/_?{q}" if self.c.grafana_embed else None,
                            "open_url": f"{base}/d/{uid}/_?viewPanel={p['id']}&from={RANGES[range_key]}&to=now", "edit_url": f"{base}/d/{uid}/_?editPanel={p['id']}"})
         return envelope(SRC, "ok", {"uid": uid, "title": str(dash.get("title"))[:120], "range": range_key, "embed_allowed": bool(self.c.grafana_embed), "panels": panels})
+
+    def metrics(self, uid: str, panel_id: int, range_key: str = "1h") -> dict:
+        """Consulta las series del panel mediante ``/api/ds/query``.
+
+        La consulta se obtiene del dashboard que el token Viewer ya puede ver.
+        La respuesta se reduce a valores escalares de tipo métrico y nunca
+        devuelve metadatos del datasource, consultas, cabeceras ni tokens.
+        """
+        if not self.configured():
+            return envelope(SRC, "not_configured", detail="GRAFANA_URL / GRAFANA_TOKEN sin definir")
+        if not UID.match(uid) or not isinstance(panel_id, int) or isinstance(panel_id, bool) or panel_id <= 0 or range_key not in RANGES:
+            return envelope(SRC, "error", detail="parámetros inválidos")
+        try:
+            doc = self._get(f"/api/dashboards/uid/{uid}")
+            dashboard = doc.get("dashboard") if isinstance(doc, dict) else None
+            panel = next((p for p in (dashboard or {}).get("panels", []) if isinstance(p, dict) and p.get("id") == panel_id), None)
+            if not panel:
+                return envelope(SRC, "error", detail="panel no encontrado")
+            queries = []
+            for target in panel.get("targets", []):
+                if not isinstance(target, dict) or target.get("hide") is True:
+                    continue
+                q = dict(target)
+                q["refId"] = str(q.get("refId", ""))[:12]
+                q["datasource"] = q.get("datasource") or panel.get("datasource")
+                q["maxDataPoints"], q["intervalMs"] = MAX_METRIC_POINTS, 20_000
+                queries.append(q)
+            if not queries:
+                return envelope(SRC, "ok", {"uid": uid, "panel_id": panel_id, "title": str(panel.get("title", ""))[:120], "range": range_key, "series": []})
+            raw = self.fetch(
+                self.c.grafana_url + "/api/ds/query",
+                method="POST",
+                headers={"Authorization": f"Bearer {self.c.grafana_token}"},
+                body={"queries": queries, "from": RANGES[range_key], "to": "now"},
+                **({"cafile": self.c.grafana_cafile} if self.c.grafana_cafile else {}),
+            )
+        except Exception as e:  # noqa: BLE001
+            return envelope(SRC, "unavailable", detail=f"Grafana no respondió ({type(e).__name__})")
+        return envelope(SRC, "ok", {"uid": uid, "panel_id": panel_id, "title": str(panel.get("title", ""))[:120], "range": range_key,
+                                     "series": self._metric_series(raw)})
+
+    @staticmethod
+    def _metric_series(raw) -> list[dict]:
+        """Extrae solo campos time/number/boolean, hasta un máximo estricto."""
+        out = []
+        results = raw.get("results", {}) if isinstance(raw, dict) else {}
+        for ref_id, result in list(results.items())[:20]:
+            for frame in (result.get("frames", []) if isinstance(result, dict) else [])[:20]:
+                schema = frame.get("schema", {}) if isinstance(frame, dict) else {}
+                data = frame.get("data", {}) if isinstance(frame, dict) else {}
+                fields, values = schema.get("fields", []), data.get("values", [])
+                keep = [(i, str(f.get("name", ""))[:80], str(f.get("type", ""))) for i, f in enumerate(fields)
+                        if isinstance(f, dict) and f.get("type") in ("time", "number", "boolean") and i < len(values)]
+                if not keep:
+                    continue
+                n = min(MAX_METRIC_POINTS, *(len(values[i]) for i, _, _ in keep if isinstance(values[i], list))) if all(isinstance(values[i], list) for i, _, _ in keep) else 0
+                out.append({"ref_id": str(ref_id)[:12], "fields": [{"name": name, "type": typ, "values": values[i][:n]} for i, name, typ in keep]})
+        return out

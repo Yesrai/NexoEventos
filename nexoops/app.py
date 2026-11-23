@@ -114,11 +114,15 @@ def create_app(cfg: Config, mailer=None, aws=None, grafana=None, zabbix=None, au
     def resend(request: Request):
         return auth.resend(request.cookies.get(CHALLENGE_COOKIE))
 
+    @app.get("/api/auth/challenge")
+    def challenge(request: Request):
+        return auth.challenge_status(request.cookies.get(CHALLENGE_COOKIE))
+
     @app.post("/api/auth/verify")
     def verify(b: OtpBody, request: Request, response: Response):
         r = auth.verify_otp(request.cookies.get(CHALLENGE_COOKIE), b.code, ip(request))
         setc(response, SESSION_COOKIE, r["token"], 8 * 3600)
-        response.delete_cookie(CHALLENGE_COOKIE, path="/")
+        response.delete_cookie(CHALLENGE_COOKIE, path="/", httponly=True, secure=cfg.cookie_secure, samesite="strict")
         return {"user": r["user"], "csrf": r["csrf"]}
 
     @app.get("/api/auth/session")
@@ -153,6 +157,12 @@ def create_app(cfg: Config, mailer=None, aws=None, grafana=None, zabbix=None, au
         if range not in RANGES:
             raise HTTPException(400, "rango inválido")
         return grafana.panels(uid, range)
+
+    @app.get("/api/monitoring/grafana/{uid}/panels/{panel_id}/metrics")
+    def g_metrics(uid: str, panel_id: int, range: str = "1h", u: dict = Depends(user)):
+        if range not in RANGES:
+            raise HTTPException(400, "rango inválido")
+        return grafana.metrics(uid, panel_id, range)
 
     @app.get("/api/monitoring/zabbix")
     def z(u: dict = Depends(user)):
