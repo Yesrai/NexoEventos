@@ -13,7 +13,7 @@ Autorizado paso a paso por la usuaria. VM `vm-nexoeventos-obs` encendida 23:12 �
 8. Regla de UFW añadida solo para la interfaz (IPv4 e IPv6): `ufw allow in on tailscale0 to any port 443 proto tcp`. Las reglas 22 y 443 por IP pública, el NSG y SSH no se modificaron.
 
 ## Verificaciones
-- Por Tailscale (`100.91.65.26`): Grafana `/grafana/api/health` → 200 (versión 13.2.4, base de datos `ok`); pantalla de acceso de Grafana → 200 con redirecciones dentro de la IP de Tailscale; Zabbix `/zabbix/` → 200 (certificado autofirmado, advertencia esperada).
+- Por Tailscale (`[IP-tailnet-oculta]`): Grafana `/grafana/api/health` → 200 (versión 13.2.4, base de datos `ok`); pantalla de acceso de Grafana → 200 con redirecciones dentro de la IP de Tailscale; Zabbix `/zabbix/` → 200 (certificado autofirmado, advertencia esperada).
 - Puertos: por Tailscale solo conecta el 443; 22, 80, 3000, 5432, 10050, 10051 y 8080 no conectan y no llegan a `tailscale0` (0 paquetes). Por la IP pública, el NSG sigue permitiendo solo 22 y 443 desde la IP autorizada (80, 3000, 5432 y 10051 bloqueados).
 - Nginx registró 32 peticiones a `/grafana/` y `/zabbix/` con origen la IP privada de Tailscale del Mac (`100.64.53.54`) entre las 05:01 y las 05:11 UTC; incluyen accesos a `/grafana/login` y `/zabbix/` con respuesta 200.
 
@@ -24,6 +24,6 @@ Autorizado paso a paso por la usuaria. VM `vm-nexoeventos-obs` encendida 23:12 �
 VM `deallocated` (00:14); IP pública estática conservada; apagado automático habilitado (17:38 UTC = 12:38 hora de Perú); NSG sin cambios; bloqueos de borrado de discos intactos (3); Tailscale, UFW y servicios (nginx, grafana-server, zabbix-server, zabbix-agent2, postgresql, ufw, tailscaled) activos y habilitados al arranque al momento de apagar.
 
 ## Pendientes (registrados)
-1. **Prueba de acceso desde otra red** (Internet del celular) en el próximo encendido: comprobar antes con `curl -s https://api.ipify.org` que la IP pública sea distinta de la autorizada, abrir `https://100.91.65.26/grafana/` y `/zabbix/` con Tailscale conectado y anotar el resultado.
+1. **Prueba de acceso desde otra red** (Internet del celular) en el próximo encendido: comprobar antes con `curl -s https://api.ipify.org` que la IP pública sea distinta de la autorizada, abrir `https://[IP-tailnet-oculta]/grafana/` y `/zabbix/` con Tailscale conectado y anotar el resultado.
 2. Confirmar en la consola de Tailscale que la VM figura con `tag:obs` y con la caducidad de clave deshabilitada; activar *Device approval* y MFA.
 3. Captura de la interfaz de Zabbix (Monitoring → Hosts y Latest data), ahora posible por Tailscale (Anexo B del informe).
