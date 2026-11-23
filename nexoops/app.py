@@ -48,9 +48,10 @@ def create_app(cfg: Config, mailer=None, aws=None, grafana=None, zabbix=None, au
     app = FastAPI(title="NexoOps", docs_url=None, redoc_url=None, openapi_url=None)
     audit = audit or AuditLog(Path(cfg.data_dir) / "audit.jsonl")
     kw = {"clock": clock} if clock else {}
+    _now = (lambda: clock()) if clock else (lambda: None)   # el reloj de la aplicación gobierna también la vigencia de la instantánea (None = hora real)
     auth = AuthService(cfg, mailer or M.build(cfg), audit, **kw)
     aws, grafana, zabbix = aws or Aws(cfg), grafana or Grafana(cfg), zabbix or Zabbix(cfg)
-    deps = {"cloud_overview": lambda: O.cloud_overview(cfg, aws, zabbix), "recovery_view": lambda: O.recovery_view(cfg), "ocs": lambda: O._ocs(cfg), "aws": aws}
+    deps = {"cloud_overview": lambda: O.cloud_overview(cfg, aws, zabbix, now=_now()), "recovery_view": lambda: O.recovery_view(cfg), "ocs": lambda: O._ocs(cfg), "aws": aws}
     actions = Actions(cfg, audit, deps)
     app.state.auth, app.state.audit = auth, audit
     frame = f" {cfg.grafana_url}" if cfg.grafana_embed and cfg.grafana_url else ""
@@ -142,7 +143,7 @@ def create_app(cfg: Config, mailer=None, aws=None, grafana=None, zabbix=None, au
     # ---- datos (solo lectura) ----
     @app.get("/api/overview")
     def overview(u: dict = Depends(user)):
-        return O.cloud_overview(cfg, aws, zabbix)
+        return O.cloud_overview(cfg, aws, zabbix, now=_now())
 
     @app.get("/api/infra/aws")
     def infra_aws(u: dict = Depends(user)):
@@ -200,7 +201,7 @@ def create_app(cfg: Config, mailer=None, aws=None, grafana=None, zabbix=None, au
 
     @app.post("/api/assistant")
     def assistant(b: AskBody, u: dict = Depends(user)):
-        out = AI.diagnose(b.question, O.cloud_overview(cfg, aws, zabbix), O.recovery_view(cfg), zabbix.problems(), cfg.llm_provider)
+        out = AI.diagnose(b.question, O.cloud_overview(cfg, aws, zabbix, now=_now()), O.recovery_view(cfg), zabbix.problems(), cfg.llm_provider)
         audit.append(u["email"], "asistente_consulta", rol=u["role"], operacion="assistant.diagnose", resultado="ok", request_id="rq-" + secrets.token_hex(5))
         return out
 
