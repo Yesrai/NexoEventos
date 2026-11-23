@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 import json
-import ssl
 import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
+
+from ..tls import trusted_context
 
 
 def utc(now=None) -> str:
@@ -24,5 +25,5 @@ def http_json(url: str, *, method="GET", headers=None, body=None, timeout=8.0, c
         raise ValueError("solo https (http únicamente a loopback)")
     data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(url, data=data, method=method, headers={"Accept": "application/json", **({"Content-Type": "application/json"} if data else {}), **(headers or {})})
-    with urllib.request.urlopen(req, timeout=timeout, context=ssl.create_default_context(cafile=cafile)) as r:    # noqa: S310 (esquema validado; cafile = certificado FIJADO, la verificación nunca se desactiva)
+    with urllib.request.urlopen(req, timeout=timeout, context=trusted_context(cafile)) as r:    # noqa: S310 (esquema validado; cafile = certificado FIJADO, la verificación nunca se desactiva)
         return json.loads(r.read(2_000_000) or b"null")

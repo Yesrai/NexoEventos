@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import smtplib
-import ssl
+from .tls import trusted_context
 from email.message import EmailMessage
 from pathlib import Path
 
@@ -30,11 +30,11 @@ class SmtpMailer:
         m = EmailMessage(); m["From"], m["To"], m["Subject"] = self.c.smtp_from, to, SUBJECT; m.set_content(body(code))
         try:
             if self.c.smtp_port == 465:
-                s = smtplib.SMTP_SSL(self.c.smtp_host, self.c.smtp_port, timeout=15, context=ssl.create_default_context())
+                s = smtplib.SMTP_SSL(self.c.smtp_host, self.c.smtp_port, timeout=15, context=trusted_context())
             else:
                 s = smtplib.SMTP(self.c.smtp_host, self.c.smtp_port, timeout=15)
                 if self.c.smtp_starttls:
-                    s.starttls(context=ssl.create_default_context())
+                    s.starttls(context=trusted_context())
             with s:
                 if self.c.smtp_user:
                     s.login(self.c.smtp_user, self.c.smtp_password)

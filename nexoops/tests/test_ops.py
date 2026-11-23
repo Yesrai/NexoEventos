@@ -187,3 +187,25 @@ def test_smtp_465_usa_ssl_verificado(cfg, monkeypatch):
     monkeypatch.setattr(smtplib, "SMTP_SSL", Fake)
     M.SmtpMailer(cfg).send("a@gmail.com", "123456")
     assert used == {"host": "smtp.gmail.com", "port": 465, "verify": "CERT_REQUIRED", "hostname": True, "login": "a@gmail.com", "to": "a@gmail.com"}
+
+
+def test_tls_validacion_obligatoria_y_sin_ca_del_sistema(monkeypatch):
+    import ssl
+    from nexoops import tls
+    ctx = tls.trusted_context()
+    assert ctx.verify_mode == ssl.CERT_REQUIRED and ctx.check_hostname is True
+    # Sin almacén por defecto (Python de python.org en macOS) se usa certifi, igualmente con validación completa
+    monkeypatch.delenv("SSL_CERT_FILE", raising=False)
+    monkeypatch.setattr(ssl, "get_default_verify_paths", lambda: ssl.DefaultVerifyPaths(None, None, "SSL_CERT_FILE", "/no/existe", "SSL_CERT_DIR", "/no/existe"))
+    used = {}
+    real = ssl.create_default_context
+    monkeypatch.setattr(ssl, "create_default_context", lambda **kw: used.update(kw) or real(**kw))
+    ctx = tls.trusted_context()
+    import certifi
+    assert used["cafile"] == certifi.where() and ctx.verify_mode == ssl.CERT_REQUIRED and ctx.check_hostname is True
+
+
+def test_no_hay_verificacion_desactivada_en_el_codigo():
+    import pathlib, re
+    src = "\n".join(p.read_text() for p in pathlib.Path(__file__).resolve().parents[1].rglob("*.py") if "tests" not in p.parts)
+    assert not re.search(r"_create_unverified_context|CERT_NONE|check_hostname\s*=\s*False", src)
