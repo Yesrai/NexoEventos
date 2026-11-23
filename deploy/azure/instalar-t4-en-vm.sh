@@ -14,7 +14,7 @@ PLAN=(
   "extraer el paquete en /opt/nexoeventos y crear /opt/nexoeventos/venv (requirements-production.lock); si falta, instalar SOLO el paquete python3-venv"
   "generar identidades del centro si no existen (NO se sobrescriben); los 3 tokens se guardan en /root/.nexo-t4-tokens-centro (0600) para que SOLO la propietaria los lea y destruya el archivo"
   "instalar el script de alertas nexo-alert-azure.py en el directorio de alertas de Zabbix (0750, grupo zabbix)"
-  "instalar ops-center.service, witness.service y ops-collector.service/.timer (el testigo y el recolector solo arrancan si existen sus archivos de configuración)"
+  "instalar ops-center.service, witness.service, ops-collector.service/.timer y ops-fastprobe.service (esta última SIN habilitar: solo se arranca durante una ventana de prueba) (el testigo y el recolector solo arrancan si existen sus archivos de configuración)"
   "crear /etc/nginx/snippets/nexo-ops.conf (rutas /ops/ y /witness/) e incluirlo UNA vez en el server HTTPS existente; nginx -t; si falla, restaurar la copia"
   "verificar: /ops/healthz, collect --once y verify-audit; Grafana, Zabbix, PostgreSQL y UFW quedan intactos (se comparan sus huellas antes/después)"
 )
@@ -38,7 +38,7 @@ if [[ -z "$ROOT" ]]; then
   [[ -f /var/lib/ops-center/identities.json ]] || sudo -u opscenter env PYTHONPATH=/opt/nexoeventos:/opt/nexoeventos/backend OPS_CENTER_STATE_DIR=/var/lib/ops-center /opt/nexoeventos/venv/bin/python -m ops_center init-identities --dir /var/lib/ops-center > /root/.nexo-t4-tokens-centro 2>&1; chmod 600 /root/.nexo-t4-tokens-centro   # los tokens NO salen por la sesión de instalación: solo la propietaria los lee (cat + shred) en su terminal
 fi
 install -d "$ROOT/etc/systemd/system"
-for u in ops-center.service ops-collector.service ops-collector.timer; do install -m 0644 "$ROOT/opt/nexoeventos/deploy/ops-center/$u" "$ROOT/etc/systemd/system/$u"; done
+for u in ops-center.service ops-collector.service ops-collector.timer ops-fastprobe.service; do install -m 0644 "$ROOT/opt/nexoeventos/deploy/ops-center/$u" "$ROOT/etc/systemd/system/$u"; done
 install -m 0644 "$ROOT/opt/nexoeventos/deploy/witness/witness.service" "$ROOT/etc/systemd/system/witness.service"
 AS="$ROOT/usr/lib/zabbix/alertscripts"; install -d "$AS"; install -m 0750 "$ROOT/opt/nexoeventos/deploy/azure/nexo-alert-azure.py" "$AS/nexo-alert-azure.py"
 [[ -n "$ROOT" ]] || chgrp zabbix "$AS/nexo-alert-azure.py"

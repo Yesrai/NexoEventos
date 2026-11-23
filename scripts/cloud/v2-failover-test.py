@@ -41,6 +41,33 @@ def iso(t: float) -> str:
     return datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def iso_ms(t: float) -> str:
+    d = datetime.fromtimestamp(t, timezone.utc)
+    return d.strftime("%Y-%m-%dT%H:%M:%S.") + f"{d.microsecond // 1000:03d}Z"
+
+
+TIME_KEYS = ("stop_issued_at", "stop_confirmed_at", "alb_marked_unhealthy_at", "restore_issued_at", "restore_confirmed_at", "both_healthy_again_at")
+
+
+def events_utc(events: dict, t0: float) -> dict:
+    """Marcas relativas (s desde T0) → UTC con milisegundos, para cruzarlas con la sonda de Azure y los registros de AWS."""
+    return {k: iso_ms(t0 + events[k]) for k in TIME_KEYS if isinstance(events.get(k), (int, float))}
+
+
+# Tipos de fallo (T5). «stop» = detención CONTROLADA del servicio (SIGTERM; Nginx sigue vivo y contesta 502 al instante): el de T5 1.er intento y el criterio original.
+# «instance» = pérdida ABRUPTA de la instancia (ec2 stop-instances): sin respuesta de TCP; es MÁS dura que «stop» (las solicitudes al destino muerto esperan al tiempo de conexión).
+FAULTS = ("stop", "instance")
+
+
+def inject_fault(fault: str, victim: str) -> str:
+    if fault == "stop":
+        return M.ssm_output(victim, "systemctl stop nexoeventos-api")
+    if fault == "instance":
+        M.aws("ec2", "stop-instances", "--instance-ids", victim)
+        return "stop-instances"
+    raise ValueError(f"fallo desconocido: {fault}")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
@@ -49,14 +76,18 @@ def main() -> None:
     ap.add_argument("--clients", type=int, default=4, help="clientes independientes (conexiones distintas) que reparten el ritmo total")
     ap.add_argument("--allow-replacement", action="store_true",
                     help="experimento de AUTOHEALING: no aborta si el ASG marca la instancia como no sana (se espera su reemplazo) y no intenta restaurar una instancia ya terminada")
+    ap.add_argument("--instances", type=int, default=2, help="instancias esperadas del ASG (2 en el 1.er intento; 6 en la variante C de T5)")
+    ap.add_argument("--fault", choices=FAULTS, default="stop", help="stop (por defecto): detención CONTROLADA del servicio, como en T5 1.er intento; instance: pérdida ABRUPTA de la instancia (más dura; exige --allow-replacement)")
     ap.add_argument("--max-seconds", type=int, default=600, help="criterio de parada: tiempo máximo del experimento; al superarlo se aborta y se restaura la API")
     args = ap.parse_args()
     if os.environ.get("NEXO_ALLOW_CLOUD_CHANGES") != "YES":
         sys.exit("Requiere NEXO_ALLOW_CLOUD_CHANGES=YES (detiene temporalmente la API de una instancia de V2).")
+    if args.fault == "instance" and not args.allow_replacement:
+        sys.exit("--fault instance exige --allow-replacement (la instancia detenida no se restaura: la sustituye el ASG).")
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     health0 = M.target_health()
-    assert len(health0) == 2 and all(s == "healthy" for s in health0.values()), f"V2 no tiene 2 instancias sanas: {health0}"
+    assert len(health0) == args.instances and all(s == "healthy" for s in health0.values()), f"V2 no tiene {args.instances} instancias sanas: {health0}"
     act0 = {a["ActivityId"] for a in M.aws("autoscaling", "describe-scaling-activities", "--auto-scaling-group-name", M.ASG_NAME, "--max-items", "20").get("Activities", [])}
     victim = sorted(health0)[0]
     other = next(i for i in health0 if i != victim)
@@ -98,7 +129,7 @@ def main() -> None:
                     timeline.append(snap); last = key
                 if sum(1 for s in health.values() if s == "healthy") == 0:
                     abort["reason"] = "el ALB se quedó sin destinos sanos"
-                if not args.allow_replacement and (any(h != "Healthy" or s != "InService" for s, h in asg_state.values()) or len(asg_state) != 2):
+                if not args.allow_replacement and (any(h != "Healthy" or s != "InService" for s, h in asg_state.values()) or len(asg_state) != args.instances):
                     abort["reason"] = f"el ASG cambió el estado de una instancia: {asg_state}"
                 if now() > args.max_seconds:
                     abort["reason"] = f"tiempo máximo excedido ({args.max_seconds} s)"
@@ -108,13 +139,13 @@ def main() -> None:
 
     threads = [threading.Thread(target=traffic, args=(w,)) for w in range(args.clients)] + [threading.Thread(target=poll)]
     [t.start() for t in threads]
-    events: dict = {"victim": victim[-6:], "other": other[-6:], "rate_req_per_s": args.rate, "allow_replacement": args.allow_replacement, "max_seconds": args.max_seconds}
+    events: dict = {"fault": args.fault, "expected_instances": args.instances, "t0_utc": iso_ms(T0), "victim": victim[-6:], "other": other[-6:], "rate_req_per_s": args.rate, "allow_replacement": args.allow_replacement, "max_seconds": args.max_seconds}
     stopped = False
     try:
         time.sleep(25)  # línea base sana
         events["baseline_s"] = 25
         events["stop_issued_at"] = now()
-        M.ssm_output(victim, "systemctl stop nexoeventos-api")
+        inject_fault(args.fault, victim)
         stopped = True
         events["stop_confirmed_at"] = now()
         deadline = time.time() + 120
@@ -142,7 +173,7 @@ def main() -> None:
         # El historial solo guarda CAMBIOS de estado: en un autohealing el estado «2 sanos» se alcanza (y queda registrado) ANTES de la restauración manual,
         # así que se compara con la inyección del fallo y no con la restauración (corregido el 4-nov-2026: antes daba `null` aunque el ASG ya hubiera repuesto la capacidad).
         reference = events["stop_issued_at"] if args.allow_replacement else events["restore_confirmed_at"]
-        if all(v == "healthy" for v in last["alb"].values()) and len(last["alb"]) == 2 and last["t"] > reference:
+        if all(v == "healthy" for v in last["alb"].values()) and len(last["alb"]) == args.instances and last["t"] > reference:
             recovered = last["t"]; break
         time.sleep(2)
     events["both_healthy_again_at"] = recovered
@@ -151,6 +182,7 @@ def main() -> None:
     [t.join() for t in threads]
     end = time.time()
     events["abort_reason"] = abort["reason"]
+    events["utc"] = events_utc(events, T0)          # marcas absolutas (UTC, ms) de cada hito: la sincronización de relojes se evidencia aparte (scripts/ops/t5-relojes.sh)
 
     ok_lat = [r["ms"] for r in requests_log if r["status"] == 200]
     errors = [r for r in requests_log if r["status"] != 200]

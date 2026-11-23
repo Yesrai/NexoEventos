@@ -29,6 +29,8 @@ def main(argv=None, env=None, out=sys.stdout):
     p = sub.add_parser("record-evidence"); p.add_argument("etapa", choices=sorted(B.EVIDENCE_NAMES)); p.add_argument("--report", required=True); p.add_argument("--result", choices=("PASS", "FAIL"), required=True)
     p = sub.add_parser("kill-switch"); p.add_argument("state", choices=("on", "off"))
     sub.add_parser("verify-audit")
+    p = sub.add_parser("fastprobe"); p.add_argument("--targets", required=True); p.add_argument("--cloud", default="aws", choices=("aws", "oci")); p.add_argument("--interval", type=float, default=5.0)
+    p.add_argument("--timeout", type=float, default=3.0); p.add_argument("--path", default="/livez"); p.add_argument("--out"); p.add_argument("--duration", type=float); p.add_argument("--burst", type=int, default=1)
     p = sub.add_parser("collect"); p.add_argument("--targets", required=True); p.add_argument("--loop", action="store_true"); p.add_argument("--interval", type=int, default=60)
     p = sub.add_parser("evidence-start"); p.add_argument("etapa", choices=sorted(B.EVIDENCE_NAMES) + ["T5", "T6", "T7", "T8"]); p.add_argument("--root", required=True)
     q1 = sub.add_parser("evidence-t1"); q1.add_argument("run"); q1.add_argument("--probe", required=True)
@@ -81,6 +83,14 @@ def main(argv=None, env=None, out=sys.stdout):
         except (OSError, ValueError) as exc:
             print(f"ERROR: {exc}", file=out); return 2
         print(json.dumps({n: snap["clouds"][n]["estado"] for n in C.CLOUDS}), file=out); return 0
+    if a.cmd == "fastprobe":
+        from . import fastprobe as FP
+        try:
+            base, vas, caf = FP.from_targets(a.targets, a.cloud)
+            n = FP.run(Path(a.out) if a.out else Path(s.state_dir) / "status" / "probe-fast.jsonl", base, path=a.path, cafile=caf, verify_as=vas, interval=a.interval, timeout=a.timeout, duration=a.duration, burst=a.burst)
+        except (OSError, ValueError) as exc:
+            print(f"ERROR: {exc}", file=out); return 2
+        print(json.dumps({"muestras": n}), file=out); return 0
     if a.cmd == "verify-audit":
         v = audit.verify(); print(json.dumps(v), file=out); return 0 if v["ok"] else 1
     if a.cmd == "kill-switch":

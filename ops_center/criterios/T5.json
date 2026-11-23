@@ -38,7 +38,7 @@
   {
    "id": "azure_observa_continuidad",
    "kind": "bool",
-   "desc": "sondas reales desde Azure durante la ventana: ≥ 5 ciclos continuos (hueco ≤ 120 s), origen cloud_verificado y estados de AWS registrados con marcas UTC (la caída parcial queda en el historial)"
+   "desc": "sondas reales desde Azure durante la ventana: recolector (hueco ≤ 120 s) Y sonda rápida de 5–10 s (hueco ≤ 15 s, ≥ 5 min de línea base antes del incidente) que CAPTURA el incidente del generador (≥ 1 muestra fallida dentro de su ventana) sin fallos inexplicados fuera de él; marcas UTC con milisegundos"
   },
   {
    "id": "limpieza_verificada",

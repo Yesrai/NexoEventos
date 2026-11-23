@@ -167,7 +167,9 @@ review_plan() {   # $1 = plan guardado; $2 = escenario (first|resume, por defect
 
 chain_run() {
   window_min
-  [[ "$SCENARIO" == first || "$SCENARIO" == resume ]] || { echo "--scenario debe ser first (primer despliegue) o resume (reanudación tras una limpieza verificada)." >&2; exit 2; }
+  [[ "$SCENARIO" == first || "$SCENARIO" == resume || "$SCENARIO" == t5b || "$SCENARIO" == t5c ]] || { echo "--scenario debe ser first (primer despliegue), resume (reanudación tras una limpieza verificada) o t5b/t5c (T5, 2.º intento; también exigen limpieza verificada)." >&2; exit 2; }
+  EXPECTED_N="${NEXO_EXPECTED_TARGETS:-2}"; [[ "$EXPECTED_N" =~ ^[0-9]+$ && "$EXPECTED_N" -ge 2 && "$EXPECTED_N" -le 10 ]] || { echo "NEXO_EXPECTED_TARGETS debe ser un entero entre 2 y 10." >&2; exit 2; }
+  [[ "$SCENARIO" == t5b && "$EXPECTED_N" != 3 || "$SCENARIO" == t5c && "$EXPECTED_N" != 6 ]] && { echo "El escenario $SCENARIO exige NEXO_EXPECTED_TARGETS=$([[ "$SCENARIO" == t5b ]] && echo 3 || echo 6) (coherente con el plan revisado)." >&2; exit 2; }
   [[ "${NEXO_ALLOW_CLOUD_CHANGES:-}" == YES && "$CONFIRM" == "ENCENDER RDS Y APLICAR V2" ]] || { echo "chain cambia AWS: exige NEXO_ALLOW_CLOUD_CHANGES=YES y --confirm \"ENCENDER RDS Y APLICAR V2\"" >&2; exit 2; }
   [[ -n "$NOTAFTER" && -n "$CREDS_UNTIL" ]] || { echo "chain exige --not-after (hora límite de inicio) y --creds-until (caducidad de credenciales), como HH:MMZ o YYYY-MM-DDTHH:MMZ" >&2; exit 2; }
   local na cu now; na="$(hhmm_epoch "$NOTAFTER")" || { echo "--not-after inválido (use HH:MMZ o YYYY-MM-DDTHH:MMZ, fecha y hora reales)" >&2; exit 2; }; cu="$(hhmm_epoch "$CREDS_UNTIL")" || { echo "--creds-until inválido (use HH:MMZ o YYYY-MM-DDTHH:MMZ, fecha y hora reales)" >&2; exit 2; }; now="$(now_epoch)"
@@ -175,7 +177,7 @@ chain_run() {
   (( cu > now )) || { log "BLOQUEADO: la caducidad de credenciales indicada ($CREDS_UNTIL) ya pasó."; exit 1; }
   (( cu - now <= ${NEXO_MAX_CREDS_AHEAD_MIN:-360}*60 )) || { log "BLOQUEADO: la caducidad indicada ($CREDS_UNTIL) está a más de ${NEXO_MAX_CREDS_AHEAD_MIN:-360} min: una sesión de Academy dura unas 4 h; revise la fecha (¿error de día?)."; exit 1; }
   (( now + MIN*60 + 45*60 <= cu )) || { log "BLOQUEADO: no hay margen (ventana ${MIN} min + 45 min) antes de la caducidad de credenciales ($CREDS_UNTIL)."; exit 1; }
-  if [[ "$SCENARIO" == resume ]]; then   # reanudar solo después de una limpieza verificada (el estado lo escribe stop-now o el watchdog)
+  if [[ "$SCENARIO" != first ]]; then   # reanudar solo después de una limpieza verificada (el estado lo escribe stop-now o el watchdog)
     [[ -f "$STATE" ]] && grep -q "PARADA_VERIFICADA" "$STATE" || { log "BLOQUEADO: --scenario resume exige que la última limpieza conste como PARADA_VERIFICADA en $STATE; use --scenario first si es el primer despliegue."; exit 1; }
   fi
   ALSO_V2=1; PLAN_FILE="$PLAN_DIR/$(date -u +%Y%m%dT%H%M%SZ)-chain.tfplan"
@@ -194,10 +196,10 @@ chain_run() {
   while (( $(date +%s) - t0 < ${NEXO_HEALTHY_WAIT_S:-720} )); do
     ids="$("$AWS" elbv2 describe-target-health --target-group-arn "$tg" --query 'TargetHealthDescriptions[?TargetHealth.State==`healthy`].Target.Id' --output text 2>/dev/null | tr -s '[:space:]' ' ' | sed 's/ $//')"
     if [[ -n "$ids" ]]; then zones="$("$AWS" ec2 describe-instances --instance-ids $ids --query 'Reservations[].Instances[].Placement.AvailabilityZone' --output text 2>/dev/null | tr '\t' '\n' | sort -u | tr '\n' ' ')"
-      [[ "$(wc -w <<<"$ids")" -ge 2 && "$zones" == *us-east-1a* && "$zones" == *us-east-1b* ]] && break; fi
+      [[ "$(wc -w <<<"$ids")" -ge "$EXPECTED_N" && "$zones" == *us-east-1a* && "$zones" == *us-east-1b* ]] && break; fi
     sleep "${NEXO_POLL:-15}"
   done
-  [[ -n "${zones:-}" && "$zones" == *us-east-1a* && "$zones" == *us-east-1b* && "$(wc -w <<<"$ids")" -ge 2 ]] || { log "FALLO: no hay 2 destinos sanos en us-east-1a y us-east-1b (ids='${ids:-}'). No se fuerza nada: decida la reversión; el watchdog sigue activo."; exit 1; }
+  [[ -n "${zones:-}" && "$zones" == *us-east-1a* && "$zones" == *us-east-1b* && "$(wc -w <<<"$ids")" -ge "$EXPECTED_N" ]] || { log "FALLO: no hay $EXPECTED_N destinos sanos en us-east-1a y us-east-1b (ids='${ids:-}'). No se fuerza nada: decida la reversión; el watchdog sigue activo."; exit 1; }
   log "DESTINOS SANOS: $(wc -w <<<"$ids" | tr -d ' ') en zonas: ${zones}"
   local dns ip c1 c2; dns="$("$AWS" elbv2 describe-load-balancers --names "$ALB_NAME" --query 'LoadBalancers[0].DNSName' --output text 2>/dev/null)"; ip="$(dig +short "$dns" 2>/dev/null | grep -E '^[0-9.]+$' | head -1)"
   c1="$(curl -s -o /dev/null -m 15 -w '%{http_code}' --resolve "$V2_DOMAIN:443:$ip" "https://$V2_DOMAIN/livez" 2>/dev/null || true)"; c2="$(curl -s -o /dev/null -m 15 -w '%{http_code}' --resolve "$V2_DOMAIN:443:$ip" "https://$V2_DOMAIN/api/events" 2>/dev/null || true)"
