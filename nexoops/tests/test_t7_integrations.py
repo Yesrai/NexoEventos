@@ -72,18 +72,22 @@ def test_endpoint_metricas_protegido_e_integrado(cfg, mail, clock):
 
 
 def test_zabbix_problemas_incluye_hosts_y_marca_utc(cfg):
+    """Como la API real de Zabbix 7.0 (verificado en la VM de Azure el 23-nov): problem.get con selectHosts es un ERROR; los hosts llegan por event.get."""
     cfg.zabbix_url, cfg.zabbix_token = "https://zabbix.test", "T"
-    seen = {}
+    methods = []
 
     def fetch(url, **kw):
-        seen.update(kw["body"]["params"])
-        return {"result": [{"eventid": "1", "name": "CPU alta", "severity": "4", "clock": "1790000000", "acknowledged": "0",
-                            "hosts": [{"hostid": "10", "name": "api-aws"}]}]}
+        m, p = kw["body"]["method"], kw["body"]["params"]; methods.append(m)
+        if m == "problem.get":
+            if "selectHosts" in p: return {"error": {"code": -32602, "message": "Invalid params.", "data": 'Invalid parameter "/": unexpected parameter "selectHosts".'}}
+            return {"result": [{"eventid": "1", "name": "CPU alta", "severity": "4", "clock": "1790000000", "acknowledged": "0"}]}
+        assert m == "event.get" and p["eventids"] == ["1"] and p["selectHosts"] == ["hostid", "name"]
+        return {"result": [{"eventid": "1", "hosts": [{"hostid": "10", "name": "api-aws"}]}]}
 
     result = Zabbix(cfg, fetch).problems()
-    assert seen["selectHosts"] == ["hostid", "name"]
+    assert result["status"] == "ok", result
     problem = result["data"]["problems"][0]
-    assert problem["hosts"] == [{"id": "10", "name": "api-aws"}]
+    assert problem["hosts"] == [{"id": "10", "name": "api-aws"}] and methods == ["problem.get", "event.get"]
     assert problem["since"].endswith("Z") and result["observed_at"].endswith("Z")
 
 

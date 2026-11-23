@@ -60,9 +60,15 @@ class Zabbix:
 
     def problems(self):
         def f():
-            rows = self._rpc("problem.get", {"output": ["eventid", "name", "severity", "clock", "acknowledged"], "selectHosts": ["hostid", "name"], "recent": False, "sortfield": ["eventid"], "sortorder": "DESC", "limit": 50})
+            # Zabbix 7.0: problem.get NO admite selectHosts (devuelve error de API); los hosts se piden con event.get sobre los mismos eventos (también de solo lectura).
+            rows = self._rpc("problem.get", {"output": ["eventid", "name", "severity", "clock", "acknowledged"], "recent": False, "sortfield": ["eventid"], "sortorder": "DESC", "limit": 50})
+            ids = [str(p["eventid"]) for p in rows]
+            hosts = {}
+            if ids:
+                for ev in self._rpc("event.get", {"output": ["eventid"], "eventids": ids, "selectHosts": ["hostid", "name"]}):
+                    hosts[str(ev.get("eventid"))] = [{"id": str(h.get("hostid", ""))[:32], "name": str(h.get("name", ""))[:80]} for h in (ev.get("hosts") or [])[:20] if isinstance(h, dict)]
             return {"problems": [{"event_id": p["eventid"], "name": str(p["name"])[:160], "severity": SEV.get(str(p["severity"]), "?"), "severity_n": int(p["severity"]), "since": _iso(p["clock"]), "acknowledged": p.get("acknowledged") == "1",
-                                   "hosts": [{"id": str(h.get("hostid", ""))[:32], "name": str(h.get("name", ""))[:80]} for h in p.get("hosts", [])[:20] if isinstance(h, dict)]} for p in rows]}
+                                   "hosts": hosts.get(str(p["eventid"]), [])} for p in rows]}
         return self._wrap(f)
 
     def history(self):

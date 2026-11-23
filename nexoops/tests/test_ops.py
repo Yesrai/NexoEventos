@@ -67,7 +67,7 @@ def test_zabbix_con_cliente_simulado_y_solo_lectura(cfg):
     r = z.problems()
     assert r["status"] == "ok" and r["data"]["problems"][0]["severity"] == "Alta" and r["observed_at"]
     with pytest.raises(PermissionError): z._rpc("host.delete", {})
-    assert calls == ["problem.get"]
+    assert calls == ["problem.get", "event.get"]
 
 
 def test_grafana_simulado_embed_condicionado(cfg):
