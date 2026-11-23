@@ -1,0 +1,61 @@
+"""Zabbix: JSON-RPC desde el backend con un token de API de un usuario Zabbix de solo lectura (ZABBIX_TOKEN). Solo métodos *.get. El navegador nunca ve el token."""
+from __future__ import annotations
+
+from datetime import datetime, timezone
+
+from . import envelope, http_json
+
+SRC = "Zabbix API"
+SEV = {"0": "No clasificada", "1": "Información", "2": "Advertencia", "3": "Media", "4": "Alta", "5": "Desastre"}
+READ_ONLY = ("host.get", "problem.get", "event.get", "apiinfo.version")
+
+
+def _iso(ts):
+    try:
+        return datetime.fromtimestamp(int(ts), timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    except (TypeError, ValueError):
+        return None
+
+
+class Zabbix:
+    def __init__(self, cfg, fetch=http_json):
+        self.c, self.fetch = cfg, fetch
+
+    def configured(self):
+        return bool(self.c.zabbix_url and self.c.zabbix_token)
+
+    def _rpc(self, method, params):
+        if method not in READ_ONLY:
+            raise PermissionError("método Zabbix no permitido")
+        r = self.fetch(self.c.zabbix_url + "/api_jsonrpc.php", method="POST", headers={"Authorization": f"Bearer {self.c.zabbix_token}", "Content-Type": "application/json-rpc"},
+                       body={"jsonrpc": "2.0", "method": method, "params": params, "id": 1})
+        if isinstance(r, dict) and r.get("error"):
+            raise RuntimeError("error de la API de Zabbix")
+        return r["result"]
+
+    def _wrap(self, fn):
+        if not self.configured():
+            return envelope(SRC, "not_configured", detail="ZABBIX_URL / ZABBIX_TOKEN sin definir")
+        try:
+            return envelope(SRC, "ok", fn())
+        except Exception as e:  # noqa: BLE001
+            return envelope(SRC, "unavailable", detail=f"Zabbix no respondió ({type(e).__name__})")
+
+    def hosts(self):
+        def f():
+            rows = self._rpc("host.get", {"output": ["hostid", "name", "status", "available"], "limit": 200})
+            return {"hosts": [{"id": h["hostid"], "name": str(h["name"])[:80], "monitored": h.get("status") == "0", "available": {"0": "desconocido", "1": "disponible", "2": "no disponible"}.get(str(h.get("available")), "desconocido")} for h in rows]}
+        return self._wrap(f)
+
+    def problems(self):
+        def f():
+            rows = self._rpc("problem.get", {"output": ["eventid", "name", "severity", "clock", "acknowledged"], "recent": False, "sortfield": ["eventid"], "sortorder": "DESC", "limit": 50})
+            return {"problems": [{"event_id": p["eventid"], "name": str(p["name"])[:160], "severity": SEV.get(str(p["severity"]), "?"), "severity_n": int(p["severity"]), "since": _iso(p["clock"]), "acknowledged": p.get("acknowledged") == "1"} for p in rows]}
+        return self._wrap(f)
+
+    def history(self):
+        """Historial de incidentes con su estado de recuperación (r_eventid ≠ 0 ⇒ resuelto)."""
+        def f():
+            rows = self._rpc("event.get", {"output": ["eventid", "name", "severity", "clock", "r_eventid"], "source": 0, "object": 0, "value": 1, "sortfield": ["eventid"], "sortorder": "DESC", "limit": 50})
+            return {"events": [{"event_id": e["eventid"], "name": str(e["name"])[:160], "severity": SEV.get(str(e["severity"]), "?"), "at": _iso(e["clock"]), "recovered": str(e.get("r_eventid", "0")) != "0"} for e in rows]}
+        return self._wrap(f)
