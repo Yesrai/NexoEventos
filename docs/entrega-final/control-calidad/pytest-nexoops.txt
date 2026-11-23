@@ -1,0 +1,8 @@
+2026-11-23T04:49:29Z
+310279c
+  ~/Workspace/NexoEventos/backend/.venv/lib/python3.12/site-packages/uvicorn/protocols/websockets/websockets_impl.py:17: DeprecationWarning: websockets.server.WebSocketServerProtocol is deprecated
+    from websockets.server import WebSocketServerProtocol
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+68 passed, 3 warnings in 7.53s
+exit=0

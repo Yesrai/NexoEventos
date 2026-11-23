@@ -159,7 +159,7 @@ El intento 2 (01:34–01:53 UTC) **se abortó sin medición**: la SCP de Academy
 
 **T5:** sonda rápida de 5 s desde Azure con 372,9 s de línea base que **capturó** la muestra fallida (02:14:37,412Z) dentro de la ventana del incidente, sin fallos inexplicados.
 
-**T7 — NexoOps [LOCAL]:** portal que integra Grafana y Zabbix (solo lectura, TLS verificado), la instantánea del recolector T4 con fuente/UTC/frescura, barreras y ledger, auditoría encadenada y un asistente **basado en reglas** (hechos, hipótesis y recomendaciones con evidencia; no es IA generativa). Código y docs: `NexoEventos-codex-t7-t8/nexoops/`, `NexoEventos-codex-t7-t8/docs/nexoops/README.md`, rama `codex/t7-t8`, commit `040f116` (59 pruebas en ese commit; hoy la copia de trabajo, con cambios sin confirmar de otro frente, da **66 passed**). Integraciones contra Grafana/Zabbix reales: **NOT_TESTED** (probadas con clientes simulados).
+**T7 — NexoOps [LOCAL]:** portal que integra Grafana y Zabbix (solo lectura, TLS verificado), la instantánea del recolector T4 con fuente/UTC/frescura, barreras y ledger, auditoría encadenada y un asistente **basado en reglas** (hechos, hipótesis y recomendaciones con evidencia; no es IA generativa). Código y docs: `nexoops/`, `docs/nexoops/README.md`, rama de trabajo de T7–T8, commit `040f116` (59 pruebas en ese commit; hoy la copia de trabajo, con cambios sin confirmar de otro frente, da **66 passed**). Integraciones contra Grafana/Zabbix reales: **NOT_TESTED** (probadas con clientes simulados).
 
 ---
 

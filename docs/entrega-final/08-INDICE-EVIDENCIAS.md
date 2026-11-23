@@ -1,6 +1,6 @@
 # 08 · Índice de evidencias T1–T7
 
-Rutas relativas a la raíz del repositorio `NexoEventos/` salvo las que empiezan por `NexoEventos-codex-t7-t8/` (worktree hermano, rama `codex/t7-t8`). **Cada ruta fue comprobada con `ls` al generar este índice** (ver `README.md`, sección «Verificación»). Los expedientes completos (`work/evidencias/<T>-<UTC>-<id>/`, con manifiesto SHA-256) no están en Git; el informe versionado cita su ruta y el hash de `resultado.json`.
+Rutas relativas a la raíz del repositorio `NexoEventos/` salvo las que empiezan por `` (worktree hermano, rama de trabajo de T7–T8). **Cada ruta fue comprobada con `ls` al generar este índice** (ver `README.md`, sección «Verificación»). Los expedientes completos (`work/evidencias/<T>-<UTC>-<id>/`, con manifiesto SHA-256) no están en Git; el informe versionado cita su ruta y el hash de `resultado.json`.
 
 ## T1 — Lease y CAS en OCI (PASS 12/12, real)
 
@@ -72,10 +72,10 @@ Rutas relativas a la raíz del repositorio `NexoEventos/` salvo las que empiezan
 
 | ID | Ruta | Contenido |
 |---|---|---|
-| EV-T7-01 | `NexoEventos-codex-t7-t8/nexoops/` | código (rama `codex/t7-t8`, commit `040f116`) |
-| EV-T7-02 | `NexoEventos-codex-t7-t8/nexoops/tests/` | pruebas: 59 en `040f116`; 66 passed el 23-nov en la copia de trabajo (con cambios sin confirmar) |
-| EV-T7-03 | `NexoEventos-codex-t7-t8/docs/nexoops/README.md`, `NexoEventos-codex-t7-t8/docs/nexoops/INTEGRACIONES.md` | arquitectura, seguridad, inventario honesto |
-| EV-T7-04 | `NexoEventos-codex-t7-t8/docs/codex/MATRIZ-CUMPLIMIENTO.md`, `NexoEventos-codex-t7-t8/docs/codex/INFORME-TECNICO-T7-T8.md`, `NexoEventos-codex-t7-t8/docs/codex/ARQUITECTURA-T7.md`, `NexoEventos-codex-t7-t8/docs/codex/DECISIONES-T7-T8.md`, `NexoEventos-codex-t7-t8/docs/codex/T7-T8-REGISTRO.md` | documentación T7–T8 de Codex |
+| EV-T7-01 | `nexoops/` | código (rama de trabajo de T7–T8, commit `040f116`) |
+| EV-T7-02 | `nexoops/tests/` | pruebas: 59 en `040f116`; 66 passed el 23-nov en la copia de trabajo (con cambios sin confirmar) |
+| EV-T7-03 | `docs/nexoops/README.md`, `docs/nexoops/INTEGRACIONES.md` | arquitectura, seguridad, inventario honesto |
+| EV-T7-04 | `docs/t7-t8/MATRIZ-CUMPLIMIENTO.md`, `docs/t7-t8/INFORME-TECNICO-T7-T8.md`, `docs/t7-t8/ARQUITECTURA-T7.md`, `docs/t7-t8/DECISIONES-T7-T8.md`, `docs/t7-t8/T7-T8-REGISTRO.md` | documentación T7–T8 de Codex |
 | EV-T7-05 | `ops_center/criterios/T7.json`, `ops_center/criterios/T8.json` | criterios T7 y T8 |
 | EV-T7-06 | (sin archivo) | login real con OTP recibido por Gmail y acceso al Overview con `SUPER_ADMIN_TI`, **en local**, confirmado por la propietaria; no hay captura versionada |
 

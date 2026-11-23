@@ -20,10 +20,10 @@
 | T6 failover AWS→OCI | **BLOCKED** | requiere autorización y nube; D1–D8 y B-T6-1 abiertos | `docs/evidencias/T6-BLOQUEOS-OBLIGATORIOS.md` |
 | T6 — 12 criterios | NOT_TESTED | — | `ops_center/criterios/T6.json` |
 | Anclaje anti-rollback, G5, proveedores, TLS G9 | LOCAL | no prueban nada en la nube | `docs/evidencias/T6-20261123-estado-local.md` |
-| T7 NexoOps | LOCAL | login con OTP real por Gmail en local; no desplegado en Azure | `NexoEventos-codex-t7-t8/docs/nexoops/README.md` |
+| T7 NexoOps | LOCAL | login con OTP real por Gmail en local; despliegue A1 en Azure PARCIAL/INCOMPLETO (servicio deshabilitado; login OTP en Azure no demostrado; ver `docs/evidencias/A1-20261123-cierre.md`) | `docs/nexoops/README.md` |
 | T7 — 4 criterios (flujo en Azure, nada ejecutado, capturas con URL y fecha, verify-audit) | NOT_TESTED | sin ventana autorizada en Azure | `ops_center/criterios/T7.json` |
 | T8 — 5 criterios de cierre | NOT_TESTED | sesión final de verificación pendiente | `ops_center/criterios/T8.json` |
-| Integraciones NexoOps con Grafana/Zabbix/AWS reales | NOT_TESTED | solo clientes simulados | `NexoEventos-codex-t7-t8/docs/codex/MATRIZ-CUMPLIMIENTO.md` |
+| Integraciones NexoOps con Grafana/Zabbix/AWS reales | NOT_TESTED | solo clientes simulados | `docs/t7-t8/MATRIZ-CUMPLIMIENTO.md` |
 | Caída abrupta de instancia / escritura durante sustitución / fallo de zona | NOT_TESTED | fuera del alcance de T5 | T5 resultado |
 | Carga ≥ 100 usuarios | NOT_TESTED (proyección) | máximo medido: 50 usuarios | `docs/entregable2/informe-entregable2.md` §11 |
 

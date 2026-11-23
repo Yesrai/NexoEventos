@@ -6,7 +6,7 @@ Solo se piden las mínimas para convertir en **real** lo ya probado en local. Ca
 ## A1 · T7: desplegar NexoOps en la VM de Azure existente
 | Campo | Detalle |
 |---|---|
-| Acción | Encender la VM de Azure (hoy desasignada), instalar NexoOps detrás del Nginx HTTPS existente en `/nexoops/` (`deploy/nexoops/` de la rama `codex/t7-t8`), comprobar las integraciones reales de Grafana y Zabbix (tokens Viewer o de solo lectura creados por la usuaria en la VM), sacar capturas con URL y fecha, y volver a desasignar la VM |
+| Acción | Encender la VM de Azure (hoy desasignada), instalar NexoOps detrás del Nginx HTTPS existente en `/nexoops/` (`deploy/nexoops/` de la rama de trabajo de T7–T8), comprobar las integraciones reales de Grafana y Zabbix (tokens Viewer o de solo lectura creados por la usuaria en la VM), sacar capturas con URL y fecha, y volver a desasignar la VM |
 | Recursos afectados | La VM de T4 (arranque y parada), Nginx (un `location` nuevo) y systemd (`nexoops.service`). Sin puertos nuevos ni cambios de NSG, IAM o DNS |
 | Costo máximo | ≤ USD 0,50 (ventana ≤ 90 min; T4 costó ≈ USD 0,21 en 55 min) |
 | Riesgos | `nginx -t` falla (mitigación: no se recarga Nginx); la VM queda encendida (mitigación: apagado programado igual que en T4); exposición de tokens (mitigación: archivo 0640 en la VM, nunca por chat) |

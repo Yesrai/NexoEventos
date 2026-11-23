@@ -5,8 +5,8 @@
 Requisitos: el entorno `backend/.venv` del repositorio (Python 3.12 con pytest, fastapi, httpx, argon2-cffi). Rutas absolutas del equipo de la propietaria:
 
 ```bash
-REPO=/Users/yeseniaramirezmedina/Workspace/NexoEventos
-OPS=/Users/yeseniaramirezmedina/Workspace/NexoEventos-codex-t7-t8
+REPO=~/Workspace/NexoEventos
+OPS=~/Workspace/worktree de T7–T8
 PY=$REPO/backend/.venv/bin/python
 ```
 
@@ -52,7 +52,7 @@ Verificado el 23-nov-2026: `66 passed` en la copia de trabajo (el commit `040f11
 
 ## 6. NexoOps en el navegador (LOCAL, puerto 8088)
 
-La propietaria ya tiene NexoOps corriendo en local (`python -m nexoops serve --port 8088`, ver `NexoEventos-codex-t7-t8/docs/nexoops/README.md`). **La demo no pide ni muestra contraseñas, OTP ni tokens**: la propietaria inicia sesión ella misma antes de proyectar.
+La propietaria ya tiene NexoOps corriendo en local (`python -m nexoops serve --port 8088`, ver `docs/nexoops/README.md`). **La demo no pide ni muestra contraseñas, OTP ni tokens**: la propietaria inicia sesión ella misma antes de proyectar.
 
 > Comprobación al preparar este documento: `http://127.0.0.1:8088/` **no respondió** (el servidor no estaba levantado en ese momento). Verificar antes de exponer con:
 > ```bash

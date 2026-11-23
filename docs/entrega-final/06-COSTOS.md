@@ -15,7 +15,7 @@
 | T5 intento 3 (6 EC2) | AWS + Azure | ≈ 80 min | ≈ USD 0,29 (AWS ≈ 0,20 cota alta + Azure ≈ 0,10) | no consultado | `docs/evidencias/T5-20261123-resultado.md` |
 | **Total T1–T5** | | | **≈ USD 0,95** | **no disponible** | suma de estimaciones |
 
-> Nota de coherencia: `NexoEventos-codex-t7-t8/docs/codex/RESULTADOS-Y-COSTOS.md` cita «≈ USD 0,50», que solo suma T4 y el PASS de T5; aquí se incluyen también los intentos fallidos.
+> Nota de coherencia: `docs/t7-t8/RESULTADOS-Y-COSTOS.md` cita «≈ USD 0,50», que solo suma T4 y el PASS de T5; aquí se incluyen también los intentos fallidos.
 
 ![Costos por ventana](graficos/costos-estimados-por-ventana.png)
 
