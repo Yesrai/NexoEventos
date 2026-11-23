@@ -1,0 +1,21 @@
+{
+ "nombre": "alerta-vm-cpu",
+ "essentials": {
+  "alertRule": "/subscriptions/<id>/resourceGroups/rg-nexoeventos-observabilidad/providers/Microsoft.Insights/metricAlerts/alerta-vm-cpu",
+  "alertState": "New",
+  "description": "CPU de la VM de monitoreo > 80 % durante 15 min",
+  "lastModifiedDateTime": "2026-10-28T15:02:59.4133129Z",
+  "lastModifiedUserName": "System",
+  "monitorCondition": "Resolved",
+  "monitorConditionResolvedDateTime": "2026-10-28T15:02:59.8086308Z",
+  "monitorService": "Platform",
+  "severity": "Sev2",
+  "signalType": "Metric",
+  "sourceCreatedId": "<id>_rg-nexoeventos-observabilidad_Microsoft.Insights_metricAlerts_alerta-vm-cpu_1845353800",
+  "startDateTime": "2026-10-28T14:41:12.7830094Z",
+  "targetResource": "<vm>",
+  "targetResourceGroup": "rg-nexoeventos-observabilidad",
+  "targetResourceName": "vm-nexoeventos-obs",
+  "targetResourceType": "microsoft.compute/virtualmachines"
+ }
+}

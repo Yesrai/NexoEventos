@@ -66,6 +66,52 @@ jobs:
           alembic upgrade head
           pytest -q
 
+  respaldo-script:
+    name: Respaldo periódico cifrado (pruebas locales, sin nube)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Instalar dependencias fijadas (los scripts de respaldo importan httpx y las del backend)
+        run: python -m pip install -r backend/requirements-production.lock httpx==0.28.1
+      - name: Probar backup_cycle.py y backup_freshness.py (servidor HTTP falso en 127.0.0.1, claves desechables)
+        run: python scripts/multicloud/test_backup_cycle.py
+      - name: Probar el descifrado de respaldos con claves protegidas por contraseña (claves desechables, sin base de datos real)
+        run: python scripts/multicloud/test_cms_key_passin.py
+      - name: Probar el selector de respaldo restaurable del failover con el orquestador simulado (respaldos cifrados reales, PostgreSQL falso)
+        run: |
+          python -m unittest discover -s scripts/multicloud/tests -p test_backup_source.py
+          python -m unittest discover -s scripts/multicloud/tests -p test_oci_source.py
+          python -m unittest discover -s scripts/multicloud/tests -p test_lease_http.py
+          python -m unittest discover -s scripts/multicloud/tests -p test_failover_e2e.py
+
+  ops-center:
+    name: Centro de operaciones (pruebas locales, sin nube)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Instalar dependencias fijadas
+        run: python -m pip install -r backend/requirements-production.lock pytest==9.0.2 httpx==0.28.1
+      - name: Guardia de seguridad (la ejecución real NO puede quedar cableada sin una revisión explícita)
+        run: |
+          grep -qE '^REAL_EXECUTION_WIRED = False$' ops_center/barriers.py
+          grep -qE '^REAL_WIRING_ENABLED = False$' scripts/multicloud/failover/real_factory.py
+      - name: Probar el centro de operaciones (solicitud, aprobación, auditoría, barreras, evidencias; servidor solo en 127.0.0.1)
+        run: python -m pytest ops_center -q
+      - name: Probar la carrera de adquisición del lease, la limpieza del probe de PAR y el perfil Azure del testigo (servidores solo en 127.0.0.1)
+        run: python -m pytest scripts/multicloud/tests/test_lease_race.py scripts/multicloud/tests/test_par_probe_cleanup.py scripts/multicloud/tests/test_witness_azure_profile.py scripts/multicloud/tests/test_real_factory.py scripts/multicloud/tests/test_iac_security_guard.py scripts/multicloud/tests/test_tls_context.py scripts/multicloud/tests/test_witness_thread_safety.py -q -p no:cacheprovider
+
   frontend:
     name: Frontend (pruebas + build)
     runs-on: ubuntu-24.04
@@ -163,6 +209,25 @@ jobs:
           trivyignores: .trivyignore
           format: table
           output: trivy-repo.txt
+      # Trivy solo reconoce `requirements.txt`; el archivo que llega a producción es `requirements-production.lock` (con las transitivas).
+      # Se copia con ese nombre a un directorio aparte para analizar exactamente lo que se instala en producción.
+      - name: Preparar el lockfile de producción para Trivy
+        run: |
+          mkdir -p "$RUNNER_TEMP/lock-prod"
+          cp backend/requirements-production.lock "$RUNNER_TEMP/lock-prod/requirements.txt"
+      - name: Lockfile de producción (bloquea HIGH/CRITICAL con corrección)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.76.0
+          scan-type: fs
+          scan-ref: ${{ runner.temp }}/lock-prod
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          trivyignores: .trivyignore
+          format: table
+          output: trivy-lock.txt
       - name: "Configuración (Dockerfile, Compose, Terraform), informe sin bloquear"
         if: always()
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
@@ -179,14 +244,16 @@ jobs:
         run: |
           {
             echo '### Trivy · dependencias y secretos'; echo '```'; cat trivy-repo.txt 2>/dev/null || echo 'Sin salida.'; echo '```'
+            echo '### Trivy · lockfile de producción'; echo '```'; cat trivy-lock.txt 2>/dev/null || echo 'Sin salida.'; echo '```'
             echo '### Trivy · configuración (informativo)'; echo '```'; cat trivy-config.txt 2>/dev/null || echo 'Sin salida.'; echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-          cat trivy-repo.txt trivy-config.txt 2>/dev/null || true
+          cat trivy-repo.txt trivy-lock.txt trivy-config.txt 2>/dev/null || true
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: trivy-repositorio
           path: |
             trivy-repo.txt
+            trivy-lock.txt
             trivy-config.txt
           if-no-files-found: ignore

@@ -1,0 +1,187 @@
+{
+  "generado_utc": "2026-10-28T21:22:10+00:00",
+  "sesion": "activa (identidad enmascarada)",
+  "region": "us-east-1",
+  "rds": [
+    {
+      "estado": "stopped",
+      "clase": "db.t3.micro",
+      "motor": "postgres 18.3",
+      "multi_az": true,
+      "almacenamiento_gib": 20,
+      "tipo_almacenamiento": "gp2",
+      "cifrada": true,
+      "publica": false,
+      "retencion_backups_dias": 7,
+      "proteccion_borrado": false,
+      "autoescalado_almacenamiento": true
+    }
+  ],
+  "rds_eventos_relevantes": [
+    {
+      "fecha_utc": "2026-10-22T05:24:38+00:00",
+      "mensaje": "DB instance started"
+    },
+    {
+      "fecha_utc": "2026-10-22T17:42:16+00:00",
+      "mensaje": "DB instance stopped"
+    },
+    {
+      "fecha_utc": "2026-10-23T00:12:58+00:00",
+      "mensaje": "DB instance restarted"
+    },
+    {
+      "fecha_utc": "2026-10-23T00:15:05+00:00",
+      "mensaje": "DB instance started"
+    },
+    {
+      "fecha_utc": "2026-10-23T00:17:12+00:00",
+      "mensaje": "Applying modification to convert to a Multi-AZ DB Instance"
+    },
+    {
+      "fecha_utc": "2026-10-23T00:25:11+00:00",
+      "mensaje": "Finished applying modification to convert to a Multi-AZ DB Instance"
+    },
+    {
+      "fecha_utc": "2026-10-23T01:08:57+00:00",
+      "mensaje": "Multi-AZ instance failover started. "
+    },
+    {
+      "fecha_utc": "2026-10-23T01:09:13+00:00",
+      "mensaje": "DB instance restarted"
+    },
+    {
+      "fecha_utc": "2026-10-23T01:09:37+00:00",
+      "mensaje": "Multi-AZ instance failover completed"
+    },
+    {
+      "fecha_utc": "2026-10-23T01:09:37+00:00",
+      "mensaje": "The user requested a failover of the DB instance."
+    },
+    {
+      "fecha_utc": "2026-10-23T02:03:26+00:00",
+      "mensaje": "DB instance stopped"
+    },
+    {
+      "fecha_utc": "2026-10-23T15:04:00+00:00",
+      "mensaje": "DB instance restarted"
+    },
+    {
+      "fecha_utc": "2026-10-23T15:05:03+00:00",
+      "mensaje": "DB instance started"
+    },
+    {
+      "fecha_utc": "2026-10-23T15:17:59+00:00",
+      "mensaje": "DB instance stopped"
+    }
+  ],
+  "rds_riesgo_reinicio": {
+    "ultima_parada_utc": "2026-10-23T15:17:59+00:00",
+    "ultimo_inicio_utc": "2026-10-23T15:05:03+00:00",
+    "reinicio_automatico_estimado_utc": "2026-10-30T15:17:59+00:00",
+    "horas_restantes": 41.9,
+    "nota": "AWS reinicia una RDS tras 7 días consecutivos detenida; la hora exacta puede variar. Los eventos solo cubren 14 días."
+  },
+  "rds_snapshots": {
+    "manuales": 4,
+    "automaticos": 9,
+    "gib_total": 260
+  },
+  "ec2": [
+    {
+      "id": "i-…7380",
+      "estado": "stopped",
+      "tipo": "t3.small",
+      "imdsv2_obligatorio": true
+    }
+  ],
+  "ebs": {
+    "volumenes": 1,
+    "gib": 20,
+    "todos_cifrados": true
+  },
+  "ebs_snapshots": {
+    "cantidad": 1,
+    "gib": 20
+  },
+  "amis_propias": 1,
+  "ip_elasticas": 0,
+  "nat_gateways_activos": 0,
+  "vpc_endpoints": 0,
+  "balanceadores": 0,
+  "auto_scaling_groups": 0,
+  "s3": [
+    {
+      "bucket": "<bucket-1>",
+      "bloqueo_publico_total": true,
+      "cifrado": [
+        "AES256"
+      ],
+      "versionado": "Enabled",
+      "reglas_de_ciclo_de_vida": 1
+    }
+  ],
+  "secretos": {
+    "cantidad": 2,
+    "nota": "solo metadatos; los valores no se leen"
+  },
+  "alarmas": [
+    {
+      "nombre": "nexoeventos-academy-ec2-cpu-high",
+      "estado": "INSUFFICIENT_DATA",
+      "acciones": 0
+    }
+  ],
+  "paneles_cloudwatch": 0,
+  "log_groups": [
+    {
+      "nombre": "/aws/lambda/RedshiftEventSubscription",
+      "retencion_dias": null,
+      "bytes": 3569
+    },
+    {
+      "nombre": "/aws/lambda/RedshiftOverwatch",
+      "retencion_dias": null,
+      "bytes": 1578
+    },
+    {
+      "nombre": "/aws/lambda/RoleCreationFunction",
+      "retencion_dias": null,
+      "bytes": 1040
+    },
+    {
+      "nombre": "/nexoeventos/academy/api",
+      "retencion_dias": 7,
+      "bytes": 10020
+    },
+    {
+      "nombre": "/nexoeventos/academy/nginx",
+      "retencion_dias": 7,
+      "bytes": 6419
+    }
+  ],
+  "cloudtrail": {
+    "consulta": "ok",
+    "detalle": null,
+    "trails": []
+  },
+  "iam_labrole": {
+    "consulta": "ok",
+    "detalle": null,
+    "politicas_adjuntas": [
+      "VocLabPolicy1",
+      "VocLabPolicy3",
+      "VocLabPolicy2",
+      "AmazonSSMManagedInstanceCore",
+      "AmazonEKSClusterPolicy",
+      "AmazonEC2ContainerRegistryReadOnly",
+      "AmazonEKSWorkerNodePolicy"
+    ]
+  },
+  "iam_instance_profile": {
+    "roles": [
+      "LabRole"
+    ]
+  },
+  "acm": []
+}

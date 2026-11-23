@@ -1,0 +1,45 @@
+# Gestionado por Ansible. Solo escucha en localhost; Nginx publica /grafana/ por HTTPS (acceso restringido a la IP del operador).
+[server]
+http_addr = 127.0.0.1
+http_port = 3000
+domain = {{ monitoring_fqdn }}
+root_url = https://{{ monitoring_fqdn }}/grafana/
+serve_from_sub_path = true
+
+[security]
+admin_user = admin
+admin_password = $__file{/etc/grafana/admin_password}
+cookie_secure = true
+cookie_samesite = lax
+disable_gravatar = true
+allow_embedding = false
+strict_transport_security = true
+
+[users]
+allow_sign_up = false
+allow_org_create = false
+
+[auth.anonymous]
+enabled = false
+
+[analytics]
+reporting_enabled = false
+check_for_updates = false
+check_for_plugin_updates = false
+
+[plugins]
+preinstall_disabled = true
+
+[azure]
+managed_identity_enabled = true
+cloud = AzureCloud
+
+[unified_alerting]
+enabled = true
+
+[dashboards]
+default_home_dashboard_path = /var/lib/grafana/dashboards/00-multicloud-resumen.json
+
+[log]
+mode = console file
+level = warn

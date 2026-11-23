@@ -1,0 +1,9 @@
+• Sesión AWS válida (rol: voclabs, perfil: nexoeventos-lab, región: us-east-1)
+── AWS V2 ───────────────────────────────────────
+ASG:        nexoeventos-academy-v2-asg
+Capacidad:  mínima=0  deseada=0  máxima=3
+Instancias: 0 en el grupo, 0 InService/Healthy en 0 zona(s)
+ALB:        nexoeventos-academy-v2-alb (active)  destinos healthy: 0
+RDS:        available  (nexoeventos-academy-postgres)
+EC2 de V1:  running  (solo informativo; estos scripts no la tocan)
+RESULTADO: V2 APAGADA (capacidad 0). El ALB y la RDS siguen facturando.

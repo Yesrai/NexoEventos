@@ -1,0 +1,31 @@
+Consulta de solo lectura de OCI — 2026-11-10 21:42 — script SHA-256 458dbceae6f2ba4f9e28678f226232b81b10eeed20af68f1eb18fc1fb07c0f05 (versión autorizada)
+Salida ya filtrada por el propio script (OCID, IP, correos, claves y tokens ocultos).
+
+== 1. Región de origen y suscripciones de región
+Warning: To increase security of your API key located at <ruta-local> append an extra line with 'OCI_API_KEY' at the end. For more information, refer to https:<largo-oculto> To suppress the warning, set the env variable SUPPRESS_LABEL_WARNING=True
++--------+--------+---------------+
+| estado | origen | region        |
++--------+--------+---------------+
+| READY  | True   | sa-saopaulo-1 |
++--------+--------+---------------+
+== 2. Compartment nexoeventos (su OCID no se imprime)
+== 3. Red existente: VCN, subredes, Internet/NAT/Service Gateway
+<largo-oculto>:25: SyntaxWarning: "\." is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\."? A raw string is also an option.
+  <largo-oculto> = "(instance-console\.[a-z0-9-]+\.(oraclecloud|oracleiaas)\.com)"  # noqa: W605
+Warning: To increase security of your API key located at <ruta-local> append an extra line with 'OCI_API_KEY' at the end. For more information, refer to https:<largo-oculto> To suppress the warning, set the env variable SUPPRESS_LABEL_WARNING=True
+ServiceError:
+{
+    "client_version": "Oracle-PythonSDK/2.188.0, Oracle-PythonCLI/3.95.0",
+    "code": "NotAuthorizedOrNotFound",
+    "logging_tips": "Please run the OCI CLI command using --debug flag to find more debug information.",
+    "message": "Authorization failed or requested resource not found.",
+    "opc-request-id": "<largo-oculto>",
+    "operation_name": "list_vcns",
+    "request_endpoint": "GET https:<largo-oculto>",
+    "status": 404,
+    "target_service": "virtual_network",
+    "timestamp": "2026-11-11T02:42:48.392508+00:00",
+    "troubleshooting_tips": "See [https:<largo-oculto>] for more information about resolving this error. If you are unable to resolve this issue, run this CLI command with --debug option and contact Oracle support and provide them the full error message."
+}
+DETENIDO: 'oci network vcn list' falló (código 1). Causa probable: credenciales, permisos o red. El script NO intenta repararlo ni instalar nada.
+código de salida: 3

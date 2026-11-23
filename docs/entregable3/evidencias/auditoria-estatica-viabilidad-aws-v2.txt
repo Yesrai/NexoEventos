@@ -1,0 +1,49 @@
+Auditoría estática de scripts/multicloud/viabilidad-readonly-aws.sh (v2) — 2026-11-10 22:01
+SHA-256: 6b9524178e96adcb00de19bc1c5152f8af821c50d306fd7ea4ddcd227700e9b3
+(No se ejecutó el script ni ningún comando contra AWS. Pruebas de lógica con una CLI FALSA en local; consultas --query comprobadas con jmespath en local.)
+
+Archivo: scripts/multicloud/viabilidad-readonly-aws.sh  ·  73 líneas de código
+
+[1] Llamadas a la CLI de AWS (servicio acción → permiso IAM necesario):
+   OK  aws sts get-caller-identity              → (ninguno: no requiere permiso)
+   OK  aws ec2 describe-instances               → ec2:DescribeInstances
+   OK  aws autoscaling describe-auto-scaling-groups     → autoscaling:DescribeAutoScalingGroups
+   OK  aws elbv2 describe-load-balancers          → elasticloadbalancing:DescribeLoadBalancers
+   OK  aws ec2 describe-nat-gateways            → ec2:DescribeNatGateways
+   OK  aws ec2 describe-addresses               → ec2:DescribeAddresses
+   OK  aws ec2 describe-volumes                 → ec2:DescribeVolumes
+   OK  aws rds describe-db-instances            → rds:DescribeDBInstances
+   OK  aws rds describe-db-instances            → rds:DescribeDBInstances
+   OK  aws rds describe-events                  → rds:DescribeEvents
+   OK  aws rds describe-db-parameter-groups     → rds:DescribeDBParameterGroups
+   OK  aws rds describe-db-engine-versions      → rds:DescribeDBEngineVersions
+   OK  aws rds describe-db-parameters           → rds:DescribeDBParameters
+   OK  aws ec2 describe-vpcs                    → ec2:DescribeVpcs
+   OK  aws ec2 describe-subnets                 → ec2:DescribeSubnets
+   OK  aws ec2 describe-route-tables            → ec2:DescribeRouteTables
+   OK  aws ec2 describe-security-groups         → ec2:DescribeSecurityGroups
+   OK  aws ec2 describe-vpn-gateways            → ec2:DescribeVpnGateways
+   OK  aws iam simulate-principal-policy        → iam:SimulatePrincipalPolicy (solo sección opcional `permisos`)
+   (llamadas directas a `aws` fuera de run/raw: 0 )
+
+[2] Palabras de modificación en el código (no comentarios; sin los nombres de acción IAM simulados):
+    ninguna
+
+[3] Instaladores, escritura de archivos, otras herramientas y lectura de credenciales locales:
+   herramientas no permitidas: ninguna
+   redirecciones de salida a archivos: ninguna
+   lecturas de ~/.aws o de claves en variables: ninguna
+   programas usados: aws, command, echo, env, exit, printf, read, sed, tail
+
+[4] Prueba local del filtro de salida (sin red), con datos sensibles de ejemplo:
+   arn:aws:sts::123456789012:assumed-role/voclabs/user4567890=N -> <arn>
+   An error occurred (ExpiredToken): The security token include -> An error occurred (ExpiredToken): The security token included in the r
+   AccessKeyId ASIAIOSFODNN7EXAMPLE y AKIAIOSFODNN7EXAMPLE      -> AccessKeyId <clave-de-acceso> y <clave-de-acceso>
+   aws_secret_access_key = wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPL -> aws_secret_access_key=<oculto>
+   SessionToken: IQoJb3JpZ2luX2VjEJr//////////wEaCXVzLWVhc3QtMS -> SessionToken=<oculto>
+   i-0123456789abcdef0 vpc-0a1b2c3d4e5f60718 subnet-0123456789a -> <i> <vpc> <subnet> <igw>
+   IP 54.210.33.99 correo persona@correo.com cuenta 21098765432 -> IP <ip> correo <correo> cuenta <id>
+   -----BEGIN RSA PRIVATE KEY-----                              -> (línea eliminada)
+   +---------------+                                            -> +---------------+
+
+RESULTADO: APTO: solo consultas, sin instalación ni escritura, salida filtrada

@@ -3,7 +3,7 @@ resource "aws_subnet" "public_b" {
   vpc_id                  = data.aws_vpc.v1.id
   cidr_block              = var.public_b_cidr
   availability_zone       = data.aws_availability_zones.available.names[1]
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = false # la IP pública se pide por instancia (AWS-0164)
   tags                    = { Name = "${local.v2_prefix}-public-b", Tier = "public" }
 
   lifecycle {

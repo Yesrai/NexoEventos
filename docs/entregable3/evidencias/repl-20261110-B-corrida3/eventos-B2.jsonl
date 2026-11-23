@@ -1,0 +1,25 @@
+{"t": 1794335077.674, "ev": "monitor_inicio", "auto": true, "pid": 12673}
+{"t": 1794335077.683, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 4.84}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794335079.396, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 1, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794335079.872, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 2, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794335080.335, "ev": "sonda_escritura_fallida", "nodo": "pg-aws", "consecutivas": 3, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794335080.337, "ev": "promote_inicio", "destino": "pg-oci", "origen": "pg-aws", "planificada": false, "epoca": 1}
+{"t": 1794335080.34, "ev": "lease_retirado", "epoca": 2}
+{"t": 1794335080.694, "ev": "fence", "nodo": "pg-aws", "detenido": true, "escritura_real_aceptada": false, "error_esperado": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known", "resultado": "confirmado"}
+{"t": 1794335080.942, "ev": "secuencias_ajustadas", "cantidad": 6}
+{"t": 1794335081.128, "ev": "escritura_destino", "aceptada": true, "error": ""}
+{"t": 1794335081.134, "ev": "lease_otorgado", "escritor": "pg-oci", "epoca": 3, "t_desde_inicio_s": 0.8}
+{"t": 1794335081.902, "ev": "haproxy_db_enruta", "nodo": "pg-oci", "t_desde_inicio_s": 1.57}
+{"t": 1794335082.028, "ev": "verificacion_final", "antiguo_escribe": false, "error": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known"}
+{"t": 1794335083.042, "ev": "latido", "witness": {"writer": "pg-oci", "epoch": 3, "lease_remaining_s": 5.65}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794335085.33, "ev": "antiguo_escritor_reaparecio_y_fue_aislado", "nodo": "pg-aws", "escritura_real_aceptada_despues": true, "t_aislamiento_s": 0.17}
+{"t": 1794335087.107, "ev": "antiguo_escritor_reaparecio_y_fue_aislado", "nodo": "pg-aws", "escritura_real_aceptada_despues": true, "t_aislamiento_s": 0.4}
+{"t": 1794335088.227, "ev": "latido", "witness": {"writer": "pg-oci", "epoch": 3, "lease_remaining_s": 5.64}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794335088.512, "ev": "antiguo_escritor_reaparecio_y_fue_aislado", "nodo": "pg-aws", "escritura_real_aceptada_despues": true, "t_aislamiento_s": 0.16}
+{"t": 1794335089.974, "ev": "antiguo_escritor_reaparecio_y_fue_aislado", "nodo": "pg-aws", "escritura_real_aceptada_despues": true, "t_aislamiento_s": 0.15}
+{"t": 1794335091.53, "ev": "antiguo_escritor_reaparecio_y_fue_aislado", "nodo": "pg-aws", "escritura_real_aceptada_despues": true, "t_aislamiento_s": 0.16}
+{"t": 1794335093.01, "ev": "antiguo_escritor_reaparecio_y_fue_aislado", "nodo": "pg-aws", "escritura_real_aceptada_despues": true, "t_aislamiento_s": 0.16}
+{"t": 1794335093.249, "ev": "latido", "witness": {"writer": "pg-oci", "epoch": 3, "lease_remaining_s": 5.86}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794335094.515, "ev": "antiguo_escritor_reaparecio_y_fue_aislado", "nodo": "pg-aws", "escritura_real_aceptada_despues": true, "t_aislamiento_s": 0.16}
+{"t": 1794335096.057, "ev": "antiguo_escritor_reaparecio_y_fue_aislado", "nodo": "pg-aws", "escritura_real_aceptada_despues": true, "t_aislamiento_s": 0.17}
+{"t": 1794335097.202, "ev": "monitor_fin", "motivo": "SIGTERM"}

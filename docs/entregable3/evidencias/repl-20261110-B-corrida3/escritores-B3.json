@@ -1,0 +1,212 @@
+[
+ {
+  "t": 1794335130.211,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: timeout ex",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794335130.686,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794335131.108,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794335131.558,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794335131.98,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794335132.4,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794335132.836,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794335133.256,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794335133.658,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794335134.072,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794335134.499,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794335134.926,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794335135.383,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794335135.809,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794335136.269,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794335136.7,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794335137.123,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794335137.562,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: could not translate host name \"pg-oci\" to address: Temporary failure in name "
+ },
+ {
+  "t": 1794335138.019,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335138.473,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335138.918,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335139.432,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335139.915,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335140.421,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335140.908,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335141.353,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335141.808,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335142.279,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335142.749,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ },
+ {
+  "t": 1794335143.216,
+  "pg-aws_acepta_escritura": true,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "",
+  "error_oci": "ERROR:  cannot execute INSERT in a read-only transaction"
+ }
+]

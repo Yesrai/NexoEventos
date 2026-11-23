@@ -1,0 +1,7 @@
+{
+  "resumen": {
+    "tablas_con_huerfanas": {},
+    "duplicados_logicos_por_idempotency_key": []
+  },
+  "filas": {}
+}

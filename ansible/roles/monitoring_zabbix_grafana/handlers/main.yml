@@ -1,0 +1,26 @@
+---
+- name: Reiniciar PostgreSQL
+  ansible.builtin.systemd: { name: postgresql, state: restarted }
+  when: monitoring_manage_services | bool
+- name: Reiniciar Zabbix server
+  ansible.builtin.systemd: { name: zabbix-server, state: restarted }
+  when: monitoring_manage_services | bool
+- name: Reiniciar Zabbix agent2
+  ansible.builtin.systemd: { name: zabbix-agent2, state: restarted }
+  when: monitoring_manage_services | bool
+- name: Recargar Nginx
+  ansible.builtin.systemd: { name: nginx, state: reloaded }
+  when: monitoring_manage_services | bool
+- name: Reiniciar PHP-FPM
+  ansible.builtin.systemd: { name: "php8.3-fpm", state: restarted }
+  when: monitoring_manage_services | bool
+- name: Reiniciar Grafana
+  ansible.builtin.systemd: { name: grafana-server, state: restarted }
+  when: monitoring_manage_services | bool
+- name: Reiniciar SSH
+  ansible.builtin.systemd: { name: ssh, state: restarted }
+  when: monitoring_manage_services | bool
+- name: Aplicar sysctl
+  ansible.builtin.command: sysctl --system
+  changed_when: true
+  when: monitoring_manage_services | bool

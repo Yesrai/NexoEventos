@@ -1,0 +1,3 @@
+{"t": 1794336342.429, "ev": "monitor_inicio", "auto": true, "pid": 29798}
+{"t": 1794336342.438, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 4.9}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794336343.822, "ev": "monitor_fin", "motivo": "SIGTERM"}

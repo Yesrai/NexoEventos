@@ -1,0 +1,8 @@
+verify_clean.py --live — solo lectura — 2026-11-11T19:15:48Z UTC
+Credenciales: AWS Academy (sesión del laboratorio; las acciones de EC2/RDS devuelven UnauthorizedOperation/AccessDenied: laboratorio no activo) y perfil por defecto de OCI.
+No se inició AWS Academy, no se encendió nada, no se modificó nada.
+
+Resultado: NO VERIFICABLE (fail-closed: no se afirma «limpio»)
+  · OCI: consultado; 0 recurso(s) residual(es)/pendiente(s)
+  ! AWS no verificable: aws ec2 describe-instances devolvió código 254: aws: [ERROR]: An error occurred (UnauthorizedOperation) when calling the DescribeInstances operation: You are not authorized to perform this
+Gasto residual estimado (de lo consultado; AWS sin verificar): 0.0000 USD/h (0.000 USD/día)

@@ -1,0 +1,12 @@
+{"t": 1794339364.487, "ev": "monitor_inicio", "auto": true, "pid": 51356}
+{"t": 1794339364.498, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 4.89}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794339369.519, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.67}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794339374.552, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.68}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794339379.601, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.62}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794339384.629, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.77}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794339389.696, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.69}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794339394.713, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.63}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794339399.739, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.76}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794339404.867, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.63}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794339409.903, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.63}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794339410.61, "ev": "monitor_fin", "motivo": "SIGTERM"}

@@ -1,0 +1,55 @@
+{
+ "stage": "T5",
+ "title": "AWS HA: caída de una EC2 con ALB + Auto Scaling, sustitución real y observación desde Azure",
+ "criteria": [
+  {
+   "id": "disponibilidad_livez_pct",
+   "kind": "min",
+   "desc": "disponibilidad del sondeo de salud (/livez o /healthz) a través del ALB durante TODO el experimento, desde antes del fallo hasta la recuperación (%)",
+   "threshold": 99
+  },
+  {
+   "id": "deteccion_s",
+   "kind": "max",
+   "desc": "segundos entre la inyección del fallo (API detenida en UNA EC2) y el ALB marcándola no sana",
+   "threshold": 30
+  },
+  {
+   "id": "sustitucion_sana_s",
+   "kind": "max",
+   "desc": "segundos entre la inyección del fallo y 2 destinos sanos de nuevo, con la EC2 defectuosa SUSTITUIDA por el ASG (no restaurada a mano)",
+   "threshold": 300
+  },
+  {
+   "id": "ec2_reemplazada_por_asg",
+   "kind": "bool",
+   "desc": "la instancia defectuosa ya no está en el ASG ni en el ALB y el ASG registra una actividad de lanzamiento de otra instancia"
+  },
+  {
+   "id": "dos_zonas_y_reparto",
+   "kind": "bool",
+   "desc": "antes del fallo: 2 EC2 en zonas de disponibilidad distintas y ambas reciben solicitudes (reparto del ALB)"
+  },
+  {
+   "id": "perdida_de_datos",
+   "kind": "bool",
+   "desc": "sin pérdida de datos: reservas y cupos iguales antes y después, y el flujo funcional completo correcto tras la recuperación (true = sin pérdida)"
+  },
+  {
+   "id": "azure_observa_continuidad",
+   "kind": "bool",
+   "desc": "sondas reales desde Azure durante la ventana: recolector (hueco ≤ 120 s) Y sonda rápida de 5–10 s (hueco ≤ 15 s, ≥ 5 min de línea base antes del incidente) que CAPTURA el incidente del generador (≥ 1 muestra fallida dentro de su ventana) sin fallos inexplicados fuera de él; marcas UTC con milisegundos"
+  },
+  {
+   "id": "limpieza_verificada",
+   "kind": "bool",
+   "desc": "ASG a 0, sin EC2 de V2, ALB/destinos y RDS detenidos/eliminados según el plan, y el inventario final igual al esperado"
+  },
+  {
+   "id": "costo_dentro_del_techo",
+   "kind": "max",
+   "desc": "coste estimado de la ventana de T5 (USD) con el techo duro de la sesión",
+   "threshold": 1.5
+  }
+ ]
+}

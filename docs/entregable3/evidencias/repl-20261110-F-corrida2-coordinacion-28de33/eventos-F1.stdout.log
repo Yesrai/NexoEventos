@@ -1,0 +1,12 @@
+{"t": 1794357388.052, "ev": "monitor_inicio", "auto": true, "pid": 63832}
+{"t": 1794357388.135, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 4.34, "prot": {"mode": "protected", "seq": 2, "primario": "pg-aws", "epoch": 1, "verified_age_s": 2.53}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794357393.297, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 5.64, "prot": {"mode": "protected", "seq": 2, "primario": "pg-aws", "epoch": 1, "verified_age_s": 1.07}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794357393.734, "ev": "proteccion", "modo": "degraded", "antes": "protected", "ok": true, "seq": 3, "primario": "pg-aws", "motivo": "synchronous_standby_names cambió fuera del controlador: ''"}
+{"t": 1794357397.69, "ev": "proteccion", "modo": "reprotecting", "antes": "degraded", "ok": true, "seq": 4, "primario": "pg-aws", "motivo": "reprotección desde degraded"}
+{"t": 1794357398.364, "ev": "sync_habilitada", "primario": "pg-aws", "estado_seguidor": "quorum"}
+{"t": 1794357398.983, "ev": "proteccion", "modo": "degraded", "antes": "reprotecting", "ok": true, "seq": 5, "primario": "pg-aws", "motivo": "no se pudo completar la reprotección"}
+{"t": 1794357398.985, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 2.1, "prot": {"mode": "degraded", "seq": 5, "primario": "pg-aws", "epoch": 1, "verified_age_s": null}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794357399.792, "ev": "proteccion", "modo": "reprotecting", "antes": "degraded", "ok": true, "seq": 6, "primario": "pg-aws", "motivo": "reprotección desde degraded"}
+{"t": 1794357400.191, "ev": "sync_habilitada", "primario": "pg-aws", "estado_seguidor": "quorum"}
+{"t": 1794357400.512, "ev": "proteccion", "modo": "protected", "antes": "reprotecting", "ok": true, "seq": 7, "primario": "pg-aws", "seguidor": "pg-oci", "motivo": "síncrono activo, seguidor confirmando y al día (barrera de LSN)"}
+{"t": 1794357400.787, "ev": "monitor_fin", "motivo": "SIGTERM"}

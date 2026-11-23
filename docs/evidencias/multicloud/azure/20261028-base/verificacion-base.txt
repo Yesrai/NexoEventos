@@ -1,0 +1,19 @@
+Verificación posterior al despliegue (base) — 2026-10-28T05:46:04Z
+OK     región del grupo de recursos = centralus
+OK     VNet: espacio de direcciones = 10.40.0.0/16
+OK     subred: prefijo y NSG asociado = 10.40.1.0/24 true
+OK     NSG: ninguna regla de entrada «Allow» con origen abierto
+OK     NSG: administración solo 22 y 443 desde una única IP /32 (177.91.x.x/32)
+OK     NSG: denegación explícita de toda la entrada
+OK     NSG: salida a Internet denegada salvo 80/443/53/123 y plataforma de Azure
+OK     Log Analytics: retención (días) y tope diario (GB) = 30 0.2
+OK     grupo de acción: receptores de correo = 1
+OK     grupo de acción: correo (enmascarado)
+OK     presupuesto: 60.0 USD Monthly
+OK     presupuesto: avisos [(50, 'Actual'), (80, 'Actual'), (100, 'Actual'), (100, 'Forecasted')]
+OK     presupuesto: solo avisa (sin grupos de acción, roles ni webhooks de automatización)
+OK     registro de actividad → Log Analytics = 1
+OK     ausencia de virtualMachines = 0
+OK     ausencia de disks = 0
+OK     ausencia de publicIPAddresses = 0
+OK     ausencia de networkInterfaces = 0

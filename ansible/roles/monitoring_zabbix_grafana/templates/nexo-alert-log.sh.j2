@@ -1,0 +1,6 @@
+#!/bin/sh
+# Tipo de medio «Registro local de alertas» (Zabbix): añade una línea JSON por notificación a {{ zabbix_alert_log }}.
+# Parámetros: $1 destinatario, $2 asunto, $3 mensaje. No usa red ni credenciales.
+ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+esc() { printf '%s' "$1" | tr '\n\r' '  ' | sed 's/\\/\\\\/g; s/"/\\"/g'; }
+printf '{"utc":"%s","destino":"%s","asunto":"%s","mensaje":"%s"}\n' "$ts" "$(esc "$1")" "$(esc "$2")" "$(esc "$3")" >> {{ zabbix_alert_log }}

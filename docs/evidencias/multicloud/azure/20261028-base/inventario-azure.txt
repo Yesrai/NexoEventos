@@ -1,0 +1,7 @@
+Microsoft.Insights/actiongroups	ag-nexoeventos-obs
+Microsoft.Network/networkSecurityGroups	nsg-nexoeventos-obs
+Microsoft.Network/virtualNetworks	vnet-nexoeventos-obs
+Microsoft.OperationalInsights/workspaces	log-nexoeventos-obs
+-- alcance de suscripción --
+Microsoft.Consumption/budgets	presupuesto-nexoeventos
+Microsoft.Insights/diagnosticSettings	actividad-suscripcion

@@ -32,6 +32,7 @@ def load(name: str, rel: str):
 
 
 M = load("v2m", "scripts/cloud/v2-measure.py")
+V = load("chaos_validate", "scripts/cloud/validate-chaos-result.py")
 T0 = time.time()
 now = lambda: round(time.time() - T0, 1)  # noqa: E731
 
@@ -40,19 +41,53 @@ def iso(t: float) -> str:
     return datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def iso_ms(t: float) -> str:
+    d = datetime.fromtimestamp(t, timezone.utc)
+    return d.strftime("%Y-%m-%dT%H:%M:%S.") + f"{d.microsecond // 1000:03d}Z"
+
+
+TIME_KEYS = ("stop_issued_at", "stop_confirmed_at", "alb_marked_unhealthy_at", "restore_issued_at", "restore_confirmed_at", "both_healthy_again_at")
+
+
+def events_utc(events: dict, t0: float) -> dict:
+    """Marcas relativas (s desde T0) → UTC con milisegundos, para cruzarlas con la sonda de Azure y los registros de AWS."""
+    return {k: iso_ms(t0 + events[k]) for k in TIME_KEYS if isinstance(events.get(k), (int, float))}
+
+
+# Tipos de fallo (T5). «stop» = detención CONTROLADA del servicio (SIGTERM; Nginx sigue vivo y contesta 502 al instante): el de T5 1.er intento y el criterio original.
+# «instance» = pérdida ABRUPTA de la instancia (ec2 stop-instances): sin respuesta de TCP; es MÁS dura que «stop» (las solicitudes al destino muerto esperan al tiempo de conexión).
+FAULTS = ("stop", "instance")
+
+
+def inject_fault(fault: str, victim: str) -> str:
+    if fault == "stop":
+        return M.ssm_output(victim, "systemctl stop nexoeventos-api")
+    if fault == "instance":
+        M.aws("ec2", "stop-instances", "--instance-ids", victim)
+        return "stop-instances"
+    raise ValueError(f"fallo desconocido: {fault}")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
     ap.add_argument("--hold-after-detect", type=int, default=20)
     ap.add_argument("--rate", type=float, default=5.0)
     ap.add_argument("--clients", type=int, default=4, help="clientes independientes (conexiones distintas) que reparten el ritmo total")
+    ap.add_argument("--allow-replacement", action="store_true",
+                    help="experimento de AUTOHEALING: no aborta si el ASG marca la instancia como no sana (se espera su reemplazo) y no intenta restaurar una instancia ya terminada")
+    ap.add_argument("--instances", type=int, default=2, help="instancias esperadas del ASG (2 en el 1.er intento; 6 en la variante C de T5)")
+    ap.add_argument("--fault", choices=FAULTS, default="stop", help="stop (por defecto): detención CONTROLADA del servicio, como en T5 1.er intento; instance: pérdida ABRUPTA de la instancia (más dura; exige --allow-replacement)")
+    ap.add_argument("--max-seconds", type=int, default=600, help="criterio de parada: tiempo máximo del experimento; al superarlo se aborta y se restaura la API")
     args = ap.parse_args()
     if os.environ.get("NEXO_ALLOW_CLOUD_CHANGES") != "YES":
         sys.exit("Requiere NEXO_ALLOW_CLOUD_CHANGES=YES (detiene temporalmente la API de una instancia de V2).")
+    if args.fault == "instance" and not args.allow_replacement:
+        sys.exit("--fault instance exige --allow-replacement (la instancia detenida no se restaura: la sustituye el ASG).")
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     health0 = M.target_health()
-    assert len(health0) == 2 and all(s == "healthy" for s in health0.values()), f"V2 no tiene 2 instancias sanas: {health0}"
+    assert len(health0) == args.instances and all(s == "healthy" for s in health0.values()), f"V2 no tiene {args.instances} instancias sanas: {health0}"
     act0 = {a["ActivityId"] for a in M.aws("autoscaling", "describe-scaling-activities", "--auto-scaling-group-name", M.ASG_NAME, "--max-items", "20").get("Activities", [])}
     victim = sorted(health0)[0]
     other = next(i for i in health0 if i != victim)
@@ -94,21 +129,23 @@ def main() -> None:
                     timeline.append(snap); last = key
                 if sum(1 for s in health.values() if s == "healthy") == 0:
                     abort["reason"] = "el ALB se quedó sin destinos sanos"
-                if any(h != "Healthy" or s != "InService" for s, h in asg_state.values()) or len(asg_state) != 2:
+                if not args.allow_replacement and (any(h != "Healthy" or s != "InService" for s, h in asg_state.values()) or len(asg_state) != args.instances):
                     abort["reason"] = f"el ASG cambió el estado de una instancia: {asg_state}"
+                if now() > args.max_seconds:
+                    abort["reason"] = f"tiempo máximo excedido ({args.max_seconds} s)"
             except Exception as error:  # noqa: BLE001
                 timeline.append({"t": now(), "error": str(error)[:120]})
     # el ciclo de consulta ya tarda ~2 s por las dos llamadas
 
     threads = [threading.Thread(target=traffic, args=(w,)) for w in range(args.clients)] + [threading.Thread(target=poll)]
     [t.start() for t in threads]
-    events: dict = {"victim": victim[-6:], "other": other[-6:], "rate_req_per_s": args.rate}
+    events: dict = {"fault": args.fault, "expected_instances": args.instances, "t0_utc": iso_ms(T0), "victim": victim[-6:], "other": other[-6:], "rate_req_per_s": args.rate, "allow_replacement": args.allow_replacement, "max_seconds": args.max_seconds}
     stopped = False
     try:
         time.sleep(25)  # línea base sana
         events["baseline_s"] = 25
         events["stop_issued_at"] = now()
-        M.ssm_output(victim, "systemctl stop nexoeventos-api")
+        inject_fault(args.fault, victim)
         stopped = True
         events["stop_confirmed_at"] = now()
         deadline = time.time() + 120
@@ -124,13 +161,19 @@ def main() -> None:
         events["restore_issued_at"] = now()
     finally:
         if stopped:
-            M.ssm_output(victim, "systemctl start nexoeventos-api")
+            try:
+                M.ssm_output(victim, "systemctl start nexoeventos-api")
+            except Exception as exc:  # noqa: BLE001  p. ej. el ASG ya terminó la instancia (autohealing): se registra y se conservan los resultados
+                events["restore_error"] = type(exc).__name__
             events["restore_confirmed_at"] = now()
     recovered = None
     deadline = time.time() + 180
     while time.time() < deadline:
         last = [x for x in timeline if "alb" in x][-1]
-        if all(v == "healthy" for v in last["alb"].values()) and len(last["alb"]) == 2 and last["t"] > events["restore_confirmed_at"]:
+        # El historial solo guarda CAMBIOS de estado: en un autohealing el estado «2 sanos» se alcanza (y queda registrado) ANTES de la restauración manual,
+        # así que se compara con la inyección del fallo y no con la restauración (corregido el 4-nov-2026: antes daba `null` aunque el ASG ya hubiera repuesto la capacidad).
+        reference = events["stop_issued_at"] if args.allow_replacement else events["restore_confirmed_at"]
+        if all(v == "healthy" for v in last["alb"].values()) and len(last["alb"]) == args.instances and last["t"] > reference:
             recovered = last["t"]; break
         time.sleep(2)
     events["both_healthy_again_at"] = recovered
@@ -139,6 +182,7 @@ def main() -> None:
     [t.join() for t in threads]
     end = time.time()
     events["abort_reason"] = abort["reason"]
+    events["utc"] = events_utc(events, T0)          # marcas absolutas (UTC, ms) de cada hito: la sincronización de relojes se evidencia aparte (scripts/ops/t5-relojes.sh)
 
     ok_lat = [r["ms"] for r in requests_log if r["status"] == 200]
     errors = [r for r in requests_log if r["status"] != 200]
@@ -146,17 +190,27 @@ def main() -> None:
                "by_path": {p: {"requests": sum(1 for r in requests_log if r["path"] == p), "errors": sum(1 for r in errors if r["path"] == p), "first_error_at": next((r["t"] for r in errors if r["path"] == p), None), "last_error_at": next((r["t"] for r in reversed(errors) if r["path"] == p), None)} for p in ("/api/events", "/healthz")},
                "first_error_at": errors[0]["t"] if errors else None, "last_error_at": errors[-1]["t"] if errors else None, "p95_ok_ms": sorted(ok_lat)[int(0.95 * (len(ok_lat) - 1))] if ok_lat else None,
                "availability_pct": round(100 * len(ok_lat) / max(1, len(requests_log)), 2)}
+    summary.update(V.split_availability(requests_log))  # disponibilidad del tráfico funcional (/api) separada de la de los sondeos de salud
     if events.get("alb_marked_unhealthy_at") is not None:
         events["detection_after_stop_s"] = round(events["alb_marked_unhealthy_at"] - events["stop_issued_at"], 1)
-    if recovered is not None:
+    if recovered is not None and args.allow_replacement:
+        events["capacity_restored_after_stop_s"] = round(recovered - events["stop_issued_at"], 1)  # autohealing: 2 destinos sanos de nuevo, medido desde el fallo
+    elif recovered is not None:
         events["recovery_after_restore_s"] = round(recovered - events["restore_confirmed_at"], 1)
+    # Se guarda YA lo medido por el cliente: las consultas posteriores (Nginx de una instancia que el ASG pudo terminar, CloudWatch) pueden fallar
+    # y antes eso hacía perder toda la medición (repetición del 22-oct, `InvalidInstanceId`).
+    (out / "resultado-parcial.json").write_text(json.dumps({"schema": 1, "events": events, "client": summary, "timeline": timeline}, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    (out / "solicitudes.json").write_text(json.dumps(requests_log) + "\n", encoding="utf-8")
     # 5xx en el log de Nginx de cada instancia durante la ventana
     window = (iso(T0), iso(end + 2))
     nginx = {}
     for inst in (victim, other):
         script = (f"awk -v a='{window[0].replace('Z', '+00:00')}' -v b='{window[1].replace('Z', '+00:00')}' '{{ if (match($0,/^[0-9T:+-]+/)) {{ t=substr($0,RSTART,RLENGTH); if (t>=a && t<b && $0 ~ /path=\\/api\\//) {{ n++; if ($0 ~ /status=5/) e++ }} }} }} END{{print n+0, e+0}}' /var/log/nginx/nexoeventos-access.log")
-        n, e = (M.ssm_output(inst, script).split() + ["0", "0"])[:2]
-        nginx[inst[-6:]] = {"api_requests": int(n), "api_5xx": int(e)}
+        try:
+            n, e = (M.ssm_output(inst, script).split() + ["0", "0"])[:2]
+            nginx[inst[-6:]] = {"api_requests": int(n), "api_5xx": int(e)}
+        except Exception as exc:  # p. ej. la instancia ya fue terminada por el ASG: se registra y se continúa
+            nginx[inst[-6:]] = {"error": type(exc).__name__}
     time.sleep(120)  # métricas del ALB en CloudWatch tardan en aparecer
     lb = M.aws("elbv2", "describe-load-balancers", "--names", M.LB_NAME)["LoadBalancers"][0]["LoadBalancerArn"].split("loadbalancer/")[1]
     tg = M.aws("elbv2", "describe-target-groups", "--names", M.TG_NAME)["TargetGroups"][0]["TargetGroupArn"].split(":")[-1]

@@ -1,0 +1,282 @@
+[
+ {
+  "t": 1794336427.584,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: timeout ex",
+  "error_oci": "Error response from daemon: container f2a057b48433bc1722a7b9b699d8037fba2e4e94e1a05325ee59"
+ },
+ {
+  "t": 1794336428.059,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": false,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": "psql: error: connection to server at \"pg-oci\" (172.29.241.2), port 5432 failed: FATAL:  pg"
+ },
+ {
+  "t": 1794336428.516,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336428.967,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336429.45,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336429.906,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336430.329,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336430.768,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336431.187,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336431.634,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: could not translate host name \"pg-aws\" to address: Name or service not known",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336432.108,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336432.552,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336432.982,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336433.428,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336433.866,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336434.291,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336434.737,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336435.172,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336435.586,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336436.013,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336436.436,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336436.886,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336437.313,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336437.791,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336438.268,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336438.708,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336439.195,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336439.684,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336440.12,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336440.591,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336441.026,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336441.461,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336441.914,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336442.393,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336442.862,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336443.326,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336443.791,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336444.225,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336444.66,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ },
+ {
+  "t": 1794336445.106,
+  "pg-aws_acepta_escritura": false,
+  "pg-oci_acepta_escritura": true,
+  "error_aws": "psql: error: connection to server at \"pg-aws\" (172.29.241.3), port 5432 failed: FATAL:  pg",
+  "error_oci": ""
+ }
+]

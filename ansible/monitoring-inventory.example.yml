@@ -1,0 +1,18 @@
+---
+# Copie a ansible/monitoring-inventory.yml (ignorado por Git) y complete con los valores de `terraform output`.
+all:
+  children:
+    monitoring:
+      hosts:
+        azure-obs:
+          ansible_host: "<IP pública de la VM>"
+          ansible_user: nexoadmin
+          ansible_ssh_private_key_file: "~/.ssh/<clave del operador>"
+          # Solo con la huella verificada antes (scripts/observability/azure-verify-hostkey.sh); nunca StrictHostKeyChecking=no.
+          ansible_ssh_common_args: "-o StrictHostKeyChecking=yes -o UserKnownHostsFile=<repo>/work/ssh/azure_known_hosts -o GlobalKnownHostsFile=/dev/null -o IdentitiesOnly=yes"
+      vars:
+        monitoring_fqdn: "<etiqueta>.centralus.cloudapp.azure.com"
+        monitoring_admin_cidr: "<IP del operador>/32"
+        grafana_azure_subscription_id: "<ID de la suscripción>"
+        nexo_probe_host: "nexoeventos-demo.duckdns.org"
+        # zabbix_smtp_server: "smtp.example.com"   # opcional (clave en work/ansible-secrets/monitoring/smtp.env)

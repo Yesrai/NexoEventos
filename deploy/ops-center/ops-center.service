@@ -1,0 +1,36 @@
+# Unidad systemd del centro de operaciones (VM de Azure). NO instalada todavía.
+[Unit]
+Description=NexoEventos - Centro de operaciones (solo consulta, solicitud y auditoria; no ejecuta failover)
+After=network.target
+
+[Service]
+User=opscenter
+Group=opscenter
+WorkingDirectory=/opt/nexoeventos
+Environment=PYTHONPATH=/opt/nexoeventos:/opt/nexoeventos/backend
+Environment=OPS_CENTER_STATE_DIR=/var/lib/ops-center
+Environment=OPS_CENTER_HOST=127.0.0.1
+Environment=OPS_CENTER_PORT=8750
+# El plazo de Academy se confirma en la consola antes de instalar; editar aqui si cambia.
+Environment=OPS_CENTER_DEADLINE=2026-11-26T00:00:00Z
+EnvironmentFile=-/etc/ops-center/ops-center.env
+ExecStart=/opt/nexoeventos/venv/bin/python -m ops_center.serve
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/ops-center
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+CapabilityBoundingSet=
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

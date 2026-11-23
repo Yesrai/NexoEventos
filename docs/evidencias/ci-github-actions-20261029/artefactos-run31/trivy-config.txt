@@ -1,0 +1,254 @@
+
+Report Summary
+
+┌──────────────────────────────────────────────────────────┬────────────────┬───────────────────┐
+│                          Target                          │      Type      │ Misconfigurations │
+├──────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
+│ backend/Dockerfile                                       │   dockerfile   │         0         │
+├──────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
+│ infra/aws                                                │   terraform    │         0         │
+├──────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
+│ infra/aws-recovery                                       │   terraform    │         0         │
+├──────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
+│ infra/aws-recovery/main.tf                               │   terraform    │         2         │
+├──────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
+│ infra/aws-v2                                             │   terraform    │         0         │
+├──────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
+│ infra/aws-v2/alb.tf                                      │   terraform    │         1         │
+├──────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
+│ infra/aws-v2/network.tf                                  │   terraform    │         2         │
+├──────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
+│ infra/aws/database.tf                                    │   terraform    │         0         │
+├──────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
+│ infra/aws/network.tf                                     │   terraform    │         2         │
+├──────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
+│ infra/aws/storage_observability.tf                       │   terraform    │         1         │
+├──────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
+│ infra/azure                                              │   terraform    │         0         │
+├──────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
+│ infra/gcp                                                │   terraform    │         0         │
+├──────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
+│ infra/oci                                                │   terraform    │         0         │
+├──────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
+│ perf/results/local-progresivo-20261019/availability.json │ cloudformation │         0         │
+├──────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
+│ perf/results/local-progresivo-20261019/catalog.json      │ cloudformation │         0         │
+├──────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
+│ perf/results/local-progresivo-20261019/detail.json       │ cloudformation │         0         │
+├──────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
+│ perf/results/local-progresivo-20261019/reserve.json      │ cloudformation │         0         │
+├──────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
+│ perf/results/local-progresivo-20261019/same_seat.json    │ cloudformation │         0         │
+├──────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
+│ perf/results/local-smoke-validacion/availability.json    │ cloudformation │         0         │
+├──────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
+│ perf/results/local-smoke-validacion/catalog.json         │ cloudformation │         0         │
+├──────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
+│ perf/results/local-smoke-validacion/detail.json          │ cloudformation │         0         │
+├──────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
+│ perf/results/local-smoke-validacion/reserve.json         │ cloudformation │         0         │
+├──────────────────────────────────────────────────────────┼────────────────┼───────────────────┤
+│ perf/results/local-smoke-validacion/same_seat.json       │ cloudformation │         0         │
+└──────────────────────────────────────────────────────────┴────────────────┴───────────────────┘
+Legend:
+- '-': Not scanned
+- '0': Clean (no security findings detected)
+
+
+infra/aws-recovery/main.tf (terraform)
+======================================
+Tests: 2 (SUCCESSES: 0, FAILURES: 2)
+Failures: 2 (HIGH: 1, CRITICAL: 1)
+
+AWS-0080 (HIGH): Instance does not have storage encryption enabled.
+════════════════════════════════════════
+Encryption should be enabled for an RDS Database instances.
+When enabling encryption by setting the kms_key_id.
+
+
+See https://avd.aquasec.com/misconfig/aws-0080
+────────────────────────────────────────
+ infra/aws-recovery/main.tf:104-133
+────────────────────────────────────────
+ 104 ┌ resource "aws_db_instance" "recovery" {
+ 105 │   identifier                   = "${local.recovery_prefix}-postgres"
+ 106 │   instance_class               = var.db_instance_class
+ 107 │   storage_type                 = "gp2"
+ 108 │   db_subnet_group_name         = data.aws_db_subnet_group.source.name
+ 109 │   vpc_security_group_ids       = [aws_security_group.database.id]
+ 110 │   publicly_accessible          = false
+ 111 │   multi_az                     = false
+ 112 └   backup_retention_period      = 0
+ ...   
+────────────────────────────────────────
+
+
+AWS-0104 (CRITICAL): Security group rule allows unrestricted egress to any IP address.
+════════════════════════════════════════
+Opening up ports to connect out to the public internet is generally to be avoided. You should restrict access to IP addresses or ranges that are explicitly required where possible.
+
+
+See https://avd.aquasec.com/misconfig/aws-0104
+────────────────────────────────────────
+ infra/aws-recovery/main.tf:58
+   via infra/aws-recovery/main.tf:52-59 (aws_vpc_security_group_egress_rule.https)
+────────────────────────────────────────
+  52   resource "aws_vpc_security_group_egress_rule" "https" {
+  53     security_group_id = aws_security_group.app.id
+  54     description       = "Servicios AWS, paquetes, DNS dinamico y ACME"
+  55     ip_protocol       = "tcp"
+  56     from_port         = 443
+  57     to_port           = 443
+  58 [   cidr_ipv4         = "0.0.0.0/0"
+  59   }
+────────────────────────────────────────
+
+
+
+infra/aws-v2/alb.tf (terraform)
+===============================
+Tests: 1 (SUCCESSES: 0, FAILURES: 1)
+Failures: 1 (HIGH: 1, CRITICAL: 0)
+
+AWS-0053 (HIGH): Load balancer is exposed publicly.
+════════════════════════════════════════
+There are many scenarios in which you would want to expose a load balancer to the wider internet, but this check exists as a warning to prevent accidental exposure of internal assets. You should ensure that this resource should be exposed publicly.
+
+
+See https://avd.aquasec.com/misconfig/aws-0053
+────────────────────────────────────────
+ infra/aws-v2/alb.tf:4
+   via infra/aws-v2/alb.tf:1-11 (aws_lb.main)
+────────────────────────────────────────
+   1   resource "aws_lb" "main" {
+   2     name                       = "${local.v2_prefix}-alb"
+   3     load_balancer_type         = "application"
+   4 [   internal                   = false
+   5     security_groups            = [aws_security_group.alb.id]
+   6     subnets                    = [data.aws_subnet.public_a.id, aws_subnet.public_b.id]
+   7     idle_timeout               = 60
+   8     drop_invalid_header_fields = true
+   9     enable_deletion_protection = var.alb_deletion_protection
+  ..   
+────────────────────────────────────────
+
+
+
+infra/aws-v2/network.tf (terraform)
+===================================
+Tests: 2 (SUCCESSES: 0, FAILURES: 2)
+Failures: 2 (HIGH: 1, CRITICAL: 1)
+
+AWS-0104 (CRITICAL): Security group rule allows unrestricted egress to any IP address.
+════════════════════════════════════════
+Opening up ports to connect out to the public internet is generally to be avoided. You should restrict access to IP addresses or ranges that are explicitly required where possible.
+
+
+See https://avd.aquasec.com/misconfig/aws-0104
+────────────────────────────────────────
+ infra/aws-v2/network.tf:81
+   via infra/aws-v2/network.tf:75-82 (aws_vpc_security_group_egress_rule.web_https)
+────────────────────────────────────────
+  75   resource "aws_vpc_security_group_egress_rule" "web_https" {
+  76     security_group_id = aws_security_group.web.id
+  77     description       = "Servicios AWS (Session Manager, S3, Secrets Manager, CloudWatch) y paquetes por HTTPS"
+  78     ip_protocol       = "tcp"
+  79     from_port         = 443
+  80     to_port           = 443
+  81 [   cidr_ipv4         = "0.0.0.0/0"
+  82   }
+────────────────────────────────────────
+
+
+AWS-0164 (HIGH): Subnet associates public IP address.
+════════════════════════════════════════
+You should limit the provision of public IP addresses for resources. Resources should not be exposed on the public internet, but should have access limited to consumers required for the function of your application.
+
+
+See https://avd.aquasec.com/misconfig/aws-0164
+────────────────────────────────────────
+ infra/aws-v2/network.tf:6
+   via infra/aws-v2/network.tf:2-15 (aws_subnet.public_b)
+────────────────────────────────────────
+   2   resource "aws_subnet" "public_b" {
+   .   
+   6 [   map_public_ip_on_launch = true
+  ..   
+  15   }
+────────────────────────────────────────
+
+
+
+infra/aws/network.tf (terraform)
+================================
+Tests: 2 (SUCCESSES: 0, FAILURES: 2)
+Failures: 2 (HIGH: 1, CRITICAL: 1)
+
+AWS-0104 (CRITICAL): Security group rule allows unrestricted egress to any IP address.
+════════════════════════════════════════
+Opening up ports to connect out to the public internet is generally to be avoided. You should restrict access to IP addresses or ranges that are explicitly required where possible.
+
+
+See https://avd.aquasec.com/misconfig/aws-0104
+────────────────────────────────────────
+ infra/aws/network.tf:106
+   via infra/aws/network.tf:100-107 (aws_vpc_security_group_egress_rule.web_https)
+────────────────────────────────────────
+ 100   resource "aws_vpc_security_group_egress_rule" "web_https" {
+ 101     security_group_id = aws_security_group.web.id
+ 102     description       = "Dependencias y servicios AWS por HTTPS"
+ 103     ip_protocol       = "tcp"
+ 104     from_port         = 443
+ 105     to_port           = 443
+ 106 [   cidr_ipv4         = "0.0.0.0/0"
+ 107   }
+────────────────────────────────────────
+
+
+AWS-0164 (HIGH): Subnet associates public IP address.
+════════════════════════════════════════
+You should limit the provision of public IP addresses for resources. Resources should not be exposed on the public internet, but should have access limited to consumers required for the function of your application.
+
+
+See https://avd.aquasec.com/misconfig/aws-0164
+────────────────────────────────────────
+ infra/aws/network.tf:19
+   via infra/aws/network.tf:15-21 (aws_subnet.public_a)
+────────────────────────────────────────
+  15   resource "aws_subnet" "public_a" {
+  16     vpc_id                  = aws_vpc.main.id
+  17     cidr_block              = var.public_a_cidr
+  18     availability_zone       = data.aws_availability_zones.available.names[0]
+  19 [   map_public_ip_on_launch = true
+  20     tags                    = { Name = "${local.name_prefix}-public-a", Tier = "public" }
+  21   }
+────────────────────────────────────────
+
+
+
+infra/aws/storage_observability.tf (terraform)
+==============================================
+Tests: 1 (SUCCESSES: 0, FAILURES: 1)
+Failures: 1 (HIGH: 1, CRITICAL: 0)
+
+AWS-0132 (HIGH): Bucket does not encrypt data with a customer managed key.
+════════════════════════════════════════
+Encryption using AWS keys provides protection for your S3 buckets. To gain greater control over encryption, such as key rotation, access policies, and auditability, use customer managed keys (CMKs) with SSE-KMS.
+Note that SSE-KMS is not supported for S3 server access logging destination buckets; in such cases, use SSE-S3 instead.
+
+
+See https://avd.aquasec.com/misconfig/aws-0132
+────────────────────────────────────────
+ infra/aws/storage_observability.tf:22-29
+────────────────────────────────────────
+  22 ┌ resource "aws_s3_bucket_server_side_encryption_configuration" "private" {
+  23 │   bucket = aws_s3_bucket.private.id
+  24 │   rule {
+  25 │     apply_server_side_encryption_by_default {
+  26 │       sse_algorithm = "AES256"
+  27 │     }
+  28 │   }
+  29 └ }
+────────────────────────────────────────
+
+

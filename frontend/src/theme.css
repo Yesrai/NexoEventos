@@ -625,3 +625,26 @@ footer { padding: 28px 24px; color: var(--c-mut); font-size: var(--fs-sm); }
 }
 
 .empty-state.compact { border: 1px solid var(--c-line); background: #fff; padding: 20px; }
+
+/* Panel de operación (solo lectura) */
+.org-head-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.org-sections { display: inline-flex; border: 1px solid var(--c-line, #cfd8dc); border-radius: 10px; overflow: hidden; }
+.org-sections button { padding: 8px 14px; background: transparent; border: 0; font-size: var(--fs-base); cursor: pointer; }
+.org-sections button.active { background: var(--c-action); color: #fff; font-weight: 600; }
+.ops { margin-top: 18px; display: grid; gap: 16px; }
+.ops-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.ops-head h2 { margin: 0; }
+.ops-head .muted { margin: 6px 0 0; max-width: 62ch; }
+.ops-actions { display: grid; gap: 6px; justify-items: end; }
+.ops-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.ops-card { border: 1px solid var(--c-line, #cfd8dc); border-radius: 14px; padding: 16px; background: var(--c-surface, #fff); display: grid; gap: 8px; align-content: start; }
+.ops-card header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.ops-card h3 { margin: 0; font-size: 1.05rem; }
+.ops-card p { margin: 0; }
+.ops-origin { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; color: var(--c-mut); }
+.ops-chip { border: 1px solid currentColor; border-radius: 999px; padding: 1px 9px; font-size: .8rem; }
+.ops-badge { border-radius: 999px; padding: 3px 11px; font-size: .85rem; font-weight: 600; white-space: nowrap; }
+.ops-ok { background: #dff3e4; color: #14532d; } .ops-warn { background: #fdf0cf; color: #7a4b00; } .ops-err { background: #fbdcdc; color: #8a1111; } .ops-unk { background: #e6e9ec; color: #3b4650; }
+.ops-rows { margin: 0; display: grid; gap: 4px; } .ops-rows div { display: flex; justify-content: space-between; gap: 12px; } .ops-rows dt { color: var(--c-mut); } .ops-rows dd { margin: 0; font-weight: 600; text-align: right; }
+.ops-services { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; } .ops-services li { display: flex; align-items: center; gap: 8px; } .ops-services li span { flex: 1; }
+@media (max-width: 600px) { .org-head-actions { width: 100%; } .ops-actions { justify-items: start; } }

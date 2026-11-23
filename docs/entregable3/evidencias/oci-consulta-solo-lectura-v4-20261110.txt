@@ -1,0 +1,254 @@
+Consulta de solo lectura de OCI — 2026-11-10 21:49 — script v4 SHA-256 04c4b76c6bcae424365dafdd79bb3efd6cc19ce8c38128b76aaf76cc1bc4287c (versión autorizada)
+Salida ya filtrada por el propio script.
+
+== 1. Región de origen y suscripciones de región
++--------+--------+---------------+
+| estado | origen | region        |
++--------+--------+---------------+
+| READY  | True   | sa-saopaulo-1 |
++--------+--------+---------------+
+== 2. Compartment nexoeventos (su OCID no se imprime)
+== 3. Red existente: VCN, subredes, Internet/NAT/Service Gateway
++------------------+-----------+--------------------------+
+| cidr             | estado    | nombre                   |
++------------------+-----------+--------------------------+
+| ['<ip>/16'] | AVAILABLE | nexoeventos-recovery-vcn |
++------------------+-----------+--------------------------+
++--------------+------------------------------+----------------+
+| cidr         | nombre                       | sin_ip_publica |
++--------------+------------------------------+----------------+
+| <ip>/24 | nexoeventos-recovery-private | True           |
++--------------+------------------------------+----------------+
+
+
++-----------+--------------------------+
+| estado    | nombre                   |
++-----------+--------------------------+
+| AVAILABLE | nexoeventos-recovery-sgw |
++-----------+--------------------------+
+== 4. Instancias (¿queda alguna?) y buckets
+
++----------------------+
+| nombre               |
++----------------------+
+| nexoeventos-recovery |
++----------------------+
+== 5. Límites de cómputo (cuota disponible; NO es un informe de capacidad de hosts, que sería una operación de creación y queda fuera)
+-- bigdata-e5t-core-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 0          | 0     |
++------------+-------+
+-- dense-io-e5-core-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 0          | 0     |
++------------+-------+
+-- dense-io-e5-core-count-reservable (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 0          | 0     |
++------------+-------+
+-- dense-io-e5-core-reserved-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 1000000000 | 0     |
++------------+-------+
+-- dense-io-e5-memory-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 0          | 0     |
++------------+-------+
+-- dense-io-e5-memory-count-reservable (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 0          | 0     |
++------------+-------+
+-- dense-io-e5-memory-reserved-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 1000000000 | 0     |
++------------+-------+
+-- dvh-standard-a1-core-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 0          | 0     |
++------------+-------+
+-- dvh-standard-e5-core-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 0          | 0     |
++------------+-------+
+-- gpu-a10-core-count-reservable (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 0          | 0     |
++------------+-------+
+-- gpu-a10-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 0          | 0     |
++------------+-------+
+-- gpu-a10-reserved-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 1000000000 | 0     |
++------------+-------+
+-- gpu-a100-v2-core-count-reservable (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 0          | 0     |
++------------+-------+
+-- gpu-a100-v2-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 0          | 0     |
++------------+-------+
+-- gpu-a100-v2-reserved-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 1000000000 | 0     |
++------------+-------+
+-- hpc-e5-core-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 0          | 0     |
++------------+-------+
+-- hpc-e5-core-count-reservable (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 0          | 0     |
++------------+-------+
+-- hpc-e5-core-reserved-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 1000000000 | 0     |
++------------+-------+
+-- standard-a1-core-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 41         | 0     |
++------------+-------+
+-- standard-a1-core-count-reservable (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 0          | 0     |
++------------+-------+
+-- standard-a1-core-regional-count (ámbito: REGION)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 16         | 0     |
++------------+-------+
+-- standard-a1-core-reserved-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 1000000000 | 0     |
++------------+-------+
+-- standard-a1-memory-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 277        | 0     |
++------------+-------+
+-- standard-a1-memory-count-reservable (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 0          | 0     |
++------------+-------+
+-- standard-a1-memory-regional-count (ámbito: REGION)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 96         | 0     |
++------------+-------+
+-- standard-a1-memory-reserved-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 1000000000 | 0     |
++------------+-------+
+-- standard-e2-micro-core-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 2          | 0     |
++------------+-------+
+-- standard-e5-core-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 13         | 0     |
++------------+-------+
+-- standard-e5-core-count-reservable (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 0          | 0     |
++------------+-------+
+-- standard-e5-core-reserved-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 1000000000 | 0     |
++------------+-------+
+-- standard-e5-memory-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 208        | 0     |
++------------+-------+
+-- standard-e5-memory-count-reservable (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 0          | 0     |
++------------+-------+
+-- standard-e5-memory-reserved-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 1000000000 | 0     |
++------------+-------+
+-- standard-e5t-lm-v2-core-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 0          | 0     |
++------------+-------+
+-- standard-e5t-lm-v2-memory-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 0          | 0     |
++------------+-------+
+-- vm-standard-e2-1-micro-count (ámbito: AD)
++------------+-------+
+| disponible | usado |
++------------+-------+
+| 2          | 0     |
++------------+-------+
+== fin (solo consultas; nada se creó, modificó, inició ni detuvo; no se instaló nada)
+código de salida: 0

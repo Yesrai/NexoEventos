@@ -1,0 +1,7 @@
+100 Outbound Allow allow-azure-platform-out * origen: *
+122 Inbound Allow admin-ssh 22 origen: <IP del operador>/32
+143 Inbound Allow admin-https 443 origen: <IP del operador>/32
+200 Outbound Allow allow-web-out ['80', '443'] origen: *
+210 Outbound Allow allow-dns-ntp-out ['53', '123'] origen: *
+4000 Outbound Deny deny-internet-out * origen: *
+4096 Inbound Deny deny-all-inbound * origen: *

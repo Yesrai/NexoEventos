@@ -1,0 +1,11 @@
+[Unit]
+Description=Run the NexoEventos encrypted backup every 30 minutes (intervalo = RPO objetivo; se mide en cycles.jsonl)
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=30min
+RandomizedDelaySec=60s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

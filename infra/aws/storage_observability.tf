@@ -34,8 +34,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "private" {
     id     = "expire-demo-backups"
     status = "Enabled"
     filter { prefix = "backups/database/" }
-    expiration { days = var.backup_retention_days }
-    noncurrent_version_expiration { noncurrent_days = var.backup_retention_days }
+    expiration { days = var.s3_backup_retention_days }
+    noncurrent_version_expiration { noncurrent_days = var.s3_backup_retention_days }
   }
 }
 
@@ -61,4 +61,6 @@ resource "aws_cloudwatch_metric_alarm" "ec2_cpu_high" {
   threshold           = 80
   treat_missing_data  = "missing"
   dimensions          = { InstanceId = aws_instance.app.id }
+  alarm_actions       = local.alarm_actions # vacío (sin cambios) salvo enable_alarms = true
+  ok_actions          = local.alarm_actions
 }

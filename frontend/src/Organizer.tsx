@@ -1,6 +1,8 @@
-import { FormEvent, KeyboardEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { FormEvent, KeyboardEvent, Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import { EventPage, useSelection } from './EventPage'
 import { api, categoryOrder, EventDetail, EventItem, formatDate, formatTime, Icon } from './shared'
+
+const OperationsPanel = lazy(() => import('./Operations'))
 
 type LayoutKind = NonNullable<EventItem['layout_kind']>
 type LayoutOption = { layout_id: number; name: string; layout_kind: LayoutKind; ticket_mode: 'general' | 'zones' | 'seats' }
@@ -305,6 +307,7 @@ export default function OrganizerPanel() {
   const [selectedId, setSelectedId] = useState<number | 'new' | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [filter, setFilter] = useState<'all' | 'published' | 'draft'>('all')
+  const [section, setSection] = useState<'events' | 'ops'>('events')
 
   const reload = useCallback(async () => {
     const [eventsResponse, venuesResponse] = await Promise.all([api('/api/organizer/events'), api('/api/organizer/venues')])
@@ -318,10 +321,11 @@ export default function OrganizerPanel() {
   const counts = { all: events.length, published: events.filter((item) => item.status === 'published').length, draft: events.filter((item) => item.status !== 'published').length }
   const shownEvents = events.filter((item) => filter === 'all' || (filter === 'published' ? item.status === 'published' : item.status !== 'published'))
   return <section className="workspace organizer">
-    <header className="org-head"><div><h1 className="page-title">Mis eventos</h1><p className="muted">Crea, configura y publica tus eventos y funciones.</p></div><button type="button" className="button primary" disabled={loading} onClick={() => { setNotice(null); setSelectedId('new') }}>Nuevo evento</button></header>
-    {loading && <div className="status" role="status"><span className="spinner" />Cargando eventos…</div>}
-    {!loading && events.length === 0 && selectedId !== 'new' && <div className="empty-state"><span className="empty-icon"><Icon name="calendar" size={26} /></span><h2>Aún no tienes eventos</h2><p>Crea tu primer evento: elige el recinto, define las entradas y publícalo cuando esté listo.</p><button type="button" className="button primary" onClick={() => setSelectedId('new')}>Crear mi primer evento</button></div>}
-    {!loading && (events.length > 0 || selectedId === 'new') && <div className="organizer-layout">
+    <header className="org-head"><div><h1 className="page-title">Mis eventos</h1><p className="muted">Crea, configura y publica tus eventos y funciones.</p></div><div className="org-head-actions"><div className="org-sections" role="group" aria-label="Sección del panel"><button type="button" aria-pressed={section === 'events'} className={section === 'events' ? 'active' : ''} onClick={() => setSection('events')}>Gestión</button><button type="button" aria-pressed={section === 'ops'} className={section === 'ops' ? 'active' : ''} onClick={() => setSection('ops')}>Operación</button></div>{section === 'events' && <button type="button" className="button primary" disabled={loading} onClick={() => { setNotice(null); setSelectedId('new') }}>Nuevo evento</button>}</div></header>
+    {section === 'ops' && <Suspense fallback={<div className="status" role="status">Cargando operación…</div>}><OperationsPanel /></Suspense>}
+    {section === 'events' && loading && <div className="status" role="status"><span className="spinner" />Cargando eventos…</div>}
+    {section === 'events' && !loading && events.length === 0 && selectedId !== 'new' && <div className="empty-state"><span className="empty-icon"><Icon name="calendar" size={26} /></span><h2>Aún no tienes eventos</h2><p>Crea tu primer evento: elige el recinto, define las entradas y publícalo cuando esté listo.</p><button type="button" className="button primary" onClick={() => setSelectedId('new')}>Crear mi primer evento</button></div>}
+    {section === 'events' && !loading && (events.length > 0 || selectedId === 'new') && <div className="organizer-layout">
       <div className="organizer-sidebar">
         <div className="org-filter" role="tablist" aria-label="Filtrar eventos">{([['all', 'Todos'], ['published', 'Publicados'], ['draft', 'Borradores']] as const).map(([value, label]) => <button type="button" key={value} role="tab" aria-selected={filter === value} onClick={() => setFilter(value)}>{label} <span>{counts[value]}</span></button>)}</div>
         {shownEvents.length === 0 && <p className="organizer-hint">No hay eventos en esta vista.</p>}

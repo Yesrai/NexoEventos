@@ -1,0 +1,8 @@
+{"t": 1794358306.774, "ev": "monitor_inicio", "auto": true, "pid": 75919}
+{"t": 1794358306.805, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 3.74, "prot": {"mode": "protected", "seq": 2, "primario": "pg-aws", "epoch": 1, "verified_age_s": 3.08}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794358312.297, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 6.0, "prot": {"mode": "protected", "seq": 2, "primario": "pg-aws", "epoch": 1, "verified_age_s": 0.66}}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794358313.949, "ev": "seguidor_no_disponible", "estado": "", "politica": "degradar tras 3.0s"}
+{"t": 1794358316.871, "ev": "proteccion", "modo": "degrading", "antes": "protected", "ok": true, "seq": 3, "primario": "pg-aws", "motivo": "seguidor no disponible > 3.0s: se prefiere disponibilidad (RPO > 0 posible)"}
+{"t": 1794358317.198, "ev": "sync_deshabilitada", "primario": "pg-aws", "motivo": "seguidor no disponible > 3.0s: se prefiere disponibilidad (RPO > 0 posible)", "ok": true}
+{"t": 1794358317.211, "ev": "proteccion", "modo": "degraded", "antes": "degrading", "ok": true, "seq": 4, "primario": "pg-aws", "motivo": "seguidor no disponible > 3.0s: se prefiere disponibilidad (RPO > 0 posible)"}
+{"t": 1794358317.212, "ev": "fallo_inyectado", "punto": "after_record", "accion": "exit"}

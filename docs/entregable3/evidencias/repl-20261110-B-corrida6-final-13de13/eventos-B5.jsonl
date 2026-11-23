@@ -1,0 +1,4 @@
+{"t": 1794336559.801, "ev": "monitor_inicio", "auto": true, "pid": 32887}
+{"t": 1794336559.82, "ev": "latido", "witness": {"writer": "pg-aws", "epoch": 1, "lease_remaining_s": 4.83}, "sondas_fallidas": {"pg-aws": 0, "pg-oci": 0}}
+{"t": 1794336562.324, "ev": "witness_no_disponible", "detalle": "RemoteDisconnected", "accion": "no se renueva ni se promueve (falla segura)"}
+{"t": 1794336562.375, "ev": "monitor_fin", "motivo": "SIGTERM"}

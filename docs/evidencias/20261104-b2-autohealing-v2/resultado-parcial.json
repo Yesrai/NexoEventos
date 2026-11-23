@@ -1,0 +1,232 @@
+{
+ "schema": 1,
+ "events": {
+  "victim": "c3fed7",
+  "other": "d425cd",
+  "rate_req_per_s": 5.0,
+  "allow_replacement": true,
+  "max_seconds": 540,
+  "baseline_s": 25,
+  "stop_issued_at": 28.7,
+  "stop_confirmed_at": 32.2,
+  "alb_marked_unhealthy_at": 51.3,
+  "restore_issued_at": 232.3,
+  "restore_error": "CalledProcessError",
+  "restore_confirmed_at": 233.0,
+  "both_healthy_again_at": null,
+  "abort_reason": null,
+  "detection_after_stop_s": 22.6
+ },
+ "client": {
+  "requests": 2112,
+  "ok": 2060,
+  "errors": 52,
+  "error_statuses": {
+   "502": 52
+  },
+  "by_path": {
+   "/api/events": {
+    "requests": 1059,
+    "errors": 24,
+    "first_error_at": 30.06,
+    "last_error_at": 50.15
+   },
+   "/healthz": {
+    "requests": 1053,
+    "errors": 28,
+    "first_error_at": 29.83,
+    "last_error_at": 49.95
+   }
+  },
+  "first_error_at": 29.83,
+  "last_error_at": 50.15,
+  "p95_ok_ms": 422,
+  "availability_pct": 97.54,
+  "availability_api_pct": 97.7,
+  "availability_health_pct": 97.3,
+  "requests_api": 1059,
+  "requests_health": 1053
+ },
+ "timeline": [
+  {
+   "t": 6.1,
+   "alb": {
+    "c3fed7": "healthy",
+    "d425cd": "healthy"
+   },
+   "asg": {
+    "c3fed7": [
+     "InService",
+     "Healthy"
+    ],
+    "d425cd": [
+     "InService",
+     "Healthy"
+    ]
+   },
+   "asg_desired": 2
+  },
+  {
+   "t": 51.3,
+   "alb": {
+    "c3fed7": "unhealthy",
+    "d425cd": "healthy"
+   },
+   "asg": {
+    "c3fed7": [
+     "InService",
+     "Healthy"
+    ],
+    "d425cd": [
+     "InService",
+     "Healthy"
+    ]
+   },
+   "asg_desired": 2
+  },
+  {
+   "t": 59.5,
+   "alb": {
+    "c3fed7": "unhealthy",
+    "d425cd": "healthy"
+   },
+   "asg": {
+    "c3fed7": [
+     "Terminating",
+     "Unhealthy"
+    ],
+    "d425cd": [
+     "InService",
+     "Healthy"
+    ]
+   },
+   "asg_desired": 2
+  },
+  {
+   "t": 61.5,
+   "alb": {
+    "c3fed7": "draining",
+    "d425cd": "healthy"
+   },
+   "asg": {
+    "a7d090": [
+     "Pending",
+     "Healthy"
+    ],
+    "c3fed7": [
+     "Terminating",
+     "Unhealthy"
+    ],
+    "d425cd": [
+     "InService",
+     "Healthy"
+    ]
+   },
+   "asg_desired": 2
+  },
+  {
+   "t": 67.6,
+   "alb": {
+    "c3fed7": "draining",
+    "d425cd": "healthy",
+    "a7d090": "initial"
+   },
+   "asg": {
+    "a7d090": [
+     "InService",
+     "Healthy"
+    ],
+    "c3fed7": [
+     "Terminating",
+     "Unhealthy"
+    ],
+    "d425cd": [
+     "InService",
+     "Healthy"
+    ]
+   },
+   "asg_desired": 2
+  },
+  {
+   "t": 83.5,
+   "alb": {
+    "c3fed7": "draining",
+    "d425cd": "healthy",
+    "a7d090": "unhealthy"
+   },
+   "asg": {
+    "a7d090": [
+     "InService",
+     "Healthy"
+    ],
+    "c3fed7": [
+     "Terminating",
+     "Unhealthy"
+    ],
+    "d425cd": [
+     "InService",
+     "Healthy"
+    ]
+   },
+   "asg_desired": 2
+  },
+  {
+   "t": 91.9,
+   "alb": {
+    "d425cd": "healthy",
+    "a7d090": "unhealthy"
+   },
+   "asg": {
+    "a7d090": [
+     "InService",
+     "Healthy"
+    ],
+    "c3fed7": [
+     "Terminating",
+     "Unhealthy"
+    ],
+    "d425cd": [
+     "InService",
+     "Healthy"
+    ]
+   },
+   "asg_desired": 2
+  },
+  {
+   "t": 132.4,
+   "alb": {
+    "d425cd": "healthy",
+    "a7d090": "unhealthy"
+   },
+   "asg": {
+    "a7d090": [
+     "InService",
+     "Healthy"
+    ],
+    "d425cd": [
+     "InService",
+     "Healthy"
+    ]
+   },
+   "asg_desired": 2
+  },
+  {
+   "t": 138.4,
+   "alb": {
+    "d425cd": "healthy",
+    "a7d090": "healthy"
+   },
+   "asg": {
+    "a7d090": [
+     "InService",
+     "Healthy"
+    ],
+    "d425cd": [
+     "InService",
+     "Healthy"
+    ]
+   },
+   "asg_desired": 2
+  }
+ ]
+}

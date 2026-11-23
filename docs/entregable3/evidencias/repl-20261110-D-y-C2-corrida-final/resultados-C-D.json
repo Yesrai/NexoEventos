@@ -1,0 +1,265 @@
+{
+  "pruebas": [
+    {
+      "prueba": "C1 C1-natural-1: sin sobreventa ni duplicados (reserved_count == suma de cantidades; una reserva por clave de idempotencia) tras la conmutación",
+      "ok": true,
+      "detalle": "{\"reservas_en_nueva_primaria\": 1399, \"claves_distintas\": 1399, \"reserved_count\": \"1399\", \"suma_cantidades\": \"1399\"}"
+    },
+    {
+      "prueba": "C1 C1-natural-1: el servicio de escritura se recupera por el borde tras la caída de la primaria",
+      "ok": true,
+      "detalle": "{\"RTO_escritura_s_desde_la_orden_de_caida\": 3.63, \"RTO_lectura_s\": 3.69, \"lease_otorgado_s\": 2.54}"
+    },
+    {
+      "prueba": "C1 C1-natural-2: sin sobreventa ni duplicados (reserved_count == suma de cantidades; una reserva por clave de idempotencia) tras la conmutación",
+      "ok": true,
+      "detalle": "{\"reservas_en_nueva_primaria\": 1368, \"claves_distintas\": 1368, \"reserved_count\": \"1368\", \"suma_cantidades\": \"1368\"}"
+    },
+    {
+      "prueba": "C1 C1-natural-2: el servicio de escritura se recupera por el borde tras la caída de la primaria",
+      "ok": true,
+      "detalle": "{\"RTO_escritura_s_desde_la_orden_de_caida\": 3.55, \"RTO_lectura_s\": 3.58, \"lease_otorgado_s\": 2.72}"
+    },
+    {
+      "prueba": "C1 C1-natural-3: sin sobreventa ni duplicados (reserved_count == suma de cantidades; una reserva por clave de idempotencia) tras la conmutación",
+      "ok": true,
+      "detalle": "{\"reservas_en_nueva_primaria\": 1340, \"claves_distintas\": 1340, \"reserved_count\": \"1340\", \"suma_cantidades\": \"1340\"}"
+    },
+    {
+      "prueba": "C1 C1-natural-3: el servicio de escritura se recupera por el borde tras la caída de la primaria",
+      "ok": true,
+      "detalle": "{\"RTO_escritura_s_desde_la_orden_de_caida\": 3.43, \"RTO_lectura_s\": 3.31, \"lease_otorgado_s\": 2.67}"
+    },
+    {
+      "prueba": "C1 C1-retraso-inducido: sin sobreventa ni duplicados (reserved_count == suma de cantidades; una reserva por clave de idempotencia) tras la conmutación",
+      "ok": true,
+      "detalle": "{\"reservas_en_nueva_primaria\": 1092, \"claves_distintas\": 1092, \"reserved_count\": \"1092\", \"suma_cantidades\": \"1092\"}"
+    },
+    {
+      "prueba": "C1 C1-retraso-inducido: el servicio de escritura se recupera por el borde tras la caída de la primaria",
+      "ok": true,
+      "detalle": "{\"RTO_escritura_s_desde_la_orden_de_caida\": 3.32, \"RTO_lectura_s\": 3.28, \"lease_otorgado_s\": 2.35}"
+    },
+    {
+      "prueba": "C1 retraso inducido (replicación pausada 3 s antes de caer): se observan transacciones confirmadas al cliente que se pierden; ese es el RPO real bajo retraso",
+      "ok": true,
+      "detalle": "{\"RPO_transacciones_confirmadas_al_cliente_PERDIDAS\": 351, \"RPO_ventana_s_(caida_menos_la_confirmacion_perdida_mas_antigua)\": 3.0}"
+    },
+    {
+      "prueba": "C2a caída tras confirmar y antes de responder (con la reserva ya replicada): el reintento con la misma clave devuelve 200 con LA MISMA reserva, sin duplicar",
+      "ok": true,
+      "detalle": "{\"respuesta_retenida_tras_confirmar\": true, \"reserva_en_la_primaria_antes_de_caer\": \"3f9c1441-c6c1-4d69-9878-bb9dd40879ca\", \"replicada_antes_de_caer\": true, \"cliente_no_recibio_respuesta\": true, \"reintentos_con_la_misma_clave\": [503, 503, 503, 503, 503, 503, 200], \"estado_final\": 200, \"replayed\": true, \"reservation_id_final\": \"3f9c1441-c6c1-4d69-9878-bb9dd40879ca\", \"misma_reserva\": true, \"reservas_con_esa_clave_en_la_nueva_primaria\": \"1\", \"tiempo_hasta_respuesta_valida_s\": 3.3, \"idempotency_key\": \"6920bf11848e425395cbe1882b666949\"}"
+    },
+    {
+      "prueba": "C2b caída tras confirmar y antes de responder SIN replicar: la reserva original se pierde con la primaria y el reintento crea OTRA (201); el cliente nunca vio dos, pero queda una huérfana en la antigua primaria",
+      "ok": true,
+      "detalle": "{\"respuesta_retenida_tras_confirmar\": true, \"reserva_en_la_primaria_antes_de_caer\": \"b90d710a-70ad-40f5-a709-f34db4840b2b\", \"replicada_antes_de_caer\": false, \"cliente_no_recibio_respuesta\": true, \"reintentos_con_la_misma_clave\": [503, 503, 503, 503, 503, 503, 201], \"estado_final\": 201, \"replayed\": false, \"reservation_id_final\": \"c82e6b27-6b70-4ed5-aaf9-97e017f0d58d\", \"misma_reserva\": false, \"reservas_con_esa_clave_en_la_nueva_primaria\": \"1\", \"tiempo_hasta_respuesta_valida_s\": 3.7, \"idempotency_key\": \"ef9a5839c6914a588ac9904152529a73\"}"
+    },
+    {
+      "prueba": "D1 la antigua primaria reiniciada a mano arranca CERRADA (witness: otro escritor), no recibe tráfico de HAProxy-BD y rechaza 20 intentos de escritura real directa, también con anulación del solo-lectura",
+      "ok": true,
+      "detalle": "{\"arranque\": \"[lab-entry] pg-aws arranca en modo fenced: el witness declara a otro nodo (o a ninguno) como escritor\", \"intentos\": 20, \"aceptados\": 0, \"ejemplo_de_rechazo\": \"psql: error: connection to server at \\\"pg-aws\\\" (172.29.241.3), port 5432 failed: FATAL:  pg_hba.conf \", \"haproxy_db\": {\"pg-aws\": \"DOWN\", \"pg-oci\": \"UP\"}, \"witness\": {\"writer\": \"pg-oci\", \"epoch\": 3, \"lease_remaining_s\": 5.63}}"
+    },
+    {
+      "prueba": "D2 las filas confirmadas solo en la antigua primaria se exportan a un archivo FUERA de Docker y se detecta el duplicado lógico por Idempotency-Key (misma clave, otra reserva)",
+      "ok": true,
+      "detalle": "{\"archivo\": \"huerfanas-pg-aws-1794338930.json\", \"tablas_con_huerfanas\": {\"reservations\": 1, \"tickets\": 1}, \"duplicados_logicos_por_idempotency_key\": [{\"orfana\": \"b90d710a-70ad-40f5-a709-f34db4840b2b\", \"idempotency_key\": \"ef9a5839c6914a588ac9904152529a73\", \"reserva_en_nueva_primaria\": \"c82e6b27-6b70-4ed5-aaf9-97e017f0d58d\"}]}"
+    },
+    {
+      "prueba": "D3 la antigua primaria se reconstruye como seguidora de la nueva (conteos idénticos), rechaza escrituras de la aplicación y el escritor sigue siendo pg-oci: no hubo retorno automático",
+      "ok": true,
+      "detalle": "{\"witness\": {\"writer\": \"pg-oci\", \"epoch\": 3, \"lease_remaining_s\": 5.65}, \"haproxy_db\": {\"pg-aws\": \"DOWN\", \"pg-oci\": \"UP\"}, \"promociones_automaticas_desde_la_caida\": 0}"
+    },
+    {
+      "prueba": "D4 retorno planificado a pg-aws (drenado, conteos iguales, aislamiento verificado, lease con época nueva): la aplicación escribe, la antigua se reconstruye como seguidora sin huérfanas y solo pg-aws acepta escrituras",
+      "ok": true,
+      "detalle": "{\"retorno_planificado_ok\": true, \"escritura_interrumpida_s_aprox\": 3.9, \"intentos_ok\": 62, \"intentos_con_error\": 32, \"huerfanas_en_la_que_se_retira\": {}, \"witness\": {\"writer\": \"pg-aws\", \"epoch\": 5, \"lease_remaining_s\": 5.69}}"
+    }
+  ],
+  "datos": {
+    "C1": {
+      "C1-natural-1": {
+        "induccion_de_retraso_s": 0.0,
+        "RTO_escritura_s_desde_la_orden_de_caida": 3.63,
+        "RTO_lectura_s": 3.69,
+        "lectura_primer_error_s": 0.06,
+        "lectura_ultimo_error_s": 3.46,
+        "deteccion_primera_sonda_fallida_s": 0.2,
+        "aislamiento_confirmado_s": 1.48,
+        "lease_otorgado_s": 2.54,
+        "haproxy_db_enruta_s": 3.57,
+        "escrituras_intentos": 1455,
+        "escrituras_confirmadas_al_cliente": 1399,
+        "de_ellas_repetidas_200_por_idempotencia": 0,
+        "errores_http_escritura": {
+          "503": 56
+        },
+        "lecturas": 299,
+        "errores_http_lectura": {
+          "503": 39
+        },
+        "retraso_de_replicacion_maximo_antes_de_caer_KiB": 42.9,
+        "RPO_transacciones_confirmadas_al_cliente_PERDIDAS": 0,
+        "RPO_ventana_s_(caida_menos_la_confirmacion_perdida_mas_antigua)": null,
+        "filas_en_la_nueva_primaria_sin_confirmar_al_cliente": 0,
+        "reservas_en_nueva_primaria": 1399,
+        "claves_distintas": 1399,
+        "reserved_count": "1399",
+        "suma_cantidades": "1399"
+      },
+      "C1-natural-2": {
+        "induccion_de_retraso_s": 0.0,
+        "RTO_escritura_s_desde_la_orden_de_caida": 3.55,
+        "RTO_lectura_s": 3.58,
+        "lectura_primer_error_s": 0.06,
+        "lectura_ultimo_error_s": 3.37,
+        "deteccion_primera_sonda_fallida_s": 0.23,
+        "aislamiento_confirmado_s": 1.39,
+        "lease_otorgado_s": 2.72,
+        "haproxy_db_enruta_s": 3.74,
+        "escrituras_intentos": 1431,
+        "escrituras_confirmadas_al_cliente": 1368,
+        "de_ellas_repetidas_200_por_idempotencia": 0,
+        "errores_http_escritura": {
+          "503": 63
+        },
+        "lecturas": 305,
+        "errores_http_lectura": {
+          "503": 40
+        },
+        "retraso_de_replicacion_maximo_antes_de_caer_KiB": 52.2,
+        "RPO_transacciones_confirmadas_al_cliente_PERDIDAS": 0,
+        "RPO_ventana_s_(caida_menos_la_confirmacion_perdida_mas_antigua)": null,
+        "filas_en_la_nueva_primaria_sin_confirmar_al_cliente": 0,
+        "reservas_en_nueva_primaria": 1368,
+        "claves_distintas": 1368,
+        "reserved_count": "1368",
+        "suma_cantidades": "1368"
+      },
+      "C1-natural-3": {
+        "induccion_de_retraso_s": 0.0,
+        "RTO_escritura_s_desde_la_orden_de_caida": 3.43,
+        "RTO_lectura_s": 3.31,
+        "lectura_primer_error_s": 0.05,
+        "lectura_ultimo_error_s": 3.17,
+        "deteccion_primera_sonda_fallida_s": 0.51,
+        "aislamiento_confirmado_s": 1.71,
+        "lease_otorgado_s": 2.67,
+        "haproxy_db_enruta_s": 3.44,
+        "escrituras_intentos": 1388,
+        "escrituras_confirmadas_al_cliente": 1340,
+        "de_ellas_repetidas_200_por_idempotencia": 0,
+        "errores_http_escritura": {
+          "503": 48
+        },
+        "lecturas": 301,
+        "errores_http_lectura": {
+          "503": 32
+        },
+        "retraso_de_replicacion_maximo_antes_de_caer_KiB": 39.9,
+        "RPO_transacciones_confirmadas_al_cliente_PERDIDAS": 0,
+        "RPO_ventana_s_(caida_menos_la_confirmacion_perdida_mas_antigua)": null,
+        "filas_en_la_nueva_primaria_sin_confirmar_al_cliente": 0,
+        "reservas_en_nueva_primaria": 1340,
+        "claves_distintas": 1340,
+        "reserved_count": "1340",
+        "suma_cantidades": "1340"
+      },
+      "C1-retraso-inducido": {
+        "induccion_de_retraso_s": 3.0,
+        "RTO_escritura_s_desde_la_orden_de_caida": 3.32,
+        "RTO_lectura_s": 3.28,
+        "lectura_primer_error_s": 0.04,
+        "lectura_ultimo_error_s": 3.03,
+        "deteccion_primera_sonda_fallida_s": 0.17,
+        "aislamiento_confirmado_s": 1.13,
+        "lease_otorgado_s": 2.35,
+        "haproxy_db_enruta_s": 3.37,
+        "escrituras_intentos": 1499,
+        "escrituras_confirmadas_al_cliente": 1443,
+        "de_ellas_repetidas_200_por_idempotencia": 0,
+        "errores_http_escritura": {
+          "503": 56
+        },
+        "lecturas": 321,
+        "errores_http_lectura": {
+          "503": 36
+        },
+        "retraso_de_replicacion_maximo_antes_de_caer_KiB": 589.7,
+        "RPO_transacciones_confirmadas_al_cliente_PERDIDAS": 351,
+        "RPO_ventana_s_(caida_menos_la_confirmacion_perdida_mas_antigua)": 3.0,
+        "filas_en_la_nueva_primaria_sin_confirmar_al_cliente": 0,
+        "reservas_en_nueva_primaria": 1092,
+        "claves_distintas": 1092,
+        "reserved_count": "1092",
+        "suma_cantidades": "1092"
+      }
+    },
+    "incidencias_de_registro": [
+      {
+        "usuario": "c0",
+        "intento": 1,
+        "respuesta": "('registro', 503, None)",
+        "t": 1794338696.28
+      }
+    ],
+    "C2": {
+      "C2a-natural": {
+        "respuesta_retenida_tras_confirmar": true,
+        "reserva_en_la_primaria_antes_de_caer": "3f9c1441-c6c1-4d69-9878-bb9dd40879ca",
+        "replicada_antes_de_caer": true,
+        "cliente_no_recibio_respuesta": true,
+        "reintentos_con_la_misma_clave": [
+          503,
+          503,
+          503,
+          503,
+          503,
+          503,
+          200
+        ],
+        "estado_final": 200,
+        "replayed": true,
+        "reservation_id_final": "3f9c1441-c6c1-4d69-9878-bb9dd40879ca",
+        "misma_reserva": true,
+        "reservas_con_esa_clave_en_la_nueva_primaria": "1",
+        "tiempo_hasta_respuesta_valida_s": 3.3,
+        "idempotency_key": "6920bf11848e425395cbe1882b666949"
+      },
+      "D-prep": {
+        "respuesta_retenida_tras_confirmar": true,
+        "reserva_en_la_primaria_antes_de_caer": "b90d710a-70ad-40f5-a709-f34db4840b2b",
+        "replicada_antes_de_caer": false,
+        "cliente_no_recibio_respuesta": true,
+        "reintentos_con_la_misma_clave": [
+          503,
+          503,
+          503,
+          503,
+          503,
+          503,
+          201
+        ],
+        "estado_final": 201,
+        "replayed": false,
+        "reservation_id_final": "c82e6b27-6b70-4ed5-aaf9-97e017f0d58d",
+        "misma_reserva": false,
+        "reservas_con_esa_clave_en_la_nueva_primaria": "1",
+        "tiempo_hasta_respuesta_valida_s": 3.7,
+        "idempotency_key": "ef9a5839c6914a588ac9904152529a73"
+      }
+    },
+    "D4": {
+      "retorno_planificado_ok": true,
+      "escritura_interrumpida_s_aprox": 3.9,
+      "intentos_ok": 62,
+      "intentos_con_error": 32,
+      "huerfanas_en_la_que_se_retira": {},
+      "witness": {
+        "writer": "pg-aws",
+        "epoch": 5,
+        "lease_remaining_s": 5.69
+      }
+    }
+  }
+}

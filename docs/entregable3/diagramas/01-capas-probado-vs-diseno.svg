@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" font-family="Helvetica, Arial, sans-serif">
+  <title>Capas de la integración AWS–OCI: qué está probado y qué es diseño</title>
+  <rect width="960" height="560" fill="#ffffff"/>
+  <text x="30" y="38" font-size="20" font-weight="700" fill="#1a1a1a">NexoEventos · Entregable 3 — qué está probado y dónde</text>
+  <text x="30" y="60" font-size="13" fill="#444">Cada capa indica el entorno REAL de la prueba. Docker local y diseño no se presentan como pruebas entre nubes.</text>
+
+  <!-- lane A -->
+  <rect x="30" y="80" width="900" height="98" rx="8" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5"/>
+  <text x="46" y="106" font-size="16" font-weight="700" fill="#1b5e20">A · Respaldo AWS → OCI</text>
+  <rect x="720" y="90" width="196" height="26" rx="13" fill="#2e7d32"/><text x="818" y="108" font-size="12" font-weight="700" text-anchor="middle" fill="#ffffff">PROBADO · AWS + OCI reales</text>
+  <text x="46" y="130" font-size="13" fill="#222">pg_dump 18.6 cifrado (CMS, clave independiente) → S3 → estación local → re-cifrado → bucket OCI sin sobrescritura.</text>
+  <text x="46" y="150" font-size="13" fill="#222">23-oct y 11-nov-2026. SHA-256 en cada salto. Límite: respaldo PUNTUAL (no continuo); RPO = momento del volcado.</text>
+  <text x="46" y="168" font-size="12" fill="#6a1b9a">Ciclo periódico + frescura (B-14/B-20): implementado, probado solo en LOCAL (14/14); NO validado en AWS–OCI, RPO sin medir.</text>
+
+  <!-- lane B -->
+  <rect x="30" y="188" width="900" height="88" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="46" y="210" font-size="16" font-weight="700" fill="#0d47a1">B · Restauración aislada</text>
+  <rect x="720" y="194" width="196" height="26" rx="13" fill="#1565c0"/><text x="818" y="212" font-size="12" font-weight="700" text-anchor="middle" fill="#ffffff">PROBADO · Docker LOCAL</text>
+  <text x="46" y="234" font-size="13" fill="#222">Respaldo del 11-nov descifrado con la clave privada de OCI y restaurado en PostgreSQL 18 desechable: 8–9 s, huella 10/10.</text>
+  <text x="46" y="254" font-size="13" fill="#222">No es una restauración dentro de OCI ni un RTO de producción.</text>
+
+  <!-- lane C -->
+  <rect x="30" y="288" width="900" height="92" rx="8" fill="#fff8e1" stroke="#ef6c00" stroke-width="1.5"/>
+  <text x="46" y="314" font-size="16" font-weight="700" fill="#bf360c">C · Despliegue de la aplicación en OCI</text>
+  <rect x="696" y="298" width="220" height="26" rx="13" fill="#ef6c00"/><text x="806" y="316" font-size="12" font-weight="700" text-anchor="middle" fill="#ffffff">PROBADO 1 vez · OCI real (23-oct)</text>
+  <text x="46" y="338" font-size="13" fill="#222">VM temporal E5.Flex: datos restaurados + aplicación + smoke test; recuperación completa 32 min 42 s, 14/14, huella 10/10.</text>
+  <text x="46" y="358" font-size="13" fill="#222">Con el respaldo ANTERIOR (23-oct). Con el del 11-nov no se repitió. VM y Bastion destruidos.</text>
+
+  <!-- lane D -->
+  <rect x="30" y="392" width="900" height="110" rx="8" fill="#fce4ec" stroke="#c62828" stroke-width="1.5"/>
+  <text x="46" y="418" font-size="16" font-weight="700" fill="#b71c1c">D · Failover multicloud AWS ↔ OCI</text>
+  <rect x="570" y="402" width="346" height="26" rx="13" fill="#c62828"/><text x="743" y="420" font-size="12" font-weight="700" text-anchor="middle" fill="#ffffff">DISEÑADO + SIMULADO · NO existe en la nube</text>
+  <text x="46" y="442" font-size="13" fill="#222">Diseño (informes 05–07): testigo con lease, compuerta que falla cerrada, respaldos frecuentes, conmutación controlada.</text>
+  <text x="46" y="462" font-size="13" fill="#222">Simulaciones solo en Docker (etapas A–F; F: 33/33): RTO de BD 3–4 s medido ENTRE CONTENEDORES, no entre AWS y OCI.</text>
+  <text x="46" y="482" font-size="13" fill="#222">No se afirma RPO cero ni disponibilidad continua. El fencing de Docker no es transferible a RDS.</text>
+
+  <text x="30" y="530" font-size="12" fill="#444">Leyenda: verde/azul/naranja = hay evidencia ejecutada (ver entorno); rojo = diseño y simulación. Fuente: docs/entregable3/ (informes 04–07, 12–14) y evidencias/.</text>
+</svg>

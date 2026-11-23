@@ -1,0 +1,100 @@
+---
+- name: Paquete de repositorio de Zabbix (verificado por SHA-256)
+  ansible.builtin.get_url:
+    url: "{{ zabbix_release_deb_url }}"
+    dest: /root/zabbix-release.deb
+    checksum: "sha256:{{ zabbix_release_deb_sha256 }}"
+    mode: "0600"
+
+- name: Instalar el repositorio de Zabbix
+  ansible.builtin.apt: { deb: /root/zabbix-release.deb, lock_timeout: 300 }
+
+- name: En arm64 el repositorio de Zabbix usa otra ruta (solo pruebas locales; la VM de Azure es amd64)
+  ansible.builtin.replace:
+    path: /etc/apt/sources.list.d/zabbix.sources
+    regexp: '^(URIs: https://repo\.zabbix\.com/zabbix/[0-9.]+/ubuntu)$'
+    replace: '\1-arm64'
+  when: ansible_architecture == 'aarch64'
+
+- name: Paquetes de Zabbix (versión fijada) y agente 2
+  ansible.builtin.apt:
+    name:
+      - "zabbix-server-pgsql={{ zabbix_package_version }}"
+      - "zabbix-frontend-php={{ zabbix_package_version }}"
+      - "zabbix-nginx-conf={{ zabbix_package_version }}"
+      - "zabbix-sql-scripts={{ zabbix_package_version }}"
+      - "zabbix-agent2={{ zabbix_package_version }}"
+      - php8.3-fpm
+      - php8.3-pgsql        # sin este módulo el frontend solo admite MySQL («DB type POSTGRESQL is not supported»)
+    update_cache: true
+    lock_timeout: 300
+    state: present
+
+- name: ¿Está importado el esquema de Zabbix?
+  ansible.builtin.command: psql -Atc "select count(*) from information_schema.tables where table_schema='public' and table_name='users'" {{ zabbix_db_name }}
+  become: true
+  become_user: postgres
+  register: _schema
+  changed_when: false
+
+- name: Importar el esquema inicial (una sola vez)
+  ansible.builtin.shell: set -o pipefail; zcat /usr/share/zabbix-sql-scripts/postgresql/server.sql.gz | psql -v ON_ERROR_STOP=1 -q {{ zabbix_db_name }}
+  args: { executable: /bin/bash }
+  environment: { PGPASSWORD: "{{ _pw_db }}", PGHOST: 127.0.0.1, PGUSER: "{{ zabbix_db_user }}" }
+  changed_when: true
+  when: _schema.stdout | trim == '0'
+  no_log: true
+
+- name: Configuración del servidor Zabbix
+  ansible.builtin.lineinfile:
+    path: /etc/zabbix/zabbix_server.conf
+    regexp: '^#?\s*{{ item.key }}='
+    line: "{{ item.key }}={{ item.value }}"
+    mode: "0640"
+  loop:
+    - { key: DBHost, value: "127.0.0.1" }
+    - { key: DBName, value: "{{ zabbix_db_name }}" }
+    - { key: DBUser, value: "{{ zabbix_db_user }}" }
+    - { key: DBPassword, value: "{{ _pw_db }}" }
+    - { key: AlertScriptsPath, value: /usr/lib/zabbix/alertscripts }
+  loop_control: { label: "{{ item.key }}" }
+  no_log: true
+  notify: Reiniciar Zabbix server
+
+- name: Ajustes de memoria y procesos del servidor (D2s_v4 de 8 GiB)
+  ansible.builtin.lineinfile:
+    path: /etc/zabbix/zabbix_server.conf
+    regexp: '^#?\s*{{ item.key }}='
+    line: "{{ item.key }}={{ item.value }}"
+  loop: "{{ zabbix_server_tuning | dict2items }}"
+  loop_control: { label: "{{ item.key }}" }
+  notify: Reiniciar Zabbix server
+
+- name: Agente 2 local (las sondas HTTP/TLS usan web.page.perf y web.certificate.get)
+  ansible.builtin.lineinfile:
+    path: /etc/zabbix/zabbix_agent2.conf
+    regexp: '^#?\s*{{ item.key }}='
+    line: "{{ item.key }}={{ item.value }}"
+  loop:
+    - { key: Server, value: "{{ zabbix_agent2_server }}" }
+    - { key: ServerActive, value: "127.0.0.1" }
+    - { key: Hostname, value: azure-obs }
+    - { key: ListenIP, value: "127.0.0.1" }
+  loop_control: { label: "{{ item.key }}" }
+  notify: Reiniciar Zabbix agent2
+
+- name: Registro local de alertas — script del tipo de medio (sin red, sin secretos)
+  ansible.builtin.template:
+    src: nexo-alert-log.sh.j2
+    dest: /usr/lib/zabbix/alertscripts/nexo-alert-log.sh
+    owner: root
+    group: zabbix
+    mode: "0750"
+
+- name: Archivo de registro de alertas
+  ansible.builtin.file: { path: "{{ zabbix_alert_log }}", state: touch, owner: zabbix, group: zabbix, mode: "0640", modification_time: preserve, access_time: preserve }
+
+- name: Servicios de Zabbix
+  ansible.builtin.systemd: { name: "{{ item }}", state: started, enabled: true }
+  loop: [zabbix-server, zabbix-agent2]
+  when: monitoring_manage_services | bool

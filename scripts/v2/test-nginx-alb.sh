@@ -6,10 +6,11 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/../.."
 PY="${PYTHON:-python3}"
 TMP="$(mktemp -d)"; trap 'docker rm -f nx-v2-up nx-v2-web >/dev/null 2>&1 || true; rm -rf "$TMP"' EXIT
-render() { "$PY" - "$1" <<'PY'
-import sys, jinja2
+render() { # la plantilla solo usa dos variables simples: se sustituyen sin depender de jinja2
+"$PY" - "$1" <<'PY'
+import sys
 t = open("ansible/roles/nexoeventos/templates/nexoeventos-nginx-alb.conf.j2").read()
-print(jinja2.Template(t).render(nexoeventos_alb_cidr=sys.argv[1], nexoeventos_release_root="/usr/share/nginx/html-x"))
+print(t.replace("{{ nexoeventos_alb_cidr }}", sys.argv[1]).replace("{{ nexoeventos_release_root }}", "/usr/share/nginx/html-x"))
 PY
 }
 cat >"$TMP/fake_api.py" <<'PY'
@@ -18,7 +19,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 class H(BaseHTTPRequestHandler):
     def do_GET(self):
         body = json.dumps({"path": self.path, "xff": self.headers.get("X-Forwarded-For"), "real_ip": self.headers.get("X-Real-IP"), "proto": self.headers.get("X-Forwarded-Proto")}).encode()
-        self.send_response(200 if self.path in ("/ready", "/api/x") else 404); self.send_header("Content-Type", "application/json"); self.end_headers(); self.wfile.write(body)
+        self.send_response(200 if self.path in ("/ready", "/health", "/api/x") else 404); self.send_header("Content-Type", "application/json"); self.end_headers(); self.wfile.write(body)
     def log_message(self, *a): pass
 HTTPServer(("127.0.0.1", 8000), H).serve_forever()
 PY
@@ -45,6 +46,7 @@ PY
 fail=0; ok() { echo "OK    $1"; }; bad() { echo "FALLÓ $1 — $2"; fail=1; }
 run_nginx "127.0.0.1/32"
 r="$(get /healthz)"; [[ "$(jq -r .body.path <<<"$r")" == "/ready" && "$(jq -r .status <<<"$r")" == 200 ]] && ok "/healthz llega a /ready (200) con el host de la IP de la instancia" || bad "/healthz" "$r"
+r="$(get /livez)"; [[ "$(jq -r .body.path <<<"$r")" == "/health" && "$(jq -r .status <<<"$r")" == 200 ]] && ok "/livez llega a /health (liveness sin base de datos)" || bad "/livez" "$r"
 r="$(get /api/x 198.51.100.9)"; [[ "$(jq -r .body.xff <<<"$r")" == 198.51.100.9 && "$(jq -r .body.real_ip <<<"$r")" == 198.51.100.9 ]] && ok "(a) red de confianza: se usa la IP real del cliente" || bad "(a)" "$r"
 r="$(get /api/x '10.9.9.9, 198.51.100.9')"; [[ "$(jq -r .body.xff <<<"$r")" == 198.51.100.9 ]] && ok "(b) valor falsificado a la izquierda ignorado (gana la dirección que añadió el ALB)" || bad "(b)" "$r"
 [[ "$(jq -r .body.proto <<<"$r")" == https && "$(jq -r .csp <<<"$r")" == true && "$(jq -r .hsts <<<"$r")" == true ]] && ok "(e) X-Forwarded-Proto https y cabeceras de seguridad presentes" || bad "(e)" "$r"

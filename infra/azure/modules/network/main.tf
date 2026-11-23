@@ -26,7 +26,10 @@ resource "azurerm_subnet" "monitoring" {
   address_prefixes     = [var.subnet_cidr]
 }
 
-# NSG: sin reglas abiertas a Internet. SSH y HTTPS (Nginx → Grafana/Zabbix) solo desde la IP del operador; 10051 solo desde las IPs de AWS indicadas (Fase B).
+# NSG de mínimo privilegio.
+#   Entrada: SSH (22) y HTTPS (443: Nginx → Grafana/Zabbix, también la API de Zabbix para cargar series históricas) SOLO desde admin_cidr (/32); 10051 solo si se autorizan IPs de AWS
+#            (Fase B, agentes activos). Regla explícita de denegación del resto.
+#   Salida: solo 443/80 (sondas, repositorios y paquetes), DNS (53) y NTP (123) hacia Internet, y el servicio de plataforma de Azure (168.63.129.16). Se deniega el resto hacia Internet.
 resource "azurerm_network_security_group" "monitoring" {
   name                = "nsg-nexoeventos-obs"
   resource_group_name = azurerm_resource_group.this.name
@@ -34,9 +37,9 @@ resource "azurerm_network_security_group" "monitoring" {
   tags                = var.tags
 
   dynamic "security_rule" {
-    for_each = var.admin_cidr == "" ? [] : [22, 443]
+    for_each = var.admin_cidr == "" ? {} : { "ssh" = 22, "https" = 443 }
     content {
-      name                       = "admin-${security_rule.value}"
+      name                       = "admin-${security_rule.key}"
       priority                   = 100 + security_rule.value % 100
       direction                  = "Inbound"
       access                     = "Allow"
@@ -51,7 +54,7 @@ resource "azurerm_network_security_group" "monitoring" {
   dynamic "security_rule" {
     for_each = length(var.zabbix_agent_source_cidrs) == 0 ? [] : [1]
     content {
-      name                       = "zabbix-trapper"
+      name                       = "zabbix-agentes-activos"
       priority                   = 300
       direction                  = "Inbound"
       access                     = "Allow"
@@ -61,6 +64,64 @@ resource "azurerm_network_security_group" "monitoring" {
       source_address_prefixes    = var.zabbix_agent_source_cidrs
       destination_address_prefix = "*"
     }
+  }
+
+  security_rule {
+    name                       = "deny-all-inbound"
+    priority                   = 4096
+    direction                  = "Inbound"
+    access                     = "Deny"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "allow-azure-platform-out"
+    priority                   = 100
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "168.63.129.16/32"
+  }
+  security_rule {
+    name                       = "allow-web-out"
+    priority                   = 200
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_ranges    = ["80", "443"]
+    source_address_prefix      = "*"
+    destination_address_prefix = "Internet"
+  }
+  security_rule {
+    # Solo NTP (UDP/123). El DNS de la VM sale por el resolvedor de Azure (168.63.129.16, regla 100), por lo que ya no se abre el 53 a Internet.
+    name                       = "allow-ntp-out"
+    priority                   = 210
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "Udp"
+    source_port_range          = "*"
+    destination_port_ranges    = ["123"]
+    source_address_prefix      = "*"
+    destination_address_prefix = "Internet"
+  }
+  security_rule {
+    name                       = "deny-internet-out"
+    priority                   = 4000
+    direction                  = "Outbound"
+    access                     = "Deny"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "Internet"
   }
 }
 

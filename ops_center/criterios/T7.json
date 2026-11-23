@@ -1,0 +1,26 @@
+{
+ "stage": "T7",
+ "title": "Flujo operativo desde Azure",
+ "criteria": [
+  {
+   "id": "flujo_solicitud_aprobacion_auditado",
+   "kind": "bool",
+   "desc": "solicitar → validar → aprobar → registrar"
+  },
+  {
+   "id": "nada_ejecutado_por_el_centro",
+   "kind": "bool",
+   "desc": "el centro no ejecutó ninguna acción"
+  },
+  {
+   "id": "capturas_con_fecha_y_url",
+   "kind": "bool",
+   "desc": "capturas con barra de direcciones y fecha"
+  },
+  {
+   "id": "auditoria_integra",
+   "kind": "bool",
+   "desc": "verify-audit íntegro"
+  }
+ ]
+}

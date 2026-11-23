@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 660" font-family="Helvetica, Arial, sans-serif" font-size="14">
+<title>Arquitectura multicloud — AWS producción, OCI recuperación, Azure observabilidad</title>
+<desc>Respaldo cifrado de AWS a OCI; recuperación probada en OCI; monitoreo externo con Zabbix y Grafana en Azure. Fuente: docs/multicloud y evidencias del 23 y 28 de octubre de 2026.</desc>
+<rect width="1200" height="660" fill="#ffffff"/>
+<text x="24" y="30" font-size="20" font-weight="bold" fill="#1a1a1a">Figura 3. Extensión multicloud de la V2</text>
+<text x="24" y="50" fill="#555">AWS sirve la aplicación; OCI guarda y restaura la copia cifrada; Azure observa desde fuera de AWS. Cada nube tiene su estado Terraform.</text>
+<defs><marker id="a" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#333"/></marker></defs>
+<!-- AWS -->
+<rect x="24" y="110" width="330" height="500" rx="12" fill="#fff8ec" stroke="#d99a2b" stroke-width="2"/>
+<text x="189" y="138" text-anchor="middle" font-weight="bold" fill="#8a5a00" font-size="16">AWS — producción</text>
+<rect x="44" y="156" width="290" height="76" rx="8" fill="#fff" stroke="#d99a2b"/><text x="189" y="182" text-anchor="middle" font-weight="bold">ALB + ASG 2–3 EC2 (2 zonas)</text><text x="189" y="204" text-anchor="middle" fill="#444">Nginx + FastAPI + React</text>
+<rect x="44" y="248" width="290" height="76" rx="8" fill="#fff" stroke="#d99a2b"/><text x="189" y="274" text-anchor="middle" font-weight="bold">RDS PostgreSQL Multi-AZ</text><text x="189" y="296" text-anchor="middle" fill="#444">privada · cifrada · failover ≈ 14 s</text>
+<rect x="44" y="340" width="290" height="76" rx="8" fill="#fff" stroke="#d99a2b"/><text x="189" y="366" text-anchor="middle" font-weight="bold">S3 privado (versionado, SSE-S3)</text><text x="189" y="388" text-anchor="middle" fill="#444">respaldo lógico cifrado (CMS, AES-256)</text>
+<rect x="44" y="432" width="290" height="60" rx="8" fill="#fff" stroke="#d99a2b"/><text x="189" y="458" text-anchor="middle" font-weight="bold">CloudWatch · Secrets Manager</text><text x="189" y="478" text-anchor="middle" fill="#444">métricas, logs 7 días, secretos</text>
+<text x="189" y="530" text-anchor="middle" fill="#555" font-size="12">Laboratorio de AWS Academy: EC2 y RDS</text><text x="189" y="548" text-anchor="middle" fill="#555" font-size="12">detenidas entre sesiones; la V2 se</text><text x="189" y="566" text-anchor="middle" fill="#555" font-size="12">destruyó tras medirla (22-oct-2026).</text>
+<!-- OCI -->
+<rect x="424" y="110" width="330" height="500" rx="12" fill="#fdecec" stroke="#c0392b" stroke-width="2"/>
+<text x="589" y="138" text-anchor="middle" font-weight="bold" fill="#8a1f14" font-size="16">OCI — recuperación (São Paulo)</text>
+<rect x="444" y="156" width="290" height="76" rx="8" fill="#fff" stroke="#c0392b"/><text x="589" y="182" text-anchor="middle" font-weight="bold">IAM de mínimo privilegio</text><text x="589" y="204" text-anchor="middle" fill="#444">carga: crear/leer objetos solo en el bucket</text>
+<rect x="444" y="248" width="290" height="76" rx="8" fill="#fff" stroke="#c0392b"/><text x="589" y="274" text-anchor="middle" font-weight="bold">VCN 10.30.0.0/16 · subred privada</text><text x="589" y="296" text-anchor="middle" fill="#444">NSG · Service Gateway · sin IP pública</text>
+<rect x="444" y="340" width="290" height="76" rx="8" fill="#fff" stroke="#c0392b"/><text x="589" y="366" text-anchor="middle" font-weight="bold">Bucket privado versionado</text><text x="589" y="388" text-anchor="middle" fill="#444">recifrado con clave independiente</text>
+<rect x="444" y="432" width="290" height="76" rx="8" fill="#fff" stroke="#c0392b" stroke-dasharray="5 4"/><text x="589" y="458" text-anchor="middle" font-weight="bold">VM de recuperación (temporal)</text><text x="589" y="480" text-anchor="middle" fill="#444">PostgreSQL + FastAPI + Nginx · Bastion</text>
+<text x="589" y="530" text-anchor="middle" fill="#555" font-size="12">Probada y destruida el 23-oct-2026:</text><text x="589" y="548" text-anchor="middle" fill="#555" font-size="12">14/14 pruebas funcionales; 32 min 42 s</text><text x="589" y="566" text-anchor="middle" fill="#555" font-size="12">desde el apply hasta las pruebas completas.</text>
+<!-- Azure -->
+<rect x="824" y="110" width="330" height="500" rx="12" fill="#eaf4ff" stroke="#2b6cb0" stroke-width="2"/>
+<text x="989" y="138" text-anchor="middle" font-weight="bold" fill="#17406e" font-size="16">Azure — observabilidad (centralus)</text>
+<rect x="844" y="156" width="290" height="76" rx="8" fill="#fff" stroke="#2b6cb0"/><text x="989" y="182" text-anchor="middle" font-weight="bold">VM D2s_v4 · Ubuntu 24.04</text><text x="989" y="204" text-anchor="middle" fill="#444">Zabbix 7.0 · Grafana · PostgreSQL 16</text>
+<rect x="844" y="248" width="290" height="76" rx="8" fill="#fff" stroke="#2b6cb0"/><text x="989" y="274" text-anchor="middle" font-weight="bold">NSG: 22/443 solo desde el operador</text><text x="989" y="296" text-anchor="middle" fill="#444">salida limitada · identidad de solo lectura</text>
+<rect x="844" y="340" width="290" height="76" rx="8" fill="#fff" stroke="#2b6cb0"/><text x="989" y="366" text-anchor="middle" font-weight="bold">Azure Monitor + Log Analytics</text><text x="989" y="388" text-anchor="middle" fill="#444">3 alertas de métricas · grupo de acción</text>
+<rect x="844" y="432" width="290" height="76" rx="8" fill="#fff" stroke="#2b6cb0"/><text x="989" y="458" text-anchor="middle" font-weight="bold">Apagado automático + presupuesto</text><text x="989" y="480" text-anchor="middle" fill="#444">desasigna cada día · presupuesto solo avisa</text>
+<text x="989" y="530" text-anchor="middle" fill="#555" font-size="12">Ventana del 28-oct-2026 (1,4 h): alerta de</text><text x="989" y="548" text-anchor="middle" fill="#555" font-size="12">CPU disparada a los 17 min 54 s;</text><text x="989" y="566" text-anchor="middle" fill="#555" font-size="12">VM desasignada al terminar.</text>
+<!-- flechas -->
+<path d="M334,378 L444,378" stroke="#333" stroke-width="2.4" fill="none" marker-end="url(#a)"/>
+<text x="389" y="338" text-anchor="middle" fill="#333" font-size="11">respaldo</text><text x="389" y="351" text-anchor="middle" fill="#333" font-size="11">cifrado +</text><text x="389" y="364" text-anchor="middle" fill="#333" font-size="11">SHA-256</text>
+<path d="M1140,110 L1140,92 L300,92 L300,156" stroke="#2b6cb0" stroke-width="2" stroke-dasharray="7 5" fill="none" marker-end="url(#a)"/>
+<text x="589" y="86" text-anchor="middle" fill="#17406e" font-size="12">sondas HTTP(S) de Zabbix a /healthz y /api/events (monitoreo externo)</text>
+<text x="24" y="640" fill="#777" font-size="12">Fuente: docs/multicloud/*, docs/evidencias/multicloud/{aws,oci,azure}. En Azure, los datos de AWS y OCI son históricos (history.push); las mediciones en vivo son solo de la VM de Azure.</text>
+</svg>

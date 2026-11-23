@@ -1,0 +1,52 @@
+---
+# Rol: Zabbix Server 7.0 LTS + PostgreSQL + Grafana en Ubuntu 24.04 (VM de monitoreo de Azure).
+# Sin secretos en el repositorio: las contraseñas se generan en la estación de control (ansible.builtin.password) dentro de monitoring_secrets_dir (work/, ignorado por Git, 0700).
+
+monitoring_fqdn: ""                    # OBLIGATORIO: nombre DNS de la VM (<etiqueta>.<región>.cloudapp.azure.com); se usa en el certificado y en las URLs
+monitoring_admin_cidr: ""              # OBLIGATORIO: IP /32 del operador (UFW del invitado; igual que el NSG)
+monitoring_secrets_dir: "{{ playbook_dir }}/../../work/ansible-secrets/monitoring"
+monitoring_manage_services: true       # false solo en la prueba en contenedor (sin systemd)
+monitoring_host_hardening: true        # swap, sysctl, UFW, SSH; false solo en la prueba en contenedor
+monitoring_min_memory_mb: 7000         # Standard_D2s_v4 = 8 GiB (≈7,7 GiB útiles); B2s está restringida para Azure for Students
+monitoring_swap_mb: 2048
+
+# --- Zabbix (repositorio oficial, paquete de repositorio fijado por SHA-256) ---
+zabbix_release_deb_url: "https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.0+ubuntu24.04_all.deb"
+zabbix_release_deb_sha256: "4f206504c2bc1cff36edf762e2274d0686b0e796b772533c95d04bbe265654de"
+zabbix_package_version: "1:7.0.32-2+ubuntu24.04"
+zabbix_db_name: zabbix
+zabbix_db_user: zabbix
+zabbix_server_tuning:                   # caches moderadas (la pila medida usa ≈1,6 GiB; ver docs/multicloud/09-azure-observabilidad.md)
+  CacheSize: 32M
+  HistoryCacheSize: 16M
+  HistoryIndexCacheSize: 4M
+  TrendCacheSize: 4M
+  ValueCacheSize: 8M
+  StartPollers: 3
+  StartTrappers: 2
+  StartHTTPPollers: 2
+  StartPingers: 1
+  StartDBSyncers: 2
+  StartPreprocessors: 3
+  Timeout: 10
+zabbix_agent2_server: "127.0.0.1"
+nexo_probe_host: "nexoeventos-demo.duckdns.org"   # servicio vigilado por las sondas HTTP/TLS (Fase A; no se enciende AWS por esto)
+zabbix_alert_log: /var/log/zabbix/alertas-nexoeventos.log
+zabbix_smtp_server: ""                  # opcional: si se define, se configura el tipo de medio Email (usuario/clave en monitoring_secrets_dir/smtp.env; nunca en Git)
+zabbix_smtp_from: ""
+zabbix_alert_email: ""
+
+# --- PostgreSQL (paquete de Ubuntu 24.04: 16) ---
+postgres_tuning:
+  shared_buffers: 256MB
+  work_mem: 4MB
+  maintenance_work_mem: 64MB
+  effective_cache_size: 1GB
+  max_connections: 50
+  synchronous_commit: "off"
+
+# --- Grafana OSS (repositorio oficial de APT, clave pública incluida en el rol) ---
+grafana_package_version: ""             # vacío = última del repositorio; el hash/versión instalados se registran como evidencia
+grafana_plugins: [alexanderzobnin-zabbix-app]
+grafana_azure_subscription_id: ""       # para el origen de datos Azure Monitor con identidad administrada (sin claves)
+nginx_server_tokens: "off"

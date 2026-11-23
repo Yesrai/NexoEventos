@@ -1,0 +1,31 @@
+Available Memory Bytes (mínimo por minuto, MiB, UTC) 22:40–23:10
+22:40 sin datos
+22:41 sin datos
+22:42 sin datos
+22:43 sin datos
+22:44 sin datos
+22:45 sin datos
+22:46 sin datos
+22:47 sin datos
+22:48 0
+22:49 6758
+22:50 6948
+22:51 6950
+22:52 6955
+22:53 6970
+22:54 6969
+22:55 6970
+22:56 6971
+22:57 6971
+22:58 6970
+22:59 6971
+23:00 6971
+23:01 sin datos
+23:02 sin datos
+23:03 sin datos
+23:04 sin datos
+23:05 sin datos
+23:06 sin datos
+23:07 sin datos
+23:08 sin datos
+23:09 sin datos

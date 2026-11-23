@@ -1,0 +1,41 @@
+Consulta de solo lectura de OCI — 2026-11-10 21:45 — script v3 SHA-256 294755a67d59b72abd00850ef38b1574628a46ab51aadfd61e9c474145e31c29 (versión autorizada)
+Salida ya filtrada por el propio script.
+
+== 1. Región de origen y suscripciones de región
++--------+--------+---------------+
+| estado | origen | region        |
++--------+--------+---------------+
+| READY  | True   | sa-saopaulo-1 |
++--------+--------+---------------+
+== 2. Compartment nexoeventos (su OCID no se imprime)
+== 3. Red existente: VCN, subredes, Internet/NAT/Service Gateway
+<largo-oculto>
+| cidr             | estado    | nombre                   |
+<largo-oculto>
+| ['<ip>/16'] | AVAILABLE | nexoeventos-recovery-vcn |
+<largo-oculto>
+<largo-oculto>
+| cidr         | nombre                       | sin_ip_publica |
+<largo-oculto>
+| <ip>/24 | nexoeventos-recovery-private | True           |
+<largo-oculto>
+
+
+<largo-oculto>
+| estado    | nombre                   |
+<largo-oculto>
+| AVAILABLE | nexoeventos-recovery-sgw |
+<largo-oculto>
+== 4. Instancias (¿queda alguna?) y buckets
+
++----------------------+
+| nombre               |
++----------------------+
+| nexoeventos-recovery |
++----------------------+
+== 5. Límites de cómputo (cuota disponible; NO es un informe de capacidad de hosts, que sería una operación de creación y queda fuera)
+Usage: oci [OPTIONS] [COMMAND] [ARGS]...
+
+Error: Invalid value for '--output': 'text' is not one of 'json', 'table'.
+DETENIDO: 'oci limits definition list' falló (código 2). Causa probable: credenciales, permisos o red. El script NO intenta repararlo ni instalar nada.
+código de salida: 3

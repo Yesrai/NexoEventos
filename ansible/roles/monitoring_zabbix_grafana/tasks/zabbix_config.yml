@@ -1,0 +1,53 @@
+---
+- name: Directorio de scripts
+  ansible.builtin.file: { path: /usr/local/lib/nexo-obs, state: directory, owner: root, group: root, mode: "0750" }
+
+- name: Scripts de configuración de Zabbix (cliente de API + configuración idempotente)
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../scripts/observability/{{ item }}"
+    dest: "/usr/local/lib/nexo-obs/{{ item }}"
+    owner: root
+    group: root
+    mode: "0750"
+  loop: [zbx.py, zabbix_configure.py]
+
+- name: Plantillas de NexoEventos (Zabbix)
+  ansible.builtin.copy:
+    src: "zabbix/{{ item }}"
+    dest: "/usr/local/lib/nexo-obs/{{ item }}"
+    owner: root
+    group: root
+    mode: "0640"
+  loop: [template_nexoeventos_probes.yaml, template_nexoeventos_historical.yaml]
+
+- name: Contraseñas para el script (archivos 0600 en /root; se borran al terminar)
+  ansible.builtin.copy: { content: "{{ item.v }}", dest: "/root/.nexo-obs-{{ item.n }}", mode: "0600" }
+  loop:
+    - { n: admin, v: "{{ _pw_zbx_admin }}" }
+    - { n: grafana, v: "{{ _pw_grafana_ro }}" }
+  loop_control: { label: "{{ item.n }}" }
+  no_log: true
+
+- name: Configurar Zabbix por API (hosts, usuarios de mínimo privilegio, medios y acción de alertas)
+  ansible.builtin.command:
+    argv: >-
+      {{ ['python3', '/usr/local/lib/nexo-obs/zabbix_configure.py', '--url', 'https://127.0.0.1/zabbix', '--insecure',
+          '--admin-password-file', '/root/.nexo-obs-admin', '--grafana-password-file', '/root/.nexo-obs-grafana',
+          '--token-out', '/root/.nexo-obs-history-token', '--templates-dir', '/usr/local/lib/nexo-obs',
+          '--probe-host', nexo_probe_host]
+         + (['--smtp-server', zabbix_smtp_server, '--smtp-from', zabbix_smtp_from, '--alert-email', zabbix_alert_email] if zabbix_smtp_server | length > 0 else []) }}
+  register: _zcfg
+  changed_when: true
+  when: monitoring_manage_services | bool
+
+- name: Traer el token de carga histórica a la estación de control (0600; no se imprime)
+  ansible.builtin.fetch:
+    src: /root/.nexo-obs-history-token
+    dest: "{{ monitoring_secrets_dir }}/history_push_token"
+    flat: true
+  no_log: true
+  when: monitoring_manage_services | bool
+
+- name: Quitar los archivos de contraseñas temporales de la VM
+  ansible.builtin.file: { path: "/root/.nexo-obs-{{ item }}", state: absent }
+  loop: [admin, grafana]

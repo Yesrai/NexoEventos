@@ -1,0 +1,17 @@
+azurerm_dev_test_global_vm_shutdown_schedule.vm[0]
+azurerm_role_assignment.grafana_monitoring_reader[0]
+module.budget.azurerm_consumption_budget_subscription.this
+module.monitor.azurerm_log_analytics_workspace.this
+module.monitor.azurerm_monitor_action_group.ops[0]
+module.monitor.azurerm_monitor_diagnostic_setting.activity[0]
+module.monitor.azurerm_monitor_metric_alert.vm["cpu"]
+module.monitor.azurerm_monitor_metric_alert.vm["mem"]
+module.monitor.azurerm_monitor_metric_alert.vm["up"]
+module.network.azurerm_network_security_group.monitoring
+module.network.azurerm_resource_group.this
+module.network.azurerm_subnet.monitoring
+module.network.azurerm_subnet_network_security_group_association.monitoring
+module.network.azurerm_virtual_network.this
+module.vm.azurerm_linux_virtual_machine.this[0]
+module.vm.azurerm_network_interface.this[0]
+module.vm.azurerm_public_ip.this[0]

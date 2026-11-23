@@ -1,0 +1,23 @@
+# Sonda rápida (T5): GET /livez cada 5 s con marcas UTC en ms. NO se habilita de forma permanente: se arranca SOLO durante una ventana de prueba (systemctl start) y se detiene al cerrarla.
+[Unit]
+Description=NexoEventos - Sonda rápida de AWS (T5; solo durante la ventana de prueba)
+After=network-online.target
+
+[Service]
+Type=simple
+User=opscenter
+Group=opscenter
+WorkingDirectory=/opt/nexoeventos
+Environment=PYTHONPATH=/opt/nexoeventos:/opt/nexoeventos/backend
+Environment=OPS_CENTER_STATE_DIR=/var/lib/ops-center
+ExecStart=/opt/nexoeventos/venv/bin/python -m ops_center fastprobe --targets /etc/ops-center/targets.json --cloud aws --interval 5 --timeout 3 --burst 6
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/ops-center
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+UMask=0077

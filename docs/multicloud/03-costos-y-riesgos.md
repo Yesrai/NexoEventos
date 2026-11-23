@@ -12,7 +12,7 @@
 | AWS | Transferencia de respaldos a OCI | despreciable (dump ≈ 80 KB; AWS cobra salida ≈ USD 0,09/GB tras 100 GB gratis) |
 | OCI | Cuenta y recursos *Always Free* (VM E2.1.Micro, 20 GiB de Object Storage, VCN, NSG, Service Gateway, Bastion) | ≈ USD 0 (**verificar** región de origen, capacidad y tratamiento del NAT gateway) |
 | OCI | Si no hay capacidad Always Free | crédito de prueba de OCI; coste de una VM pequeña por horas ≈ centavos |
-| Azure | VM B2s ≈ USD 0,04/h solo en ventanas (p. ej. 40 h/mes ≈ 1,7) | ≈ USD 2/mes |
+| Azure | VM D2s_v4 USD 0,108/h (la B2s está restringida; tarifa pública 28-oct-2026) solo en ventanas (p. ej. 40 h/mes ≈ 4,3) | ≈ USD 4/mes |
 | Azure | Disco SSD estándar 64 GiB (persistente) + IP pública estática (si no se libera) | ≈ USD 5 + 3,6 /mes |
 | Azure | Log Analytics (5 GB/mes gratis), pruebas de disponibilidad externas | ≈ USD 0–3/mes (**verificar**) |
 | **Total mensual aprox.** | AWS ≈ 7–10 · OCI ≈ 0 · Azure ≈ 8–12 | **≈ USD 15–22/mes** (Azure dentro de los USD 100 informados si el crédito se confirma) |

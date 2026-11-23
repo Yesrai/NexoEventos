@@ -1,0 +1,31 @@
+{
+ "stage": "T8",
+ "title": "Cierre y limpieza",
+ "criteria": [
+  {
+   "id": "aws_sin_recursos_facturables",
+   "kind": "bool",
+   "desc": "0 EC2/ALB/NAT/EIP; RDS detenida"
+  },
+  {
+   "id": "oci_sin_recursos_temporales",
+   "kind": "bool",
+   "desc": "VM, IGW, IP y PAR eliminados"
+  },
+  {
+   "id": "azure_vm_desasignada",
+   "kind": "bool",
+   "desc": "VM desasignada"
+  },
+  {
+   "id": "tokens_y_claves_revocados",
+   "kind": "bool",
+   "desc": "tokens del centro y claves temporales revocados"
+  },
+  {
+   "id": "paquete_cifrado_nuevo_verificado",
+   "kind": "bool",
+   "desc": "paquete nuevo copiado a Drive/OneDrive y reverificado"
+  }
+ ]
+}

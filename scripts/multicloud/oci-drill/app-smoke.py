@@ -10,8 +10,8 @@ from datetime import datetime, timezone
 import httpx
 
 CLIENT = "smoke-1791073267-26124@example.com"; OPERATOR = "operador.demo@example.com"
-ap = argparse.ArgumentParser(); ap.add_argument("--out", required=True); ap.add_argument("--base", default="https://localhost:8443")
-ap.add_argument("--reset-creds", action="store_true"); ap.add_argument("--ssh-port", default="2222"); ap.add_argument("--ssh-key", default=os.path.expanduser("~/.ssh/nexoeventos_recovery")); a = ap.parse_args()
+ap = argparse.ArgumentParser(); ap.add_argument("--out", required=True); ap.add_argument("--base", default="https://localhost:8443"); ap.add_argument("--cafile", help="certificado a FIJAR (acceso público de prueba); sin él, túnel local con certificado efímero sin verificar")
+ap.add_argument("--reset-creds", action="store_true"); ap.add_argument("--read-only", action="store_true", help="recuperación aislada: solo lecturas; comprueba además que las escrituras son RECHAZADAS"); ap.add_argument("--ssh-port", default="2222"); ap.add_argument("--ssh-key", default=os.path.expanduser("~/.ssh/nexoeventos_recovery")); a = ap.parse_args()
 t0 = time.time(); res = []; BASE = a.base; extra = {}
 
 
@@ -20,7 +20,7 @@ def check(name, ok, detail=""):
 
 
 def ssh(cmd, stdin=None):
-    return subprocess.run(["ssh", "-i", a.ssh_key, "-p", a.ssh_port, "-o", "IdentitiesOnly=yes", "-o", "ConnectTimeout=30", "opc@127.0.0.1", cmd], input=stdin, capture_output=True, text=True)
+    return subprocess.run(["ssh", "-i", a.ssh_key, "-p", a.ssh_port, "-o", "IdentitiesOnly=yes", "-o", "ConnectTimeout=30", "-o", "StrictHostKeyChecking=yes", "-o", "UserKnownHostsFile=" + os.path.join(a.out, "known_hosts"), "opc@127.0.0.1", cmd], input=stdin, capture_output=True, text=True)
 
 
 def sql_read(q):
@@ -28,12 +28,28 @@ def sql_read(q):
     return r.stdout.strip()
 
 
+if a.read_only:
+    # Modo de solo lectura (recuperación aislada, sin doble escritor): sin credenciales ni sesiones. Lecturas públicas + prueba de que NINGÚN verbo de escritura llega a la API.
+    cl = httpx.Client(base_url=BASE, verify=(a.cafile or False), timeout=30, headers={"Origin": BASE})
+    r = cl.get("/livez"); check("livez (proceso de la API) = 200 con status ok", r.status_code == 200 and r.json().get("status") == "ok", f"HTTP {r.status_code}")
+    r = cl.get("/ready"); check("ready (API + PostgreSQL) = 200 con status ready", r.status_code == 200 and r.json().get("status") == "ready", f"HTTP {r.status_code}")
+    r = cl.get("/healthz"); check("healthz (API + BD) = 200", r.status_code == 200, f"HTTP {r.status_code}")
+    r = cl.get("/"); check("frontend servido por Nginx con cabeceras de seguridad", r.status_code == 200 and "content-security-policy" in {k.lower() for k in r.headers} and "<div id=" in r.text[:2000], f"HTTP {r.status_code}")
+    r = cl.get("/api/events"); ev = r.json() if r.status_code == 200 else []; check("petición real de lectura: /api/events devuelve el catálogo", r.status_code == 200 and len(ev) > 0, f"{len(ev)} eventos publicados")
+    if ev:
+        r = cl.get(f"/api/events/{ev[0]['id']}"); check("detalle de un evento", r.status_code == 200, f"HTTP {r.status_code}")
+    for verb, path in (("POST", "/api/auth/login"), ("POST", "/api/auth/register"), ("PUT", "/api/events/1"), ("DELETE", "/api/events/1"), ("PATCH", "/api/events/1")):
+        r = cl.request(verb, path, json={})
+        check(f"escritura rechazada: {verb} {path} → 403 (Nginx en solo lectura)", r.status_code == 403, f"HTTP {r.status_code}")
+    out = {"ejecutado_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"), "duracion_s": round(time.time() - t0, 1), "modo": "solo lectura", "base": BASE, "tls_verificado": bool(a.cafile), "resultados": res, "todo_ok": all(x["ok"] for x in res)}
+    os.makedirs(a.out, exist_ok=True); open(os.path.join(a.out, "smoke.json"), "w").write(json.dumps(out, indent=2, ensure_ascii=False) + "\n")
+    print(f"\n{sum(x['ok'] for x in res)}/{len(res)} correctas; duración {out['duracion_s']} s"); sys.exit(0 if out["todo_ok"] else 1)
 if a.reset_creds:
     from pwdlib import PasswordHash
     ph = PasswordHash.recommended()
     pw = {CLIENT: secrets.token_urlsafe(24), OPERATOR: secrets.token_urlsafe(24)}
     payload = json.dumps({e: ph.hash(p) for e, p in pw.items()})
-    scp = subprocess.run(["scp", "-i", a.ssh_key, "-P", a.ssh_port, "-o", "IdentitiesOnly=yes", os.path.join(os.path.dirname(os.path.abspath(__file__)), "reset-two-passwords.py"), "opc@127.0.0.1:app/"], capture_output=True)
+    scp = subprocess.run(["scp", "-i", a.ssh_key, "-P", a.ssh_port, "-o", "IdentitiesOnly=yes", "-o", "StrictHostKeyChecking=yes", "-o", "UserKnownHostsFile=" + os.path.join(a.out, "known_hosts"), os.path.join(os.path.dirname(os.path.abspath(__file__)), "reset-two-passwords.py"), "opc@127.0.0.1:app/"], capture_output=True)
     r = ssh("sudo /opt/nexoeventos/backend/.venv/bin/python /home/opc/app/reset-two-passwords.py", stdin=payload)
     payload = None
     try:
@@ -52,7 +68,7 @@ else:
 
 
 def client():
-    return httpx.Client(base_url=BASE, verify=False, timeout=30, headers={"Origin": BASE})   # certificado autofirmado y efímero
+    return httpx.Client(base_url=BASE, verify=(a.cafile or False), timeout=30, headers={"Origin": BASE})   # certificado autofirmado y efímero
 
 
 def csrf(c):
@@ -60,6 +76,8 @@ def csrf(c):
 
 
 cl, op = client(), client()
+r = cl.get("/livez"); check("livez (proceso de la API) = 200 con status ok", r.status_code == 200 and r.json().get("status") == "ok", f"HTTP {r.status_code}")
+r = cl.get("/ready"); check("ready (API + PostgreSQL) = 200 con status ready", r.status_code == 200 and r.json().get("status") == "ready", f"HTTP {r.status_code}")
 r = cl.get("/healthz"); check("healthz (API + BD) = 200", r.status_code == 200, f"HTTP {r.status_code}")
 r = cl.get("/"); check("frontend servido por Nginx con cabeceras de seguridad", r.status_code == 200 and "content-security-policy" in {k.lower() for k in r.headers} and "<div id=" in r.text[:2000], f"HTTP {r.status_code}")
 r = cl.post("/api/auth/login", json={"email": CLIENT, "password": pw[CLIENT]}); check("inicio de sesión de cliente", r.status_code == 200, f"HTTP {r.status_code}")
@@ -79,10 +97,16 @@ if tok:
     r = op.post("/api/operator/validate", json={"event_id": tok["event_id"], "qr_token": tok["qr_token"]}, headers=csrf(op))
     detail = (r.json().get("detail") if r.headers.get("content-type", "").startswith("application/json") else "") or ""
     check("validación de un ticket ya usado → already_used (409 'Entrada ya utilizada'; token verificado con SECURITY_HASH_KEY original)", r.status_code == 409 and "utilizada" in detail.lower(), f"HTTP {r.status_code}")
+if tok:   # reservas REALES sobre la copia desechable: reserva nueva, idempotencia, inventario bajo concurrencia, ciclo reserva → QR → validación (app_functional.py; validado antes contra la aplicación real)
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); import app_functional as AF
+    def new_client():
+        c = client(); c.cookies.update(cl.cookies); return c
+    op_ids = [e.get("id") for e in op.get("/api/operator/events").json()] if op.get("/api/operator/events").status_code == 200 else []
+    extra["funcional"] = AF.functional_checks(cl, op, ev, op_ids, check, csrf, new_client)
 pw = None
 if a.reset_creds:
     extra["access_logs_por_resultado_tras_las_pruebas"] = sql_read("select result||'='||count(*) from access_logs group by result order by 1;").splitlines()
-out = {"ejecutado_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"), "duracion_s": round(time.time() - t0, 1), "base": "https://localhost:8443 (túnel Bastion)", **extra,
+out = {"ejecutado_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"), "duracion_s": round(time.time() - t0, 1), "base": BASE + (" (público, certificado FIJADO)" if a.cafile else " (túnel Bastion, certificado efímero sin verificar)"), "tls_verificado": bool(a.cafile), **extra,
        "resultados": res, "todo_ok": all(x["ok"] for x in res)}
 os.makedirs(a.out, exist_ok=True); open(os.path.join(a.out, "smoke.json"), "w").write(json.dumps(out, indent=2, ensure_ascii=False) + "\n")
 print(f"\n{sum(x['ok'] for x in res)}/{len(res)} correctas; duración {out['duracion_s']} s"); sys.exit(0 if out["todo_ok"] else 1)

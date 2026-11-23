@@ -16,7 +16,7 @@ resource "aws_subnet" "public_a" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.public_a_cidr
   availability_zone       = data.aws_availability_zones.available.names[0]
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = var.public_subnet_auto_public_ip # false por defecto: la IP pública se pide por instancia (AWS-0164)
   tags                    = { Name = "${local.name_prefix}-public-a", Tier = "public" }
 }
 

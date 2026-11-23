@@ -1,0 +1,6 @@
+Estado del laboratorio nexo-repl-lab inspeccionado el 10-nov-2026 antes de modificarlo (solo lectura; sin escrituras):
+- 8 contenedores del laboratorio en ejecución; ningún monitor en marcha.
+- witness: escritor pg-aws, época 3, lease caducado (nadie renueva) => los gateways de BD no enrutan a nadie.
+- pg-aws: una sesión nueva del rol de la aplicación ve transaction_read_only=off (única base escribible); sin suscripciones.
+- pg-oci: seguidor con la suscripción sub_oci; transaction_read_only=on por un ajuste a nivel de ROL (la propia aplicación puede anularlo: ver B4).
+- Conclusión: no había dos escritores con tráfico ni lease activo; no fue necesario detener ni aislar nada para dejarlo seguro. Las evidencias de la corrida 3 de B se conservaron en esta carpeta.

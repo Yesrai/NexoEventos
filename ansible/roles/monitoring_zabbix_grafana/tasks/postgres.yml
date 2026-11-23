@@ -1,0 +1,51 @@
+---
+- name: PostgreSQL (paquete de Ubuntu 24.04)
+  ansible.builtin.apt: { name: postgresql, state: present, lock_timeout: 300 }
+
+- name: Ajustes de rendimiento y solo escucha local
+  ansible.builtin.template:
+    src: postgresql-90-zabbix.conf.j2
+    dest: /etc/postgresql/16/main/conf.d/90-zabbix.conf
+    owner: postgres
+    group: postgres
+    mode: "0644"
+  notify: Reiniciar PostgreSQL
+
+- name: Servicio PostgreSQL activo
+  ansible.builtin.systemd: { name: postgresql, state: started, enabled: true }
+  when: monitoring_manage_services | bool
+
+- name: ¿Existe el rol de Zabbix?
+  ansible.builtin.command: psql -Atc "select 1 from pg_roles where rolname='{{ zabbix_db_user }}'"
+  become: true
+  become_user: postgres
+  register: _role
+  changed_when: false
+
+- name: Crear o actualizar el rol de Zabbix (la contraseña va por variable de psql; nunca se registra)
+  ansible.builtin.shell: |
+    set -e
+    psql -v ON_ERROR_STOP=1 -v pw="$ZBX_PW" <<'SQL'
+    DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '{{ zabbix_db_user }}') THEN CREATE ROLE {{ zabbix_db_user }} LOGIN; END IF; END $$;
+    ALTER ROLE {{ zabbix_db_user }} PASSWORD :'pw';
+    SQL
+  args: { executable: /bin/bash }
+  environment: { ZBX_PW: "{{ _pw_db }}" }
+  become: true
+  become_user: postgres
+  no_log: true
+  changed_when: _role.stdout | length == 0
+
+- name: ¿Existe la base de datos de Zabbix?
+  ansible.builtin.command: psql -Atc "select 1 from pg_database where datname='{{ zabbix_db_name }}'"
+  become: true
+  become_user: postgres
+  register: _db
+  changed_when: false
+
+- name: Crear la base de datos de Zabbix (UTF-8)
+  ansible.builtin.command: createdb -O {{ zabbix_db_user }} -E UTF8 -T template0 {{ zabbix_db_name }}
+  become: true
+  become_user: postgres
+  changed_when: true
+  when: _db.stdout | length == 0

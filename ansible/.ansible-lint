@@ -1,0 +1,5 @@
+---
+# Estilo del repositorio: nombres de variables sin prefijo de rol (compartidos con los playbooks) y líneas largas en YAML de configuración.
+skip_list:
+  - var-naming
+  - yaml[line-length]

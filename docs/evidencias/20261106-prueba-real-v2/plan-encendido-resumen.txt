@@ -1,0 +1,4 @@
+  # aws_autoscaling_group.web will be updated in-place
+      ~ desired_capacity                 = 0 -> 2
+      ~ min_size                         = 0 -> 2
+Plan: 0 to add, 1 to change, 0 to destroy.

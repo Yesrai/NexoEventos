@@ -1,0 +1,57 @@
+--- work/app-recovery.sh.orig-20261111	2026-11-11 13:30:26
++++ scripts/multicloud/oci-drill/app-recovery.sh	2026-11-11 13:31:35
+@@ -5,15 +5,28 @@
+ # Uso: BUNDLE=<respaldo> SECBUNDLE=<app-secrets-AAAAMMDDThhmmssZ> OCI_NS=<ns> LPORT=2222 HPORT=8443 SSH_KEY=~/.ssh/nexoeventos_recovery RPMS=work/oci-drill/rpms app-recovery.sh
+ set -euo pipefail
+ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"; HERE="$ROOT/scripts/multicloud"; cd "$ROOT"
++fail() { echo "ERROR: $1" >&2; exit "${2:-2}"; }
+ : "${BUNDLE:?}" "${SECBUNDLE:?}" "${OCI_NS:?}" "${LPORT:?}" "${HPORT:?}" "${SSH_KEY:?}" "${RPMS:?}"
+-BUCKET=nexoeventos-recovery; PROFILE=NEXOEVENTOS_UPLOADER; KEY="${RECOVERY_KEY:-$HOME/.nexoeventos/recovery-oci/oci-recovery-private.pem}"
++# La línea base se elige SIEMPRE de forma explícita (antes estaba fija en 0008-estado-20261022 y habría rechazado cualquier respaldo posterior).
++: "${BASELINE_KEY:?define BASELINE_KEY (p. ej. rds-20261111T164610Z); no hay valor por defecto a propósito}"
++BASELINE_FILE="${BASELINE_FILE:-$ROOT/docs/multicloud/baseline-restauracion.json}"
++BUCKET="${BUCKET:-nexoeventos-recovery}"; PROFILE="${OCI_PROFILE:-NEXOEVENTOS_UPLOADER}"; KEY="${RECOVERY_KEY:-$HOME/.nexoeventos/recovery-oci/oci-recovery-private.pem}"
++# Comprobaciones LOCALES antes de tocar nada ni pedir ninguna frase de paso.
++for t in oci openssl ssh scp python3 shasum npm tar; do command -v "$t" >/dev/null || fail "falta la herramienta «$t» en esta estación"; done
++[[ -r "$KEY" ]] || fail "no se puede leer la clave de recuperación: $KEY"; [[ -r "$SSH_KEY" ]] || fail "no se puede leer la clave SSH: $SSH_KEY"
++compgen -G "$RPMS/*.rpm" >/dev/null || fail "no hay RPM en $RPMS"; "$HERE/oci-drill/verify-rpms.sh" "$RPMS" "${RPM_CHECKSUMS:-$HERE/oci-drill/rpm-checksums.sha256}" >/dev/null || fail "los RPM no coinciden con la lista fijada de SHA-256"; [[ -x backend/.venv/bin/python ]] || fail "falta backend/.venv (necesario para descargar las ruedas y ejecutar el humo)"
++for f in deploy/systemd/nexoeventos-api.service deploy/nginx/nexoeventos.conf.template backend/requirements-production.lock; do [[ -f "$f" ]] || fail "falta $f"; done
++python3 "$HERE/compare-fingerprint.py" --check "$BASELINE_FILE" "$BASELINE_KEY" || fail "línea base inválida (ver mensaje anterior)"
++if [[ "${PREFLIGHT_ONLY:-}" == "1" ]]; then echo "OK    preflight local completo (no se usó red ni se creó nada)"; exit 0; fi
+ # Reanudación: START_AT=download|build|copy|postgres|app1|data|secrets|app2|smoke y OUT_DIR=<carpeta de la ejecución anterior> (conserva descargas, paquete y tiempos; el RTO sigue contando desde el T0 original).
+ STAGES=(download build copy postgres app1 data secrets app2 smoke); START_AT="${START_AT:-download}"
+ idx() { local i=0; for x in "${STAGES[@]}"; do [[ "$x" == "$1" ]] && { echo $i; return; }; i=$((i+1)); done; echo "etapa desconocida: $1" >&2; exit 2; }
+ STOP_BEFORE="${STOP_BEFORE:-}"   # opcional: detenerse antes de una etapa (p. ej. smoke, que pide contraseñas en la terminal)
+ want() { [[ $(idx "$1") -ge $(idx "$START_AT") ]] && { [[ -z "$STOP_BEFORE" ]] || [[ $(idx "$1") -lt $(idx "$STOP_BEFORE") ]]; }; }
+ OUT="${OUT_DIR:-$ROOT/work/oci-drill/app-$(date -u +%Y%m%dT%H%M%SZ)}"; umask 077; mkdir -p "$OUT/bundle/wheels"; LOG="$OUT/tiempos.txt"; B="$OUT/bundle"
+-SSH=(ssh -i "$SSH_KEY" -p "$LPORT" -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes opc@127.0.0.1); SCP=(scp -i "$SSH_KEY" -P "$LPORT" -o IdentitiesOnly=yes)
++# known_hosts POR EJECUCIÓN (en $OUT): cada VM nueva llega por el mismo 127.0.0.1:$LPORT con otra clave de host; con ~/.ssh/known_hosts la 2.ª ejecución fallaría («HOST IDENTIFICATION HAS CHANGED»).
++SSHOPTS=(-i "$SSH_KEY" -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="$OUT/known_hosts" -o IdentitiesOnly=yes)
++SSH=(ssh "${SSHOPTS[@]}" -p "$LPORT" opc@127.0.0.1); SCP=(scp "${SSHOPTS[@]}" -P "$LPORT")
+ mark() { printf '%s %s\n' "$(date -u +%FT%TZ)" "$1" | tee -a "$LOG"; }; if [[ -s "$LOG" ]]; then T0=$(python3 -c "import sys,datetime as d;print(int(d.datetime.strptime(open(sys.argv[1]).readline().split()[0],'%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=d.timezone.utc).timestamp()))" "$LOG"); mark "REANUDACIÓN desde la etapa '$START_AT' (el T0 original no se reinicia)"; else T0=$(date +%s); mark "T0 inicio de la recuperación de la aplicación"; fi
+ RUNPG="sudo -u postgres env DRILL_DB=nexoeventos bash -c 'cd /var/lib/pgsql && exec bash /var/lib/pgsql/drill-tools/remote-restore.sh"
+ if want download; then
+@@ -32,7 +45,7 @@
+   -r backend/requirements-production.lock -d "$B/wheels"
+ tar -czf "$B/backend.tgz" --exclude='__pycache__' -C backend app alembic alembic.ini requirements-production.lock
+ ( cd frontend && npm run build >/dev/null ) && tar -czf "$B/dist.tgz" -C frontend dist
+-cp deploy/systemd/nexoeventos-api.service deploy/nginx/nexoeventos.conf.template "$B/"; cp "$HERE/oci-drill/"*.sh "$HERE/fingerprint.sql" "$B/"
++cp deploy/systemd/nexoeventos-api.service deploy/nginx/nexoeventos.conf.template "$B/"; cp "$HERE/oci-drill/"*.sh "$HERE/oci-drill/rpm-checksums.sha256" "$HERE/fingerprint.sql" "$B/"
+ mark "paquete de la aplicación construido en la Mac ($ARCH)"
+ fi
+ if want copy; then
+@@ -54,13 +67,7 @@
+ PLAIN="$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['plaintext_dump_sha256'])" "$OUT/$BUNDLE.manifest.json")"
+ set +e; openssl cms -decrypt -binary -inform DER -in "$OUT/$BUNDLE.oci.cms" -inkey "$KEY" 2>"$OUT/openssl-datos.err" | "${SSH[@]}" "$RUNPG $PLAIN /var/lib/pgsql/drill-tools/fingerprint.sql'" | tee "$OUT/huella-restaurada.txt"; rc=("${PIPESTATUS[@]}"); set -e
+ [[ ${rc[0]} -eq 0 ]] || { echo "FALLÓ el descifrado local de los datos (openssl $rc)" >&2; exit 7; }; [[ ${rc[1]} -eq 0 ]] || { echo "FALLÓ la restauración remota (código ${rc[1]})" >&2; exit 8; }
+-python3 - "$ROOT/docs/multicloud/baseline-restauracion.json" "0008-estado-20261022" "$OUT/huella-restaurada.txt" <<'PY'
+-import json, sys
+-base = json.load(open(sys.argv[1]))["baselines"][sys.argv[2]]["fingerprint"]; now = dict(l.strip().split("=", 1) for l in open(sys.argv[3]) if "=" in l)
+-diff = {k: (base[k], now.get(k)) for k in base if base[k] != now.get(k)}
+-if diff: print("FALLÓ huella:", diff); sys.exit(1)
+-print(f"OK    huella idéntica a la línea base ({len(base)} claves)")
+-PY
++python3 "$HERE/compare-fingerprint.py" "$BASELINE_FILE" "$BASELINE_KEY" "$OUT/huella-restaurada.txt" || { echo "FALLÓ: la huella restaurada NO coincide con la línea base «$BASELINE_KEY»" >&2; exit 1; }
+ mark "T_datos: datos restaurados y huella verificada"
+ fi
+ if want secrets; then

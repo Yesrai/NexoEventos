@@ -1,0 +1,32 @@
+---
+- name: Comprobaciones previas
+  ansible.builtin.import_tasks: preflight.yml
+  tags: [preflight]
+- name: Base del sistema y endurecimiento
+  ansible.builtin.import_tasks: base.yml
+  tags: [base]
+- name: PostgreSQL
+  ansible.builtin.import_tasks: postgres.yml
+  tags: [postgres]
+- name: Zabbix Server y agente 2
+  ansible.builtin.import_tasks: zabbix.yml
+  tags: [zabbix]
+- name: Nginx, TLS y frontend de Zabbix
+  ansible.builtin.import_tasks: web.yml
+  tags: [web]
+- name: Aplicar ya los reinicios pendientes (Nginx/PHP-FPM) antes de usar la API de Zabbix
+  ansible.builtin.meta: flush_handlers
+- name: Comprobar que Nginx escucha de verdad en HTTPS (443) antes de usar la API
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: 443
+    timeout: 60
+- name: Grafana y aprovisionamiento
+  ansible.builtin.import_tasks: grafana.yml
+  tags: [grafana]
+- name: Configuración de Zabbix por API
+  ansible.builtin.import_tasks: zabbix_config.yml
+  tags: [zabbix_config]
+- name: Evidencia de versiones
+  ansible.builtin.import_tasks: evidence.yml
+  tags: [evidence]

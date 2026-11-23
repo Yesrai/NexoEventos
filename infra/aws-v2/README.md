@@ -5,7 +5,7 @@ Raíz Terraform **separada** de V1 (`infra/aws`): estado propio y solo recursos 
 | Archivo | Contenido |
 |---|---|
 | `network.tf` | subred pública b (otra zona), SG del ALB (80/443 públicos) y SG de las instancias (80 **solo desde el SG del ALB**, sin SSH), regla aditiva 5432 hacia la RDS |
-| `alb.tf` | ALB, target group (`least_outstanding_requests`, health check `/healthz`, sin afinidad), listener 443 (TLS 1.2/1.3) y 80→443 |
+| `alb.tf` | ALB, target group (`least_outstanding_requests`, health check `/livez` (liveness sin base de datos), sin afinidad), listener 443 (TLS 1.2/1.3) y 80→443 |
 | `compute.tf` | launch template (AMI dorada, IMDSv2, EBS cifrado, `LabInstanceProfile`), ASG 2–3 en dos zonas con health check ELB y política de seguimiento de CPU (opcional: solicitudes por instancia) |
 | `observability.tf` | panel de CloudWatch (instancias sanas, solicitudes/latencia/5xx, CPU, RDS) |
 | `tests/check_security.py` | comprobaciones estáticas de las reglas de seguridad |
@@ -21,3 +21,8 @@ Validación local realizada: `terraform fmt`, `terraform validate`, `python3 inf
 3. **AMI dorada** (instancia temporal, ~45 min): `v2-prepare.sh builder-launch` → `scripts/ansible-aws.sh bake` (rol `nexoeventos` en modo `nexoeventos_bake` + `nexoeventos_edge: alb`: sin secretos, sin migraciones, API sin arrancar) → `builder-image` → `builder-delete`.
 4. **Plan real** con `ami_id` (`work/operacion/v2-ami-id`) y `certificate_arn` (`work/operacion/v2-certificate-arn`) y revisión.
 5. **`terraform apply`** solo de esta raíz; después verificación funcional y medición.
+
+## Alta disponibilidad (preparación local, sin nube)
+- **Dos instancias, un solo lease de escritura:** `backend/app/failover/site_member.py` + `gate.py`. Al activarse la compuerta de escritura (autorización aparte; fuera de esta raíz de Terraform) solo la líder (bloqueo consultivo de PostgreSQL) compite por el lease entre nubes; la otra recibe la autoridad que la base ya tiene concedida. La seguridad no depende de la elección (lease CAS + vallado de la base). Pruebas: `scripts/multicloud/tests/test_aws_v2_site.py` (PostgreSQL 18 real).
+- **ALB + ASG simulados con instancias reales de la API:** `scripts/v2/ha_sim.py`; pruebas en `backend/tests/test_v2_alb_asg_local.py` (reparto, sesión sin afinidad, reservas concurrentes, caída/colgado de una instancia, sustitución, reintentos idempotentes).
+- **Despliegue y reversión en Academy:** [RUNBOOK-academy.md](RUNBOOK-academy.md).

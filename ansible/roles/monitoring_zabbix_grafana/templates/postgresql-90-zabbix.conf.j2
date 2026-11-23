@@ -1,0 +1,5 @@
+# Gestionado por Ansible (rol monitoring_zabbix_grafana)
+listen_addresses = 'localhost'
+{% for k, v in postgres_tuning.items() %}
+{{ k }} = {{ v if v is number else "'" ~ v ~ "'" }}
+{% endfor %}

@@ -1,0 +1,5 @@
+#cloud-config
+# Canal fuera de banda para verificar la huella SSH: imprime las huellas PÚBLICAS de las claves de host en la consola serie
+# (se leen con `az vm boot-diagnostics get-boot-log` antes de aceptar nada con SSH). No contiene secretos ni instala paquetes.
+runcmd:
+  - [sh, -c, 'for k in /etc/ssh/ssh_host_*_key.pub; do ssh-keygen -lf "$k" | sed "s/^/NEXO-HOSTKEY /"; done | tee /dev/ttyS0 /dev/console >/dev/null 2>&1 || true']

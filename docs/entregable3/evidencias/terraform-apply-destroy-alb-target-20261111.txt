@@ -1,0 +1,45 @@
+aws_lb_listener.https: Destroying... [id=arn:aws:elasticloadbalancing:us-east-1:<cuenta>:listener/app/nexoeventos-academy-v2-alb/d772b4c6341b5ec8/290544bf64912b09]
+aws_cloudwatch_metric_alarm.alb_target_5xx[0]: Destroying... [id=nexoeventos-academy-v2-alb-5xx-destino]
+aws_cloudwatch_metric_alarm.alb_latency_p95[0]: Destroying... [id=nexoeventos-academy-v2-alb-latencia-p95]
+aws_cloudwatch_dashboard.v2: Destroying... [id=nexoeventos-academy-v2-medicion]
+aws_cloudwatch_metric_alarm.alb_healthy_below_desired[0]: Destroying... [id=nexoeventos-academy-v2-alb-sanos-bajo-lo-deseado]
+aws_cloudwatch_metric_alarm.alb_unhealthy_hosts[0]: Destroying... [id=nexoeventos-academy-v2-alb-destinos-no-sanos]
+aws_lb_listener.http_redirect: Destroying... [id=arn:aws:elasticloadbalancing:us-east-1:<cuenta>:listener/app/nexoeventos-academy-v2-alb/d772b4c6341b5ec8/bc4e68cd560ee88b]
+aws_lb_listener.https: Destruction complete after 1s
+aws_lb_listener.http_redirect: Destruction complete after 1s
+aws_cloudwatch_metric_alarm.alb_healthy_below_desired[0]: Destruction complete after 1s
+aws_cloudwatch_metric_alarm.alb_target_5xx[0]: Destruction complete after 1s
+aws_cloudwatch_metric_alarm.alb_latency_p95[0]: Destruction complete after 1s
+aws_cloudwatch_metric_alarm.alb_unhealthy_hosts[0]: Destruction complete after 1s
+aws_cloudwatch_dashboard.v2: Destruction complete after 2s
+aws_lb.main: Destroying... [id=arn:aws:elasticloadbalancing:us-east-1:<cuenta>:loadbalancer/app/nexoeventos-academy-v2-alb/d772b4c6341b5ec8]
+aws_lb.main: Still destroying... [id=arn:aws:elasticloadbalancing:us-east-1:...ventos-academy-v2-alb/d772b4c6341b5ec8, 00m10s elapsed]
+aws_lb.main: Destruction complete after 18s
+
+Warning: Applied changes may be incomplete
+
+The plan was created with the -target option in effect, so some changes
+requested in the configuration may have been ignored and the output values
+may not be fully updated. Run the following command to verify that no other
+changes are pending:
+    terraform plan
+
+Note that the -target option is not suitable for routine use, and is provided
+only for exceptional situations such as recovering from errors or mistakes,
+or when Terraform specifically suggests to use it as part of an error
+message.
+
+Apply complete! Resources: 0 added, 0 changed, 8 destroyed.
+
+Outputs:
+
+alb_arn_suffix = "app/nexoeventos-academy-v2-alb/d772b4c6341b5ec8"
+alb_dns_name = "<dns-alb-eliminado>"
+alb_security_group_id = "<sg-1>"
+asg_name = "nexoeventos-academy-v2-asg"
+public_subnets = [
+  "<subnet-1>",
+  "<subnet-2>",
+]
+target_group_arn_suffix = "targetgroup/nexoeventos-academy-v2-tg/62ea872c083f554f"
+web_security_group_id = "<sg-2>"

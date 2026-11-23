@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# Comprobaciones de SOLO LECTURA en AWS (Academy) para la viabilidad de la integración AWS-OCI. NO SE HA EJECUTADO: requiere autorización explícita de la usuaria
+# y un laboratorio de Academy iniciado (Start Lab) con las credenciales del perfil ya renovadas. No crea, modifica, inicia ni detiene nada.
+# Todo pasa por scripts/cloud/mask.sh (sin IDs de cuenta, ARN, IP ni correos). Uso:  NEXO_READONLY_VIABILIDAD=YES scripts/multicloud/viabilidad-readonly-aws.sh [seccion]
+# Secciones: identidad | rds | parametros | permisos | red | todo (por defecto)
+set -uo pipefail
+cd "$(dirname "${BASH_SOURCE[0]}")/../.."
+[[ "${NEXO_READONLY_VIABILIDAD:-}" == "YES" ]] || { echo "Solo lectura, pero requiere autorización: exporta NEXO_READONLY_VIABILIDAD=YES" >&2; exit 2; }
+PROFILE="${AWS_PROFILE:-nexoeventos-lab}"; REGION="${AWS_REGION:-us-east-1}"
+RDS_ID="${RDS_ID:-nexoeventos-academy-postgres}"
+aws_() { aws --profile "$PROFILE" --region "$REGION" "$@" 2>&1 | scripts/cloud/mask.sh; }
+sec="${1:-todo}"
+want() { [[ "$sec" == "todo" || "$sec" == "$1" ]]; }
+
+if want identidad; then
+  echo "== 1. Identidad (solo el tipo de principal; sin cuenta)"
+  aws_ sts get-caller-identity --query 'Arn' --output text | sed -E 's#.*(assumed-role|user)/([^/]*).*#\1/\2#' 2>/dev/null || true
+fi
+
+if want rds; then
+  echo "== 2. Instancia RDS: versión, Multi-AZ, grupo de parámetros, acceso público, almacenamiento, estado"
+  aws_ rds describe-db-instances --db-instance-identifier "$RDS_ID" --query 'DBInstances[0].{Estado:DBInstanceStatus,Motor:Engine,Version:EngineVersion,Clase:DBInstanceClass,MultiAZ:MultiAZ,PublicoAccesible:PubliclyAccessible,Grupos:DBParameterGroups[].[DBParameterGroupName,ParameterApplyStatus],AlmacenGiB:AllocatedStorage,AlmacenMaxGiB:MaxAllocatedStorage,Retencion:BackupRetentionPeriod,CA:CACertificateIdentifier,SubredGrupo:DBSubnetGroup.DBSubnetGroupName}' --output json
+  echo "-- eventos de RDS de los últimos 14 días (arranques automáticos por exceder 7 días detenida)"
+  aws_ rds describe-events --source-type db-instance --source-identifier "$RDS_ID" --duration 20160 --query 'Events[?contains(Message, `started`) || contains(Message, `stopped`)].[Date,Message]' --output text | tail -8
+  echo "-- grupos de parámetros existentes (¿hay alguno personalizado?)"
+  aws_ rds describe-db-parameter-groups --query 'DBParameterGroups[].[DBParameterGroupName,DBParameterGroupFamily]' --output text
+  echo "-- versiones de motor disponibles para postgres 18.x y si admiten réplicas/replicación lógica de slots"
+  aws_ rds describe-db-engine-versions --engine postgres --engine-version 18.3 --query 'DBEngineVersions[].{Version:EngineVersion,Familia:DBParameterGroupFamily,SoportaReplicaLecturaLogica:SupportsLogicalReplicationSlotFailover,Rep:SupportsReadReplica}' --output json
+fi
+
+if want parametros; then
+  echo "== 3. Parámetros relevantes del grupo por defecto de PostgreSQL 18 (IsModifiable = si se pueden cambiar en un grupo PERSONALIZADO)"
+  aws_ rds describe-db-parameters --db-parameter-group-name default.postgres18 \
+    --query "Parameters[?ParameterName=='synchronous_standby_names' || ParameterName=='synchronous_commit' || ParameterName=='rds.logical_replication' || ParameterName=='wal_level' || ParameterName=='max_wal_senders' || ParameterName=='max_replication_slots' || ParameterName=='max_logical_replication_workers' || ParameterName=='max_slot_wal_keep_size' || ParameterName=='wal_sender_timeout' || ParameterName=='rds.force_ssl' || ParameterName=='rds.replica_identity_full' || ParameterName=='idle_in_transaction_session_timeout' || ParameterName=='statement_timeout' || ParameterName=='tcp_keepalives_idle'].[ParameterName,ParameterValue,IsModifiable,ApplyType,Source]" --output table
+  echo "-- (si existe un grupo personalizado, repetir con --db-parameter-group-name <ese grupo>)"
+fi
+
+if want permisos; then
+  echo "== 4. Permisos del rol de la sesión para los pasos de la integración (SIMULACIÓN de políticas, no ejecuta las acciones)"
+  ROLE_ARN="$(aws --profile "$PROFILE" --region "$REGION" sts get-caller-identity --query Arn --output text 2>/dev/null | sed -E 's#:assumed-role/([^/]*)/.*#:role/\1#; s#:sts:#:iam:#')"
+  if [[ -n "${ROLE_ARN:-}" ]]; then
+    aws --profile "$PROFILE" --region "$REGION" iam simulate-principal-policy --policy-source-arn "$ROLE_ARN" \
+      --action-names rds:CreateDBParameterGroup rds:ModifyDBParameterGroup rds:ModifyDBInstance rds:RebootDBInstance rds:CreateDBInstanceReadReplica rds:DescribeDBParameters \
+                     ec2:CreateSecurityGroup ec2:AuthorizeSecurityGroupIngress ec2:RunInstances ec2:AllocateAddress ec2:CreateVpnGateway ec2:CreateVpnConnection ec2:CreateTransitGateway \
+                     s3:PutObject secretsmanager:GetSecretValue iam:CreateUser iam:CreateAccessKey \
+      --query 'EvaluationResults[].[EvalActionName,EvalDecision]' --output text 2>&1 | scripts/cloud/mask.sh
+    echo "(Si devuelve AccessDenied para iam:SimulatePrincipalPolicy, la simulación no es posible en Academy: la única prueba fiable de un permiso es intentarlo, y eso requiere autorización aparte.)"
+  else
+    echo "No se pudo derivar el ARN del rol."
+  fi
+fi
+
+if want red; then
+  echo "== 5. Red existente (VPC, subredes, rutas, SG y VPN/IP elásticas) para valorar un camino hacia OCI"
+  aws_ ec2 describe-vpcs --query 'Vpcs[].[CidrBlock,IsDefault]' --output text
+  aws_ ec2 describe-subnets --query 'Subnets[].[CidrBlock,AvailabilityZone,MapPublicIpOnLaunch,Tags[?Key==`Name`]|[0].Value]' --output text
+  aws_ ec2 describe-route-tables --query 'RouteTables[].[Tags[?Key==`Name`]|[0].Value,Routes[].[DestinationCidrBlock,GatewayId]]' --output json
+  aws_ ec2 describe-security-groups --query 'SecurityGroups[].[GroupName,IpPermissions[].[IpProtocol,FromPort,ToPort]]' --output json
+  aws_ ec2 describe-vpn-gateways --query 'VpnGateways[].[State,Type]' --output text
+  aws_ ec2 describe-addresses --query 'Addresses[].[Domain]' --output text
+fi
+echo "== fin (solo lectura; nada se creó, modificó, inició ni detuvo)"

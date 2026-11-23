@@ -1,0 +1,50 @@
+Auditoría estática de scripts/multicloud/viabilidad-readonly-oci.sh (v2) — 2026-11-10 21:40
+SHA-256: 458dbceae6f2ba4f9e28678f226232b81b10eeed20af68f1eb18fc1fb07c0f05
+(No se ejecutó el script ni ningún comando contra OCI.)
+
+Archivo: scripts/multicloud/viabilidad-readonly-oci.sh  ·  53 líneas de código
+
+[1] Llamadas a la CLI de OCI (servicio recurso acción):
+   OK  oci iam region-subscription list
+   OK  oci iam compartment list
+   OK  oci network vcn list
+   OK  oci network subnet list
+   OK  oci network internet-gateway list
+   OK  oci network nat-gateway list
+   OK  oci network service-gateway list
+   OK  oci compute instance list
+   OK  oci os ns get
+   OK  oci os bucket list
+   OK  oci iam availability-domain list
+   OK  oci limits definition list
+   OK  oci limits resource-availability get
+   OK  oci limits resource-availability get
+   (llamadas directas a `oci` fuera de run/raw: 0 )
+
+[2] Palabras de modificación en el código (no comentarios):
+    ninguna
+
+[3] Instaladores, escritura de archivos y otras herramientas:
+   herramientas no permitidas: ninguna
+   redirecciones de salida a archivos: ninguna
+   programas usados: awk, command, echo, exit, oci, printf, read, sed
+
+[4] Lectura de la configuración local:
+     CFG="${OCI_CLI_CONFIG_FILE:-$HOME/.oci/config}"; PROFILE="${OCI_CLI_PROFILE:-DEFAULT}"
+     [[ -r "$CFG" ]] || { echo "DETENIDO: no existe o no se puede leer el archivo de configuración de OCI. No se cr
+     TENANCY="$(awk -v p="[$PROFILE]" '$0==p{f=1;next} /^\[/{f=0} f && $1 ~ /^tenancy/ {sub(/^[^=]*=[ \t]*/,""); pr
+   (solo se LEE: `-r` y `awk`; ninguna escritura)
+
+[5] Prueba local del filtro de salida (sin red) con datos sensibles de ejemplo:
+   tenancy=ocid1.tenancy.oc1..aaaaaaaabbbbbbbbccccccccddddddd -> tenancy=<ocid>
+   fingerprint=aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:9 -> fingerprint=<huella>
+   key_file=/Users/alguien/.oci/oci_api_key.pem               -> key_file=<oculto>
+   -----BEGIN RSA PRIVATE KEY-----                            -> (línea eliminada)
+   Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9 -> Authorization: Bearer <oculto>
+   pass_phrase=MiClaveSecreta123                              -> pass_phrase=<oculto>
+   IP pública 129.151.20.33 y correo persona@example.com      -> IP pública <ip> y correo <correo>
+   cadena larga: QWxhZGRpbjpvcGVuIHNlc2FtZVF3ZXJ0eXVpb3Bhc2Rm -> cadena larga: <largo-oculto>
+   Warning: To increase security of your API key located at / -> Warning: To increase security of your API key located at <ru
+   líneas con 'PRIVATE KEY' eliminadas: True
+
+RESULTADO: APTO: solo consultas, sin instalación ni escritura, salida filtrada

@@ -1,0 +1,9 @@
+{
+    "State": "active",
+    "Scheme": "internet-facing",
+    "AZs": [
+        "us-east-1b",
+        "us-east-1a"
+    ],
+    "Type": "application"
+}
