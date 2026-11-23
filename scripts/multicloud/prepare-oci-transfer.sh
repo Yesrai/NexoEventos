@@ -15,12 +15,13 @@ src_sha="$(sha "$SRC")"
 [[ -z "$EXPECT" || "$src_sha" == "$EXPECT" ]] || { echo "SHA-256 del origen distinto del esperado; abortado." >&2; exit 3; }
 name="$(basename "$SRC" .cms)"; dest="$OUT/$name.oci.cms"; plain_sha_file="$(mktemp)"; magic_file="$(mktemp)"; trap 'rm -f "$plain_sha_file" "$magic_file"' EXIT
 if ! { cms_decrypt_key "$SRC" "$AWS_KEY" "${NEXO_AWS_KEY_PASSIN:-}" - \
-  | tee >(shasum -a 256 | cut -d' ' -f1 >"$plain_sha_file") >(head -c 5 >"$magic_file") \
+  | tee >(shasum -a 256 | cut -d' ' -f1 >"$plain_sha_file") >({ head -c 5 >"$magic_file"; cat >/dev/null; }) \
   | openssl cms -encrypt -binary -aes-256-cbc -outform DER -out "$dest" "$OCI_CRT"; }; then
   rm -f "$dest"  # un descifrado fallido no debe dejar un CMS «vacío» con apariencia válida
   echo "Fallo al descifrar o re-cifrar; no se generó ninguna copia para OCI." >&2; exit 5
 fi
-sleep 0.2
+# Las sustituciones de procesos terminan de forma asíncrona: se espera (máx. 5 s) a que el SHA-256 y la cabecera estén completos.
+for _ in $(seq 1 50); do [[ "$(wc -c <"$plain_sha_file" | tr -d ' ')" -ge 64 && "$(wc -c <"$magic_file" | tr -d ' ')" -ge 5 ]] && break; sleep 0.1; done
 # Una clave equivocada puede «descifrar» a basura con código 0: se exige la cabecera de un volcado de PostgreSQL (formato custom).
 if [[ "$(cat "$magic_file")" != "PGDMP" ]]; then
   rm -f "$dest"; echo "Lo descifrado no es un volcado PGDMP (¿clave equivocada o archivo alterado?); no se generó ninguna copia para OCI." >&2; exit 6
