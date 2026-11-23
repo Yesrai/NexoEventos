@@ -39,8 +39,10 @@ def configure_smtp():
     old = {}
     if p.exists():
         old = dict(l.split("=", 1) for l in p.read_text().splitlines() if "=" in l)
-    vals = {"NEXOOPS_ENV": "dev", "NEXOOPS_COOKIE_SECURE": "0", "NEXOOPS_MAIL_MODE": "smtp", "NEXOOPS_SMTP_HOST": "smtp.gmail.com", "NEXOOPS_SMTP_PORT": "465", "NEXOOPS_SMTP_USER": email,
+    prod = os.environ.get("NEXOOPS_ENV", "dev") == "production"          # en la VM: cookies Secure obligatorias; nunca se escribe «dev» en el archivo de producción
+    vals = {"NEXOOPS_ENV": "production" if prod else "dev", "NEXOOPS_COOKIE_SECURE": "1" if prod else "0", "NEXOOPS_MAIL_MODE": "smtp", "NEXOOPS_SMTP_HOST": "smtp.gmail.com", "NEXOOPS_SMTP_PORT": "465", "NEXOOPS_SMTP_USER": email,
             "NEXOOPS_SMTP_FROM": email, "NEXOOPS_SMTP_PASSWORD": pw, "NEXOOPS_ADMIN_EMAIL": email, "NEXOOPS_OTP_SECRET": old.get("NEXOOPS_OTP_SECRET") or secrets.token_urlsafe(48)}
+    vals = {**{k: v for k, v in old.items() if k not in vals}, **vals}                 # conserva el resto (tokens de Grafana/Zabbix, URL) sin mostrarlo
     fd = os.open(p, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     with os.fdopen(fd, "w") as f:
         f.write("\n".join(f"{k}={v}" for k, v in vals.items()) + "\n")
