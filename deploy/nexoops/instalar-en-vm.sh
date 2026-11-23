@@ -12,9 +12,9 @@ PLAN=(
   "respaldar configuración actual: /etc/nginx (tar) y unidades systemd en $BK"
   "crear usuario de sistema nexoops (sin shell ni sudo), /var/lib/nexoops (0700) y /etc/nexoops (0750 root:nexoops)"
   "extraer el paquete en /opt/nexoeventos/nexoops (root, solo lectura para nexoops) y reutilizar /opt/nexoeventos/venv"
-  "la usuaria ejecuta EN LA VM: sudo -u nexoops env NEXOOPS_ENV=production NEXOOPS_ENV_FILE=/etc/nexoops/nexoops.env python -m nexoops configure-smtp (archivo 0600 de nexoops): OTP secret, SMTP Gmail, GRAFANA_TOKEN Viewer, ZABBIX_TOKEN solo lectura (nunca por chat)"
-  "la usuaria ejecuta en la VM: python -m nexoops create-admin (contraseña por getpass)"
-  "instalar nexoops.service y habilitarlo (127.0.0.1:8760)"
+  "el operador ejecuta EN LA VM: sudo -u nexoops env NEXOOPS_ENV=production NEXOOPS_ENV_FILE=/etc/nexoops/nexoops.env python -m nexoops configure-smtp (archivo 0600 de nexoops): OTP secret, SMTP Gmail, GRAFANA_TOKEN Viewer, ZABBIX_TOKEN solo lectura (nunca por chat)"
+  "el operador ejecuta en la VM: python -m nexoops create-admin (contraseña por getpass)"
+  "instalar el espejo de solo lectura (nexoops-feed.service/.timer, /var/lib/nexoops-feed 0750 opscenter:nexoops) y nexoops.service, y habilitarlo (127.0.0.1:8770)"
   "insertar nginx-nexoops.conf en el server HTTPS existente, nginx -t y recargar (si nginx -t falla: no se recarga)"
   "verificar: curl -fsS https://<host>/nexoops/healthz, login OTP real, check-integrations"
 )
@@ -28,7 +28,13 @@ install -d -m 0700 -o nexoops -g nexoops /var/lib/nexoops; install -d -m 0700 -o
 tar -xzf "$PKG" -C /opt/nexoeventos --no-same-owner
 [[ -x /opt/nexoeventos/venv/bin/python ]] || python3 -m venv /opt/nexoeventos/venv
 /opt/nexoeventos/venv/bin/pip install --no-cache-dir -r /opt/nexoeventos/nexoops/requirements.txt
-install -m 0644 /opt/nexoeventos/deploy/nexoops/nexoops.service /etc/systemd/system/nexoops.service; systemctl daemon-reload
+install -m 0644 /opt/nexoeventos/deploy/nexoops/nexoops.service /etc/systemd/system/nexoops.service
+chmod 0755 /opt/nexoeventos/deploy/nexoops/nexoops-feed.sh
+install -d -m 0750 -o opscenter -g nexoops /var/lib/nexoops-feed
+install -m 0644 /opt/nexoeventos/deploy/nexoops/nexoops-feed.service /etc/systemd/system/nexoops-feed.service
+install -m 0644 /opt/nexoeventos/deploy/nexoops/nexoops-feed.timer /etc/systemd/system/nexoops-feed.timer
+systemctl daemon-reload
 [[ -f /etc/nexoops/nexoops.env ]] || { echo "Falta /etc/nexoops/nexoops.env: créalo con configure-smtp (0600, propietario nexoops) y vuelve a ejecutar. No se habilita el servicio."; exit 3; }
+systemctl enable --now nexoops-feed.timer
 systemctl enable --now nexoops
-echo "Servicio activo en 127.0.0.1:8760. Falta insertar deploy/nexoops/nginx-nexoops.conf en el server HTTPS (nginx -t antes de recargar)."
+echo "Servicio activo en 127.0.0.1:8770. Falta insertar deploy/nexoops/nginx-nexoops.conf en el server HTTPS (nginx -t antes de recargar)."

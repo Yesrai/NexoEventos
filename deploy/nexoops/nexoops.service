@@ -12,10 +12,10 @@ Environment=PYTHONPATH=/opt/nexoeventos:/opt/nexoeventos/backend
 Environment=NEXOOPS_ENV=production
 Environment=NEXOOPS_BASE_PATH=/nexoops
 Environment=NEXOOPS_DATA_DIR=/var/lib/nexoops
-Environment=OPS_CENTER_STATE_DIR=/var/lib/ops-center
+Environment=OPS_CENTER_STATE_DIR=/var/lib/nexoops-feed
 # Secretos (OTP, SMTP, tokens Viewer/solo lectura de Grafana y Zabbix) SOLO en este archivo 0600 root:nexoops; nunca en el repositorio.
 EnvironmentFile=/etc/nexoops/nexoops.env
-ExecStart=/opt/nexoeventos/venv/bin/python -m nexoops serve --host 127.0.0.1 --port 8760
+ExecStart=/opt/nexoeventos/venv/bin/python -m nexoops serve --host 127.0.0.1 --port 8770
 Restart=on-failure
 RestartSec=5
 NoNewPrivileges=true
@@ -23,7 +23,7 @@ PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
 ReadWritePaths=/var/lib/nexoops
-ReadOnlyPaths=/var/lib/ops-center
+ReadOnlyPaths=/var/lib/nexoops-feed
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true

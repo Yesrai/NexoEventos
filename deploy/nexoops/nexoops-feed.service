@@ -1,0 +1,21 @@
+# Espejo de solo lectura del estado de ops-center para NexoOps (aditivo; no modifica ops-center). Lo lanza nexoops-feed.timer.
+[Unit]
+Description=NexoOps - espejo de solo lectura del estado de ops-center
+After=ops-collector.service
+
+[Service]
+Type=oneshot
+User=opscenter
+Group=nexoops
+ExecStart=/opt/nexoeventos/deploy/nexoops/nexoops-feed.sh /var/lib/ops-center /var/lib/nexoops-feed
+TimeoutStartSec=20
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateNetwork=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/var/lib/ops-center
+ReadWritePaths=/var/lib/nexoops-feed
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX
+UMask=0027
