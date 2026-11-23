@@ -44,7 +44,7 @@ Barreras de software que siguen cerradas: `REAL_EXECUTION_WIRED=False` y `REAL_W
 4. Verificar el cifrado y la integridad: SHA-256 del objeto y `c04_verify.py`.
 5. Restaurar en OCI: la misma ruta que T3 (PASS 19/19).
 6. Verificar los datos: huella `fingerprint.sql` y `compare-fingerprint.py`; las reservas confirmadas deben ser idénticas.
-7. RPO real = hora de congelación − hora de la última escritura confirmada en el respaldo, medidas ambas en UTC. El RTO es el tiempo de reloj desde la detección o la orden hasta la primera escritura aceptada en OCI.
+7. Definición oficial (`ops_center/criterios/T6.json`, la única válida): **RPO** = edad del respaldo usado (umbral 5400 s); **RTO** = desde la inyección del fallo hasta que el nuevo escritor está verificado (umbral 3600 s). Como dato complementario se registra la ventana de congelación (última escritura confirmada → congelación) en UTC.
 
 ## 4. Regresión
 - Antes de los cambios de esta sesión: `pytest scripts/multicloud` → 683 pruebas aprobadas y 66 subtests, exit 0 (658 s).

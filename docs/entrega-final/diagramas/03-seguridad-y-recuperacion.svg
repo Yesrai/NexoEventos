@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 620" width="1280" height="620" font-family="Arial, Helvetica, sans-serif" font-size="13">
+<title>Mecanismos de seguridad y recuperación para un único escritor</title><desc>Lease en OCI, testigo anclado, compuerta de escritura, sello antirretroceso y vallado; estado real/local/abierto de cada uno.</desc>
+<rect width="1280" height="620" fill="#ffffff"/>
+<defs><marker id="a" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#333"/></marker><marker id="ar" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#c0392b"/></marker><marker id="ap" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#4527a0"/></marker><marker id="ag" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#2e7d32"/></marker></defs>
+<text x="24" y="32" font-size="20" font-weight="bold" fill="#1a1a1a" text-anchor="start">Figura F3. Seguridad y recuperación: un solo escritor en todo momento</text>
+<text x="24" y="54" font-size="12.5" fill="#555" text-anchor="start">Cada mecanismo indica dónde está demostrado. Ninguno de los rotulados LOCAL o ABIERTO se presenta como probado en la nube.</text>
+<rect x="24" y="84" width="232" height="270" rx="8" fill="#fdecec" stroke="#c0392b" stroke-width="1.5"/>
+<text x="140" y="108" font-size="14" font-weight="bold" fill="#8a1f14" text-anchor="middle">1 · Lease (OCI Object Storage)</text>
+<text x="36" y="134" font-size="11.3" fill="#333" text-anchor="start">Objeto con CAS: If-None-Match / If-Match</text>
+<text x="36" y="152" font-size="11.3" fill="#333" text-anchor="start">Firma Ed25519 + época monótona</text>
+<text x="36" y="170" font-size="11.3" fill="#333" text-anchor="start">ttl 15 s / margen 5 s (diseño)</text>
+<text x="36" y="188" font-size="11.3" fill="#333" text-anchor="start"></text>
+<text x="36" y="206" font-size="11.3" fill="#333" text-anchor="start">REAL (T1): CAS 20/20, lease 20/20,</text>
+<text x="36" y="224" font-size="11.3" fill="#333" text-anchor="start">épocas 2→21 sin retroceso,</text>
+<text x="36" y="242" font-size="11.3" fill="#333" text-anchor="start">p95 PUT 0,414 s, PAR revocados (401)</text>
+<text x="36" y="260" font-size="11.3" fill="#333" text-anchor="start"></text>
+<text x="36" y="278" font-size="11.3" fill="#333" text-anchor="start">Límite: el PAR permite escribir sin</text>
+<text x="36" y="296" font-size="11.3" fill="#333" text-anchor="start">condición → la protección es la firma</text>
+<rect x="204" y="74" width="46" height="17" rx="8" fill="#2e7d32"/>
+<text x="227.0" y="86.5" font-size="10.5" font-weight="bold" fill="#fff" text-anchor="middle">REAL</text>
+<rect x="274" y="84" width="232" height="270" rx="8" fill="#eaf4ff" stroke="#2b6cb0" stroke-width="1.5"/>
+<text x="390" y="108" font-size="14" font-weight="bold" fill="#17406e" text-anchor="middle">2 · Testigo (Azure)</text>
+<text x="286" y="134" font-size="11.3" fill="#333" text-anchor="start">Registro encadenado (seq + hash)</text>
+<text x="286" y="152" font-size="11.3" fill="#333" text-anchor="start">Autenticación por alcance, firma</text>
+<text x="286" y="170" font-size="11.3" fill="#333" text-anchor="start"></text>
+<text x="286" y="188" font-size="11.3" fill="#333" text-anchor="start">REAL (T4): 401/403/200, reinicio,</text>
+<text x="286" y="206" font-size="11.3" fill="#333" text-anchor="start">27 pruebas del perfil Azure</text>
+<text x="286" y="224" font-size="11.3" fill="#333" text-anchor="start"></text>
+<text x="286" y="242" font-size="11.3" fill="#333" text-anchor="start">LOCAL: anclaje de cabeza fuera de la</text>
+<text x="286" y="260" font-size="11.3" fill="#333" text-anchor="start">VM (anchor.py, 19 pruebas): detecta</text>
+<text x="286" y="278" font-size="11.3" fill="#333" text-anchor="start">restauración a un prefijo</text>
+<text x="286" y="296" font-size="11.3" fill="#333" text-anchor="start">Real: B-T6-1 ABIERTO</text>
+<rect x="430" y="74" width="70" height="17" rx="8" fill="#ef6c00"/>
+<text x="465.0" y="86.5" font-size="10.5" font-weight="bold" fill="#fff" text-anchor="middle">PARCIAL</text>
+<rect x="524" y="84" width="232" height="270" rx="8" fill="#fff8ec" stroke="#d99a2b" stroke-width="1.5"/>
+<text x="640" y="108" font-size="14" font-weight="bold" fill="#8a5a00" text-anchor="middle">3 · Compuerta de escritura</text>
+<text x="536" y="134" font-size="11.3" fill="#333" text-anchor="start">WRITE_GATE_MODE off/enforce</text>
+<text x="536" y="152" font-size="11.3" fill="#333" text-anchor="start">Rechaza escrituras sin lease en</text>
+<text x="536" y="170" font-size="11.3" fill="#333" text-anchor="start">HTTP, en BD y antes del COMMIT</text>
+<text x="536" y="188" font-size="11.3" fill="#333" text-anchor="start"></text>
+<text x="536" y="206" font-size="11.3" fill="#333" text-anchor="start">LOCAL: pruebas con 2 PostgreSQL</text>
+<text x="536" y="224" font-size="11.3" fill="#333" text-anchor="start">(400 escenarios sin doble escritor)</text>
+<text x="536" y="242" font-size="11.3" fill="#333" text-anchor="start"></text>
+<text x="536" y="260" font-size="11.3" fill="#333" text-anchor="start">Real: ninguna instancia V2 tiene</text>
+<text x="536" y="278" font-size="11.3" fill="#333" text-anchor="start">WRITE_GATE_* → D1/D4 ABIERTOS</text>
+<rect x="696" y="74" width="54" height="17" rx="8" fill="#4527a0"/>
+<text x="723.0" y="86.5" font-size="10.5" font-weight="bold" fill="#fff" text-anchor="middle">LOCAL</text>
+<rect x="774" y="84" width="232" height="270" rx="8" fill="#fdecec" stroke="#c0392b" stroke-width="1.5"/>
+<text x="890" y="108" font-size="14" font-weight="bold" fill="#8a1f14" text-anchor="middle">4 · Sello antirretroceso</text>
+<text x="786" y="134" font-size="11.3" fill="#333" text-anchor="start">Sello del último estado autorizado</text>
+<text x="786" y="152" font-size="11.3" fill="#333" text-anchor="start">en almacén WORM (solo adición)</text>
+<text x="786" y="170" font-size="11.3" fill="#333" text-anchor="start">Un sello retrocedido se rechaza</text>
+<text x="786" y="188" font-size="11.3" fill="#333" text-anchor="start"></text>
+<text x="786" y="206" font-size="11.3" fill="#333" text-anchor="start">LOCAL: seal.py / seal_log.py</text>
+<text x="786" y="224" font-size="11.3" fill="#333" text-anchor="start"></text>
+<text x="786" y="242" font-size="11.3" fill="#333" text-anchor="start">Real: D2 ABIERTO</text>
+<rect x="946" y="74" width="54" height="17" rx="8" fill="#4527a0"/>
+<text x="973.0" y="86.5" font-size="10.5" font-weight="bold" fill="#fff" text-anchor="middle">LOCAL</text>
+<rect x="1024" y="84" width="232" height="270" rx="8" fill="#f5f5f5" stroke="#9e9e9e" stroke-width="1.5"/>
+<text x="1140" y="108" font-size="14" font-weight="bold" fill="#424242" text-anchor="middle">5 · Vallado y DNS</text>
+<text x="1036" y="134" font-size="11.3" fill="#333" text-anchor="start">Vallado fuerte de RDS (D1) y</text>
+<text x="1036" y="152" font-size="11.3" fill="#333" text-anchor="start">verificación por efecto: 0 × 201</text>
+<text x="1036" y="170" font-size="11.3" fill="#333" text-anchor="start">desde AWS tras la toma (D5)</text>
+<text x="1036" y="188" font-size="11.3" fill="#333" text-anchor="start"></text>
+<text x="1036" y="206" font-size="11.3" fill="#333" text-anchor="start">DNS: REAL en dominio de pruebas</text>
+<text x="1036" y="224" font-size="11.3" fill="#333" text-anchor="start">(T2: 62 s, intervalo mín. 300 s,</text>
+<text x="1036" y="242" font-size="11.3" fill="#333" text-anchor="start">rechazos de seguridad 3/3)</text>
+<text x="1036" y="260" font-size="11.3" fill="#333" text-anchor="start"></text>
+<text x="1036" y="278" font-size="11.3" fill="#333" text-anchor="start">Real: D1, D5 ABIERTOS</text>
+<rect x="1180" y="74" width="70" height="17" rx="8" fill="#ef6c00"/>
+<text x="1215.0" y="86.5" font-size="10.5" font-weight="bold" fill="#fff" text-anchor="middle">PARCIAL</text>
+<rect x="24" y="374" width="610" height="140" rx="8" fill="#ede7f6" stroke="#4527a0" stroke-width="1.5"/>
+<text x="34" y="394" font-size="14" font-weight="bold" fill="#311b92" text-anchor="start">Verificación formal local (G5) — rotulada LOCAL</text>
+<text x="34" y="412" font-size="12" fill="#333" text-anchor="start">Exploración exhaustiva: 9 acciones^5 = 59.049 secuencias de 5 eventos,</text>
+<text x="34" y="428" font-size="12" fill="#333" text-anchor="start">dos actores AWS/OCI (adquirir, renovar, tick, expirar, testigo caído,</text>
+<text x="34" y="444" font-size="12" fill="#333" text-anchor="start">rollback del testigo, partición): 0 estados con doble escritor.</text>
+<text x="34" y="460" font-size="12" fill="#333" text-anchor="start">Control negativo: SIN anclaje, el rollback del testigo SÍ autoriza a un</text>
+<text x="34" y="476" font-size="12" fill="#333" text-anchor="start">segundo escritor → el anclaje es necesario.</text>
+<text x="34" y="492" font-size="12" fill="#333" text-anchor="start">Fuente: scripts/multicloud/tests/test_g5_single_writer_exhaustive.py</text>
+<rect x="654" y="374" width="602" height="140" rx="8" fill="#fff3e0" stroke="#ef6c00" stroke-width="1.5"/>
+<text x="664" y="394" font-size="14" font-weight="bold" fill="#bf360c" text-anchor="start">Interruptores en rojo (fallan cerrado)</text>
+<text x="664" y="412" font-size="12" fill="#333" text-anchor="start">REAL_EXECUTION_WIRED = False (ops_center/barriers.py)</text>
+<text x="664" y="428" font-size="12" fill="#333" text-anchor="start">REAL_WIRING_ENABLED = False (scripts/multicloud/failover/real_factory.py)</text>
+<text x="664" y="444" font-size="12" fill="#333" text-anchor="start">Proveedores reales cableados pero NO ejecutados (real_providers.py)</text>
+<text x="664" y="460" font-size="12" fill="#333" text-anchor="start">TLS de sondas con certificado fijado (G9, local)</text>
+<text x="664" y="476" font-size="12" fill="#333" text-anchor="start">Solo un cambio de código revisado + autorización con frase los cambia.</text>
+<text x="640" y="560" font-size="12.5" font-weight="bold" fill="#2e7d32" text-anchor="middle">Respaldo: pg_dump -Fc → cifrado CMS AES-256 (clave pública; privada fuera del repositorio) → SHA-256 en cada salto → OCI sin sobrescritura</text>
+<text x="640" y="584" font-size="12.5" fill="#2e7d32" text-anchor="middle">Restauración real en OCI (T3): SHA-256 OK, 136 reservas / 136 tickets, 10/10 huellas, humo 11/11 + 23/23</text>
+</svg>
